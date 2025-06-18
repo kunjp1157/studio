@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -14,15 +15,22 @@ interface FacilitySearchFormProps {
   onSearch: (filters: { searchTerm: string; sport: string; location: string; date?: Date }) => void;
 }
 
+const ANY_SPORT_VALUE = "all-sports-filter-value"; // Unique value for "Any Sport"
+
 export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSport, setSelectedSport] = useState('');
+  const [selectedSport, setSelectedSport] = useState(ANY_SPORT_VALUE); // Default to "Any Sport"
   const [location, setLocation] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch({ searchTerm, sport: selectedSport, location, date: selectedDate });
+    onSearch({ 
+      searchTerm, 
+      sport: selectedSport === ANY_SPORT_VALUE ? '' : selectedSport, // Pass empty string if "Any Sport"
+      location, 
+      date: selectedDate 
+    });
   };
 
   return (
@@ -54,7 +62,7 @@ export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
             <SelectValue placeholder="Any Sport" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Any Sport</SelectItem>
+            <SelectItem value={ANY_SPORT_VALUE}>Any Sport</SelectItem>
             {mockSports.map((sport) => (
               <SelectItem key={sport.id} value={sport.id}>
                 {sport.name}
