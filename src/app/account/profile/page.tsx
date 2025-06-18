@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox'; // Added import
 import { mockUser, mockSports, mockMembershipPlans } from '@/lib/data';
 import type { UserProfile as UserProfileType, Sport, MembershipPlan } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award } from 'lucide-react';
+import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap } from 'lucide-react'; // Added Zap as default icon
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 export default function ProfilePage() {
