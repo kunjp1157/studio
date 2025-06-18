@@ -1,6 +1,8 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -89,60 +91,63 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <Card>
+      <Card className="shadow-lg">
         <CardHeader>
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={user.profilePictureUrl} alt={user.name} />
-              <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-            </Avatar>
+          <div className="flex items-center space-x-6">
+            <div className="relative">
+                <Avatar className="h-24 w-24 border-2 border-primary shadow-md">
+                <AvatarImage src={user.profilePictureUrl} alt={user.name} data-ai-hint={user.dataAiHint || "user avatar"} />
+                <AvatarFallback className="text-3xl">{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                </Avatar>
+                {isEditing && (
+                    <Button variant="outline" size="icon" className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 bg-background hover:bg-muted" onClick={() => toast({title: "Feature Coming Soon!"})}>
+                        <UploadCloud className="h-4 w-4" />
+                        <span className="sr-only">Change photo</span>
+                    </Button>
+                )}
+            </div>
             <div>
-              <CardTitle className="text-2xl">{user.name}</CardTitle>
-              <CardDescription className="flex items-center">
+              <CardTitle className="text-3xl font-headline">{user.name}</CardTitle>
+              <CardDescription className="flex items-center text-base mt-1">
                 <Mail className="mr-2 h-4 w-4 text-muted-foreground" /> {user.email}
               </CardDescription>
               {user.phone && 
-                <CardDescription className="flex items-center mt-1">
+                <CardDescription className="flex items-center text-base mt-1">
                     <Phone className="mr-2 h-4 w-4 text-muted-foreground" /> {user.phone}
                 </CardDescription>
               }
             </div>
           </div>
-          {isEditing && (
-            <Button variant="outline" size="sm" className="mt-4 w-fit">
-              <UploadCloud className="mr-2 h-4 w-4" /> Change Photo
-            </Button>
-          )}
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="space-y-8 mt-6">
+            <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
               <div>
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" name="name" value={user.name} onChange={handleInputChange} disabled={!isEditing} />
+                <Label htmlFor="name" className="text-base">Full Name</Label>
+                <Input id="name" name="name" value={user.name} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
               </div>
               <div>
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" name="email" type="email" value={user.email} onChange={handleInputChange} disabled={!isEditing} />
+                <Label htmlFor="email" className="text-base">Email Address</Label>
+                <Input id="email" name="email" type="email" value={user.email} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
               </div>
               <div>
-                <Label htmlFor="phone">Phone Number (Optional)</Label>
-                <Input id="phone" name="phone" type="tel" value={user.phone || ''} onChange={handleInputChange} disabled={!isEditing} />
+                <Label htmlFor="phone" className="text-base">Phone Number (Optional)</Label>
+                <Input id="phone" name="phone" type="tel" value={user.phone || ''} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
               </div>
               <div>
-                <Label htmlFor="membershipLevel"><Award className="inline mr-2 h-4 w-4" />Membership Level</Label>
+                <Label htmlFor="membershipLevel" className="text-base flex items-center"><Award className="inline mr-2 h-5 w-5 text-primary" />Membership Level</Label>
                  <Select 
                     name="membershipLevel" 
                     value={user.membershipLevel} 
                     onValueChange={(value) => handleSelectChange('membershipLevel', value)}
                     disabled={!isEditing}
                 >
-                  <SelectTrigger id="membershipLevel">
+                  <SelectTrigger id="membershipLevel" className="mt-1 text-base p-3 h-auto">
                     <SelectValue placeholder="Select membership" />
                   </SelectTrigger>
                   <SelectContent>
                     {mockMembershipPlans.map(plan => (
-                      <SelectItem key={plan.id} value={plan.name}>{plan.name}</SelectItem>
+                      <SelectItem key={plan.id} value={plan.name} className="text-base">{plan.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -150,33 +155,35 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <Label><Heart className="inline mr-2 h-4 w-4" />Preferred Sports</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2 p-4 border rounded-md">
-                {mockSports.map(sport => (
-                  <div key={sport.id} className="flex items-center space-x-2">
-                    <Input
-                      type="checkbox"
-                      id={`sport-${sport.id}`}
-                      checked={user.preferredSports?.some(s => s.id === sport.id) || false}
-                      onChange={() => handlePreferredSportsChange(sport.id)}
-                      disabled={!isEditing}
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor={`sport-${sport.id}`} className="text-sm font-normal cursor-pointer">
-                      {sport.name}
-                    </Label>
-                  </div>
-                ))}
+              <Label className="text-base flex items-center"><Heart className="inline mr-2 h-5 w-5 text-destructive" />Preferred Sports</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2 p-4 border rounded-md bg-muted/30">
+                {mockSports.map(sport => {
+                    const SportIcon = sport.icon || Zap;
+                    return (
+                        <div key={sport.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-background transition-colors">
+                            <Checkbox
+                            id={`sport-${sport.id}`}
+                            checked={user.preferredSports?.some(s => s.id === sport.id) || false}
+                            onCheckedChange={() => handlePreferredSportsChange(sport.id)}
+                            disabled={!isEditing}
+                            className="h-5 w-5"
+                            />
+                            <Label htmlFor={`sport-${sport.id}`} className={`text-base font-normal cursor-pointer flex items-center ${isEditing ? '' : 'text-muted-foreground'}`}>
+                               <SportIcon className="mr-2 h-5 w-5 text-primary" /> {sport.name}
+                            </Label>
+                        </div>
+                    );
+                })}
               </div>
             </div>
             
             {isEditing && (
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => { setIsEditing(false); setUser(mockUser); /* Reset changes */ }}>
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); setUser(mockUser); /* Reset changes */ }}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
+                <Button type="submit" disabled={isLoading} size="lg">
+                  {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
                   Save Changes
                 </Button>
               </div>

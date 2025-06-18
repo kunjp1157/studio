@@ -32,7 +32,7 @@ export interface Facility {
   rating: number; // Average rating 0-5
   capacity?: number;
   isPopular?: boolean;
-  dataAiHint?: string; // For placeholder image generation
+  dataAiHint?: string; // For placeholder image generation for the facility itself
 }
 
 export interface TimeSlot {
@@ -47,6 +47,7 @@ export interface Booking {
   facilityId: string;
   facilityName: string; // Denormalized for easy display
   facilityImage: string; // Denormalized
+  dataAiHint?: string; // AI hint for the facility image in the booking context
   date: string; // "YYYY-MM-DD"
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
@@ -61,6 +62,7 @@ export interface UserProfile {
   email: string;
   phone?: string;
   profilePictureUrl?: string;
+  dataAiHint?: string; // AI hint for the profile picture
   preferredSports?: Sport[];
   favoriteFacilities?: string[]; // Array of facility IDs
   membershipLevel?: 'Basic' | 'Premium' | 'Pro';
@@ -96,4 +98,6 @@ export interface SportEvent {
   description: string;
   maxParticipants?: number;
   registeredParticipants: number;
+  imageUrl?: string;
+  imageDataAiHint?: string;
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,8 +8,8 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Booking } from '@/lib/types';
-import { mockUser, getBookingsByUserId } from '@/lib/data';
+import type { Booking, Facility } from '@/lib/types'; // Added Facility type
+import { mockUser, getBookingsByUserId, getFacilityById } from '@/lib/data'; // Added getFacilityById
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -81,8 +82,11 @@ export default function BookingsPage() {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
   }
   
-  const BookingCard = ({ booking }: { booking: Booking }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+  const BookingCard = ({ booking }: { booking: Booking }) => {
+    const facilityDetails = getFacilityById(booking.facilityId);
+    
+    return (
+    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">
         <CardHeader className="p-0 relative">
         <Image
             src={booking.facilityImage || `https://placehold.co/400x200.png?text=${encodeURIComponent(booking.facilityName)}`}
@@ -90,7 +94,7 @@ export default function BookingsPage() {
             width={400}
             height={200}
             className="w-full h-36 object-cover"
-            data-ai-hint="sports facility booking"
+            data-ai-hint={booking.dataAiHint || "sports facility booking"}
         />
         <Badge 
             variant={booking.status === 'Confirmed' ? 'default' : booking.status === 'Cancelled' ? 'destructive' : 'secondary'}
@@ -100,10 +104,10 @@ export default function BookingsPage() {
         </Badge>
         </CardHeader>
         <CardContent className="p-4">
-        <CardTitle className="text-xl mb-1 truncate">{booking.facilityName}</CardTitle>
+        <CardTitle className="text-xl mb-1 truncate font-headline">{booking.facilityName}</CardTitle>
         <div className="text-sm text-muted-foreground mb-3 flex items-center">
             <MapPin className="w-4 h-4 mr-1.5 text-primary" />
-            {getFacilityById(booking.facilityId)?.location || 'Unknown Location'}
+            {facilityDetails?.location || 'Unknown Location'}
         </div>
         <div className="space-y-1 text-sm text-muted-foreground">
             <div className="flex items-center"><CalendarDays className="w-4 h-4 mr-2 text-primary" /> {format(parseISO(booking.date), 'EEE, MMM d, yyyy')}</div>
@@ -143,7 +147,7 @@ export default function BookingsPage() {
         )}
         </CardFooter>
     </Card>
-  );
+  )};
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -178,6 +182,18 @@ export default function BookingsPage() {
                      {pastBookings.map(booking => <BookingCard key={booking.id} booking={booking} />)}
                  </div>
                  </section>
+            )}
+             {upcomingBookings.length === 0 && pastBookings.length === 0 && !isLoading && (
+                 <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>All Clear!</AlertTitle>
+                    <AlertDescription>
+                    You have no upcoming or past bookings to display at the moment.
+                    <Link href="/facilities" passHref>
+                        <Button className="mt-4">Explore Facilities</Button>
+                    </Link>
+                    </AlertDescription>
+                </Alert>
             )}
         </>
       )}
