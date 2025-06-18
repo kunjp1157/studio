@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Facility } from '@/lib/types';
@@ -51,7 +52,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Link href={`/facilities/${facility.id}`} legacyBehavior passHref>
+        <Link href={`/facilities/${facility.id}`}>
           <Button className="w-full" variant="default" aria-label={`View details for ${facility.name}`}>
             View Details
           </Button>
