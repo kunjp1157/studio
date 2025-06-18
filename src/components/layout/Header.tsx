@@ -1,7 +1,8 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { MountainSnow } from 'lucide-react'; // Placeholder icon for logo
+import { MountainSnow, Dices } from 'lucide-react'; // Placeholder icon for logo
 
 export function Header() {
   return (
@@ -13,21 +14,27 @@ export function Header() {
             City Sports Hub
           </span>
         </Link>
-        <nav className="flex flex-1 items-center space-x-4">
+        <nav className="flex flex-1 items-center space-x-1 sm:space-x-2 md:space-x-4">
           <Link href="/facilities">
-            <Button variant="ghost" className="text-sm font-medium">Facilities</Button>
+            <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">Facilities</Button>
+          </Link>
+          <Link href="/sports">
+            <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">
+                <Dices className="h-4 w-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Sports</span>
+            </Button>
           </Link>
           <Link href="/events">
-            <Button variant="ghost" className="text-sm font-medium">Events</Button>
+            <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">Events</Button>
           </Link>
           <Link href="/memberships">
-            <Button variant="ghost" className="text-sm font-medium">Memberships</Button>
+            <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">Memberships</Button>
           </Link>
           <Link href="/recommendation">
-            <Button variant="ghost" className="text-sm font-medium text-accent-foreground bg-accent hover:bg-accent/90">AI Recommender</Button>
+            <Button variant="ghost" className="text-sm font-medium text-accent-foreground bg-accent hover:bg-accent/90 px-2 sm:px-3">AI Recommender</Button>
           </Link>
         </nav>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <UserNav />
         </div>
       </div>
