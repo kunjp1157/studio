@@ -5,7 +5,8 @@ import type { Facility } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, MapPin, DollarSign, Zap } from 'lucide-react';
+import { Star, MapPin, DollarSign, Zap, Heart } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -13,21 +14,43 @@ interface FacilityCardProps {
 
 export function FacilityCard({ facility }: FacilityCardProps) {
   const SportIcon = facility.sports[0]?.icon || Zap; // Default to Zap icon if no sport icon
+  const { toast } = useToast();
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation if the button is inside a Link
+    e.stopPropagation();
+    toast({
+      title: "Added to Favorites (Mock)",
+      description: `${facility.name} has been added to your favorites.`,
+    });
+    // In a real app, you'd update the user's favorite list here
+  };
 
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">
       <CardHeader className="p-0 relative">
-        <Image
-          src={facility.images[0] || `https://placehold.co/400x250.png?text=${encodeURIComponent(facility.name)}`}
-          alt={facility.name}
-          width={400}
-          height={250}
-          className="w-full h-48 object-cover"
-          data-ai-hint={facility.dataAiHint || 'sports facility'}
-        />
+        <Link href={`/facilities/${facility.id}`} passHref>
+          <Image
+            src={facility.images[0] || `https://placehold.co/400x250.png?text=${encodeURIComponent(facility.name)}`}
+            alt={facility.name}
+            width={400}
+            height={250}
+            className="w-full h-48 object-cover"
+            data-ai-hint={facility.dataAiHint || 'sports facility'}
+          />
+        </Link>
         {facility.isPopular && (
           <Badge variant="destructive" className="absolute top-2 right-2 bg-accent text-accent-foreground">Popular</Badge>
         )}
+        <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute top-1 right-10 h-8 w-8 bg-background/70 hover:bg-background rounded-full"
+            onClick={handleFavoriteClick}
+            aria-label="Add to favorites"
+        >
+            <Heart className="h-5 w-5 text-destructive" />
+        </Button>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
         <CardTitle className="text-xl font-headline mb-2 truncate">{facility.name}</CardTitle>
@@ -52,7 +75,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Link href={`/facilities/${facility.id}`}>
+        <Link href={`/facilities/${facility.id}`} className="w-full">
           <Button className="w-full" variant="default" aria-label={`View details for ${facility.name}`}>
             View Details
           </Button>

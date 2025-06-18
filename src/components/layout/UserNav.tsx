@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard } from 'lucide-react';
+import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart } from 'lucide-react';
 import { mockUser } from '@/lib/data'; // For mock data
 
 export function UserNav() {
@@ -58,10 +59,12 @@ export function UserNav() {
           <LogIn className="mr-2 h-4 w-4" />
           Login
         </Button>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Sign Up
-        </Button>
+        <Link href="/account/signup" passHref>
+          <Button>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Sign Up
+          </Button>
+        </Link>
       </div>
     );
   }
@@ -104,6 +107,12 @@ export function UserNav() {
             <DropdownMenuItem>
               <CalendarDays className="mr-2 h-4 w-4" />
               <span>My Bookings</span>
+            </DropdownMenuItem>
+          </Link>
+           <Link href="/account/favorites" passHref>
+            <DropdownMenuItem>
+              <Heart className="mr-2 h-4 w-4" />
+              <span>My Favorites</span>
             </DropdownMenuItem>
           </Link>
           <Link href="/account/payment-methods" passHref>

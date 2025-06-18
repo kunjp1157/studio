@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -10,11 +11,12 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Star, MapPin, Clock, DollarSign, CalendarPlus, Users, Zap } from 'lucide-react';
+import { Star, MapPin, Clock, DollarSign, CalendarPlus, Users, Zap, Heart } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
 
 // Mock calendar component for availability preview
 function AvailabilityPreview({ facilityId }: { facilityId: string }) {
@@ -53,6 +55,7 @@ export default function FacilityDetailPage() {
   const params = useParams();
   const facilityId = params.id as string;
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined); // undefined for loading, null for not found
+  const { toast } = useToast();
 
   useEffect(() => {
     if (facilityId) {
@@ -63,6 +66,15 @@ export default function FacilityDetailPage() {
       }, 300);
     }
   }, [facilityId]);
+
+  const handleFavoriteClick = () => {
+    if (!facility) return;
+    toast({
+      title: "Added to Favorites (Mock)",
+      description: `${facility.name} has been added to your favorites.`,
+    });
+    // In a real app, you'd update the user's favorite list here
+  };
 
   if (facility === undefined) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
@@ -107,8 +119,13 @@ export default function FacilityDetailPage() {
               ))}
             </div>
           )}
-
-          <PageTitle title={facility.name} />
+          
+          <div className="flex justify-between items-start">
+            <PageTitle title={facility.name} />
+            <Button variant="outline" onClick={handleFavoriteClick} className="ml-4 mt-1">
+              <Heart className="mr-2 h-4 w-4 text-destructive" /> Add to Favorites
+            </Button>
+          </div>
           
           <div className="flex items-center space-x-4 mb-4 text-muted-foreground">
             <div className="flex items-center">
