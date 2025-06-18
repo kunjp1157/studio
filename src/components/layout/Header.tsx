@@ -14,16 +14,16 @@ export function Header() {
           </span>
         </Link>
         <nav className="flex flex-1 items-center space-x-4">
-          <Link href="/facilities" legacyBehavior passHref>
+          <Link href="/facilities">
             <Button variant="ghost" className="text-sm font-medium">Facilities</Button>
           </Link>
-          <Link href="/events" legacyBehavior passHref>
+          <Link href="/events">
             <Button variant="ghost" className="text-sm font-medium">Events</Button>
           </Link>
-          <Link href="/memberships" legacyBehavior passHref>
+          <Link href="/memberships">
             <Button variant="ghost" className="text-sm font-medium">Memberships</Button>
           </Link>
-          <Link href="/recommendation" legacyBehavior passHref>
+          <Link href="/recommendation">
             <Button variant="ghost" className="text-sm font-medium text-accent-foreground bg-accent hover:bg-accent/90">AI Recommender</Button>
           </Link>
         </nav>
