@@ -9,6 +9,8 @@ export interface Sport {
   id: string;
   name: string;
   icon?: React.ElementType; // Optional: Lucide icon component
+  imageUrl?: string; // Optional: URL for a representative image of the sport
+  imageDataAiHint?: string; // Optional: AI hint for the sport's image
 }
 
 export interface Facility {

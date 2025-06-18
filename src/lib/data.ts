@@ -3,18 +3,18 @@ import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, Member
 import { Shirt, ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Sailboat, Swords, Palette, Music, Tent, Drama, MapPin, Heart } from 'lucide-react';
 
 export const mockSports: Sport[] = [
-  { id: 'sport-1', name: 'Soccer', icon: Goal },
-  { id: 'sport-2', name: 'Basketball', icon: Dices /* Placeholder, Lucide lacks specific icon */ },
-  { id: 'sport-3', name: 'Tennis', icon: Dices /* Placeholder */ },
-  { id: 'sport-4', name: 'Badminton', icon: Dices /* Placeholder */ },
-  { id: 'sport-5', name: 'Swimming', icon: Sailboat /* Placeholder for swimming */ },
-  { id: 'sport-6', name: 'Gym Workout', icon: Dumbbell },
-  { id: 'sport-7', name: 'Cycling', icon: Bike },
-  { id: 'sport-8', name: 'Fencing', icon: Swords },
-  { id: 'sport-9', name: 'Yoga', icon: Palette /* Placeholder for Yoga/Artistic activity */},
-  { id: 'sport-10', name: 'Dance', icon: Music /* Placeholder for Dance */},
-  { id: 'sport-11', name: 'Camping', icon: Tent },
-  { id: 'sport-12', name: 'Theatre', icon: Drama },
+  { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://placehold.co/100x100.png?text=Soccer', imageDataAiHint: 'soccer ball' },
+  { id: 'sport-2', name: 'Basketball', icon: Dices /* Placeholder, Lucide lacks specific icon */, imageUrl: 'https://placehold.co/100x100.png?text=Basketball', imageDataAiHint: 'basketball hoop' },
+  { id: 'sport-3', name: 'Tennis', icon: Dices /* Placeholder */, imageUrl: 'https://placehold.co/100x100.png?text=Tennis', imageDataAiHint: 'tennis racket' },
+  { id: 'sport-4', name: 'Badminton', icon: Dices /* Placeholder */, imageUrl: 'https://placehold.co/100x100.png?text=Badminton', imageDataAiHint: 'badminton shuttlecock' },
+  { id: 'sport-5', name: 'Swimming', icon: Sailboat /* Placeholder for swimming */, imageUrl: 'https://placehold.co/100x100.png?text=Swimming', imageDataAiHint: 'swimming lane' },
+  { id: 'sport-6', name: 'Gym Workout', icon: Dumbbell, imageUrl: 'https://placehold.co/100x100.png?text=Gym', imageDataAiHint: 'gym weights' },
+  { id: 'sport-7', name: 'Cycling', icon: Bike, imageUrl: 'https://placehold.co/100x100.png?text=Cycling', imageDataAiHint: 'cycling road' },
+  { id: 'sport-8', name: 'Fencing', icon: Swords, imageUrl: 'https://placehold.co/100x100.png?text=Fencing', imageDataAiHint: 'fencing mask' },
+  { id: 'sport-9', name: 'Yoga', icon: Palette /* Placeholder for Yoga/Artistic activity */, imageUrl: 'https://placehold.co/100x100.png?text=Yoga', imageDataAiHint: 'yoga mat'},
+  { id: 'sport-10', name: 'Dance', icon: Music /* Placeholder for Dance */, imageUrl: 'https://placehold.co/100x100.png?text=Dance', imageDataAiHint: 'dance studio'},
+  { id: 'sport-11', name: 'Camping', icon: Tent, imageUrl: 'https://placehold.co/100x100.png?text=Camping', imageDataAiHint: 'camping tent' },
+  { id: 'sport-12', name: 'Theatre', icon: Drama, imageUrl: 'https://placehold.co/100x100.png?text=Theatre', imageDataAiHint: 'theatre stage' },
 ];
 
 export const mockAmenities: Amenity[] = [
@@ -42,7 +42,7 @@ export const mockFacilities: Facility[] = [
     pricePerHour: 50,
     rating: 4.8,
     isPopular: true,
-    dataAiHint: 'sports stadium',
+    dataAiHint: 'multi sport',
     capacity: 500,
   },
   {
@@ -74,7 +74,7 @@ export const mockFacilities: Facility[] = [
     pricePerHour: 20,
     rating: 4.2,
     isPopular: true,
-    dataAiHint: 'community center',
+    dataAiHint: 'basketball gym',
   },
   {
     id: 'facility-4',
