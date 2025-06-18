@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -93,7 +94,7 @@ export default function HomePage() {
 
       <div className="mt-12 text-center">
         <p className="text-lg text-muted-foreground mb-4">Can't decide? Let our AI help you!</p>
-        <Link href="/recommendation" passHref>
+        <Link href="/recommendation">
           <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
             Get AI Recommendation
           </Button>

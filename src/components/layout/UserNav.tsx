@@ -59,7 +59,7 @@ export function UserNav() {
           <LogIn className="mr-2 h-4 w-4" />
           Login
         </Button>
-        <Link href="/account/signup" passHref>
+        <Link href="/account/signup">
           <Button>
             <UserPlus className="mr-2 h-4 w-4" />
             Sign Up
@@ -97,25 +97,25 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <Link href="/account/profile" passHref>
+          <Link href="/account/profile">
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
           </Link>
-          <Link href="/account/bookings" passHref>
+          <Link href="/account/bookings">
             <DropdownMenuItem>
               <CalendarDays className="mr-2 h-4 w-4" />
               <span>My Bookings</span>
             </DropdownMenuItem>
           </Link>
-           <Link href="/account/favorites" passHref>
+           <Link href="/account/favorites">
             <DropdownMenuItem>
               <Heart className="mr-2 h-4 w-4" />
               <span>My Favorites</span>
             </DropdownMenuItem>
           </Link>
-          <Link href="/account/payment-methods" passHref>
+          <Link href="/account/payment-methods">
             <DropdownMenuItem>
               <CreditCard className="mr-2 h-4 w-4" />
               <span>Payment Methods</span>
@@ -123,7 +123,7 @@ export function UserNav() {
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <Link href="/admin" passHref>
+        <Link href="/admin">
             <DropdownMenuItem>
               <LayoutDashboard className="mr-2 h-4 w-4" />
               <span>Admin Dashboard</span>

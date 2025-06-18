@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -136,8 +137,8 @@ export default function SignupPage() {
         <CardFooter className="justify-center text-sm">
           <p className="text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/account/login" legacyBehavior>
-              <a className="font-medium text-primary hover:underline">Log in <ArrowRight className="inline h-4 w-4" /></a>
+            <Link href="/account/login" className="font-medium text-primary hover:underline">
+              Log in <ArrowRight className="inline h-4 w-4" />
             </Link>
           </p>
         </CardFooter>

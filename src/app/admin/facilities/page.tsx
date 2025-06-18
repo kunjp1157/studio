@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -87,7 +88,7 @@ export default function AdminFacilitiesPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <PageTitle title="Manage Facilities" description="Add, edit, or remove sports facilities." />
-        <Link href="/admin/facilities/new" passHref>
+        <Link href="/admin/facilities/new">
           <Button><PlusCircle className="mr-2 h-4 w-4" /> Add New Facility</Button>
         </Link>
       </div>
@@ -129,10 +130,10 @@ export default function AdminFacilitiesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <Link href={`/facilities/${facility.id}`} passHref>
+                        <Link href={`/facilities/${facility.id}`}>
                            <DropdownMenuItem><Eye className="mr-2 h-4 w-4" /> View Public Page</DropdownMenuItem>
                         </Link>
-                        <Link href={`/admin/facilities/${facility.id}/edit`} passHref>
+                        <Link href={`/admin/facilities/${facility.id}/edit`}>
                           <DropdownMenuItem><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
                         </Link>
                         <DropdownMenuSeparator />

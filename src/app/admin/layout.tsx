@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import {
@@ -40,7 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <SidebarContent className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <Link href="/admin" passHref legacyBehavior>
+              <Link href="/admin">
                 <SidebarMenuButton isActive={isActive('/admin')} tooltip="Dashboard">
                   <LayoutDashboard />
                   <span>Dashboard</span>
@@ -51,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <SidebarGroup>
               <SidebarGroupLabel className="group-data-[collapsible=icon]:justify-center">Management</SidebarGroupLabel>
               <SidebarMenuItem>
-                <Link href="/admin/facilities" passHref legacyBehavior>
+                <Link href="/admin/facilities">
                   <SidebarMenuButton isActive={isActive('/admin/facilities')} tooltip="Facilities">
                     <Building2 />
                     <span>Facilities</span>
@@ -59,7 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                 <Link href="/admin/bookings" passHref legacyBehavior>
+                 <Link href="/admin/bookings">
                     <SidebarMenuButton isActive={isActive('/admin/bookings')} tooltip="Bookings">
                         <Ticket />
                         <span>Bookings</span>
@@ -67,7 +68,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                  </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/admin/users" passHref legacyBehavior>
+                <Link href="/admin/users">
                   <SidebarMenuButton isActive={isActive('/admin/users')} tooltip="Users">
                     <Users />
                     <span>Users</span>
@@ -75,7 +76,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/admin/memberships" passHref legacyBehavior>
+                <Link href="/admin/memberships">
                   <SidebarMenuButton isActive={isActive('/admin/memberships')} tooltip="Memberships">
                     <Award />
                     <span>Memberships</span>
@@ -83,7 +84,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/admin/events" passHref legacyBehavior>
+                <Link href="/admin/events">
                   <SidebarMenuButton isActive={isActive('/admin/events')} tooltip="Events">
                     <EventIcon />
                     <span>Events</span>
@@ -95,7 +96,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <SidebarGroup>
               <SidebarGroupLabel className="group-data-[collapsible=icon]:justify-center">Analytics & Settings</SidebarGroupLabel>
               <SidebarMenuItem>
-                <Link href="/admin/reports" passHref legacyBehavior>
+                <Link href="/admin/reports">
                   <SidebarMenuButton isActive={isActive('/admin/reports')} tooltip="Reports">
                     <BarChart3 />
                     <span>Reports</span>
@@ -103,7 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <Link href="/admin/settings" passHref legacyBehavior>
+                <Link href="/admin/settings">
                   <SidebarMenuButton isActive={isActive('/admin/settings')} tooltip="Settings">
                     <Settings />
                     <span>Settings</span>

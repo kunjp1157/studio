@@ -88,7 +88,7 @@ export default function FacilityDetailPage() {
           <AlertTitle>Facility Not Found</AlertTitle>
           <AlertDescription>The facility you are looking for does not exist or could not be loaded.</AlertDescription>
         </Alert>
-         <Link href="/facilities" passHref>
+         <Link href="/facilities">
             <Button variant="outline" className="mt-4">Back to Facilities</Button>
           </Link>
       </div>
@@ -225,7 +225,7 @@ export default function FacilityDetailPage() {
                 Select your preferred date and time to reserve this facility.
               </p>
               <AvailabilityPreview facilityId={facility.id}/>
-              <Link href={`/facilities/${facility.id}/book`} passHref>
+              <Link href={`/facilities/${facility.id}/book`}>
                 <Button size="lg" className="w-full mt-6">
                   <CalendarPlus className="mr-2 h-5 w-5" /> Book Now
                 </Button>

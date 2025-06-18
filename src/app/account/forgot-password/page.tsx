@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -61,10 +62,8 @@ export default function ForgotPasswordPage() {
           </form>
         </CardContent>
         <CardFooter className="justify-center text-sm">
-          <Link href="/account/login" legacyBehavior>
-            <a className="font-medium text-primary hover:underline flex items-center">
-              <ArrowLeft className="inline h-4 w-4 mr-1" /> Back to Log in
-            </a>
+          <Link href="/account/login" className="font-medium text-primary hover:underline flex items-center">
+            <ArrowLeft className="inline h-4 w-4 mr-1" /> Back to Log in
           </Link>
         </CardFooter>
       </Card>

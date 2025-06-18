@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -88,8 +89,8 @@ export default function LoginPage() {
                     {/* <Checkbox id="remember-me" />
                     <Label htmlFor="remember-me" className="font-normal">Remember me</Label> */}
                 </div>
-                <Link href="/account/forgot-password" legacyBehavior>
-                    <a className="font-medium text-primary hover:underline">Forgot password?</a>
+                <Link href="/account/forgot-password" className="font-medium text-primary hover:underline">
+                  Forgot password?
                 </Link>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
@@ -121,8 +122,8 @@ export default function LoginPage() {
         <CardFooter className="justify-center text-sm">
           <p className="text-muted-foreground">
             Don't have an account?{' '}
-            <Link href="/account/signup" legacyBehavior>
-              <a className="font-medium text-primary hover:underline">Sign up <ArrowRight className="inline h-4 w-4" /></a>
+            <Link href="/account/signup" className="font-medium text-primary hover:underline">
+              Sign up <ArrowRight className="inline h-4 w-4" />
             </Link>
           </p>
         </CardFooter>

@@ -52,7 +52,7 @@ export default function FavoritesPage() {
           <AlertTitle>No Favorites Yet!</AlertTitle>
           <AlertDescription>
             You haven't added any facilities to your favorites. Start exploring and save the ones you love!
-            <Link href="/facilities" passHref>
+            <Link href="/facilities">
               <Button className="mt-4">Browse Facilities</Button>
             </Link>
           </AlertDescription>

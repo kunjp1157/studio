@@ -116,7 +116,7 @@ export default function BookingsPage() {
         </div>
         </CardContent>
         <CardFooter className="p-4 pt-0 space-x-2">
-        <Link href={`/facilities/${booking.facilityId}`} passHref>
+        <Link href={`/facilities/${booking.facilityId}`}>
             <Button variant="outline" size="sm"><Eye className="mr-1 h-4 w-4" /> View Facility</Button>
         </Link>
         {booking.status === 'Confirmed' && !isPast(parseISO(booking.date + 'T' + booking.startTime)) && (
@@ -159,7 +159,7 @@ export default function BookingsPage() {
             <AlertTitle>No Bookings Yet!</AlertTitle>
             <AlertDescription>
             You haven't made any bookings. Start exploring facilities and reserve your spot!
-            <Link href="/facilities" passHref>
+            <Link href="/facilities">
                 <Button className="mt-4">Browse Facilities</Button>
             </Link>
             </AlertDescription>
@@ -189,7 +189,7 @@ export default function BookingsPage() {
                     <AlertTitle>All Clear!</AlertTitle>
                     <AlertDescription>
                     You have no upcoming or past bookings to display at the moment.
-                    <Link href="/facilities" passHref>
+                    <Link href="/facilities">
                         <Button className="mt-4">Explore Facilities</Button>
                     </Link>
                     </AlertDescription>
