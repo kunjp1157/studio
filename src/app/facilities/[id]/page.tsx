@@ -5,13 +5,13 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { Facility, Amenity, Sport, Review } from '@/lib/types';
+import type { Facility, Amenity, Sport, Review, RentalEquipment } from '@/lib/types';
 import { getFacilityById } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Star, MapPin, Clock, DollarSign, CalendarPlus, Users, Zap, Heart, MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Star, MapPin, Clock, DollarSign, CalendarPlus, Users, Zap, Heart, MessageSquare, PackageSearch } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -96,6 +96,7 @@ export default function FacilityDetailPage() {
   }
   
   const reviewCount = facility.reviews?.length || 0;
+  const hasRentals = facility.availableEquipment && facility.availableEquipment.length > 0;
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -105,9 +106,10 @@ export default function FacilityDetailPage() {
             <Image
               src={facility.images[0] || `https://placehold.co/800x450.png?text=${encodeURIComponent(facility.name)}`}
               alt={facility.name}
-              layout="fill"
-              objectFit="cover"
-              className="transition-transform duration-500 hover:scale-105"
+              fill
+              sizes="(max-width: 1024px) 100vw, 800px"
+              className="object-cover transition-transform duration-500 hover:scale-105"
+              priority
               data-ai-hint={facility.dataAiHint || 'sports facility large'}
             />
           </div>
@@ -115,7 +117,7 @@ export default function FacilityDetailPage() {
             <div className="grid grid-cols-3 gap-2 mb-6">
               {facility.images.slice(1, 4).map((img, idx) => (
                 <div key={idx} className="relative aspect-video rounded-md overflow-hidden shadow-md">
-                  <Image src={img} alt={`${facility.name} - view ${idx + 2}`} layout="fill" objectFit="cover" data-ai-hint={facility.dataAiHint || 'sports detail'} />
+                  <Image src={img} alt={`${facility.name} - view ${idx + 2}`} fill sizes="(max-width: 768px) 30vw, 250px" objectFit="cover" data-ai-hint={facility.dataAiHint || 'sports detail'} />
                 </div>
               ))}
             </div>
@@ -140,7 +142,7 @@ export default function FacilityDetailPage() {
               <MapPin className="w-4 h-4 mr-1 text-primary" /> {facility.location}
             </div>
             <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-1 text-green-500" /> {facility.pricePerHour}/hr
+              <DollarSign className="w-4 h-4 mr-1 text-green-500" /> {facility.pricePerHour}/hr (facility slot)
             </div>
           </div>
 
@@ -148,10 +150,11 @@ export default function FacilityDetailPage() {
           <p className="text-lg text-foreground mb-6">{facility.description}</p>
 
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 mb-4">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-4">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="amenities">Amenities</TabsTrigger>
               <TabsTrigger value="sports">Sports</TabsTrigger>
+              {hasRentals && <TabsTrigger value="rentals">Rentals</TabsTrigger>}
               <TabsTrigger value="hours">Hours</TabsTrigger>
               <TabsTrigger value="reviews">Reviews ({reviewCount})</TabsTrigger>
             </TabsList>
@@ -203,6 +206,39 @@ export default function FacilityDetailPage() {
                     </CardContent>
                 </Card>
             </TabsContent>
+             {hasRentals && (
+              <TabsContent value="rentals">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Available Equipment Rentals</CardTitle>
+                    <CardDescription>Rent equipment for your session directly during booking.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {facility.availableEquipment?.map((equip: RentalEquipment) => (
+                        <Card key={equip.id} className="flex flex-col sm:flex-row items-center p-3 gap-3">
+                          {equip.imageUrl && (
+                            <Image 
+                              src={equip.imageUrl} 
+                              alt={equip.name} 
+                              width={60} 
+                              height={60} 
+                              className="rounded-md object-cover h-16 w-16 sm:h-20 sm:w-20"
+                              data-ai-hint={equip.dataAiHint || "sports equipment"}
+                            />
+                          )}
+                          <div className="text-center sm:text-left">
+                            <h4 className="font-semibold text-md">{equip.name}</h4>
+                            <p className="text-sm text-muted-foreground">${equip.pricePerItem.toFixed(2)} / {equip.priceType === 'per_booking' ? 'booking' : 'hour'}</p>
+                            <p className="text-xs text-muted-foreground">Stock: {equip.stock}</p>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
             <TabsContent value="hours">
               <Card>
                 <CardContent className="pt-6">
@@ -273,3 +309,4 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Facility, Sport, Amenity } from '@/lib/types';
+import type { Facility, Sport, Amenity, RentalEquipment } from '@/lib/types'; // Added RentalEquipment
 import { mockSports, mockAmenities } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud } from 'lucide-react';
+import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch } from 'lucide-react';
 
 const facilityFormSchema = z.object({
   name: z.string().min(3, { message: "Facility name must be at least 3 characters." }),
@@ -37,7 +38,9 @@ const facilityFormSchema = z.object({
   rating: z.coerce.number().min(0).max(5).optional().default(0),
   capacity: z.coerce.number().min(0).optional().default(0),
   isPopular: z.boolean().optional().default(false),
+  isIndoor: z.boolean().optional().default(false), // Added isIndoor
   dataAiHint: z.string().optional(),
+  // availableEquipment: z.array(...) // Placeholder for future equipment management
 });
 
 type FacilityFormValues = z.infer<typeof facilityFormSchema>;
@@ -67,10 +70,11 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
       sports: initialData.sports.map(s => s.id),
       amenities: initialData.amenities.map(a => a.id),
       operatingHours: initialData.operatingHours.length === 7 ? initialData.operatingHours : defaultOperatingHours,
+      isIndoor: initialData.isIndoor ?? false,
     } : {
       name: '', type: 'Court', address: '', location: '', description: '',
       images: [''], sports: [], amenities: [], operatingHours: defaultOperatingHours,
-      pricePerHour: 0, rating: 0, capacity: 0, isPopular: false, dataAiHint: ''
+      pricePerHour: 0, rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: ''
     },
   });
 
@@ -313,15 +317,47 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
                     </FormItem>
                 )} />
             </div>
-             <FormField control={form.control} name="isPopular" render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                        <FormLabel className="text-base">Mark as Popular</FormLabel>
-                        <FormDescription>Popular facilities are highlighted in listings.</FormDescription>
-                    </div>
-                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                </FormItem>
-            )} />
+            <div className="grid md:grid-cols-2 gap-6">
+              <FormField control={form.control} name="isPopular" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                          <FormLabel className="text-base">Mark as Popular</FormLabel>
+                          <FormDescription>Popular facilities are highlighted in listings.</FormDescription>
+                      </div>
+                      <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                  </FormItem>
+              )} />
+              <FormField control={form.control} name="isIndoor" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                          <FormLabel className="text-base">Indoor Facility</FormLabel>
+                          <FormDescription>Check if this is an indoor facility.</FormDescription>
+                      </div>
+                      <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                  </FormItem>
+              )} />
+            </div>
+
+            {/* Placeholder for Rental Equipment Management */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <PackageSearch className="mr-2 h-5 w-5 text-muted-foreground" />
+                  Manage Rental Equipment
+                </CardTitle>
+                <CardDescription>
+                  (Feature Under Development) Define and manage rental equipment available at this facility.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  This section will allow you to add, edit, and remove rental items, set their prices, and manage stock.
+                </p>
+                <Button variant="outline" disabled className="mt-4">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Equipment (Coming Soon)
+                </Button>
+              </CardContent>
+            </Card>
 
 
           </CardContent>
@@ -340,3 +376,4 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
     </Form>
   );
 }
+

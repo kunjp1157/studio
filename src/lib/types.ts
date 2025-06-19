@@ -53,6 +53,17 @@ export interface PromotionRule {
   // Conditions for applicability could be added later, e.g., specific facilities, sports, user segments, min booking value
 }
 
+export interface RentalEquipment {
+  id: string;
+  facilityId: string; // To which facility this specific stock belongs, or could be global if managed centrally
+  name: string;
+  description?: string;
+  pricePerItem: number; // Price per booking or per hour/session
+  priceType: 'per_booking' | 'per_hour'; // To clarify pricing model
+  imageUrl?: string;
+  dataAiHint?: string;
+  stock: number; // Available quantity
+}
 
 export interface Facility {
   id: string;
@@ -79,12 +90,22 @@ export interface Facility {
   isPopular?: boolean;
   isIndoor?: boolean; // Added for indoor/outdoor filter
   dataAiHint?: string; // For placeholder image generation for the facility itself
+  availableEquipment?: RentalEquipment[];
 }
 
 export interface TimeSlot {
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
   isAvailable: boolean;
+}
+
+export interface RentedItemInfo {
+  equipmentId: string;
+  name: string;
+  quantity: number;
+  priceAtBooking: number; // Unit price at the time of booking
+  priceTypeAtBooking: 'per_booking' | 'per_hour';
+  totalCost: number;
 }
 
 export interface Booking {
@@ -97,11 +118,15 @@ export interface Booking {
   date: string; // "YYYY-MM-DD"
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
+  durationHours?: number; // Calculated duration, useful for per_hour rentals
   numberOfGuests?: number; // Number of guests for the booking
-  totalPrice: number;
+  baseFacilityPrice?: number; // Price for the facility slot itself
+  equipmentRentalCost?: number; // Total cost for all rented equipment
+  totalPrice: number; // Overall total
   status: 'Confirmed' | 'Pending' | 'Cancelled';
   bookedAt: string; // ISO date string
   reviewed?: boolean; // Flag to indicate if this booking has been reviewed
+  rentedEquipment?: RentedItemInfo[];
 }
 
 export interface UserProfile {

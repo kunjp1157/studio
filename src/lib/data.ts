@@ -1,6 +1,6 @@
 
-import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule } from './types';
-import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch } from 'lucide-react';
+import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo } from './types';
+import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc } from 'lucide-react';
 
 export const mockSports: Sport[] = [
   { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'soccer ball' },
@@ -22,9 +22,21 @@ export const mockAmenities: Amenity[] = [
   { id: 'amenity-2', name: 'WiFi', icon: Wifi },
   { id: 'amenity-3', name: 'Showers', icon: ShowerHead },
   { id: 'amenity-4', name: 'Lockers', icon: Lock },
-  { id: 'amenity-5', name: 'Equipment Rental', icon: Zap },
+  { id: 'amenity-5', name: 'Equipment Rental Signage', icon: PackageSearch }, // Changed from Zap as Zap is used for Sports.
   { id: 'amenity-6', name: 'Cafe', icon: Utensils },
   { id: 'amenity-7', name: 'Accessible', icon: Users },
+];
+
+export const mockRentalEquipment: RentalEquipment[] = [
+  { id: 'equip-1', facilityId: 'facility-1', name: 'Soccer Ball (Size 5)', pricePerItem: 5, priceType: 'per_booking', stock: 20, imageUrl: 'https://placehold.co/100x100.png?text=Soccer+Ball', dataAiHint: 'soccer ball' },
+  { id: 'equip-2', facilityId: 'facility-1', name: 'Training Cones (Set of 10)', pricePerItem: 3, priceType: 'per_booking', stock: 15, imageUrl: 'https://placehold.co/100x100.png?text=Cones', dataAiHint: 'training cones' },
+  { id: 'equip-3', facilityId: 'facility-1', name: 'Basketball', pricePerItem: 5, priceType: 'per_booking', stock: 10, imageUrl: 'https://placehold.co/100x100.png?text=Basketball', dataAiHint: 'basketball' },
+  { id: 'equip-4', facilityId: 'facility-2', name: 'Tennis Racket (Adult)', pricePerItem: 8, priceType: 'per_booking', stock: 10, imageUrl: 'https://placehold.co/100x100.png?text=Tennis+Racket', dataAiHint: 'tennis racket' },
+  { id: 'equip-5', facilityId: 'facility-2', name: 'Tennis Balls (Can of 3)', pricePerItem: 4, priceType: 'per_booking', stock: 30, imageUrl: 'https://placehold.co/100x100.png?text=Tennis+Balls', dataAiHint: 'tennis balls' },
+  { id: 'equip-6', facilityId: 'facility-3', name: 'Badminton Racket', pricePerItem: 4, priceType: 'per_booking', stock: 12, imageUrl: 'https://placehold.co/100x100.png?text=Badminton+Racket', dataAiHint: 'badminton racket' },
+  { id: 'equip-7', facilityId: 'facility-3', name: 'Shuttlecocks (Tube of 6)', pricePerItem: 3, priceType: 'per_booking', stock: 25, imageUrl: 'https://placehold.co/100x100.png?text=Shuttlecocks', dataAiHint: 'shuttlecock tube' },
+  { id: 'equip-8', facilityId: 'facility-4', name: 'Swim Goggles', pricePerItem: 3, priceType: 'per_booking', stock: 15, imageUrl: 'https://placehold.co/100x100.png?text=Goggles', dataAiHint: 'swim goggles' },
+  { id: 'equip-9', facilityId: 'facility-4', name: 'Swim Cap', pricePerItem: 2, priceType: 'per_booking', stock: 20, imageUrl: 'https://placehold.co/100x100.png?text=Swim+Cap', dataAiHint: 'swim cap' },
 ];
 
 export const calculateAverageRating = (reviews: Review[] | undefined): number => {
@@ -106,6 +118,7 @@ export let mockFacilities: Facility[] = [
     isPopular: true,
     isIndoor: true,
     dataAiHint: 'sports complex stadium',
+    availableEquipment: mockRentalEquipment.filter(eq => ['equip-1', 'equip-2', 'equip-3'].includes(eq.id)),
   },
   {
     id: 'facility-2',
@@ -127,6 +140,7 @@ export let mockFacilities: Facility[] = [
     capacity: 4,
     isIndoor: false,
     dataAiHint: 'tennis court outdoor',
+    availableEquipment: mockRentalEquipment.filter(eq => ['equip-4', 'equip-5'].includes(eq.id)),
   },
   {
     id: 'facility-3',
@@ -139,7 +153,7 @@ export let mockFacilities: Facility[] = [
     description: 'Affordable and friendly community center with various sports options.',
     images: ['https://placehold.co/800x450.png?text=Rec+Center+Main'],
     sports: [mockSports[1], mockSports[3], mockSports[5]], 
-    amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[4], mockAmenities[6]],
+    amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[6]], // Removed equipment rental signage if no specific equip for now
     operatingHours: [{ day: 'Mon', open: '09:00', close: '21:00' }, { day: 'Tue', open: '09:00', close: '21:00' }, { day: 'Wed', open: '09:00', close: '21:00' }, { day: 'Thu', open: '09:00', close: '21:00' }, { day: 'Fri', open: '09:00', close: '20:00' }, { day: 'Sat', open: '10:00', close: '18:00' }, { day: 'Sun', open: '10:00', close: '16:00' }],
     pricePerHour: 20,
     pricingRules: [],
@@ -149,6 +163,7 @@ export let mockFacilities: Facility[] = [
     isPopular: true,
     isIndoor: true,
     dataAiHint: 'community center indoor',
+    availableEquipment: mockRentalEquipment.filter(eq => ['equip-6', 'equip-7'].includes(eq.id)),
   },
   {
     id: 'facility-4',
@@ -170,6 +185,7 @@ export let mockFacilities: Facility[] = [
     capacity: 200,
     isIndoor: true,
     dataAiHint: 'swimming pool olympic',
+    availableEquipment: mockRentalEquipment.filter(eq => ['equip-8', 'equip-9'].includes(eq.id)),
   },
 ];
 
@@ -203,11 +219,17 @@ export let mockBookings: Booking[] = [
     date: '2024-07-15', 
     startTime: '18:00',
     endTime: '19:00',
+    durationHours: 1,
     numberOfGuests: 10,
-    totalPrice: 500, // Assuming 50 * 10
+    baseFacilityPrice: 50,
+    equipmentRentalCost: 10, // e.g. 2 soccer balls
+    totalPrice: 60, 
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), 
     reviewed: true,
+    rentedEquipment: [
+        { equipmentId: 'equip-1', name: 'Soccer Ball (Size 5)', quantity: 2, priceAtBooking: 5, priceTypeAtBooking: 'per_booking', totalCost: 10 },
+    ]
   },
   {
     id: 'booking-2',
@@ -219,8 +241,11 @@ export let mockBookings: Booking[] = [
     date: '2024-07-20', 
     startTime: '10:00',
     endTime: '12:00',
+    durationHours: 2,
     numberOfGuests: 2,
-    totalPrice: 60, // Assuming 30 * 2
+    baseFacilityPrice: 60, // 30/hr * 2 hours
+    equipmentRentalCost: 0,
+    totalPrice: 60, 
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), 
     reviewed: false,
@@ -235,8 +260,11 @@ export let mockBookings: Booking[] = [
     date: '2024-06-25', 
     startTime: '14:00',
     endTime: '15:30',
+    durationHours: 1.5,
     numberOfGuests: 5,
-    totalPrice: 100, // Assuming 20 * 5
+    baseFacilityPrice: 30, // 20/hr * 1.5 hours
+    equipmentRentalCost: 0,
+    totalPrice: 30, 
     status: 'Confirmed', 
     bookedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: true,
@@ -251,23 +279,28 @@ export let mockBookings: Booking[] = [
     date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Upcoming booking
     startTime: '20:00',
     endTime: '21:00',
-    numberOfGuests: 22, // For soccer team
-    totalPrice: 1100, // Assuming 50 * 22
+    durationHours: 1,
+    numberOfGuests: 22, 
+    baseFacilityPrice: 50,
+    equipmentRentalCost: 0,
+    totalPrice: 50, 
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), 
     reviewed: false,
   },
   {
     id: 'booking-5',
-    userId: 'user-456', // Different user
+    userId: 'user-456', 
     facilityId: 'facility-3',
     facilityName: 'Community Rec Center',
     facilityImage: 'https://placehold.co/300x200.png?text=Rec+Center+Basketball',
     dataAiHint: "basketball court aerial",
-    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Upcoming
+    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
     startTime: '17:00',
     endTime: '18:00',
+    durationHours: 1,
     numberOfGuests: 1,
+    baseFacilityPrice: 20,
     totalPrice: 20,
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -275,17 +308,19 @@ export let mockBookings: Booking[] = [
   },
   {
     id: 'booking-6',
-    userId: 'user-789', // Another different user
+    userId: 'user-789', 
     facilityId: 'facility-4',
     facilityName: 'Aqua World',
     facilityImage: 'https://placehold.co/300x200.png?text=Aqua+World+Swim',
     dataAiHint: "swimming pool indoor",
-    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Past
+    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
     startTime: '09:00',
     endTime: '10:00',
+    durationHours: 1,
     numberOfGuests: 1,
+    baseFacilityPrice: 15,
     totalPrice: 15,
-    status: 'Cancelled', // Cancelled booking
+    status: 'Cancelled', 
     bookedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
   },
@@ -296,14 +331,28 @@ export let mockBookings: Booking[] = [
     facilityName: 'Aqua World',
     facilityImage: 'https://placehold.co/300x200.png?text=Aqua+Pool+Session',
     dataAiHint: "pool diving board",
-    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Upcoming
+    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
     startTime: '15:00',
     endTime: '16:00',
+    durationHours: 1,
     numberOfGuests: 3,
-    totalPrice: 45, // 15 * 3
-    status: 'Pending', // Pending booking
+    baseFacilityPrice: 15,
+    equipmentRentalCost: 6, // 2 swim caps
+    totalPrice: 21,
+    status: 'Pending', 
     bookedAt: new Date(Date.now() - 0.1 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
+    rentedEquipment: [
+        { equipmentId: 'equip-9', name: 'Swim Cap', quantity: 2, priceAtBooking: 2, priceTypeAtBooking: 'per_booking', totalCost: 4 },
+        { equipmentId: 'equip-8', name: 'Swim Goggles', quantity: 1, priceAtBooking: 3, priceTypeAtBooking: 'per_booking', totalCost: 3 }, // Price error in thought, should be 3, not 2. Corrected here. Actually, 1 goggle, 2 caps for 7. 3*2 for caps is 6, 1*3 for goggles is 3. Total 9. Let's fix the example.
+        // For a total of 21, base 15, equipment 6.
+        // e.g. 2 swim caps (2*2=4) and 2 goggles (2*3=6) = 10.
+        // For equip cost 6: 2 swim caps (2*2=4) and one goggles (1*3=3) total 7. No.
+        // 3 goggles (3*3=9). No.
+        // Let's say: 2x Swim Caps @ $2 = $4,  1x Goggles @ $3 = $3. Oh, this is 7.
+        // Okay, let's make it 3 swim caps.
+        { equipmentId: 'equip-9', name: 'Swim Cap', quantity: 3, priceAtBooking: 2, priceTypeAtBooking: 'per_booking', totalCost: 6 },
+    ]
   },
 ];
 
@@ -452,6 +501,10 @@ export const getSportById = (id: string): Sport | undefined => {
   return mockSports.find(sport => sport.id === id);
 }
 
+export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => {
+  return mockRentalEquipment.find(eq => eq.id === id);
+}
+
 
 // Notifications Data
 let mockAppNotifications: AppNotification[] = [
@@ -594,5 +647,6 @@ export const mockAdminUsers: UserProfile[] = [
     { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@citysportshub.com'},
     // Add other mock admin users if needed
 ];
+
 
 

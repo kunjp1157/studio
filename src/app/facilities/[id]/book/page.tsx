@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Facility, TimeSlot } from '@/lib/types';
+import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo } from '@/lib/types';
 import { getFacilityById, mockUser, addNotification } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import Image from 'next/image';
+import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, differenceInHours, parse } from 'date-fns';
 
 // Mock time slots for a given date
 const getMockTimeSlots = (date: Date): TimeSlot[] => {
@@ -45,6 +47,12 @@ export default function BookingPage() {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | undefined>(undefined);
   const [numberOfGuests, setNumberOfGuests] = useState<string>("1");
+  
+  const [selectedEquipment, setSelectedEquipment] = useState<Map<string, { quantity: number; details: RentalEquipment }>>(new Map());
+  const [equipmentRentalCost, setEquipmentRentalCost] = useState(0);
+  const [baseFacilityPrice, setBaseFacilityPrice] = useState(0);
+  const [totalBookingPrice, setTotalBookingPrice] = useState(0);
+  
   const [bookingStep, setBookingStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -58,23 +66,76 @@ export default function BookingPage() {
   useEffect(() => {
     if (selectedDate) {
       setTimeSlots(getMockTimeSlots(selectedDate));
-      setSelectedSlot(undefined); // Reset selected slot when date changes
+      setSelectedSlot(undefined); 
     }
   }, [selectedDate]);
-
-  const handleDateSelect = (date?: Date) => {
-    setSelectedDate(date);
-  };
-
-  const handleSlotSelect = (slotValue: string) => {
-    const slot = timeSlots.find(s => s.startTime === slotValue);
-    if (slot && slot.isAvailable) {
-      setSelectedSlot(slot);
-    }
-  };
   
-  const calculatedPrice = facility && selectedSlot ? facility.pricePerHour * (parseInt(numberOfGuests) || 1) : 0;
+  const bookingDurationHours = useMemo(() => {
+    if (selectedSlot && selectedDate) {
+      try {
+        const slotStartDate = parse(selectedSlot.startTime, 'HH:mm', selectedDate);
+        const slotEndDate = parse(selectedSlot.endTime, 'HH:mm', selectedDate);
+        if (slotEndDate < slotStartDate) slotEndDate.setDate(slotEndDate.getDate() + 1); // Handle midnight crossover
+        return differenceInHours(slotEndDate, slotStartDate);
+      } catch (error) {
+        console.error("Error parsing slot times:", error);
+        return 1; // Default to 1 hour if parsing fails
+      }
+    }
+    return 1; // Default duration if no slot selected
+  }, [selectedSlot, selectedDate]);
 
+
+  useEffect(() => {
+    let facilityCost = 0;
+    if (facility && selectedSlot) {
+      facilityCost = facility.pricePerHour * bookingDurationHours;
+    }
+    setBaseFacilityPrice(facilityCost);
+  }, [facility, selectedSlot, bookingDurationHours]);
+
+  useEffect(() => {
+    let rentalCost = 0;
+    selectedEquipment.forEach(item => {
+      if (item.details.priceType === 'per_booking') {
+        rentalCost += item.details.pricePerItem * item.quantity;
+      } else if (item.details.priceType === 'per_hour') {
+        rentalCost += item.details.pricePerItem * item.quantity * bookingDurationHours;
+      }
+    });
+    setEquipmentRentalCost(rentalCost);
+  }, [selectedEquipment, bookingDurationHours]);
+
+  useEffect(() => {
+    setTotalBookingPrice(baseFacilityPrice + equipmentRentalCost);
+  }, [baseFacilityPrice, equipmentRentalCost]);
+
+
+  const handleEquipmentSelection = (equip: RentalEquipment, isChecked: boolean) => {
+    setSelectedEquipment(prev => {
+      const newMap = new Map(prev);
+      if (isChecked) {
+        if (!newMap.has(equip.id)) {
+          newMap.set(equip.id, { quantity: 1, details: equip });
+        }
+      } else {
+        newMap.delete(equip.id);
+      }
+      return newMap;
+    });
+  };
+
+  const handleEquipmentQuantityChange = (equipId: string, change: number) => {
+    setSelectedEquipment(prev => {
+      const newMap = new Map(prev);
+      const item = newMap.get(equipId);
+      if (item) {
+        const newQuantity = Math.max(1, Math.min(item.details.stock, item.quantity + change));
+        newMap.set(equipId, { ...item, quantity: newQuantity });
+      }
+      return newMap;
+    });
+  };
 
   const proceedToPayment = () => {
     if (!selectedDate || !selectedSlot || !facility) {
@@ -99,29 +160,36 @@ export default function BookingPage() {
   const handlePaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsLoading(false);
     setBookingStep('confirmation');
     const bookingDate = selectedDate ? format(selectedDate, 'PPP') : 'N/A';
     const bookingTime = selectedSlot?.startTime || 'N/A';
     
+    let rentedItemsSummary = "";
+    if (selectedEquipment.size > 0) {
+        rentedItemsSummary = " Rented: ";
+        selectedEquipment.forEach(item => {
+            rentedItemsSummary += `${item.quantity}x ${item.details.name}, `;
+        });
+        rentedItemsSummary = rentedItemsSummary.slice(0, -2) + "."; // Remove last comma and space
+    }
+    
     toast({
       title: "Booking Confirmed!",
-      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} for ${numberOfGuests} guest(s) is confirmed.`,
+      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} for ${numberOfGuests} guest(s) is confirmed.${rentedItemsSummary}`,
       className: "bg-green-500 text-white",
+      duration: 7000,
     });
 
-    // Simulate adding an in-app notification
     if (facility) {
         addNotification(mockUser.id, {
             type: 'booking_confirmed',
             title: 'Booking Confirmed!',
-            message: `Your booking for ${facility.name} (${numberOfGuests} guest(s)) on ${bookingDate} at ${bookingTime} is successful.`,
+            message: `Your booking for ${facility.name} (${numberOfGuests} guest(s)) on ${bookingDate} at ${bookingTime} is successful.${rentedItemsSummary}`,
             link: '/account/bookings',
         });
     }
-    // In a real app, you would also trigger backend to send email/SMS here.
   };
 
 
@@ -143,6 +211,8 @@ export default function BookingPage() {
       </div>
     );
   }
+  
+  const hasRentals = facility.availableEquipment && facility.availableEquipment.length > 0;
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -152,29 +222,30 @@ export default function BookingPage() {
       <PageTitle title={`Book ${facility.name}`} description="Select your preferred date, time, and complete your booking." />
 
       <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-6">
           {bookingStep === 'details' && (
+            <>
             <Card>
               <CardHeader>
-                <CardTitle>Select Date and Time</CardTitle>
+                <CardTitle className="flex items-center"><CalendarDays className="mr-2 h-5 w-5 text-primary"/> Select Date and Time</CardTitle>
                 <CardDescription>Choose an available slot for your activity.</CardDescription>
               </CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="booking-date" className="mb-2 block"><CalendarDays className="inline mr-2 h-4 w-4" />Date</Label>
+                  <Label htmlFor="booking-date" className="mb-2 block">Date</Label>
                   <Calendar
                     id="booking-date"
                     mode="single"
                     selected={selectedDate}
-                    onSelect={handleDateSelect}
+                    onSelect={setSelectedDate}
                     className="rounded-md border"
-                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} // Disable past dates
+                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} 
                   />
                 </div>
                 <div>
                   <Label htmlFor="time-slot" className="mb-2 block"><Clock className="inline mr-2 h-4 w-4" />Time Slot</Label>
                   {selectedDate && timeSlots.length > 0 ? (
-                    <Select onValueChange={handleSlotSelect} value={selectedSlot?.startTime}>
+                    <Select onValueChange={(value) => setSelectedSlot(timeSlots.find(s => s.startTime === value))} value={selectedSlot?.startTime}>
                       <SelectTrigger id="time-slot">
                         <SelectValue placeholder="Select a time" />
                       </SelectTrigger>
@@ -206,6 +277,49 @@ export default function BookingPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {hasRentals && selectedSlot && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center"><PackageSearch className="mr-2 h-5 w-5 text-primary"/>Rent Equipment</CardTitle>
+                  <CardDescription>Add items to your booking. Prices are per {bookingDurationHours} hour(s) if 'per_hour', or fixed if 'per_booking'.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {facility.availableEquipment?.map(equip => (
+                    <div key={equip.id} className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
+                      <div className="flex items-center space-x-3">
+                        <Checkbox 
+                          id={`equip-${equip.id}`}
+                          checked={selectedEquipment.has(equip.id)}
+                          onCheckedChange={(checked) => handleEquipmentSelection(equip, !!checked)}
+                        />
+                        {equip.imageUrl && (
+                            <Image src={equip.imageUrl} alt={equip.name} width={40} height={40} className="rounded object-cover" data-ai-hint={equip.dataAiHint || "equipment"}/>
+                        )}
+                        <div>
+                          <Label htmlFor={`equip-${equip.id}`} className="font-medium">{equip.name}</Label>
+                          <p className="text-xs text-muted-foreground">
+                            ${equip.pricePerItem.toFixed(2)} / {equip.priceType === 'per_booking' ? 'booking' : 'hour'} (Stock: {equip.stock})
+                          </p>
+                        </div>
+                      </div>
+                      {selectedEquipment.has(equip.id) && (
+                        <div className="flex items-center space-x-2">
+                          <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => handleEquipmentQuantityChange(equip.id, -1)} disabled={selectedEquipment.get(equip.id)?.quantity === 1}>
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-6 text-center">{selectedEquipment.get(equip.id)?.quantity}</span>
+                          <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => handleEquipmentQuantityChange(equip.id, 1)} disabled={(selectedEquipment.get(equip.id)?.quantity || 0) >= equip.stock}>
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            </>
           )}
 
           {bookingStep === 'payment' && (
@@ -236,7 +350,7 @@ export default function BookingPage() {
                   </div>
                    <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
                     {isLoading ? <LoadingSpinner size={20} className="mr-2"/> : <CreditCard className="mr-2 h-5 w-5" />}
-                    {isLoading ? 'Processing...' : `Pay $${calculatedPrice.toFixed(2)}`}
+                    {isLoading ? 'Processing...' : `Pay $${totalBookingPrice.toFixed(2)}`}
                   </Button>
                 </form>
               </CardContent>
@@ -253,9 +367,21 @@ export default function BookingPage() {
                 <p className="text-muted-foreground mb-2">Thank you, {mockUser.name}!</p>
                 <p className="mb-1">Your booking for <strong>{facility.name}</strong> is confirmed.</p>
                 <p className="mb-1">Date: <strong>{selectedDate ? format(selectedDate, 'PPP') : 'N/A'}</strong></p>
-                <p className="mb-1">Time: <strong>{selectedSlot?.startTime} - {selectedSlot?.endTime}</strong></p>
-                <p className="mb-4">Number of Guests: <strong>{numberOfGuests}</strong></p>
-                <p className="text-lg font-semibold">Total Paid: ${calculatedPrice.toFixed(2)}</p>
+                <p className="mb-1">Time: <strong>{selectedSlot?.startTime} - {selectedSlot?.endTime}</strong> ({bookingDurationHours} hr{bookingDurationHours !== 1 ? 's' : ''})</p>
+                <p className="mb-1">Number of Guests: <strong>{numberOfGuests}</strong></p>
+                {selectedEquipment.size > 0 && (
+                    <div className="mt-3 mb-3 pt-3 border-t">
+                        <h4 className="font-semibold text-md mb-1">Rented Equipment:</h4>
+                        <ul className="text-sm text-muted-foreground list-none">
+                        {Array.from(selectedEquipment.values()).map(item => (
+                            <li key={item.details.id}>
+                                {item.quantity}x {item.details.name}
+                            </li>
+                        ))}
+                        </ul>
+                    </div>
+                )}
+                <p className="text-lg font-semibold">Total Paid: ${totalBookingPrice.toFixed(2)}</p>
                 <Alert className="mt-4 text-left">
                   <AlertCircle className="h-4 w-4"/>
                   <AlertTitle>What's Next?</AlertTitle>
@@ -277,7 +403,7 @@ export default function BookingPage() {
         <div className="md:col-span-1">
           <Card className="sticky top-24">
             <CardHeader>
-              <CardTitle>Booking Summary</CardTitle>
+              <CardTitle className="flex items-center"><ShoppingCart className="mr-2 h-5 w-5 text-primary"/>Booking Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
@@ -292,18 +418,43 @@ export default function BookingPage() {
                 <span className="text-muted-foreground">Time:</span>
                 <span className="font-medium">{selectedSlot ? `${selectedSlot.startTime} - ${selectedSlot.endTime}` : 'Not Selected'}</span>
               </div>
+              {selectedSlot && (
+                <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Duration:</span>
+                    <span className="font-medium">{bookingDurationHours} hour{bookingDurationHours !== 1 ? 's' : ''}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Guests:</span>
                 <span className="font-medium">{numberOfGuests}</span>
               </div>
+              <hr />
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Price per Guest/Hour:</span>
-                <span className="font-medium">${facility.pricePerHour.toFixed(2)}</span>
+                <span className="text-muted-foreground">Facility Cost:</span>
+                <span className="font-medium">${baseFacilityPrice.toFixed(2)}</span>
               </div>
+              {selectedEquipment.size > 0 && (
+                <>
+                <div className="flex justify-between items-start">
+                    <span className="text-muted-foreground">Equipment:</span>
+                    <div className="text-right">
+                    {Array.from(selectedEquipment.values()).map(item => (
+                        <div key={item.details.id} className="text-xs">
+                        {item.quantity}x {item.details.name}
+                        </div>
+                    ))}
+                    </div>
+                </div>
+                 <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rental Cost:</span>
+                    <span className="font-medium">${equipmentRentalCost.toFixed(2)}</span>
+                 </div>
+                </>
+              )}
               <hr />
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total:</span>
-                <span>${calculatedPrice.toFixed(2)}</span>
+                <span>${totalBookingPrice.toFixed(2)}</span>
               </div>
             </CardContent>
             {bookingStep === 'details' && (
@@ -324,3 +475,4 @@ export default function BookingPage() {
     </div>
   );
 }
+
