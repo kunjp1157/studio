@@ -1,6 +1,8 @@
 
 import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement } from './types';
-import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket } from 'lucide-react';
+import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket } from 'lucide-react';
+import { parseISO } from 'date-fns';
+
 
 export const mockSports: Sport[] = [
   { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'soccer ball' },
@@ -396,7 +398,7 @@ export const mockMembershipPlans: MembershipPlan[] = [
   },
 ];
 
-export const mockEvents: SportEvent[] = [
+export let mockEvents: SportEvent[] = [
   {
     id: 'event-1',
     name: 'Summer Soccer Tournament',
@@ -405,6 +407,7 @@ export const mockEvents: SportEvent[] = [
     startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'Annual summer soccer tournament for all skill levels. Join us for a competitive and fun weekend! This event features multiple matches, food trucks, and activities for spectators. Great prizes for winning teams.',
+    entryFee: 20,
     maxParticipants: 64,
     registeredParticipants: 25,
     imageUrl: 'https://placehold.co/600x300.png?text=Soccer+Tournament',
@@ -418,6 +421,7 @@ export const mockEvents: SportEvent[] = [
     startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'Come try our tennis courts for free! Coaching available for beginners. Fun for the whole family, with mini-games and refreshments.',
+    entryFee: 0,
     registeredParticipants: 0, // Open registration, no hard cap for open day
     imageUrl: 'https://placehold.co/600x300.png?text=Tennis+Open+Day',
     imageDataAiHint: "tennis players friendly"
@@ -430,6 +434,7 @@ export const mockEvents: SportEvent[] = [
     startDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'The exciting conclusion to our community basketball league. Witness the crowning of the champions! Spectators welcome, entry is free.',
+    entryFee: 5,
     maxParticipants: 200, // Spectator capacity
     registeredParticipants: 112, // Could represent team registrations or expected attendance
     imageUrl: 'https://placehold.co/600x300.png?text=Basketball+Finals',
@@ -443,6 +448,7 @@ export const mockEvents: SportEvent[] = [
     startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'A full weekend of badminton fun! Singles and doubles tournaments for various age groups. All levels welcome. Coaching sessions available.',
+    entryFee: 15,
     maxParticipants: 48,
     registeredParticipants: 15,
     imageUrl: 'https://placehold.co/600x300.png?text=Badminton+Bonanza',
@@ -456,6 +462,7 @@ export const mockEvents: SportEvent[] = [
     startDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'A rejuvenating day of yoga, meditation, and wellness workshops. Connect with nature and find your inner peace.',
+    entryFee: 50,
     maxParticipants: 30,
     registeredParticipants: 10,
     imageUrl: 'https://placehold.co/600x300.png?text=Yoga+Retreat',
@@ -463,8 +470,65 @@ export const mockEvents: SportEvent[] = [
   }
 ];
 
+export const getAllEvents = (): SportEvent[] => {
+  return [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+}
+
 export const getEventById = (id: string): SportEvent | undefined => {
-  return mockEvents.find(event => event.id === id);
+  const event = mockEvents.find(event => event.id === id);
+  if (event) {
+    const sport = getSportById(event.sport.id); // Ensure full sport object if only ID was stored
+    return sport ? { ...event, sport } : { ...event }; // Return event, with full sport object if found
+  }
+  return undefined;
+};
+
+export const addEvent = (eventData: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): SportEvent => {
+  const sport = getSportById(eventData.sportId);
+  if (!sport) throw new Error("Invalid sport ID provided for event.");
+  
+  const newEvent: SportEvent = {
+    ...eventData,
+    id: `event-${Date.now()}`,
+    sport: sport, // Store the full sport object
+    registeredParticipants: 0, // Initialize
+  };
+  mockEvents.push(newEvent);
+  return newEvent;
+};
+
+export const updateEvent = (updatedEventData: Omit<SportEvent, 'sport'> & { sportId: string }): SportEvent | undefined => {
+  const sport = getSportById(updatedEventData.sportId);
+  if (!sport) throw new Error("Invalid sport ID provided for event update.");
+
+  const eventIndex = mockEvents.findIndex(e => e.id === updatedEventData.id);
+  if (eventIndex === -1) return undefined;
+
+  const updatedEventWithFullSport: SportEvent = {
+    ...updatedEventData,
+    sport: sport,
+  };
+
+  mockEvents[eventIndex] = updatedEventWithFullSport;
+  return mockEvents[eventIndex];
+};
+
+export const deleteEvent = (eventId: string): boolean => {
+  const initialLength = mockEvents.length;
+  mockEvents = mockEvents.filter(e => e.id !== eventId);
+  return mockEvents.length < initialLength;
+};
+
+export const registerForEvent = (eventId: string): boolean => {
+  const eventIndex = mockEvents.findIndex(e => e.id === eventId);
+  if (eventIndex === -1) return false;
+
+  if (mockEvents[eventIndex].maxParticipants && mockEvents[eventIndex].registeredParticipants >= mockEvents[eventIndex].maxParticipants!) {
+    return false; // Event is full
+  }
+  
+  mockEvents[eventIndex].registeredParticipants += 1;
+  return true;
 };
 
 
@@ -535,6 +599,15 @@ export const getSportById = (id: string): Sport | undefined => {
   return mockSports.find(sport => sport.id === id);
 }
 
+export const getAllSports = (): Sport[] => {
+    return mockSports;
+}
+
+export const getAllFacilities = (): Facility[] => {
+    return mockFacilities;
+}
+
+
 export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => {
   return mockRentalEquipment.find(eq => eq.id === id);
 }
@@ -562,7 +635,7 @@ let mockAppNotifications: AppNotification[] = [
     createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
     isRead: true,
     link: '/account/bookings',
-    icon: CalendarDays,
+    icon: LucideCalendarDays,
   },
   {
     id: 'notif-3',
@@ -604,7 +677,7 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
     case 'booking_confirmed': icon = CheckCircle; break;
     case 'booking_cancelled': icon = XCircle; break;
     case 'review_submitted': icon = MessageSquareText; break;
-    case 'reminder': icon = CalendarDays; break;
+    case 'reminder': icon = LucideCalendarDays; break;
     case 'promotion': icon = Gift; break;
   }
 

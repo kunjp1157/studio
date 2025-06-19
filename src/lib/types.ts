@@ -175,10 +175,11 @@ export interface SportEvent {
   id: string;
   name: string;
   facilityId: string;
-  sport: Sport;
+  sport: Sport; // For display, store the whole object or just sportId and look up
   startDate: string; // ISO date string
   endDate: string; // ISO date string
   description: string;
+  entryFee?: number;
   maxParticipants?: number;
   registeredParticipants: number;
   imageUrl?: string;

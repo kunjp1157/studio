@@ -6,12 +6,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import type { SportEvent, Facility } from '@/lib/types';
-import { getEventById, getFacilityById } from '@/lib/data';
+import { getEventById, getFacilityById, registerForEvent as mockRegisterForEvent, addNotification, mockUser } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CalendarDays, MapPin, Users, Ticket, ArrowLeft, Clock, Building, Zap, ShieldCheck, Info } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Ticket, ArrowLeft, Clock, Building, Zap, ShieldCheck, Info, DollarSign as FeeIcon } from 'lucide-react';
 import { format, parseISO, isPast } from 'date-fns';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -24,6 +24,7 @@ export default function EventDetailPage() {
   const eventId = params.id as string;
   const [event, setEvent] = useState<SportEvent | null | undefined>(undefined);
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     if (eventId) {
@@ -38,12 +39,37 @@ export default function EventDetailPage() {
     }
   }, [eventId]);
 
-  const handleRegisterClick = () => {
+  const handleRegisterClick = async () => {
     if (!event) return;
-    toast({
-        title: "Registration Coming Soon!",
-        description: `Registration for "${event.name}" will be available soon.`,
-    });
+    setIsRegistering(true);
+    
+    // Simulate API call for registration
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const success = mockRegisterForEvent(event.id);
+
+    if (success) {
+      toast({
+          title: "Registration Successful!",
+          description: `You've been registered for "${event.name}".`,
+          className: "bg-green-500 text-white",
+      });
+      // Update local event state to reflect new participant count
+      setEvent(prev => prev ? {...prev, registeredParticipants: prev.registeredParticipants + 1} : null);
+      addNotification(mockUser.id, {
+        type: 'general', // Or a new 'event_registration' type
+        title: 'Event Registration Confirmed',
+        message: `You are now registered for ${event.name}.`,
+        link: `/events/${event.id}`,
+      });
+    } else {
+        toast({
+            title: "Registration Failed",
+            description: `Could not register for "${event.name}". It might be full or an error occurred.`,
+            variant: "destructive",
+        });
+    }
+    setIsRegistering(false);
   };
 
   if (event === undefined) {
@@ -59,8 +85,9 @@ export default function EventDetailPage() {
   }
 
   const SportIcon = event.sport.icon || Zap;
-  const isEventPast = isPast(parseISO(event.endDate));
+  const isEventPastStatus = isPast(parseISO(event.endDate));
   const isEventFull = event.maxParticipants && event.registeredParticipants >= event.maxParticipants;
+  const canRegister = !isEventPastStatus && !isEventFull;
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 max-w-4xl">
@@ -86,9 +113,9 @@ export default function EventDetailPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <PageTitle title={event.name} className="mb-0" />
             <div className="flex gap-2 items-center mt-2 md:mt-0 shrink-0">
-              {isEventPast && <Badge variant="secondary">Event Concluded</Badge>}
-              {isEventFull && !isEventPast && <Badge variant="destructive">Event Full</Badge>}
-              {!isEventFull && !isEventPast && <Badge variant="default" className="bg-green-500 hover:bg-green-600">Registrations Open</Badge>}
+              {isEventPastStatus && <Badge variant="secondary">Event Concluded</Badge>}
+              {isEventFull && !isEventPastStatus && <Badge variant="destructive">Event Full</Badge>}
+              {!isEventFull && !isEventPastStatus && <Badge variant="default" className="bg-green-500 hover:bg-green-600">Registrations Open</Badge>}
             </div>
           </div>
           <div className="flex items-center text-muted-foreground mt-2">
@@ -135,13 +162,12 @@ export default function EventDetailPage() {
                   </p>
                 </div>
               </div>
-               {/* Placeholder for entry fee or other financial details */}
               <div className="flex items-start">
-                <DollarSign className="w-5 h-5 mr-3 text-primary mt-1 shrink-0" />
+                <FeeIcon className="w-5 h-5 mr-3 text-primary mt-1 shrink-0" />
                 <div>
                   <p className="font-semibold">Entry Fee</p>
                   <p className="text-muted-foreground">
-                    {event.entryFee ? `$${event.entryFee.toFixed(2)}` : 'Free Entry / TBD'}
+                    {event.entryFee !== undefined ? (event.entryFee > 0 ? `$${event.entryFee.toFixed(2)}` : 'Free Entry') : 'Not Specified'}
                   </p>
                 </div>
               </div>
@@ -161,10 +187,10 @@ export default function EventDetailPage() {
             size="lg" 
             className="w-full md:w-auto" 
             onClick={handleRegisterClick}
-            disabled={isEventPast || isEventFull}
+            disabled={!canRegister || isRegistering}
           >
-            <Ticket className="mr-2 h-5 w-5" />
-            {isEventPast ? 'Event Ended' : isEventFull ? 'Registration Full' : 'Register for Event'}
+            {isRegistering ? <LoadingSpinner size={20} className="mr-2" /> : <Ticket className="mr-2 h-5 w-5" />}
+            {isRegistering ? 'Registering...' : (isEventPastStatus ? 'Event Ended' : (isEventFull ? 'Registration Full' : 'Register for Event'))}
           </Button>
         </CardFooter>
       </Card>
