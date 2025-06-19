@@ -37,7 +37,7 @@ import { PlusCircle, MoreHorizontal, Edit, Trash2, DollarSign, CheckCircle, XCir
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 export default function AdminPricingPage() {
   const [rules, setRules] = useState<PricingRule[]>([]);
@@ -217,3 +217,4 @@ export default function AdminPricingPage() {
     </div>
   );
 }
+
