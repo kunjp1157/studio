@@ -165,7 +165,7 @@ export default function FacilityDetailPage() {
                     <p className="text-muted-foreground mb-4 flex items-center"><Users className="w-4 h-4 mr-2" /> Up to {facility.capacity} people</p>
                   </>
                   }
-                  <p className="text-sm text-muted-foreground">Facility Type: <Badge variant="outline">{facility.type}</Badge></p>
+                  <div className="text-sm text-muted-foreground">Facility Type: <Badge variant="outline">{facility.type}</Badge></div>
                 </CardContent>
               </Card>
             </TabsContent>
