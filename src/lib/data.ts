@@ -1,6 +1,6 @@
 
 import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule } from './types';
-import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3 } from 'lucide-react';
+import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch } from 'lucide-react';
 
 export const mockSports: Sport[] = [
   { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'soccer ball' },
@@ -235,7 +235,7 @@ export let mockBookings: Booking[] = [
     bookedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: true,
   },
-    {
+  {
     id: 'booking-4',
     userId: 'user-123',
     facilityId: 'facility-1',
@@ -248,6 +248,51 @@ export let mockBookings: Booking[] = [
     totalPrice: 50,
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), 
+    reviewed: false,
+  },
+  {
+    id: 'booking-5',
+    userId: 'user-456', // Different user
+    facilityId: 'facility-3',
+    facilityName: 'Community Rec Center',
+    facilityImage: 'https://placehold.co/300x200.png?text=Rec+Center+Basketball',
+    dataAiHint: "basketball court aerial",
+    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Upcoming
+    startTime: '17:00',
+    endTime: '18:00',
+    totalPrice: 20,
+    status: 'Confirmed',
+    bookedAt: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
+    reviewed: false,
+  },
+  {
+    id: 'booking-6',
+    userId: 'user-789', // Another different user
+    facilityId: 'facility-4',
+    facilityName: 'Aqua World',
+    facilityImage: 'https://placehold.co/300x200.png?text=Aqua+World+Swim',
+    dataAiHint: "swimming pool indoor",
+    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Past
+    startTime: '09:00',
+    endTime: '10:00',
+    totalPrice: 15,
+    status: 'Cancelled', // Cancelled booking
+    bookedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    reviewed: false,
+  },
+  {
+    id: 'booking-7',
+    userId: 'user-123',
+    facilityId: 'facility-4',
+    facilityName: 'Aqua World',
+    facilityImage: 'https://placehold.co/300x200.png?text=Aqua+Pool+Session',
+    dataAiHint: "pool diving board",
+    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Upcoming
+    startTime: '15:00',
+    endTime: '16:00',
+    totalPrice: 15,
+    status: 'Pending', // Pending booking
+    bookedAt: new Date(Date.now() - 0.1 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
   },
 ];
@@ -371,6 +416,27 @@ export const getFacilityById = (id: string): Facility | undefined => {
 export const getBookingsByUserId = (userId: string): Booking[] => {
   return mockBookings.filter(booking => booking.userId === userId);
 };
+
+export const getAllBookings = (): Booking[] => {
+  // In a real app, this would fetch from a database.
+  // We sort them by bookedAt date, newest first.
+  return [...mockBookings].sort((a,b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
+}
+
+export const getUserById = (userId: string): UserProfile | { id: string, name: string, email: string } | undefined => {
+  if (userId === mockUser.id) {
+    return mockUser;
+  }
+  // In a real app, you would fetch other users from your database.
+  // For this mock, return a placeholder or undefined for other IDs.
+  const otherUserBooking = mockBookings.find(b => b.userId === userId);
+  if (otherUserBooking) {
+    // Create a very basic mock user profile if we find a booking by them
+    return { id: userId, name: `User ${userId.substring(0,6)}`, email: `${userId.substring(0,6)}@example.com` };
+  }
+  return undefined;
+}
+
 
 export const getSportById = (id: string): Sport | undefined => {
   return mockSports.find(sport => sport.id === id);
@@ -514,3 +580,7 @@ export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
 
 export const mockPromotionRules: PromotionRule[] = [];
 
+export const mockAdminUsers: UserProfile[] = [
+    { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@citysportshub.com'},
+    // Add other mock admin users if needed
+];
