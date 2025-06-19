@@ -8,9 +8,9 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Booking, Facility } from '@/lib/types'; // Added Facility type
-import { mockUser, getBookingsByUserId, getFacilityById } from '@/lib/data'; // Added getFacilityById
-import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle } from 'lucide-react';
+import type { Booking, Facility, Review } from '@/lib/types';
+import { mockUser, getBookingsByUserId, getFacilityById, addReview as addMockReview } from '@/lib/data';
+import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO, isPast } from 'date-fns';
@@ -25,32 +25,41 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { ReviewForm } from '@/components/reviews/ReviewForm';
 
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate fetching user's bookings
     setTimeout(() => {
-      const userBookings = getBookingsByUserId(mockUser.id);
-      // Sort bookings: upcoming first, then past, both sorted by date
+      let userBookings = getBookingsByUserId(mockUser.id);
       userBookings.sort((a, b) => {
         const aDate = parseISO(a.date + 'T' + a.startTime);
         const bDate = parseISO(b.date + 'T' + b.startTime);
         const aIsPast = isPast(aDate);
         const bIsPast = isPast(bDate);
 
-        if (aIsPast && !bIsPast) return 1; // a is past, b is upcoming, b comes first
-        if (!aIsPast && bIsPast) return -1; // a is upcoming, b is past, a comes first
+        if (aIsPast && !bIsPast) return 1;
+        if (!aIsPast && bIsPast) return -1;
         
-        // Both are upcoming or both are past, sort by date
-        if (aIsPast) { // if both past, sort descending (most recent past first)
+        if (aIsPast) {
             return bDate.getTime() - aDate.getTime();
-        } else { // if both upcoming, sort ascending (soonest upcoming first)
+        } else {
             return aDate.getTime() - bDate.getTime();
         }
       });
@@ -60,7 +69,6 @@ export default function BookingsPage() {
   }, []);
 
   const handleCancelBooking = (bookingId: string) => {
-    // Mock cancellation
     setIsLoading(true);
     setTimeout(() => {
       setBookings(prevBookings => 
@@ -73,6 +81,42 @@ export default function BookingsPage() {
       setIsLoading(false);
     }, 1000);
   };
+
+  const handleOpenReviewModal = (booking: Booking) => {
+    setSelectedBookingForReview(booking);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleReviewSubmit = async (rating: number, comment: string, bookingId: string) => {
+    if (!selectedBookingForReview) return;
+
+    try {
+      addMockReview({
+        facilityId: selectedBookingForReview.facilityId,
+        userId: mockUser.id,
+        rating,
+        comment,
+        bookingId,
+      });
+
+      setBookings(prevBookings =>
+        prevBookings.map(b => b.id === bookingId ? { ...b, reviewed: true } : b)
+      );
+      toast({
+        title: "Review Submitted!",
+        description: `Thank you for reviewing ${selectedBookingForReview.facilityName}.`,
+        className: "bg-green-500 text-white",
+      });
+      setIsReviewModalOpen(false);
+      setSelectedBookingForReview(null);
+    } catch (error) {
+      toast({
+        title: "Error Submitting Review",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   
   const upcomingBookings = bookings.filter(b => !isPast(parseISO(b.date + 'T' + b.startTime)) && b.status === 'Confirmed');
   const pastBookings = bookings.filter(b => isPast(parseISO(b.date + 'T' + b.startTime)) || b.status !== 'Confirmed');
@@ -84,6 +128,7 @@ export default function BookingsPage() {
   
   const BookingCard = ({ booking }: { booking: Booking }) => {
     const facilityDetails = getFacilityById(booking.facilityId);
+    const bookingIsPast = isPast(parseISO(booking.date + 'T' + booking.startTime));
     
     return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">
@@ -98,7 +143,7 @@ export default function BookingsPage() {
         />
         <Badge 
             variant={booking.status === 'Confirmed' ? 'default' : booking.status === 'Cancelled' ? 'destructive' : 'secondary'}
-            className={`absolute top-2 right-2 ${booking.status === 'Confirmed' && !isPast(parseISO(booking.date + 'T' + booking.startTime)) ? 'bg-green-500 text-white' : ''}`}
+            className={`absolute top-2 right-2 ${booking.status === 'Confirmed' && !bookingIsPast ? 'bg-green-500 text-white' : ''}`}
         >
             {booking.status}
         </Badge>
@@ -115,36 +160,44 @@ export default function BookingsPage() {
             <div className="flex items-center"><DollarSign className="w-4 h-4 mr-2 text-primary" /> Total: ${booking.totalPrice.toFixed(2)}</div>
         </div>
         </CardContent>
-        <CardFooter className="p-4 pt-0 space-x-2">
-        <Link href={`/facilities/${booking.facilityId}`}>
-            <Button variant="outline" size="sm"><Eye className="mr-1 h-4 w-4" /> View Facility</Button>
-        </Link>
-        {booking.status === 'Confirmed' && !isPast(parseISO(booking.date + 'T' + booking.startTime)) && (
-            <>
-            <Button variant="outline" size="sm" onClick={() => toast({title: "Feature Coming Soon", description: "Booking modification will be available soon."})}>
-                <Edit3 className="mr-1 h-4 w-4" /> Modify
-            </Button>
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isLoading}><XCircle className="mr-1 h-4 w-4" /> Cancel</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                    This action cannot be undone. Cancelling this booking might be subject to a cancellation fee according to our policy.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleCancelBooking(booking.id)} disabled={isLoading}>
-                    {isLoading ? <LoadingSpinner size={16} /> : 'Yes, Cancel Booking'}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-            </>
-        )}
+        <CardFooter className="p-4 pt-0 space-x-2 flex-wrap gap-y-2">
+            <Link href={`/facilities/${booking.facilityId}`}>
+                <Button variant="outline" size="sm"><Eye className="mr-1 h-4 w-4" /> View Facility</Button>
+            </Link>
+            {booking.status === 'Confirmed' && !bookingIsPast && (
+                <>
+                <Button variant="outline" size="sm" onClick={() => toast({title: "Feature Coming Soon", description: "Booking modification will be available soon."})}>
+                    <Edit3 className="mr-1 h-4 w-4" /> Modify
+                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={isLoading}><XCircle className="mr-1 h-4 w-4" /> Cancel</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                        This action cannot be undone. Cancelling this booking might be subject to a cancellation fee according to our policy.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleCancelBooking(booking.id)} disabled={isLoading}>
+                        {isLoading ? <LoadingSpinner size={16} /> : 'Yes, Cancel Booking'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                </>
+            )}
+            {booking.status === 'Confirmed' && bookingIsPast && !booking.reviewed && (
+                <Button variant="secondary" size="sm" onClick={() => handleOpenReviewModal(booking)}>
+                    <MessageSquarePlus className="mr-1 h-4 w-4" /> Write Review
+                </Button>
+            )}
+            {booking.status === 'Confirmed' && bookingIsPast && booking.reviewed && (
+                 <Badge variant="outline" className="text-green-600 border-green-600 py-1 px-2">Reviewed</Badge>
+            )}
         </CardFooter>
     </Card>
   )};
@@ -152,6 +205,28 @@ export default function BookingsPage() {
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <PageTitle title="My Bookings" description="Manage your upcoming and past sports facility reservations." />
+
+      {selectedBookingForReview && (
+        <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
+            <DialogContent className="sm:max-w-[525px]">
+                <DialogHeader>
+                    <DialogTitle>Write a Review for {selectedBookingForReview.facilityName}</DialogTitle>
+                    <DialogDescription>
+                        Share your experience to help others. Your feedback is valuable!
+                    </DialogDescription>
+                </DialogHeader>
+                <ReviewForm
+                    facilityName={selectedBookingForReview.facilityName}
+                    bookingId={selectedBookingForReview.id}
+                    onSubmit={handleReviewSubmit}
+                    onCancel={() => {
+                        setIsReviewModalOpen(false);
+                        setSelectedBookingForReview(null);
+                    }}
+                />
+            </DialogContent>
+        </Dialog>
+      )}
 
       {bookings.length === 0 && !isLoading ? (
         <Alert>

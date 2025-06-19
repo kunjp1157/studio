@@ -13,6 +13,18 @@ export interface Sport {
   imageDataAiHint?: string; // Optional: AI hint for the sport's image
 }
 
+export interface Review {
+  id: string;
+  facilityId: string;
+  userId: string;
+  userName: string; // Denormalized for easy display
+  userAvatar?: string; // Optional, denormalized
+  rating: number; // 1-5
+  comment: string;
+  createdAt: string; // ISO date string
+  bookingId?: string; // To link review to a specific booking
+}
+
 export interface Facility {
   id: string;
   name:string;
@@ -29,7 +41,8 @@ export interface Facility {
     close: string; // e.g., "22:00"
   }[];
   pricePerHour: number; // Base price
-  rating: number; // Average rating 0-5
+  rating: number; // This will now be dynamically calculated based on reviews
+  reviews?: Review[]; // Array of reviews associated with the facility
   capacity?: number;
   isPopular?: boolean;
   dataAiHint?: string; // For placeholder image generation for the facility itself
@@ -54,6 +67,7 @@ export interface Booking {
   totalPrice: number;
   status: 'Confirmed' | 'Pending' | 'Cancelled';
   bookedAt: string; // ISO date string
+  reviewed?: boolean; // Flag to indicate if this booking has been reviewed
 }
 
 export interface UserProfile {

@@ -5,18 +5,20 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { Facility, Amenity, Sport } from '@/lib/types';
+import type { Facility, Amenity, Sport, Review } from '@/lib/types';
 import { getFacilityById } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Star, MapPin, Clock, DollarSign, CalendarPlus, Users, Zap, Heart } from 'lucide-react';
+import { Star, MapPin, Clock, DollarSign, CalendarPlus, Users, Zap, Heart, MessageSquare } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { StarDisplay } from '@/components/shared/StarDisplay';
+import { ReviewItem } from '@/components/reviews/ReviewItem';
 
 // Mock calendar component for availability preview
 function AvailabilityPreview({ facilityId }: { facilityId: string }) {
@@ -60,7 +62,6 @@ export default function FacilityDetailPage() {
   useEffect(() => {
     if (facilityId) {
       const foundFacility = getFacilityById(facilityId);
-      // Simulate API delay
       setTimeout(() => {
         setFacility(foundFacility || null);
       }, 300);
@@ -73,7 +74,6 @@ export default function FacilityDetailPage() {
       title: "Added to Favorites (Mock)",
       description: `${facility.name} has been added to your favorites.`,
     });
-    // In a real app, you'd update the user's favorite list here
   };
 
   if (facility === undefined) {
@@ -94,11 +94,12 @@ export default function FacilityDetailPage() {
       </div>
     );
   }
+  
+  const reviewCount = facility.reviews?.length || 0;
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Left Column: Images and Basic Info */}
         <div className="md:col-span-2">
           <div className="relative aspect-video rounded-lg overflow-hidden mb-6 shadow-lg">
             <Image
@@ -120,33 +121,39 @@ export default function FacilityDetailPage() {
             </div>
           )}
           
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start mb-2">
             <PageTitle title={facility.name} />
-            <Button variant="outline" onClick={handleFavoriteClick} className="ml-4 mt-1">
+            <Button variant="outline" onClick={handleFavoriteClick} className="ml-4 mt-1 shrink-0">
               <Heart className="mr-2 h-4 w-4 text-destructive" /> Add to Favorites
             </Button>
           </div>
           
-          <div className="flex items-center space-x-4 mb-4 text-muted-foreground">
+          <div className="flex items-center space-x-4 mb-2 text-muted-foreground">
             <div className="flex items-center">
-              <Star className="w-5 h-5 mr-1 text-yellow-400 fill-yellow-400" /> <span className="font-medium">{facility.rating.toFixed(1)}</span>
-            </div>
-            <div className="flex items-center">
-              <MapPin className="w-5 h-5 mr-1 text-primary" /> {facility.location}
-            </div>
-            <div className="flex items-center">
-              <DollarSign className="w-5 h-5 mr-1 text-green-500" /> {facility.pricePerHour}/hr
+              <StarDisplay rating={facility.rating} starSize={20} />
+              <span className="font-medium ml-1.5 mr-1">{facility.rating.toFixed(1)}</span>
+              <span className="text-sm">({reviewCount} review{reviewCount !== 1 ? 's' : ''})</span>
             </div>
           </div>
+           <div className="flex items-center space-x-4 mb-4 text-muted-foreground text-sm">
+            <div className="flex items-center">
+              <MapPin className="w-4 h-4 mr-1 text-primary" /> {facility.location}
+            </div>
+            <div className="flex items-center">
+              <DollarSign className="w-4 h-4 mr-1 text-green-500" /> {facility.pricePerHour}/hr
+            </div>
+          </div>
+
 
           <p className="text-lg text-foreground mb-6">{facility.description}</p>
 
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 md:grid-cols-4 mb-4">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 mb-4">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="amenities">Amenities</TabsTrigger>
               <TabsTrigger value="sports">Sports</TabsTrigger>
               <TabsTrigger value="hours">Hours</TabsTrigger>
+              <TabsTrigger value="reviews">Reviews ({reviewCount})</TabsTrigger>
             </TabsList>
             <TabsContent value="details">
               <Card>
@@ -207,6 +214,22 @@ export default function FacilityDetailPage() {
                       </li>
                     ))}
                   </ul>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="reviews">
+              <Card>
+                <CardHeader>
+                    <CardTitle>User Reviews</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {reviewCount > 0 ? (
+                    facility.reviews?.map(review => (
+                      <ReviewItem key={review.id} review={review} />
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">No reviews yet for this facility. Be the first to write one!</p>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
