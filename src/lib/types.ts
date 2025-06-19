@@ -31,6 +31,8 @@ export interface Facility {
   type: 'Complex' | 'Court' | 'Field' | 'Studio' | 'Pool';
   address: string;
   location: string; // Could be more complex, e.g., { lat: number, lng: number }
+  latitude?: number; // Optional latitude
+  longitude?: number; // Optional longitude
   description: string;
   images: string[]; // URLs to images
   sports: Sport[];

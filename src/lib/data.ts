@@ -79,14 +79,16 @@ export let mockFacilities: Facility[] = [
     type: 'Complex',
     address: '123 Stadium Rd, Metropolis, CA 90210',
     location: 'Metropolis',
+    latitude: 34.0522, // Example coordinates
+    longitude: -118.2437,
     description: 'State-of-the-art multi-sport complex with indoor and outdoor facilities.',
     images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
     sports: [mockSports[0], mockSports[1], mockSports[2]], // Soccer, Basketball, Tennis
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[2], mockAmenities[3], mockAmenities[5]],
     operatingHours: [{ day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' }, { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' }, { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' }, { day: 'Sun', open: '09:00', close: '20:00' }],
     pricePerHour: 50,
-    rating: 0, // Will be calculated
-    reviews: [], // Will be populated by getFacilityById
+    rating: 0, 
+    reviews: [], 
     isPopular: true,
     dataAiHint: 'sports complex stadium',
     capacity: 500,
@@ -97,14 +99,16 @@ export let mockFacilities: Facility[] = [
     type: 'Court',
     address: '45 Green Ave, Metropolis, CA 90211',
     location: 'Metropolis',
+    latitude: 34.0550,
+    longitude: -118.2500,
     description: 'Premium tennis courts with beautiful riverside views.',
     images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png'],
     sports: [mockSports[2]], // Tennis
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '07:00', close: '21:00' }, { day: 'Tue', open: '07:00', close: '21:00' }, { day: 'Wed', open: '07:00', close: '21:00' }, { day: 'Thu', open: '07:00', close: '21:00' }, { day: 'Fri', open: '07:00', close: '21:00' }, { day: 'Sat', open: '08:00', close: '18:00' }, { day: 'Sun', open: '08:00', close: '18:00' }],
     pricePerHour: 30,
-    rating: 0, // Will be calculated
-    reviews: [], // Will be populated by getFacilityById
+    rating: 0, 
+    reviews: [], 
     dataAiHint: 'tennis court outdoor',
   },
   {
@@ -113,14 +117,16 @@ export let mockFacilities: Facility[] = [
     type: 'Complex',
     address: '789 Park St, Metropolis, CA 90212',
     location: 'Metropolis',
+    latitude: 34.0600,
+    longitude: -118.2300,
     description: 'Affordable and friendly community center with various sports options.',
     images: ['https://placehold.co/800x450.png'],
     sports: [mockSports[1], mockSports[3], mockSports[5]], // Basketball, Badminton, Gym
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[4], mockAmenities[6]],
     operatingHours: [{ day: 'Mon', open: '09:00', close: '21:00' }, { day: 'Tue', open: '09:00', close: '21:00' }, { day: 'Wed', open: '09:00', close: '21:00' }, { day: 'Thu', open: '09:00', close: '21:00' }, { day: 'Fri', open: '09:00', close: '20:00' }, { day: 'Sat', open: '10:00', close: '18:00' }, { day: 'Sun', open: '10:00', close: '16:00' }],
     pricePerHour: 20,
-    rating: 0, // Will be calculated
-    reviews: [], // Will be populated by getFacilityById
+    rating: 0, 
+    reviews: [], 
     isPopular: true,
     dataAiHint: 'community center indoor',
   },
@@ -130,14 +136,16 @@ export let mockFacilities: Facility[] = [
     type: 'Pool',
     address: '101 Splash Ave, Metropolis, CA 90213',
     location: 'Metropolis',
+    latitude: 34.0400,
+    longitude: -118.2600,
     description: 'Large Olympic-sized swimming pool with dedicated lanes and recreational areas.',
     images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
     sports: [mockSports[4]], // Swimming
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '06:00', close: '20:00' }, { day: 'Tue', open: '06:00', close: '20:00' }, { day: 'Wed', open: '06:00', close: '20:00' }, { day: 'Thu', open: '06:00', close: '20:00' }, { day: 'Fri', open: '06:00', close: '20:00' }, { day: 'Sat', open: '07:00', close: '19:00' }, { day: 'Sun', open: '07:00', close: '19:00' }],
     pricePerHour: 15,
-    rating: 0, // Will be calculated
-    reviews: [], // Will be populated by getFacilityById
+    rating: 0, 
+    reviews: [], 
     dataAiHint: 'swimming pool olympic',
   },
 ];
@@ -176,7 +184,7 @@ export let mockBookings: Booking[] = [
     facilityName: 'Riverside Tennis Club',
     facilityImage: 'https://placehold.co/300x200.png?text=Tennis+Club',
     dataAiHint: "tennis court sunset",
-    date: '2024-07-20', // Past date
+    date: '2024-07-20', 
     startTime: '10:00',
     endTime: '12:00',
     totalPrice: 60,
@@ -206,7 +214,7 @@ export let mockBookings: Booking[] = [
     facilityName: 'Grand City Arena',
     facilityImage: 'https://placehold.co/300x200.png?text=Grand+Arena+Soccer',
     dataAiHint: "soccer field night",
-    date: '2024-08-25', // Future date
+    date: '2024-08-25', 
     startTime: '20:00',
     endTime: '21:00',
     totalPrice: 50,
@@ -286,7 +294,7 @@ export const mockEvents: SportEvent[] = [
     startDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'The exciting conclusion to our community basketball league. Witness the crowning of the champions!',
-    maxParticipants: 200, // Spectators
+    maxParticipants: 200, 
     registeredParticipants: 112,
     imageUrl: 'https://placehold.co/600x300.png?text=Basketball+Finals',
     imageDataAiHint: "basketball game intensity"
@@ -312,13 +320,12 @@ export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userNam
   const newReview: Review = {
     ...reviewData,
     id: `review-${mockReviews.length + 1}`,
-    userName: mockUser.name, // Assuming the current mockUser is adding the review
+    userName: mockUser.name, 
     userAvatar: mockUser.profilePictureUrl,
     createdAt: new Date().toISOString(),
   };
   mockReviews.push(newReview);
   
-  // Update the facility's reviews array and rating
   const facilityIndex = mockFacilities.findIndex(f => f.id === reviewData.facilityId);
   if (facilityIndex !== -1) {
     const facilityReviews = getReviewsByFacilityId(reviewData.facilityId);
@@ -326,7 +333,6 @@ export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userNam
     mockFacilities[facilityIndex].rating = calculateAverageRating(facilityReviews);
   }
   
-  // Mark booking as reviewed
   const bookingIndex = mockBookings.findIndex(b => b.id === reviewData.bookingId);
   if (bookingIndex !== -1) {
     mockBookings[bookingIndex].reviewed = true;
