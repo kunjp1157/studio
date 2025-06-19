@@ -97,6 +97,7 @@ export interface Booking {
   date: string; // "YYYY-MM-DD"
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
+  numberOfGuests?: number; // Number of guests for the booking
   totalPrice: number;
   status: 'Confirmed' | 'Pending' | 'Cancelled';
   bookedAt: string; // ISO date string

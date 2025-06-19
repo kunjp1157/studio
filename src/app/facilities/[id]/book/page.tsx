@@ -85,6 +85,14 @@ export default function BookingPage() {
       });
       return;
     }
+    if (facility.capacity && parseInt(numberOfGuests) > facility.capacity) {
+        toast({
+            title: "Guest Limit Exceeded",
+            description: `This facility has a maximum capacity of ${facility.capacity} guests.`,
+            variant: "destructive",
+        });
+        return;
+    }
     setBookingStep('payment');
   };
 
@@ -100,7 +108,7 @@ export default function BookingPage() {
     
     toast({
       title: "Booking Confirmed!",
-      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} is confirmed.`,
+      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} for ${numberOfGuests} guest(s) is confirmed.`,
       className: "bg-green-500 text-white",
     });
 
@@ -109,7 +117,7 @@ export default function BookingPage() {
         addNotification(mockUser.id, {
             type: 'booking_confirmed',
             title: 'Booking Confirmed!',
-            message: `Your booking for ${facility.name} on ${bookingDate} at ${bookingTime} is successful.`,
+            message: `Your booking for ${facility.name} (${numberOfGuests} guest(s)) on ${bookingDate} at ${bookingTime} is successful.`,
             link: '/account/bookings',
         });
     }
@@ -245,7 +253,8 @@ export default function BookingPage() {
                 <p className="text-muted-foreground mb-2">Thank you, {mockUser.name}!</p>
                 <p className="mb-1">Your booking for <strong>{facility.name}</strong> is confirmed.</p>
                 <p className="mb-1">Date: <strong>{selectedDate ? format(selectedDate, 'PPP') : 'N/A'}</strong></p>
-                <p className="mb-4">Time: <strong>{selectedSlot?.startTime} - {selectedSlot?.endTime}</strong></p>
+                <p className="mb-1">Time: <strong>{selectedSlot?.startTime} - {selectedSlot?.endTime}</strong></p>
+                <p className="mb-4">Number of Guests: <strong>{numberOfGuests}</strong></p>
                 <p className="text-lg font-semibold">Total Paid: ${calculatedPrice.toFixed(2)}</p>
                 <Alert className="mt-4 text-left">
                   <AlertCircle className="h-4 w-4"/>
@@ -303,7 +312,7 @@ export default function BookingPage() {
                   size="lg" 
                   className="w-full" 
                   onClick={proceedToPayment} 
-                  disabled={!selectedDate || !selectedSlot}
+                  disabled={!selectedDate || !selectedSlot || !numberOfGuests || parseInt(numberOfGuests) < 1}
                 >
                   Proceed to Payment
                 </Button>

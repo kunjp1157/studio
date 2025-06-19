@@ -102,10 +102,10 @@ export let mockFacilities: Facility[] = [
     pricingRules: [],
     rating: 0, 
     reviews: [], 
+    capacity: 100,
     isPopular: true,
     isIndoor: true,
     dataAiHint: 'sports complex stadium',
-    capacity: 500,
   },
   {
     id: 'facility-2',
@@ -124,6 +124,7 @@ export let mockFacilities: Facility[] = [
     pricingRules: [],
     rating: 0, 
     reviews: [], 
+    capacity: 4,
     isIndoor: false,
     dataAiHint: 'tennis court outdoor',
   },
@@ -144,6 +145,7 @@ export let mockFacilities: Facility[] = [
     pricingRules: [],
     rating: 0, 
     reviews: [], 
+    capacity: 50,
     isPopular: true,
     isIndoor: true,
     dataAiHint: 'community center indoor',
@@ -165,6 +167,7 @@ export let mockFacilities: Facility[] = [
     pricingRules: [],
     rating: 0, 
     reviews: [], 
+    capacity: 200,
     isIndoor: true,
     dataAiHint: 'swimming pool olympic',
   },
@@ -200,7 +203,8 @@ export let mockBookings: Booking[] = [
     date: '2024-07-15', 
     startTime: '18:00',
     endTime: '19:00',
-    totalPrice: 50,
+    numberOfGuests: 10,
+    totalPrice: 500, // Assuming 50 * 10
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), 
     reviewed: true,
@@ -215,7 +219,8 @@ export let mockBookings: Booking[] = [
     date: '2024-07-20', 
     startTime: '10:00',
     endTime: '12:00',
-    totalPrice: 60,
+    numberOfGuests: 2,
+    totalPrice: 60, // Assuming 30 * 2
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), 
     reviewed: false,
@@ -230,7 +235,8 @@ export let mockBookings: Booking[] = [
     date: '2024-06-25', 
     startTime: '14:00',
     endTime: '15:30',
-    totalPrice: 30,
+    numberOfGuests: 5,
+    totalPrice: 100, // Assuming 20 * 5
     status: 'Confirmed', 
     bookedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: true,
@@ -245,7 +251,8 @@ export let mockBookings: Booking[] = [
     date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Upcoming booking
     startTime: '20:00',
     endTime: '21:00',
-    totalPrice: 50,
+    numberOfGuests: 22, // For soccer team
+    totalPrice: 1100, // Assuming 50 * 22
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), 
     reviewed: false,
@@ -260,6 +267,7 @@ export let mockBookings: Booking[] = [
     date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Upcoming
     startTime: '17:00',
     endTime: '18:00',
+    numberOfGuests: 1,
     totalPrice: 20,
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -275,6 +283,7 @@ export let mockBookings: Booking[] = [
     date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Past
     startTime: '09:00',
     endTime: '10:00',
+    numberOfGuests: 1,
     totalPrice: 15,
     status: 'Cancelled', // Cancelled booking
     bookedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -290,7 +299,8 @@ export let mockBookings: Booking[] = [
     date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Upcoming
     startTime: '15:00',
     endTime: '16:00',
-    totalPrice: 15,
+    numberOfGuests: 3,
+    totalPrice: 45, // 15 * 3
     status: 'Pending', // Pending booking
     bookedAt: new Date(Date.now() - 0.1 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
@@ -584,3 +594,4 @@ export const mockAdminUsers: UserProfile[] = [
     { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@citysportshub.com'},
     // Add other mock admin users if needed
 ];
+

@@ -162,7 +162,7 @@ export default function FacilityDetailPage() {
                   <p className="text-muted-foreground mb-4">{facility.address}</p>
                   {facility.capacity && <>
                     <h3 className="text-lg font-semibold mb-2">Capacity</h3>
-                    <p className="text-muted-foreground mb-4 flex items-center"><Users className="w-4 h-4 mr-2" /> Up to {facility.capacity} people</p>
+                    <div className="text-muted-foreground mb-4 flex items-center"><Users className="w-4 h-4 mr-2" /> Up to {facility.capacity} people</div>
                   </>
                   }
                   <div className="text-sm text-muted-foreground">Facility Type: <Badge variant="outline">{facility.type}</Badge></div>
