@@ -1,6 +1,6 @@
 
-import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo } from './types';
-import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc } from 'lucide-react';
+import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement } from './types';
+import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket } from 'lucide-react';
 
 export const mockSports: Sport[] = [
   { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'soccer ball' },
@@ -196,6 +196,13 @@ mockFacilities.forEach(facility => {
   facility.rating = calculateAverageRating(facilityReviews); 
 });
 
+export const mockAchievements: Achievement[] = [
+  { id: 'ach-1', name: 'First Booking', description: 'Congratulations on making your first booking!', icon: Medal, unlockedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'ach-2', name: 'Review Pro', description: 'You shared your thoughts on 2 facilities!', icon: Star, unlockedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'ach-3', name: 'Weekend Warrior', description: 'Booked 3 times on a weekend.', icon: Trophy },
+  { id: 'ach-4', name: 'Top Fan', description: 'Visited your favorite facility 5 times.', icon: Heart },
+  { id: 'ach-5', name: 'Explorer', description: 'Booked 3 different types of sports.', icon: Rocket },
+];
 
 export const mockUser: UserProfile = {
   id: 'user-123',
@@ -206,6 +213,11 @@ export const mockUser: UserProfile = {
   preferredSports: [mockSports[0], mockSports[2]],
   favoriteFacilities: ['facility-1', 'facility-2'],
   membershipLevel: 'Premium',
+  loyaltyPoints: 1250,
+  achievements: [
+    mockAchievements[0], // First Booking
+    mockAchievements[1], // Review Pro
+  ],
 };
 
 export let mockBookings: Booking[] = [
@@ -337,20 +349,12 @@ export let mockBookings: Booking[] = [
     durationHours: 1,
     numberOfGuests: 3,
     baseFacilityPrice: 15,
-    equipmentRentalCost: 6, // 2 swim caps
+    equipmentRentalCost: 6, 
     totalPrice: 21,
     status: 'Pending', 
     bookedAt: new Date(Date.now() - 0.1 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
     rentedEquipment: [
-        { equipmentId: 'equip-9', name: 'Swim Cap', quantity: 2, priceAtBooking: 2, priceTypeAtBooking: 'per_booking', totalCost: 4 },
-        { equipmentId: 'equip-8', name: 'Swim Goggles', quantity: 1, priceAtBooking: 3, priceTypeAtBooking: 'per_booking', totalCost: 3 }, // Price error in thought, should be 3, not 2. Corrected here. Actually, 1 goggle, 2 caps for 7. 3*2 for caps is 6, 1*3 for goggles is 3. Total 9. Let's fix the example.
-        // For a total of 21, base 15, equipment 6.
-        // e.g. 2 swim caps (2*2=4) and 2 goggles (2*3=6) = 10.
-        // For equip cost 6: 2 swim caps (2*2=4) and one goggles (1*3=3) total 7. No.
-        // 3 goggles (3*3=9). No.
-        // Let's say: 2x Swim Caps @ $2 = $4,  1x Goggles @ $3 = $3. Oh, this is 7.
-        // Okay, let's make it 3 swim caps.
         { equipmentId: 'equip-9', name: 'Swim Cap', quantity: 3, priceAtBooking: 2, priceTypeAtBooking: 'per_booking', totalCost: 6 },
     ]
   },
@@ -647,6 +651,4 @@ export const mockAdminUsers: UserProfile[] = [
     { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@citysportshub.com'},
     // Add other mock admin users if needed
 ];
-
-
 

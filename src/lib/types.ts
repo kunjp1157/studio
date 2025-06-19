@@ -129,6 +129,14 @@ export interface Booking {
   rentedEquipment?: RentedItemInfo[];
 }
 
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon?: React.ElementType;
+  unlockedAt?: string; // ISO date string when the user unlocked it
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -139,6 +147,8 @@ export interface UserProfile {
   preferredSports?: Sport[];
   favoriteFacilities?: string[]; // Array of facility IDs
   membershipLevel?: 'Basic' | 'Premium' | 'Pro';
+  loyaltyPoints?: number;
+  achievements?: Achievement[];
 }
 
 export interface AdminUser {
