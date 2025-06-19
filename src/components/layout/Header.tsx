@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { MountainSnow, Dices } from 'lucide-react'; // Placeholder icon for logo
+import { MountainSnow, Dices, Wand2 } from 'lucide-react'; // Placeholder icon for logo
 
 export function Header() {
   return (
@@ -31,7 +31,11 @@ export function Header() {
             <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">Memberships</Button>
           </Link>
           <Link href="/recommendation">
-            <Button variant="ghost" className="text-sm font-medium text-accent-foreground bg-accent hover:bg-accent/90 px-2 sm:px-3">AI Recommender</Button>
+            <Button variant="ghost" className="text-sm font-medium text-accent-foreground bg-accent hover:bg-accent/90 px-2 sm:px-3">
+                <Wand2 className="h-4 w-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">AI Recommender</span>
+                <span className="sm:hidden">AI</span>
+            </Button>
           </Link>
         </nav>
         <div className="flex items-center space-x-2 sm:space-x-4">
