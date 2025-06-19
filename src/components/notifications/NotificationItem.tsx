@@ -53,10 +53,17 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
   );
 
   const itemContent = notification.link ? (
-    <Link href={notification.link} passHref legacyBehavior>
-      <a className="block w-full cursor-pointer" onClick={() => !notification.isRead && onMarkAsRead(notification.id)}>
-        {content}
-      </a>
+    <Link
+      href={notification.link}
+      className="block w-full cursor-pointer"
+      onClick={() => {
+        if (!notification.isRead) {
+          onMarkAsRead(notification.id);
+        }
+        // Allow default link navigation to proceed
+      }}
+    >
+      {content}
     </Link>
   ) : (
     <div className="block w-full cursor-default" onClick={() => !notification.isRead && onMarkAsRead(notification.id)}>
@@ -76,3 +83,4 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
     </DropdownMenuItem>
   );
 }
+
