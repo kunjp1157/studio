@@ -404,7 +404,7 @@ export const mockEvents: SportEvent[] = [
     sport: mockSports[0], 
     startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString(), 
-    description: 'Annual summer soccer tournament for all skill levels. Join us for a competitive and fun weekend!',
+    description: 'Annual summer soccer tournament for all skill levels. Join us for a competitive and fun weekend! This event features multiple matches, food trucks, and activities for spectators. Great prizes for winning teams.',
     maxParticipants: 64,
     registeredParticipants: 25,
     imageUrl: 'https://placehold.co/600x300.png?text=Soccer+Tournament',
@@ -412,13 +412,13 @@ export const mockEvents: SportEvent[] = [
   },
   {
     id: 'event-2',
-    name: 'Tennis Open Day',
+    name: 'Tennis Open Day & Clinic',
     facilityId: 'facility-2',
     sport: mockSports[2], 
     startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
-    description: 'Come try our tennis courts for free! Coaching available for beginners. Fun for the whole family.',
-    registeredParticipants: 0,
+    description: 'Come try our tennis courts for free! Coaching available for beginners. Fun for the whole family, with mini-games and refreshments.',
+    registeredParticipants: 0, // Open registration, no hard cap for open day
     imageUrl: 'https://placehold.co/600x300.png?text=Tennis+Open+Day',
     imageDataAiHint: "tennis players friendly"
   },
@@ -429,13 +429,43 @@ export const mockEvents: SportEvent[] = [
     sport: mockSports[1], 
     startDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
-    description: 'The exciting conclusion to our community basketball league. Witness the crowning of the champions!',
-    maxParticipants: 200, 
-    registeredParticipants: 112,
+    description: 'The exciting conclusion to our community basketball league. Witness the crowning of the champions! Spectators welcome, entry is free.',
+    maxParticipants: 200, // Spectator capacity
+    registeredParticipants: 112, // Could represent team registrations or expected attendance
     imageUrl: 'https://placehold.co/600x300.png?text=Basketball+Finals',
     imageDataAiHint: "basketball game intensity"
   },
+   {
+    id: 'event-4',
+    name: 'Badminton Bonanza Weekend',
+    facilityId: 'facility-3', // Can be hosted at community center too
+    sport: mockSports[3], // Badminton
+    startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), 
+    endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(), 
+    description: 'A full weekend of badminton fun! Singles and doubles tournaments for various age groups. All levels welcome. Coaching sessions available.',
+    maxParticipants: 48,
+    registeredParticipants: 15,
+    imageUrl: 'https://placehold.co/600x300.png?text=Badminton+Bonanza',
+    imageDataAiHint: "badminton players action"
+  },
+  {
+    id: 'event-5',
+    name: 'Yoga & Wellness Retreat',
+    facilityId: 'facility-2', // Assuming riverside has a nice calm spot
+    sport: mockSports[8], // Yoga
+    startDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), 
+    endDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), 
+    description: 'A rejuvenating day of yoga, meditation, and wellness workshops. Connect with nature and find your inner peace.',
+    maxParticipants: 30,
+    registeredParticipants: 10,
+    imageUrl: 'https://placehold.co/600x300.png?text=Yoga+Retreat',
+    imageDataAiHint: "yoga outdoor group"
+  }
 ];
+
+export const getEventById = (id: string): SportEvent | undefined => {
+  return mockEvents.find(event => event.id === id);
+};
 
 
 export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Review => {
