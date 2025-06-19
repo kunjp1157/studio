@@ -1,6 +1,6 @@
 
 import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours } from './types';
-import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket } from 'lucide-react';
+import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target } from 'lucide-react';
 import { parseISO } from 'date-fns';
 
 
@@ -10,14 +10,10 @@ export const mockSports: Sport[] = [
   { id: 'sport-3', name: 'Tennis', icon: Activity, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'tennis racket' },
   { id: 'sport-4', name: 'Badminton', icon: Activity, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'badminton shuttlecock' },
   { id: 'sport-5', name: 'Swimming', icon: Activity, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'swimming lane' },
-  { id: 'sport-6', name: 'Gym Workout', icon: Dumbbell, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'gym weights' },
   { id: 'sport-7', name: 'Cycling', icon: Bike, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cycling road' },
-  { id: 'sport-8', name: 'Fencing', icon: Swords, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'fencing mask' },
-  { id: 'sport-9', name: 'Yoga', icon: Feather, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'yoga mat'},
-  { id: 'sport-10', name: 'Dance', icon: Music, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'dance studio'},
-  { id: 'sport-11', name: 'Camping', icon: Tent, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'camping tent' },
-  { id: 'sport-12', name: 'Theatre', icon: Drama, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'theatre stage' },
   { id: 'sport-13', name: 'Cricket', icon: Dices, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cricket bat ball' },
+  { id: 'sport-14', name: 'Pool', icon: Target, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'billiards table' },
+  { id: 'sport-15', name: 'PC Game/PS5', icon: Gamepad2, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'gaming setup' },
 ];
 
 export const mockAmenities: Amenity[] = [
@@ -155,7 +151,7 @@ export let mockFacilities: Facility[] = [
     longitude: -118.2300,
     description: 'Affordable and friendly community center with various sports options.',
     images: ['https://placehold.co/800x450.png'],
-    sports: [mockSports[1], mockSports[3], mockSports[5]], 
+    sports: [mockSports[1], mockSports[3]], 
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[6]], // Removed equipment rental signage if no specific equip for now
     operatingHours: [{ day: 'Mon', open: '09:00', close: '21:00' }, { day: 'Tue', open: '09:00', close: '21:00' }, { day: 'Wed', open: '09:00', close: '21:00' }, { day: 'Thu', open: '09:00', close: '21:00' }, { day: 'Fri', open: '09:00', close: '20:00' }, { day: 'Sat', open: '10:00', close: '18:00' }, { day: 'Sun', open: '10:00', close: '16:00' }],
     pricePerHour: 20,
@@ -456,20 +452,6 @@ export let mockEvents: SportEvent[] = [
     imageUrl: 'https://placehold.co/600x300.png',
     imageDataAiHint: "badminton players action"
   },
-  {
-    id: 'event-5',
-    name: 'Yoga & Wellness Retreat',
-    facilityId: 'facility-2', // Assuming riverside has a nice calm spot
-    sport: mockSports[8], // Yoga
-    startDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), 
-    endDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), 
-    description: 'A rejuvenating day of yoga, meditation, and wellness workshops. Connect with nature and find your inner peace.',
-    entryFee: 50,
-    maxParticipants: 30,
-    registeredParticipants: 10,
-    imageUrl: 'https://placehold.co/600x300.png',
-    imageDataAiHint: "yoga outdoor group"
-  }
 ];
 
 export let mockPricingRules: PricingRule[] = [
@@ -975,6 +957,7 @@ export const deletePromotionRule = (ruleId: string): boolean => {
     mockPromotionRules = mockPromotionRules.filter(r => r.id !== ruleId);
     return mockPromotionRules.length < initialLength;
 };
+
 
 
 
