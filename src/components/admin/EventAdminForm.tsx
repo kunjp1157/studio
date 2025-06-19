@@ -7,7 +7,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { SportEvent, Facility, Sport } from '@/lib/types';
-import { getAllSports, getAllFacilities, getSportById } from '@/lib/data'; 
+import { getAllSports, getAllFacilities, getSportById, addEvent, updateEvent } from '@/lib/data'; 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Save, ArrowLeft, CalendarDays, DollarSign, Users, ImageIcon, Info } from 'lucide-react';
+import { Save, ArrowLeft, CalendarDays, DollarSign, Users, ImageIcon, Info, Zap } from 'lucide-react';
 
 const eventFormSchema = z.object({
   name: z.string().min(3, { message: "Event name must be at least 3 characters." }),
