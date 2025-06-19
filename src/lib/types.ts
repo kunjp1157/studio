@@ -38,6 +38,22 @@ export interface PricingRule {
   isActive: boolean;
 }
 
+export interface PromotionRule {
+  id: string;
+  name: string;
+  description?: string;
+  code?: string; // The actual discount code a user would enter, e.g., "SUMMER20"
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number; // e.g., 20 for 20% or 5 for $5 off
+  startDate?: string; // ISO date string
+  endDate?: string; // ISO date string
+  usageLimit?: number; // How many times this promotion can be used in total
+  usageLimitPerUser?: number; // How many times a single user can use this promotion
+  isActive: boolean;
+  // Conditions for applicability could be added later, e.g., specific facilities, sports, user segments, min booking value
+}
+
+
 export interface Facility {
   id: string;
   name:string;
@@ -173,3 +189,4 @@ export interface BlogPost {
   isFeatured?: boolean;
   dataAiHint?: string;
 }
+

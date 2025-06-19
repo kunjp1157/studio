@@ -1,5 +1,5 @@
 
-import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule } from './types';
+import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3 } from 'lucide-react';
 
 export const mockSports: Sport[] = [
@@ -512,4 +512,5 @@ export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
   return mockBlogPosts.find(post => post.slug === slug);
 };
 
+export const mockPromotionRules: PromotionRule[] = [];
 
