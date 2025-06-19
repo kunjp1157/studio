@@ -48,8 +48,8 @@ export interface PromotionRule {
   discountValue: number; // e.g., 20 for 20% or 5 for $5 off
   startDate?: string; // ISO date string
   endDate?: string; // ISO date string
-  usageLimit?: number; // How many times this promotion can be used in total
-  usageLimitPerUser?: number; // How many times a single user can use this promotion
+  usageLimit?: number; // How many times this promotion can be used in total. 0 or undefined for unlimited.
+  usageLimitPerUser?: number; // How many times a single user can use this promotion. 0 or undefined for unlimited.
   isActive: boolean;
   // Conditions for applicability could be added later, e.g., specific facilities, sports, user segments, min booking value
 }

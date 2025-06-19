@@ -505,6 +505,42 @@ export let mockPricingRules: PricingRule[] = [
     }
 ];
 
+export let mockPromotionRules: PromotionRule[] = [
+    {
+        id: 'promo-1',
+        name: 'Summer Kickoff Discount',
+        description: 'Get 15% off any booking in June.',
+        code: 'SUMMER15',
+        discountType: 'percentage',
+        discountValue: 15,
+        startDate: '2024-06-01',
+        endDate: '2024-06-30',
+        usageLimit: 1000,
+        usageLimitPerUser: 1,
+        isActive: true,
+    },
+    {
+        id: 'promo-2',
+        name: 'New User Welcome',
+        description: '$10 off your first booking.',
+        code: 'WELCOME10',
+        discountType: 'fixed_amount',
+        discountValue: 10,
+        usageLimitPerUser: 1,
+        isActive: true,
+    },
+    {
+        id: 'promo-3',
+        name: 'Weekend Warrior Special',
+        description: '20% off weekend bookings (Sat/Sun). No code needed.',
+        discountType: 'percentage',
+        discountValue: 20,
+        isActive: true,
+        // This would ideally be linked to daysOfWeek in a real system, but for mock data, it's descriptive.
+    }
+];
+
+
 export const getAllEvents = (): SportEvent[] => {
   return [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
 }
@@ -873,8 +909,6 @@ export const deleteMembershipPlan = (planId: string): boolean => {
 };
 
 
-export const mockPromotionRules: PromotionRule[] = [];
-
 export const mockAdminUsers: UserProfile[] = [
     { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@citysportshub.com'},
 ];
@@ -909,3 +943,35 @@ export const deletePricingRule = (ruleId: string): boolean => {
     mockPricingRules = mockPricingRules.filter(r => r.id !== ruleId);
     return mockPricingRules.length < initialLength;
 };
+
+// Promotion Rule Data Management
+export const getAllPromotionRules = (): PromotionRule[] => {
+    return [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
+};
+
+export const getPromotionRuleById = (id: string): PromotionRule | undefined => {
+    return mockPromotionRules.find(rule => rule.id === id);
+};
+
+export const addPromotionRule = (ruleData: Omit<PromotionRule, 'id'>): PromotionRule => {
+    const newRule: PromotionRule = {
+        ...ruleData,
+        id: `promo-${Date.now()}-${Math.random().toString(36).substring(2,7)}`,
+    };
+    mockPromotionRules.push(newRule);
+    return newRule;
+};
+
+export const updatePromotionRule = (updatedRuleData: PromotionRule): PromotionRule | undefined => {
+    const ruleIndex = mockPromotionRules.findIndex(r => r.id === updatedRuleData.id);
+    if (ruleIndex === -1) return undefined;
+    mockPromotionRules[ruleIndex] = updatedRuleData;
+    return mockPromotionRules[ruleIndex];
+};
+
+export const deletePromotionRule = (ruleId: string): boolean => {
+    const initialLength = mockPromotionRules.length;
+    mockPromotionRules = mockPromotionRules.filter(r => r.id !== ruleId);
+    return mockPromotionRules.length < initialLength;
+};
+
