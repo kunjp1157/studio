@@ -422,6 +422,7 @@ export let mockEvents: SportEvent[] = [
     endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'Come try our tennis courts for free! Coaching available for beginners. Fun for the whole family, with mini-games and refreshments.',
     entryFee: 0,
+    maxParticipants: 100, // Max participants for open day
     registeredParticipants: 0, // Open registration, no hard cap for open day
     imageUrl: 'https://placehold.co/600x300.png?text=Tennis+Open+Day',
     imageDataAiHint: "tennis players friendly"
@@ -565,6 +566,8 @@ export const getFacilityById = (id: string): Facility | undefined => {
       ...facility,
       reviews: reviews,
       rating: calculateAverageRating(reviews),
+      sports: facility.sports.map(s => getSportById(s.id) || s), // Ensure full sport objects
+      amenities: facility.amenities.map(a => getAmenityById(a.id) || a), // Ensure full amenity objects
     };
   }
   return undefined;
@@ -599,13 +602,64 @@ export const getSportById = (id: string): Sport | undefined => {
   return mockSports.find(sport => sport.id === id);
 }
 
+export const getAmenityById = (id: string): Amenity | undefined => {
+  return mockAmenities.find(amenity => amenity.id === id);
+}
+
+
 export const getAllSports = (): Sport[] => {
     return mockSports;
 }
 
 export const getAllFacilities = (): Facility[] => {
-    return mockFacilities;
+    return mockFacilities.map(f => ({
+      ...f,
+      rating: calculateAverageRating(getReviewsByFacilityId(f.id)),
+      reviews: getReviewsByFacilityId(f.id)
+    }));
 }
+
+export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating'> & { sports: string[], amenities?: string[] }): Facility => {
+  const newFacility: Facility = {
+    ...facilityData,
+    id: `facility-${Date.now()}`,
+    sports: facilityData.sports.map(sportId => getSportById(sportId)).filter(Boolean) as Sport[],
+    amenities: (facilityData.amenities || []).map(amenityId => getAmenityById(amenityId)).filter(Boolean) as Amenity[],
+    reviews: [],
+    rating: facilityData.rating ?? 0, // Use provided rating or default to 0
+    availableEquipment: facilityData.availableEquipment || [], // Ensure availableEquipment is initialized
+    pricingRules: facilityData.pricingRules || [], // Ensure pricingRules is initialized
+  };
+  mockFacilities.push(newFacility);
+  return newFacility;
+};
+
+export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'amenities' | 'reviews' | 'rating'> & { sports: string[], amenities?: string[] }): Facility | undefined => {
+  const facilityIndex = mockFacilities.findIndex(f => f.id === updatedFacilityData.id);
+  if (facilityIndex === -1) return undefined;
+
+  const updatedFacility: Facility = {
+    ...mockFacilities[facilityIndex], // Preserve existing fields like reviews
+    ...updatedFacilityData,
+    sports: updatedFacilityData.sports.map(sportId => getSportById(sportId)).filter(Boolean) as Sport[],
+    amenities: (updatedFacilityData.amenities || []).map(amenityId => getAmenityById(amenityId)).filter(Boolean) as Amenity[],
+    rating: updatedFacilityData.rating ?? mockFacilities[facilityIndex].rating, // Use provided rating or keep existing
+  };
+  
+  mockFacilities[facilityIndex] = updatedFacility;
+  return updatedFacility;
+};
+
+export const deleteFacility = (facilityId: string): boolean => {
+  const initialLength = mockFacilities.length;
+  mockFacilities = mockFacilities.filter(f => f.id !== facilityId);
+  // Also remove associated reviews (optional, depending on desired behavior)
+  mockReviews = mockReviews.filter(r => r.facilityId !== facilityId);
+  // Also remove associated rental equipment (optional)
+  // mockRentalEquipment = mockRentalEquipment.filter(re => re.facilityId !== facilityId);
+  return mockFacilities.length < initialLength;
+};
+
 
 
 export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => {

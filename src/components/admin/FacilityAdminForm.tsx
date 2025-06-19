@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Facility, Sport, Amenity, RentalEquipment } from '@/lib/types'; // Added RentalEquipment
-import { mockSports, mockAmenities } from '@/lib/data';
+import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours } from '@/lib/types';
+import { mockSports, mockAmenities, addFacility as addMockFacility, updateFacility as updateMockFacility } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch } from 'lucide-react';
+import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Image as ImageIcon, Users, SunMoon, TrendingUpIcon, ClockIcon } from 'lucide-react';
 
 const facilityFormSchema = z.object({
   name: z.string().min(3, { message: "Facility name must be at least 3 characters." }),
@@ -26,36 +26,38 @@ const facilityFormSchema = z.object({
   address: z.string().min(5, { message: "Address is required." }),
   location: z.string().min(2, { message: "Location is required." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  images: z.array(z.string().url({ message: "Please enter a valid URL." })).min(1, { message: "At least one image URL is required."}),
+  images: z.array(z.string().url({ message: "Please enter a valid URL or leave empty if not applicable." }).or(z.literal(''))).min(1, { message: "At least one image URL is required (can be placeholder). Use https://placehold.co/800x450.png for placeholders."}).transform(arr => arr.filter(img => img.trim() !== '')),
   sports: z.array(z.string()).min(1, { message: "Select at least one sport." }),
-  amenities: z.array(z.string()).optional(),
+  amenities: z.array(z.string()).optional().default([]),
   operatingHours: z.array(z.object({
     day: z.enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
     open: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format (HH:MM)"}),
     close: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format (HH:MM)"}),
   })).length(7, { message: "Operating hours for all 7 days are required."}),
-  pricePerHour: z.coerce.number().min(0, { message: "Price must be a positive number." }),
+  pricePerHour: z.coerce.number().min(0, { message: "Price must be a non-negative number." }),
   rating: z.coerce.number().min(0).max(5).optional().default(0),
   capacity: z.coerce.number().min(0).optional().default(0),
   isPopular: z.boolean().optional().default(false),
-  isIndoor: z.boolean().optional().default(false), // Added isIndoor
+  isIndoor: z.boolean().optional().default(false),
   dataAiHint: z.string().optional(),
+  latitude: z.coerce.number().optional(),
+  longitude: z.coerce.number().optional(),
   // availableEquipment: z.array(...) // Placeholder for future equipment management
 });
 
 type FacilityFormValues = z.infer<typeof facilityFormSchema>;
 
 interface FacilityAdminFormProps {
-  initialData?: Facility | null; // For editing
+  initialData?: Facility | null; 
   onSubmitSuccess?: () => void;
 }
 
-const defaultOperatingHours = [
+const defaultOperatingHours: FacilityOperatingHours[] = [
   { day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' },
   { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' },
   { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' },
   { day: 'Sun', open: '09:00', close: '20:00' },
-] as FacilityFormValues['operatingHours'];
+];
 
 
 export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdminFormProps) {
@@ -69,12 +71,20 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
       ...initialData,
       sports: initialData.sports.map(s => s.id),
       amenities: initialData.amenities.map(a => a.id),
-      operatingHours: initialData.operatingHours.length === 7 ? initialData.operatingHours : defaultOperatingHours,
+      operatingHours: initialData.operatingHours?.length === 7 ? initialData.operatingHours : defaultOperatingHours,
+      images: initialData.images.length > 0 ? initialData.images : [''],
       isIndoor: initialData.isIndoor ?? false,
+      rating: initialData.rating ?? 0,
+      capacity: initialData.capacity ?? 0,
+      isPopular: initialData.isPopular ?? false,
+      dataAiHint: initialData.dataAiHint ?? '',
+      latitude: initialData.latitude,
+      longitude: initialData.longitude,
     } : {
       name: '', type: 'Court', address: '', location: '', description: '',
       images: [''], sports: [], amenities: [], operatingHours: defaultOperatingHours,
-      pricePerHour: 0, rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: ''
+      pricePerHour: 0, rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
+      latitude: undefined, longitude: undefined,
     },
   });
 
@@ -92,17 +102,41 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
   const onSubmit = async (data: FacilityFormValues) => {
     setIsLoading(true);
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Form Data Submitted:", data);
-    setIsLoading(false);
-    toast({
-      title: initialData ? "Facility Updated" : "Facility Created",
-      description: `${data.name} has been successfully ${initialData ? 'updated' : 'created'}.`,
-    });
-    if (onSubmitSuccess) {
-      onSubmitSuccess();
-    } else {
-      router.push('/admin/facilities');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const facilityPayload = {
+      ...data,
+      id: initialData?.id || `facility-${Date.now()}`, // Keep ID if editing, generate if new
+      // The mock functions will handle converting sport/amenity IDs to full objects
+    };
+
+    try {
+        if (initialData) {
+        updateMockFacility(facilityPayload as any); // Cast as any to match Omit type in function for now
+        } else {
+        addMockFacility(facilityPayload as any); // Cast as any
+        }
+
+        toast({
+        title: initialData ? "Facility Updated" : "Facility Created",
+        description: `${data.name} has been successfully ${initialData ? 'updated' : 'created'}.`,
+        });
+        
+        if (onSubmitSuccess) {
+        onSubmitSuccess();
+        } else {
+        router.push('/admin/facilities');
+        router.refresh(); // Refresh page to show updated list
+        }
+    } catch (error) {
+        console.error("Error saving facility:", error);
+        toast({
+            title: "Error",
+            description: "Failed to save facility. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -115,21 +149,21 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
 
         <Card>
           <CardHeader>
-            <CardTitle>{initialData ? 'Edit Facility' : 'Add New Facility'}</CardTitle>
+            <CardTitle className="flex items-center"><Building2 className="mr-2 h-5 w-5 text-primary"/>{initialData ? 'Edit Facility' : 'Add New Facility'}</CardTitle>
             <CardDescription>Fill in the details for the sports facility.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Facility Name</FormLabel>
+                  <FormLabel className="flex items-center"><Info className="mr-2 h-4 w-4 text-muted-foreground"/>Facility Name</FormLabel>
                   <FormControl><Input placeholder="e.g., Grand City Arena" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="type" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Facility Type</FormLabel>
+                  <FormLabel className="flex items-center"><Building2 className="mr-2 h-4 w-4 text-muted-foreground"/>Facility Type</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
                     <SelectContent>
@@ -144,7 +178,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
             </div>
             <FormField control={form.control} name="address" render={({ field }) => (
               <FormItem>
-                <FormLabel>Address</FormLabel>
+                <FormLabel className="flex items-center"><MapPinIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Address</FormLabel>
                 <FormControl><Input placeholder="123 Main St, City, State ZIP" {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
@@ -152,30 +186,46 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
              <div className="grid md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="location" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Location (City/Area)</FormLabel>
+                        <FormLabel className="flex items-center"><MapPinIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Location (City/Area)</FormLabel>
                         <FormControl><Input placeholder="e.g., Metropolis Downtown" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
                 <FormField control={form.control} name="pricePerHour" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Price Per Hour ($)</FormLabel>
-                        <FormControl><Input type="number" placeholder="25" {...field} /></FormControl>
+                        <FormLabel className="flex items-center"><DollarSign className="mr-2 h-4 w-4 text-muted-foreground"/>Price Per Hour ($)</FormLabel>
+                        <FormControl><Input type="number" step="0.01" placeholder="25.00" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+            </div>
+             <div className="grid md:grid-cols-2 gap-6">
+                <FormField control={form.control} name="latitude" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center"><LocateFixed className="mr-2 h-4 w-4 text-muted-foreground"/>Latitude (Optional)</FormLabel>
+                        <FormControl><Input type="number" step="any" placeholder="e.g., 34.0522" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <FormField control={form.control} name="longitude" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center"><LocateFixed className="mr-2 h-4 w-4 text-muted-foreground"/>Longitude (Optional)</FormLabel>
+                        <FormControl><Input type="number" step="any" placeholder="e.g., -118.2437" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
             </div>
             <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel className="flex items-center"><Info className="mr-2 h-4 w-4 text-muted-foreground"/>Description</FormLabel>
                 <FormControl><Textarea placeholder="Detailed description of the facility..." {...field} rows={4} /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
 
-            {/* Image URLs */}
             <div>
-                <FormLabel>Image URLs</FormLabel>
+                <FormLabel className="flex items-center"><ImageIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Image URLs</FormLabel>
+                <FormDescription>Add URLs for facility images. Use https://placehold.co/ for placeholders if needed.</FormDescription>
                 {imageFields.map((field, index) => (
                     <FormField
                     key={field.id}
@@ -185,28 +235,28 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
                         <FormItem className="flex items-center gap-2 mt-2">
                             <FormControl><Input placeholder="https://example.com/image.png" {...imageField} /></FormControl>
                             {imageFields.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeImage(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
-                            <FormMessage />
                         </FormItem>
                     )}
                     />
                 ))}
+                 <FormMessage>{form.formState.errors.images?.root?.message || form.formState.errors.images?.[0]?.message}</FormMessage>
                 <Button type="button" variant="outline" size="sm" onClick={() => appendImage('')} className="mt-2">
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Image URL
                 </Button>
             </div>
              <FormField control={form.control} name="dataAiHint" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>AI Hint for Images (Optional)</FormLabel>
+                  <FormLabel className="flex items-center"><UploadCloud className="mr-2 h-4 w-4 text-muted-foreground"/>AI Hint for Images (Optional)</FormLabel>
                   <FormControl><Input placeholder="e.g., soccer field night" {...field} /></FormControl>
                   <FormDescription>Keywords to help AI generate placeholder images if URLs are for placeholders.</FormDescription>
+                  <FormMessage />
                 </FormItem>
               )} />
 
 
-            {/* Sports Offered */}
             <FormField control={form.control} name="sports" render={() => (
               <FormItem>
-                <FormLabel>Sports Offered</FormLabel>
+                <FormLabel className="flex items-center"><Zap className="mr-2 h-4 w-4 text-muted-foreground"/>Sports Offered</FormLabel>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 border rounded-md">
                   {mockSports.map((sport) => (
                     <FormField
@@ -235,10 +285,9 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
               </FormItem>
             )} />
             
-            {/* Amenities */}
             <FormField control={form.control} name="amenities" render={() => (
               <FormItem>
-                <FormLabel>Amenities</FormLabel>
+                <FormLabel className="flex items-center"><Dices className="mr-2 h-4 w-4 text-muted-foreground"/>Amenities</FormLabel>
                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 border rounded-md">
                   {mockAmenities.map((amenity) => (
                     <FormField
@@ -267,19 +316,18 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
               </FormItem>
             )} />
             
-            {/* Operating Hours */}
             <div>
-                <FormLabel>Operating Hours</FormLabel>
+                <FormLabel className="flex items-center"><ClockIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Operating Hours</FormLabel>
                 <div className="space-y-2 mt-2 p-4 border rounded-md">
-                {hoursFields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-3 gap-2 items-center">
-                        <Label className="font-medium">{field.day}</Label>
+                {hoursFields.map((item, index) => (
+                    <div key={item.id} className="grid grid-cols-[minmax(0,_1fr)_minmax(0,_1fr)_minmax(0,_1fr)] gap-2 items-center">
+                        <Label className="font-medium">{item.day}</Label>
                         <FormField
                             control={form.control}
                             name={`operatingHours.${index}.open`}
-                            render={({ field: openField }) => (
+                            render={({ field }) => (
                                 <FormItem>
-                                    <FormControl><Input type="time" {...openField} /></FormControl>
+                                    <FormControl><Input type="time" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -287,16 +335,16 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
                         <FormField
                             control={form.control}
                             name={`operatingHours.${index}.close`}
-                            render={({ field: closeField }) => (
+                            render={({ field }) => (
                                 <FormItem>
-                                    <FormControl><Input type="time" {...closeField} /></FormControl>
+                                    <FormControl><Input type="time" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
                 ))}
-                <FormMessage>{form.formState.errors.operatingHours?.message}</FormMessage>
+                <FormMessage>{form.formState.errors.operatingHours?.message || form.formState.errors.operatingHours?.root?.message}</FormMessage>
                 </div>
             </div>
 
@@ -304,15 +352,16 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
             <div className="grid md:grid-cols-2 gap-6">
                  <FormField control={form.control} name="rating" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Rating (0-5)</FormLabel>
+                        <FormLabel className="flex items-center"><Star className="mr-2 h-4 w-4 text-muted-foreground"/>Rating (0-5, Optional)</FormLabel>
                         <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
+                        <FormDescription>Leave at 0 if not applicable. Will be auto-calculated from reviews.</FormDescription>
                         <FormMessage />
                     </FormItem>
                 )} />
                 <FormField control={form.control} name="capacity" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Capacity (Optional)</FormLabel>
-                        <FormControl><Input type="number" {...field} /></FormControl>
+                        <FormLabel className="flex items-center"><Users className="mr-2 h-4 w-4 text-muted-foreground"/>Capacity (Optional)</FormLabel>
+                        <FormControl><Input type="number" placeholder="0 for not specified" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -321,8 +370,8 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
               <FormField control={form.control} name="isPopular" render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                          <FormLabel className="text-base">Mark as Popular</FormLabel>
-                          <FormDescription>Popular facilities are highlighted in listings.</FormDescription>
+                          <FormLabel className="text-base flex items-center"><TrendingUpIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Mark as Popular</FormLabel>
+                          <FormDescription>Popular facilities are highlighted.</FormDescription>
                       </div>
                       <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                   </FormItem>
@@ -330,7 +379,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
               <FormField control={form.control} name="isIndoor" render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                          <FormLabel className="text-base">Indoor Facility</FormLabel>
+                          <FormLabel className="text-base flex items-center"><SunMoon className="mr-2 h-4 w-4 text-muted-foreground"/>Indoor Facility</FormLabel>
                           <FormDescription>Check if this is an indoor facility.</FormDescription>
                       </div>
                       <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
@@ -338,7 +387,6 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
               )} />
             </div>
 
-            {/* Placeholder for Rental Equipment Management */}
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle className="flex items-center">
