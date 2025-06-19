@@ -30,15 +30,15 @@ export const mockAmenities: Amenity[] = [
 ];
 
 export const mockRentalEquipment: RentalEquipment[] = [
-  { id: 'equip-1', facilityId: 'facility-1', name: 'Soccer Ball (Size 5)', pricePerItem: 5, priceType: 'per_booking', stock: 20, imageUrl: 'https://placehold.co/100x100.png?text=Soccer+Ball', dataAiHint: 'soccer ball' },
-  { id: 'equip-2', facilityId: 'facility-1', name: 'Training Cones (Set of 10)', pricePerItem: 3, priceType: 'per_booking', stock: 15, imageUrl: 'https://placehold.co/100x100.png?text=Cones', dataAiHint: 'training cones' },
-  { id: 'equip-3', facilityId: 'facility-1', name: 'Basketball', pricePerItem: 5, priceType: 'per_booking', stock: 10, imageUrl: 'https://placehold.co/100x100.png?text=Basketball', dataAiHint: 'basketball' },
-  { id: 'equip-4', facilityId: 'facility-2', name: 'Tennis Racket (Adult)', pricePerItem: 8, priceType: 'per_booking', stock: 10, imageUrl: 'https://placehold.co/100x100.png?text=Tennis+Racket', dataAiHint: 'tennis racket' },
-  { id: 'equip-5', facilityId: 'facility-2', name: 'Tennis Balls (Can of 3)', pricePerItem: 4, priceType: 'per_booking', stock: 30, imageUrl: 'https://placehold.co/100x100.png?text=Tennis+Balls', dataAiHint: 'tennis balls' },
-  { id: 'equip-6', facilityId: 'facility-3', name: 'Badminton Racket', pricePerItem: 4, priceType: 'per_booking', stock: 12, imageUrl: 'https://placehold.co/100x100.png?text=Badminton+Racket', dataAiHint: 'badminton racket' },
-  { id: 'equip-7', facilityId: 'facility-3', name: 'Shuttlecocks (Tube of 6)', pricePerItem: 3, priceType: 'per_booking', stock: 25, imageUrl: 'https://placehold.co/100x100.png?text=Shuttlecocks', dataAiHint: 'shuttlecock tube' },
-  { id: 'equip-8', facilityId: 'facility-4', name: 'Swim Goggles', pricePerItem: 3, priceType: 'per_booking', stock: 15, imageUrl: 'https://placehold.co/100x100.png?text=Goggles', dataAiHint: 'swim goggles' },
-  { id: 'equip-9', facilityId: 'facility-4', name: 'Swim Cap', pricePerItem: 2, priceType: 'per_booking', stock: 20, imageUrl: 'https://placehold.co/100x100.png?text=Swim+Cap', dataAiHint: 'swim cap' },
+  { id: 'equip-1', facilityId: 'facility-1', name: 'Soccer Ball (Size 5)', pricePerItem: 5, priceType: 'per_booking', stock: 20, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'soccer ball' },
+  { id: 'equip-2', facilityId: 'facility-1', name: 'Training Cones (Set of 10)', pricePerItem: 3, priceType: 'per_booking', stock: 15, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'training cones' },
+  { id: 'equip-3', facilityId: 'facility-1', name: 'Basketball', pricePerItem: 5, priceType: 'per_booking', stock: 10, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'basketball' },
+  { id: 'equip-4', facilityId: 'facility-2', name: 'Tennis Racket (Adult)', pricePerItem: 8, priceType: 'per_booking', stock: 10, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'tennis racket' },
+  { id: 'equip-5', facilityId: 'facility-2', name: 'Tennis Balls (Can of 3)', pricePerItem: 4, priceType: 'per_booking', stock: 30, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'tennis balls' },
+  { id: 'equip-6', facilityId: 'facility-3', name: 'Badminton Racket', pricePerItem: 4, priceType: 'per_booking', stock: 12, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'badminton racket' },
+  { id: 'equip-7', facilityId: 'facility-3', name: 'Shuttlecocks (Tube of 6)', pricePerItem: 3, priceType: 'per_booking', stock: 25, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'shuttlecock tube' },
+  { id: 'equip-8', facilityId: 'facility-4', name: 'Swim Goggles', pricePerItem: 3, priceType: 'per_booking', stock: 15, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'swim goggles' },
+  { id: 'equip-9', facilityId: 'facility-4', name: 'Swim Cap', pricePerItem: 2, priceType: 'per_booking', stock: 20, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'swim cap' },
 ];
 
 export const calculateAverageRating = (reviews: Review[] | undefined): number => {
@@ -59,7 +59,7 @@ export let mockReviews: Review[] = [
     facilityId: 'facility-1',
     userId: 'user-123',
     userName: 'Alex Johnson',
-    userAvatar: 'https://placehold.co/40x40.png?text=AJ',
+    userAvatar: 'https://placehold.co/40x40.png',
     rating: 5,
     comment: 'Amazing facility! Clean, well-maintained, and friendly staff. Will definitely book again.',
     createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
@@ -70,7 +70,7 @@ export let mockReviews: Review[] = [
     facilityId: 'facility-1',
     userId: 'user-456',
     userName: 'Maria Garcia',
-    userAvatar: 'https://placehold.co/40x40.png?text=MG',
+    userAvatar: 'https://placehold.co/40x40.png',
     rating: 4,
     comment: 'Great place for soccer. The fields are top-notch. Parking can be a bit tricky during peak hours.',
     createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
@@ -80,7 +80,7 @@ export let mockReviews: Review[] = [
     facilityId: 'facility-2',
     userId: 'user-789',
     userName: 'David Smith',
-    userAvatar: 'https://placehold.co/40x40.png?text=DS',
+    userAvatar: 'https://placehold.co/40x40.png',
     rating: 5,
     comment: 'Loved the tennis courts here. Beautiful view and excellent surface.',
     createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -90,7 +90,7 @@ export let mockReviews: Review[] = [
     facilityId: 'facility-3',
     userId: 'user-123',
     userName: 'Alex Johnson',
-    userAvatar: 'https://placehold.co/40x40.png?text=AJ',
+    userAvatar: 'https://placehold.co/40x40.png',
     rating: 3,
     comment: 'Decent community center. Good value for money, but can get crowded. Equipment is a bit old.',
     createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
@@ -108,7 +108,7 @@ export let mockFacilities: Facility[] = [
     latitude: 34.0522, 
     longitude: -118.2437,
     description: 'State-of-the-art multi-sport complex with indoor and outdoor facilities.',
-    images: ['https://placehold.co/800x450.png?text=Grand+Arena+Main', 'https://placehold.co/400x250.png?text=Arena+View+1', 'https://placehold.co/400x250.png?text=Arena+View+2'],
+    images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
     sports: [mockSports[0], mockSports[1], mockSports[2]], 
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[2], mockAmenities[3], mockAmenities[5]],
     operatingHours: [{ day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' }, { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' }, { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' }, { day: 'Sun', open: '09:00', close: '20:00' }],
@@ -131,7 +131,7 @@ export let mockFacilities: Facility[] = [
     latitude: 34.0550,
     longitude: -118.2500,
     description: 'Premium tennis courts with beautiful riverside views.',
-    images: ['https://placehold.co/800x450.png?text=Tennis+Club+Main', 'https://placehold.co/400x250.png?text=Tennis+Court+View'],
+    images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png'],
     sports: [mockSports[2]], 
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '07:00', close: '21:00' }, { day: 'Tue', open: '07:00', close: '21:00' }, { day: 'Wed', open: '07:00', close: '21:00' }, { day: 'Thu', open: '07:00', close: '21:00' }, { day: 'Fri', open: '07:00', close: '21:00' }, { day: 'Sat', open: '08:00', close: '18:00' }, { day: 'Sun', open: '08:00', close: '18:00' }],
@@ -153,7 +153,7 @@ export let mockFacilities: Facility[] = [
     latitude: 34.0600,
     longitude: -118.2300,
     description: 'Affordable and friendly community center with various sports options.',
-    images: ['https://placehold.co/800x450.png?text=Rec+Center+Main'],
+    images: ['https://placehold.co/800x450.png'],
     sports: [mockSports[1], mockSports[3], mockSports[5]], 
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[6]], // Removed equipment rental signage if no specific equip for now
     operatingHours: [{ day: 'Mon', open: '09:00', close: '21:00' }, { day: 'Tue', open: '09:00', close: '21:00' }, { day: 'Wed', open: '09:00', close: '21:00' }, { day: 'Thu', open: '09:00', close: '21:00' }, { day: 'Fri', open: '09:00', close: '20:00' }, { day: 'Sat', open: '10:00', close: '18:00' }, { day: 'Sun', open: '10:00', close: '16:00' }],
@@ -176,7 +176,7 @@ export let mockFacilities: Facility[] = [
     latitude: 34.0400,
     longitude: -118.2600,
     description: 'Large Olympic-sized swimming pool with dedicated lanes and recreational areas.',
-    images: ['https://placehold.co/800x450.png?text=Aqua+World+Pool', 'https://placehold.co/400x250.png?text=Pool+Lane', 'https://placehold.co/400x250.png?text=Pool+Area', 'https://placehold.co/400x250.png?text=Diving+Board'],
+    images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
     sports: [mockSports[4]], 
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '06:00', close: '20:00' }, { day: 'Tue', open: '06:00', close: '20:00' }, { day: 'Wed', open: '06:00', close: '20:00' }, { day: 'Thu', open: '06:00', close: '20:00' }, { day: 'Fri', open: '06:00', close: '20:00' }, { day: 'Sat', open: '07:00', close: '19:00' }, { day: 'Sun', open: '07:00', close: '19:00' }],
@@ -210,7 +210,7 @@ export const mockUser: UserProfile = {
   id: 'user-123',
   name: 'Alex Johnson',
   email: 'alex.johnson@example.com',
-  profilePictureUrl: 'https://placehold.co/100x100.png?text=AJ',
+  profilePictureUrl: 'https://placehold.co/100x100.png',
   dataAiHint: "user avatar",
   preferredSports: [mockSports[0], mockSports[2]],
   favoriteFacilities: ['facility-1', 'facility-2'],
@@ -228,7 +228,7 @@ export let mockBookings: Booking[] = [
     userId: 'user-123',
     facilityId: 'facility-1',
     facilityName: 'Grand City Arena',
-    facilityImage: 'https://placehold.co/300x200.png?text=Grand+Arena',
+    facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "arena floodlights",
     date: '2024-07-15', 
     startTime: '18:00',
@@ -250,7 +250,7 @@ export let mockBookings: Booking[] = [
     userId: 'user-123',
     facilityId: 'facility-2',
     facilityName: 'Riverside Tennis Club',
-    facilityImage: 'https://placehold.co/300x200.png?text=Tennis+Club',
+    facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "tennis court sunset",
     date: '2024-07-20', 
     startTime: '10:00',
@@ -269,7 +269,7 @@ export let mockBookings: Booking[] = [
     userId: 'user-123',
     facilityId: 'facility-3',
     facilityName: 'Community Rec Center',
-    facilityImage: 'https://placehold.co/300x200.png?text=Rec+Center',
+    facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "indoor basketball",
     date: '2024-06-25', 
     startTime: '14:00',
@@ -288,7 +288,7 @@ export let mockBookings: Booking[] = [
     userId: 'user-123',
     facilityId: 'facility-1',
     facilityName: 'Grand City Arena',
-    facilityImage: 'https://placehold.co/300x200.png?text=Grand+Arena+Soccer',
+    facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "soccer field night",
     date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Upcoming booking
     startTime: '20:00',
@@ -307,7 +307,7 @@ export let mockBookings: Booking[] = [
     userId: 'user-456', 
     facilityId: 'facility-3',
     facilityName: 'Community Rec Center',
-    facilityImage: 'https://placehold.co/300x200.png?text=Rec+Center+Basketball',
+    facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "basketball court aerial",
     date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
     startTime: '17:00',
@@ -325,7 +325,7 @@ export let mockBookings: Booking[] = [
     userId: 'user-789', 
     facilityId: 'facility-4',
     facilityName: 'Aqua World',
-    facilityImage: 'https://placehold.co/300x200.png?text=Aqua+World+Swim',
+    facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "swimming pool indoor",
     date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
     startTime: '09:00',
@@ -343,7 +343,7 @@ export let mockBookings: Booking[] = [
     userId: 'user-123',
     facilityId: 'facility-4',
     facilityName: 'Aqua World',
-    facilityImage: 'https://placehold.co/300x200.png?text=Aqua+Pool+Session',
+    facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "pool diving board",
     date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
     startTime: '15:00',
@@ -410,7 +410,7 @@ export let mockEvents: SportEvent[] = [
     entryFee: 20,
     maxParticipants: 64,
     registeredParticipants: 25,
-    imageUrl: 'https://placehold.co/600x300.png?text=Soccer+Tournament',
+    imageUrl: 'https://placehold.co/600x300.png',
     imageDataAiHint: "soccer tournament action"
   },
   {
@@ -424,7 +424,7 @@ export let mockEvents: SportEvent[] = [
     entryFee: 0,
     maxParticipants: 100, // Max participants for open day
     registeredParticipants: 0, // Open registration, no hard cap for open day
-    imageUrl: 'https://placehold.co/600x300.png?text=Tennis+Open+Day',
+    imageUrl: 'https://placehold.co/600x300.png',
     imageDataAiHint: "tennis players friendly"
   },
   {
@@ -438,7 +438,7 @@ export let mockEvents: SportEvent[] = [
     entryFee: 5,
     maxParticipants: 200, // Spectator capacity
     registeredParticipants: 112, // Could represent team registrations or expected attendance
-    imageUrl: 'https://placehold.co/600x300.png?text=Basketball+Finals',
+    imageUrl: 'https://placehold.co/600x300.png',
     imageDataAiHint: "basketball game intensity"
   },
    {
@@ -452,7 +452,7 @@ export let mockEvents: SportEvent[] = [
     entryFee: 15,
     maxParticipants: 48,
     registeredParticipants: 15,
-    imageUrl: 'https://placehold.co/600x300.png?text=Badminton+Bonanza',
+    imageUrl: 'https://placehold.co/600x300.png',
     imageDataAiHint: "badminton players action"
   },
   {
@@ -466,7 +466,7 @@ export let mockEvents: SportEvent[] = [
     entryFee: 50,
     maxParticipants: 30,
     registeredParticipants: 10,
-    imageUrl: 'https://placehold.co/600x300.png?text=Yoga+Retreat',
+    imageUrl: 'https://placehold.co/600x300.png',
     imageDataAiHint: "yoga outdoor group"
   }
 ];
@@ -830,10 +830,10 @@ export const mockBlogPosts: BlogPost[] = [
     title: 'Top 5 Badminton Courts in Metropolis You Need to Try',
     excerpt: 'Discover the best places to play badminton in Metropolis, from professional-grade courts to hidden gems perfect for a casual game.',
     content: '<p>Finding the perfect badminton court can elevate your game. Metropolis boasts a variety of options, but here are our top 5 picks:</p><ol><li><strong>Eagle Badminton Center:</strong> Known for its excellent lighting and well-maintained courts. A favorite among competitive players.</li><li><strong>Community Rec Center (Badminton Hall):</strong> Great value and very accessible. Offers multiple courts and is perfect for all skill levels.</li><li><strong>SkyHigh Sports Complex:</strong> Features dedicated badminton courts with good amenities, including equipment rental.</li><li><strong>Westside Badminton Club:</strong> A members-only club but offers guest passes. Known for its strong community and coaching programs.</li><li><strong>Metro Park Outdoor Courts:</strong> For those who enjoy playing outdoors, Metro Park offers several free-to-use courts, though availability can be a challenge.</li></ol><p>Remember to check booking availability and pricing before you go. Happy smashing!</p>',
-    imageUrl: 'https://placehold.co/800x400.png?text=Badminton+Courts',
+    imageUrl: 'https://placehold.co/800x400.png',
     imageAlt: 'A badminton court with a net and shuttlecock',
     authorName: 'Jane Doe, Sports Enthusiast',
-    authorAvatarUrl: 'https://placehold.co/50x50.png?text=JD',
+    authorAvatarUrl: 'https://placehold.co/50x50.png',
     publishedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     tags: ['Badminton', 'Metropolis', 'Sports Venues'],
     isFeatured: true,
@@ -845,10 +845,10 @@ export const mockBlogPosts: BlogPost[] = [
     title: 'Choosing the Right Soccer Cleats: A Beginner\'s Guide',
     excerpt: 'Your soccer cleats can make a huge difference in your performance and safety. Learn what to look for when buying your next pair.',
     content: '<p>Selecting the right soccer cleats is crucial for any player, regardless of skill level. Here are key factors to consider:</p><ul><li><strong>Playing Surface:</strong> Firm Ground (FG), Soft Ground (SG), Artificial Grass (AG), Turf (TF), and Indoor (IC) cleats are designed for specific surfaces. Using the wrong type can lead to injury or poor performance.</li><li><strong>Material:</strong> Leather (kangaroo, calfskin) offers a soft touch and molds to your foot, while synthetic materials are often lighter, more durable, and water-resistant.</li><li><strong>Fit:</strong> Cleats should fit snugly without being too tight. There should be minimal space between your toes and the end of the shoe.</li><li><strong>Stud Pattern:</strong> Different stud configurations offer varying levels of traction and stability. Conical studs are good for rotation, while bladed studs offer aggressive traction.</li><li><strong>Your Position:</strong> While not a strict rule, some cleats are marketed towards specific positions (e.g., lighter cleats for wingers, more protective for defenders).</li></ul><p>Try on several pairs and consider your playing style and budget. Investing in good cleats is investing in your game!</p>',
-    imageUrl: 'https://placehold.co/800x400.png?text=Soccer+Cleats',
+    imageUrl: 'https://placehold.co/800x400.png',
     imageAlt: 'A pair of soccer cleats on a grass field',
     authorName: 'Mike Lee, Soccer Coach',
-    authorAvatarUrl: 'https://placehold.co/50x50.png?text=ML',
+    authorAvatarUrl: 'https://placehold.co/50x50.png',
     publishedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
     tags: ['Soccer', 'Equipment', 'Tips'],
     dataAiHint: 'soccer cleats'
@@ -859,10 +859,10 @@ export const mockBlogPosts: BlogPost[] = [
     title: 'Dive In: The Amazing Health Benefits of Regular Swimming',
     excerpt: 'Swimming is more than just a recreational activity; it\'s a full-body workout with numerous health benefits for all ages.',
     content: '<p>Looking for a low-impact exercise that delivers high results? Swimming might be your answer. Here’s why:</p><ul><li><strong>Full-Body Workout:</strong> Swimming engages almost all major muscle groups, from your arms and shoulders to your core and legs.</li><li><strong>Low Impact:</strong> The buoyancy of water supports your body, making swimming gentle on your joints. This is great for people with arthritis or injuries.</li><li><strong>Cardiovascular Health:</strong> It’s an excellent aerobic exercise that strengthens your heart and improves lung capacity.</li><li><strong>Weight Management:</strong> Swimming burns a significant amount of calories, aiding in weight loss or maintenance.</li><li><strong>Stress Reduction:</strong> The rhythmic nature of swimming and the sensation of water can be very calming and meditative.</li><li><strong>Improved Flexibility & Balance:</strong> The range of motion involved in different strokes helps improve flexibility.</li></ul><p>Whether you prefer laps in a pool or open water swimming, incorporating it into your routine can lead to significant health improvements.</p>',
-    imageUrl: 'https://placehold.co/800x400.png?text=Swimming+Pool',
+    imageUrl: 'https://placehold.co/800x400.png',
     imageAlt: 'A person swimming in a clear blue pool',
     authorName: 'Dr. Aqua Fina',
-    authorAvatarUrl: 'https://placehold.co/50x50.png?text=AF',
+    authorAvatarUrl: 'https://placehold.co/50x50.png',
     publishedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
     tags: ['Swimming', 'Health', 'Fitness', 'Wellness'],
     dataAiHint: 'swimming pool'
@@ -974,4 +974,5 @@ export const deletePromotionRule = (ruleId: string): boolean => {
     mockPromotionRules = mockPromotionRules.filter(r => r.id !== ruleId);
     return mockPromotionRules.length < initialLength;
 };
+
 
