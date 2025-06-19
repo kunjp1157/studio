@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Image as ImageIcon, Users, SunMoon, TrendingUpIcon, ClockIcon } from 'lucide-react';
+import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Image as ImageIcon, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LayoutPanelLeft, LocateFixed, Star } from 'lucide-react';
 
 const facilityFormSchema = z.object({
   name: z.string().min(3, { message: "Facility name must be at least 3 characters." }),
