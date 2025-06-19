@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { MountainSnow, Dices, Wand2, FileText } from 'lucide-react'; // Placeholder icon for logo
+import { MountainSnow, Dices, Wand2, FileText, CalendarDays } from 'lucide-react'; // Added CalendarDays
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export function Header() {
@@ -26,7 +26,10 @@ export function Header() {
             </Button>
           </Link>
           <Link href="/events">
-            <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">Events</Button>
+            <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">
+                <CalendarDays className="h-4 w-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Events</span>
+            </Button>
           </Link>
           <Link href="/memberships">
             <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">Memberships</Button>
