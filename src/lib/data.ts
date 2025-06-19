@@ -17,6 +17,7 @@ export const mockSports: Sport[] = [
   { id: 'sport-10', name: 'Dance', icon: Music, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'dance studio'},
   { id: 'sport-11', name: 'Camping', icon: Tent, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'camping tent' },
   { id: 'sport-12', name: 'Theatre', icon: Drama, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'theatre stage' },
+  { id: 'sport-13', name: 'Cricket', icon: Dices, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cricket bat ball' },
 ];
 
 export const mockAmenities: Amenity[] = [
@@ -974,5 +975,6 @@ export const deletePromotionRule = (ruleId: string): boolean => {
     mockPromotionRules = mockPromotionRules.filter(r => r.id !== ruleId);
     return mockPromotionRules.length < initialLength;
 };
+
 
 
