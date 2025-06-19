@@ -377,7 +377,7 @@ export const mockReportData: ReportData = {
   ],
 };
 
-export const mockMembershipPlans: MembershipPlan[] = [
+export let mockMembershipPlans: MembershipPlan[] = [
   {
     id: 'mem-1',
     name: 'Basic',
@@ -802,10 +802,41 @@ export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
   return mockBlogPosts.find(post => post.slug === slug);
 };
 
+// Membership Plan Data Management
+export const getAllMembershipPlans = (): MembershipPlan[] => {
+  return [...mockMembershipPlans];
+};
+
+export const getMembershipPlanById = (id: string): MembershipPlan | undefined => {
+  return mockMembershipPlans.find(plan => plan.id === id);
+};
+
+export const addMembershipPlan = (planData: Omit<MembershipPlan, 'id'>): MembershipPlan => {
+  const newPlan: MembershipPlan = {
+    ...planData,
+    id: `mem-${Date.now()}`,
+  };
+  mockMembershipPlans.push(newPlan);
+  return newPlan;
+};
+
+export const updateMembershipPlan = (updatedPlanData: MembershipPlan): MembershipPlan | undefined => {
+  const planIndex = mockMembershipPlans.findIndex(p => p.id === updatedPlanData.id);
+  if (planIndex === -1) return undefined;
+  mockMembershipPlans[planIndex] = updatedPlanData;
+  return mockMembershipPlans[planIndex];
+};
+
+export const deleteMembershipPlan = (planId: string): boolean => {
+  const initialLength = mockMembershipPlans.length;
+  mockMembershipPlans = mockMembershipPlans.filter(p => p.id !== planId);
+  return mockMembershipPlans.length < initialLength;
+};
+
+
 export const mockPromotionRules: PromotionRule[] = [];
 
 export const mockAdminUsers: UserProfile[] = [
     { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@citysportshub.com'},
     // Add other mock admin users if needed
 ];
-
