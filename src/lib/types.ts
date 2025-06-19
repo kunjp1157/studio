@@ -143,3 +143,19 @@ export interface AppNotification {
   link?: string; // Optional link to navigate to
   icon?: React.ElementType; // Optional specific icon
 }
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string; // Could be Markdown or HTML
+  imageUrl?: string;
+  imageAlt?: string;
+  authorName: string;
+  authorAvatarUrl?: string;
+  publishedAt: string; // ISO date string
+  tags?: string[];
+  isFeatured?: boolean;
+  dataAiHint?: string;
+}

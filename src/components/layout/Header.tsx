@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { MountainSnow, Dices, Wand2 } from 'lucide-react'; // Placeholder icon for logo
+import { MountainSnow, Dices, Wand2, FileText } from 'lucide-react'; // Placeholder icon for logo
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export function Header() {
@@ -31,7 +31,13 @@ export function Header() {
           <Link href="/memberships">
             <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">Memberships</Button>
           </Link>
-          <Link href="/recommendation">
+          <Link href="/blog">
+            <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">
+                <FileText className="h-4 w-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Blog</span>
+            </Button>
+          </Link>
+          <Link href="/recommendation" className="ml-auto md:ml-0">
             <Button variant="ghost" className="text-sm font-medium text-accent-foreground bg-accent hover:bg-accent/90 px-2 sm:px-3">
                 <Wand2 className="h-4 w-4 mr-0 sm:mr-2" />
                 <span className="hidden sm:inline">AI Recommender</span>
