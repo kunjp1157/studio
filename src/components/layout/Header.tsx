@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
 import { MountainSnow, Dices, Wand2 } from 'lucide-react'; // Placeholder icon for logo
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export function Header() {
   return (
@@ -39,6 +40,7 @@ export function Header() {
           </Link>
         </nav>
         <div className="flex items-center space-x-2 sm:space-x-4">
+          <NotificationBell />
           <UserNav />
         </div>
       </div>

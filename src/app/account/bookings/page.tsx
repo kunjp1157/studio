@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review } from '@/lib/types';
-import { mockUser, getBookingsByUserId, getFacilityById, addReview as addMockReview } from '@/lib/data';
+import { mockUser, getBookingsByUserId, getFacilityById, addReview as addMockReview, addNotification } from '@/lib/data';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -71,6 +71,7 @@ export default function BookingsPage() {
   const handleCancelBooking = (bookingId: string) => {
     setIsLoading(true);
     setTimeout(() => {
+      const bookingToCancel = bookings.find(b => b.id === bookingId);
       setBookings(prevBookings => 
         prevBookings.map(b => b.id === bookingId ? { ...b, status: 'Cancelled' } : b)
       );
@@ -78,6 +79,16 @@ export default function BookingsPage() {
         title: "Booking Cancelled",
         description: "Your booking has been successfully cancelled.",
       });
+      
+      if (bookingToCancel) {
+        addNotification(mockUser.id, {
+            type: 'booking_cancelled',
+            title: 'Booking Cancelled',
+            message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} has been cancelled.`,
+            link: '/account/bookings',
+        });
+      }
+      // In a real app, also trigger backend to send email/SMS confirmation of cancellation.
       setIsLoading(false);
     }, 1000);
   };
@@ -107,6 +118,15 @@ export default function BookingsPage() {
         description: `Thank you for reviewing ${selectedBookingForReview.facilityName}.`,
         className: "bg-green-500 text-white",
       });
+      
+      addNotification(mockUser.id, {
+        type: 'review_submitted',
+        title: 'Review Submitted!',
+        message: `Your review for ${selectedBookingForReview.facilityName} has been posted.`,
+        link: `/facilities/${selectedBookingForReview.facilityId}`,
+      });
+      // In a real app, also trigger backend to potentially notify facility owner or for moderation.
+
       setIsReviewModalOpen(false);
       setSelectedBookingForReview(null);
     } catch (error) {

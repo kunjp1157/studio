@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Facility, TimeSlot } from '@/lib/types';
-import { getFacilityById, mockUser } from '@/lib/data';
+import { getFacilityById, mockUser, addNotification } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,12 +95,25 @@ export default function BookingPage() {
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsLoading(false);
     setBookingStep('confirmation');
+    const bookingDate = selectedDate ? format(selectedDate, 'PPP') : 'N/A';
+    const bookingTime = selectedSlot?.startTime || 'N/A';
+    
     toast({
       title: "Booking Confirmed!",
-      description: `Your booking for ${facility?.name} on ${selectedDate ? format(selectedDate, 'PPP') : ''} at ${selectedSlot?.startTime} is confirmed.`,
-      variant: "default", // Changed from success as it's not a shadcn variant
-      className: "bg-green-500 text-white", // Custom styling for success
+      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} is confirmed.`,
+      className: "bg-green-500 text-white",
     });
+
+    // Simulate adding an in-app notification
+    if (facility) {
+        addNotification(mockUser.id, {
+            type: 'booking_confirmed',
+            title: 'Booking Confirmed!',
+            message: `Your booking for ${facility.name} on ${bookingDate} at ${bookingTime} is successful.`,
+            link: '/account/bookings',
+        });
+    }
+    // In a real app, you would also trigger backend to send email/SMS here.
   };
 
 

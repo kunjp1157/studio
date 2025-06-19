@@ -129,3 +129,17 @@ export interface SearchFilters {
   selectedAmenities?: string[];
   indoorOutdoor?: 'any' | 'indoor' | 'outdoor';
 }
+
+export type NotificationType = 'booking_confirmed' | 'booking_cancelled' | 'review_submitted' | 'reminder' | 'promotion' | 'general';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  createdAt: string; // ISO date string
+  isRead: boolean;
+  link?: string; // Optional link to navigate to
+  icon?: React.ElementType; // Optional specific icon
+}

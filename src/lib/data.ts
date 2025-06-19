@@ -1,6 +1,6 @@
 
-import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review } from './types';
-import { Shirt, ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Waves, Activity, Feather } from 'lucide-react';
+import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType } from './types';
+import { Shirt, ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Waves, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift } from 'lucide-react';
 
 export const mockSports: Sport[] = [
   { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://placehold.co/100x100.png?text=Soccer', imageDataAiHint: 'soccer ball' },
@@ -72,7 +72,6 @@ export let mockReviews: Review[] = [
   },
 ];
 
-// Moved function definitions before their usage
 export const getReviewsByFacilityId = (facilityId: string): Review[] => {
   return mockReviews.filter(review => review.facilityId === facilityId);
 };
@@ -170,9 +169,9 @@ export let mockFacilities: Facility[] = [
 
 // Calculate initial ratings
 mockFacilities.forEach(facility => {
-  const facilityReviews = getReviewsByFacilityId(facility.id); // Now this function is defined above
+  const facilityReviews = getReviewsByFacilityId(facility.id); 
   facility.reviews = facilityReviews;
-  facility.rating = calculateAverageRating(facilityReviews); // Now this function is defined above
+  facility.rating = calculateAverageRating(facilityReviews); 
 });
 
 
@@ -356,11 +355,11 @@ export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userNam
 export const getFacilityById = (id: string): Facility | undefined => {
   const facility = mockFacilities.find(f => f.id === id);
   if (facility) {
-    const reviews = getReviewsByFacilityId(id); // Safe to call here
+    const reviews = getReviewsByFacilityId(id);
     return {
       ...facility,
       reviews: reviews,
-      rating: calculateAverageRating(reviews), // Safe to call here
+      rating: calculateAverageRating(reviews),
     };
   }
   return undefined;
@@ -373,3 +372,84 @@ export const getBookingsByUserId = (userId: string): Booking[] => {
 export const getSportById = (id: string): Sport | undefined => {
   return mockSports.find(sport => sport.id === id);
 }
+
+
+// Notifications Data
+let mockAppNotifications: AppNotification[] = [
+  {
+    id: 'notif-1',
+    userId: 'user-123',
+    type: 'booking_confirmed',
+    title: 'Booking Confirmed!',
+    message: 'Your booking for Grand City Arena on July 15th is confirmed.',
+    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+    isRead: false,
+    link: '/account/bookings',
+    icon: CheckCircle,
+  },
+  {
+    id: 'notif-2',
+    userId: 'user-123',
+    type: 'reminder',
+    title: 'Upcoming Booking Reminder',
+    message: 'Your tennis session at Riverside Tennis Club is tomorrow at 10:00 AM.',
+    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+    isRead: true,
+    link: '/account/bookings',
+    icon: CalendarDays,
+  },
+  {
+    id: 'notif-3',
+    userId: 'user-123',
+    type: 'promotion',
+    title: 'Special Offer Just For You!',
+    message: 'Get 20% off your next booking with code SUMMER20.',
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    isRead: false,
+    link: '/facilities',
+    icon: Gift,
+  },
+];
+
+export const getNotificationsForUser = (userId: string): AppNotification[] => {
+  return mockAppNotifications
+    .filter(n => n.userId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
+export const markNotificationAsRead = (userId: string, notificationId: string): void => {
+  const notification = mockAppNotifications.find(n => n.id === notificationId && n.userId === userId);
+  if (notification) {
+    notification.isRead = true;
+  }
+};
+
+export const markAllNotificationsAsRead = (userId: string): void => {
+  mockAppNotifications.forEach(n => {
+    if (n.userId === userId) {
+      n.isRead = true;
+    }
+  });
+};
+
+export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
+  let icon = Info;
+  switch (notificationData.type) {
+    case 'booking_confirmed': icon = CheckCircle; break;
+    case 'booking_cancelled': icon = XCircle; break;
+    case 'review_submitted': icon = MessageSquareText; break;
+    case 'reminder': icon = CalendarDays; break;
+    case 'promotion': icon = Gift; break;
+  }
+
+  const newNotification: AppNotification = {
+    ...notificationData,
+    id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    userId,
+    createdAt: new Date().toISOString(),
+    isRead: false,
+    icon: notificationData.icon || icon,
+  };
+  mockAppNotifications.unshift(newNotification); // Add to the beginning to show newest first
+  return newNotification;
+};
