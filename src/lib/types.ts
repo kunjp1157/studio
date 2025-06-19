@@ -25,6 +25,19 @@ export interface Review {
   bookingId?: string; // To link review to a specific booking
 }
 
+export interface PricingRule {
+  id: string;
+  name: string; // e.g., "Weekend Evening Surge", "Weekday Morning Discount"
+  description?: string;
+  daysOfWeek?: ('Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun')[]; // Specific days this rule applies to
+  timeRange?: [string, string]; // e.g., ["17:00", "21:00"]
+  dateRange?: [string, string]; // e.g., ["2024-12-20", "2024-12-26"] for holiday pricing
+  adjustmentType: 'percentage_increase' | 'percentage_decrease' | 'fixed_increase' | 'fixed_decrease' | 'fixed_price';
+  value: number; // The actual adjustment value or fixed price
+  priority?: number; // To handle overlapping rules, lower numbers apply first
+  isActive: boolean;
+}
+
 export interface Facility {
   id: string;
   name:string;
@@ -42,7 +55,8 @@ export interface Facility {
     open: string; // e.g., "08:00"
     close: string; // e.g., "22:00"
   }[];
-  pricePerHour: number; // Base price
+  pricePerHour: number; // Base price, or current default. Dynamic rules would modify this.
+  pricingRules?: PricingRule[]; // Optional array for dynamic pricing rules
   rating: number; // This will now be dynamically calculated based on reviews
   reviews?: Review[]; // Array of reviews associated with the facility
   capacity?: number;

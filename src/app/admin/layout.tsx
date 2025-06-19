@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MountainSnow, LayoutDashboard, Building2, Users, BarChart3, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket } from 'lucide-react';
+import { MountainSnow, LayoutDashboard, Building2, Users, BarChart3, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { mockUser } from '@/lib/data';
 
@@ -88,6 +88,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <SidebarMenuButton isActive={isActive('/admin/events')} tooltip="Events">
                     <EventIcon />
                     <span>Events</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/admin/pricing">
+                  <SidebarMenuButton isActive={isActive('/admin/pricing')} tooltip="Pricing Rules">
+                    <DollarSign />
+                    <span>Pricing Rules</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
