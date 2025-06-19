@@ -72,6 +72,20 @@ export let mockReviews: Review[] = [
   },
 ];
 
+// Moved function definitions before their usage
+export const getReviewsByFacilityId = (facilityId: string): Review[] => {
+  return mockReviews.filter(review => review.facilityId === facilityId);
+};
+
+export const calculateAverageRating = (reviews: Review[] | undefined): number => {
+  if (!reviews || reviews.length === 0) {
+    return 0;
+  }
+  const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
+  return parseFloat((totalRating / reviews.length).toFixed(1));
+};
+
+
 export let mockFacilities: Facility[] = [
   {
     id: 'facility-1',
@@ -79,17 +93,18 @@ export let mockFacilities: Facility[] = [
     type: 'Complex',
     address: '123 Stadium Rd, Metropolis, CA 90210',
     location: 'Metropolis',
-    latitude: 34.0522, // Example coordinates
+    latitude: 34.0522, 
     longitude: -118.2437,
     description: 'State-of-the-art multi-sport complex with indoor and outdoor facilities.',
     images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
-    sports: [mockSports[0], mockSports[1], mockSports[2]], // Soccer, Basketball, Tennis
+    sports: [mockSports[0], mockSports[1], mockSports[2]], 
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[2], mockAmenities[3], mockAmenities[5]],
     operatingHours: [{ day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' }, { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' }, { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' }, { day: 'Sun', open: '09:00', close: '20:00' }],
     pricePerHour: 50,
     rating: 0, 
     reviews: [], 
     isPopular: true,
+    isIndoor: true,
     dataAiHint: 'sports complex stadium',
     capacity: 500,
   },
@@ -103,12 +118,13 @@ export let mockFacilities: Facility[] = [
     longitude: -118.2500,
     description: 'Premium tennis courts with beautiful riverside views.',
     images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png'],
-    sports: [mockSports[2]], // Tennis
+    sports: [mockSports[2]], 
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '07:00', close: '21:00' }, { day: 'Tue', open: '07:00', close: '21:00' }, { day: 'Wed', open: '07:00', close: '21:00' }, { day: 'Thu', open: '07:00', close: '21:00' }, { day: 'Fri', open: '07:00', close: '21:00' }, { day: 'Sat', open: '08:00', close: '18:00' }, { day: 'Sun', open: '08:00', close: '18:00' }],
     pricePerHour: 30,
     rating: 0, 
     reviews: [], 
+    isIndoor: false,
     dataAiHint: 'tennis court outdoor',
   },
   {
@@ -121,13 +137,14 @@ export let mockFacilities: Facility[] = [
     longitude: -118.2300,
     description: 'Affordable and friendly community center with various sports options.',
     images: ['https://placehold.co/800x450.png'],
-    sports: [mockSports[1], mockSports[3], mockSports[5]], // Basketball, Badminton, Gym
+    sports: [mockSports[1], mockSports[3], mockSports[5]], 
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[4], mockAmenities[6]],
     operatingHours: [{ day: 'Mon', open: '09:00', close: '21:00' }, { day: 'Tue', open: '09:00', close: '21:00' }, { day: 'Wed', open: '09:00', close: '21:00' }, { day: 'Thu', open: '09:00', close: '21:00' }, { day: 'Fri', open: '09:00', close: '20:00' }, { day: 'Sat', open: '10:00', close: '18:00' }, { day: 'Sun', open: '10:00', close: '16:00' }],
     pricePerHour: 20,
     rating: 0, 
     reviews: [], 
     isPopular: true,
+    isIndoor: true,
     dataAiHint: 'community center indoor',
   },
   {
@@ -140,15 +157,24 @@ export let mockFacilities: Facility[] = [
     longitude: -118.2600,
     description: 'Large Olympic-sized swimming pool with dedicated lanes and recreational areas.',
     images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
-    sports: [mockSports[4]], // Swimming
+    sports: [mockSports[4]], 
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '06:00', close: '20:00' }, { day: 'Tue', open: '06:00', close: '20:00' }, { day: 'Wed', open: '06:00', close: '20:00' }, { day: 'Thu', open: '06:00', close: '20:00' }, { day: 'Fri', open: '06:00', close: '20:00' }, { day: 'Sat', open: '07:00', close: '19:00' }, { day: 'Sun', open: '07:00', close: '19:00' }],
     pricePerHour: 15,
     rating: 0, 
     reviews: [], 
+    isIndoor: true,
     dataAiHint: 'swimming pool olympic',
   },
 ];
+
+// Calculate initial ratings
+mockFacilities.forEach(facility => {
+  const facilityReviews = getReviewsByFacilityId(facility.id); // Now this function is defined above
+  facility.reviews = facilityReviews;
+  facility.rating = calculateAverageRating(facilityReviews); // Now this function is defined above
+});
+
 
 export const mockUser: UserProfile = {
   id: 'user-123',
@@ -265,7 +291,7 @@ export const mockEvents: SportEvent[] = [
     id: 'event-1',
     name: 'Summer Soccer Tournament',
     facilityId: 'facility-1',
-    sport: mockSports[0], // Soccer
+    sport: mockSports[0], 
     startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'Annual summer soccer tournament for all skill levels. Join us for a competitive and fun weekend!',
@@ -278,7 +304,7 @@ export const mockEvents: SportEvent[] = [
     id: 'event-2',
     name: 'Tennis Open Day',
     facilityId: 'facility-2',
-    sport: mockSports[2], // Tennis
+    sport: mockSports[2], 
     startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'Come try our tennis courts for free! Coaching available for beginners. Fun for the whole family.',
@@ -290,7 +316,7 @@ export const mockEvents: SportEvent[] = [
     id: 'event-3',
     name: 'Community Basketball League Finals',
     facilityId: 'facility-3',
-    sport: mockSports[1], // Basketball
+    sport: mockSports[1], 
     startDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
     endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
     description: 'The exciting conclusion to our community basketball league. Witness the crowning of the champions!',
@@ -301,21 +327,7 @@ export const mockEvents: SportEvent[] = [
   },
 ];
 
-// Helper function to get reviews for a facility
-export const getReviewsByFacilityId = (facilityId: string): Review[] => {
-  return mockReviews.filter(review => review.facilityId === facilityId);
-};
 
-// Helper function to calculate average rating
-export const calculateAverageRating = (reviews: Review[] | undefined): number => {
-  if (!reviews || reviews.length === 0) {
-    return 0;
-  }
-  const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
-  return parseFloat((totalRating / reviews.length).toFixed(1));
-};
-
-// Helper function to add a review (mock)
 export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Review => {
   const newReview: Review = {
     ...reviewData,
@@ -341,27 +353,23 @@ export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userNam
   return newReview;
 };
 
-// Helper function to get a facility by ID, now populating reviews and calculating rating
 export const getFacilityById = (id: string): Facility | undefined => {
   const facility = mockFacilities.find(f => f.id === id);
   if (facility) {
-    const reviews = getReviewsByFacilityId(id);
+    const reviews = getReviewsByFacilityId(id); // Safe to call here
     return {
       ...facility,
       reviews: reviews,
-      rating: calculateAverageRating(reviews),
+      rating: calculateAverageRating(reviews), // Safe to call here
     };
   }
   return undefined;
 };
 
-
-// Helper function to get bookings for a user
 export const getBookingsByUserId = (userId: string): Booking[] => {
   return mockBookings.filter(booking => booking.userId === userId);
 };
 
-// Helper function to get a sport by ID
 export const getSportById = (id: string): Sport | undefined => {
   return mockSports.find(sport => sport.id === id);
 }

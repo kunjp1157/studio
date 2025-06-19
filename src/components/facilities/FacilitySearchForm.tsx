@@ -1,122 +1,226 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import type { SearchFilters, Amenity as AmenityType } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Search, MapPin, CalendarDays, Filter, Dices } from 'lucide-react';
-import { mockSports } from '@/lib/data'; // For sport options
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks } from 'lucide-react';
+import { mockSports, mockAmenities, mockFacilities } from '@/lib/data'; 
 import { format } from 'date-fns';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+
 
 interface FacilitySearchFormProps {
-  onSearch: (filters: { searchTerm: string; sport: string; location: string; date?: Date }) => void;
+  onSearch: (filters: SearchFilters) => void;
 }
 
-const ANY_SPORT_VALUE = "all-sports-filter-value"; // Unique value for "Any Sport"
+const ANY_SPORT_VALUE = "all-sports-filter-value";
 
 export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSport, setSelectedSport] = useState(ANY_SPORT_VALUE); // Default to "Any Sport"
+  const [selectedSport, setSelectedSport] = useState(ANY_SPORT_VALUE);
   const [location, setLocation] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  
+  const [minPrice, maxPrice] = useMemo(() => {
+    if (mockFacilities.length === 0) return [0, 100];
+    const prices = mockFacilities.map(f => f.pricePerHour);
+    return [Math.min(...prices), Math.max(...prices)];
+  }, []);
+
+  const [priceRange, setPriceRange] = useState<[number, number]>([minPrice, maxPrice]);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [indoorOutdoor, setIndoorOutdoor] = useState<'any' | 'indoor' | 'outdoor'>('any');
+  const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
+
+
+  const handleAmenityChange = (amenityId: string) => {
+    setSelectedAmenities(prev =>
+      prev.includes(amenityId)
+        ? prev.filter(id => id !== amenityId)
+        : [...prev, amenityId]
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch({ 
       searchTerm, 
-      sport: selectedSport === ANY_SPORT_VALUE ? '' : selectedSport, // Pass empty string if "Any Sport"
+      sport: selectedSport === ANY_SPORT_VALUE ? '' : selectedSport, 
       location, 
-      date: selectedDate 
+      date: selectedDate,
+      priceRange: priceRange[0] === minPrice && priceRange[1] === maxPrice ? undefined : priceRange, // Only pass if changed from default full range
+      selectedAmenities: selectedAmenities.length > 0 ? selectedAmenities : undefined,
+      indoorOutdoor: indoorOutdoor === 'any' ? undefined : indoorOutdoor,
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 bg-card rounded-xl shadow-lg space-y-4 md:space-y-0 md:flex md:items-end md:space-x-4">
-      <div className="flex-grow">
-        <label htmlFor="search-term" className="block text-sm font-medium text-foreground mb-1">
-          Search Facility
-        </label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            id="search-term"
-            type="text"
-            placeholder="e.g., Grand Arena, Soccer field"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="sport-type" className="block text-sm font-medium text-foreground mb-1">
-          Sport Type
-        </label>
-        <Select value={selectedSport} onValueChange={setSelectedSport}>
-          <SelectTrigger className="w-full md:w-[180px]">
-            <Dices className="h-4 w-4 mr-2 text-muted-foreground" />
-            <SelectValue placeholder="Any Sport" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ANY_SPORT_VALUE}>Any Sport</SelectItem>
-            {mockSports.map((sport) => (
-              <SelectItem key={sport.id} value={sport.id}>
-                {sport.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <label htmlFor="location" className="block text-sm font-medium text-foreground mb-1">
-          Location
-        </label>
-         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            id="location"
-            type="text"
-            placeholder="e.g., Metropolis"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="pl-10 w-full md:w-[180px]"
-          />
-        </div>
-      </div>
-      
-      <div>
-        <label htmlFor="date" className="block text-sm font-medium text-foreground mb-1">
-          Date
-        </label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full md:w-[180px] justify-start text-left font-normal"
-            >
-              <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-              {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              initialFocus
+    <form onSubmit={handleSubmit} className="p-6 bg-card rounded-xl shadow-lg space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div>
+          <Label htmlFor="search-term" className="block text-sm font-medium text-foreground mb-1">
+            Search Facility
+          </Label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              id="search-term"
+              type="text"
+              placeholder="e.g., Grand Arena, Soccer field"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
             />
-          </PopoverContent>
-        </Popover>
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="sport-type" className="block text-sm font-medium text-foreground mb-1">
+            Sport Type
+          </Label>
+          <Select value={selectedSport} onValueChange={setSelectedSport}>
+            <SelectTrigger>
+              <Dices className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Any Sport" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ANY_SPORT_VALUE}>Any Sport</SelectItem>
+              {mockSports.map((sport) => (
+                <SelectItem key={sport.id} value={sport.id}>
+                  {sport.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="location" className="block text-sm font-medium text-foreground mb-1">
+            Location
+          </Label>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              id="location"
+              type="text"
+              placeholder="e.g., Metropolis"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+        
+        <div>
+          <Label htmlFor="date" className="block text-sm font-medium text-foreground mb-1">
+            Date
+          </Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-left font-normal"
+              >
+                <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
+                {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                initialFocus
+                disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
-      <Button type="submit" className="w-full md:w-auto bg-primary hover:bg-primary/90">
-        <Filter className="mr-2 h-4 w-4" /> Search
-      </Button>
+      <Collapsible open={isAdvancedFiltersOpen} onOpenChange={setIsAdvancedFiltersOpen}>
+        <CollapsibleTrigger asChild>
+            <Button variant="link" className="p-0 text-sm">
+                <Filter className="mr-2 h-4 w-4" />
+                {isAdvancedFiltersOpen ? "Hide" : "Show"} Advanced Filters
+            </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-6 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                 <div>
+                    <Label htmlFor="indoor-outdoor" className="block text-sm font-medium text-foreground mb-1">
+                        Environment
+                    </Label>
+                    <Select value={indoorOutdoor} onValueChange={(value) => setIndoorOutdoor(value as 'any' | 'indoor' | 'outdoor')}>
+                        <SelectTrigger>
+                        <SunMoon className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <SelectValue placeholder="Any Environment" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="any">Any</SelectItem>
+                        <SelectItem value="indoor">Indoor</SelectItem>
+                        <SelectItem value="outdoor">Outdoor</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label htmlFor="price-range" className="block text-sm font-medium text-foreground mb-1">
+                        Price Range (${priceRange[0]} - ${priceRange[1]})
+                    </Label>
+                    <div className="flex items-center space-x-2">
+                        <DollarSign className="h-5 w-5 text-muted-foreground" />
+                        <Slider
+                        id="price-range"
+                        min={minPrice}
+                        max={maxPrice}
+                        step={1}
+                        value={priceRange}
+                        onValueChange={(value) => setPriceRange(value as [number, number])}
+                        className="my-2"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div>
+              <Label className="block text-sm font-medium text-foreground mb-2">
+                <ListChecks className="inline h-4 w-4 mr-2 text-muted-foreground" /> Specific Amenities
+              </Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2 p-4 border rounded-md bg-muted/20">
+                {mockAmenities.map((amenity) => {
+                  const AmenityIcon = amenity.icon || LayoutPanelLeft;
+                  return (
+                    <div key={amenity.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`amenity-${amenity.id}`}
+                        checked={selectedAmenities.includes(amenity.id)}
+                        onCheckedChange={() => handleAmenityChange(amenity.id)}
+                      />
+                      <Label htmlFor={`amenity-${amenity.id}`} className="font-normal text-sm flex items-center">
+                        <AmenityIcon className="mr-1.5 h-4 w-4 text-primary" />
+                        {amenity.name}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      <div className="pt-2 flex justify-end">
+        <Button type="submit" className="w-full md:w-auto">
+          <Search className="mr-2 h-4 w-4" /> Apply Filters & Search
+        </Button>
+      </div>
     </form>
   );
 }

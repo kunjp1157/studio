@@ -47,6 +47,7 @@ export interface Facility {
   reviews?: Review[]; // Array of reviews associated with the facility
   capacity?: number;
   isPopular?: boolean;
+  isIndoor?: boolean; // Added for indoor/outdoor filter
   dataAiHint?: string; // For placeholder image generation for the facility itself
 }
 
@@ -116,4 +117,15 @@ export interface SportEvent {
   registeredParticipants: number;
   imageUrl?: string;
   imageDataAiHint?: string;
+}
+
+// For FacilitySearchForm
+export interface SearchFilters {
+  searchTerm: string;
+  sport: string;
+  location: string;
+  date?: Date;
+  priceRange?: [number, number];
+  selectedAmenities?: string[];
+  indoorOutdoor?: 'any' | 'indoor' | 'outdoor';
 }
