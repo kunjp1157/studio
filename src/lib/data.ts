@@ -1,5 +1,5 @@
 
-import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement } from './types';
+import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket } from 'lucide-react';
 import { parseISO } from 'date-fns';
 
@@ -113,7 +113,7 @@ export let mockFacilities: Facility[] = [
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[2], mockAmenities[3], mockAmenities[5]],
     operatingHours: [{ day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' }, { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' }, { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' }, { day: 'Sun', open: '09:00', close: '20:00' }],
     pricePerHour: 50,
-    pricingRules: [],
+    pricingRulesApplied: [],
     rating: 0, 
     reviews: [], 
     capacity: 100,
@@ -136,7 +136,7 @@ export let mockFacilities: Facility[] = [
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '07:00', close: '21:00' }, { day: 'Tue', open: '07:00', close: '21:00' }, { day: 'Wed', open: '07:00', close: '21:00' }, { day: 'Thu', open: '07:00', close: '21:00' }, { day: 'Fri', open: '07:00', close: '21:00' }, { day: 'Sat', open: '08:00', close: '18:00' }, { day: 'Sun', open: '08:00', close: '18:00' }],
     pricePerHour: 30,
-    pricingRules: [],
+    pricingRulesApplied: [],
     rating: 0, 
     reviews: [], 
     capacity: 4,
@@ -158,7 +158,7 @@ export let mockFacilities: Facility[] = [
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[6]], // Removed equipment rental signage if no specific equip for now
     operatingHours: [{ day: 'Mon', open: '09:00', close: '21:00' }, { day: 'Tue', open: '09:00', close: '21:00' }, { day: 'Wed', open: '09:00', close: '21:00' }, { day: 'Thu', open: '09:00', close: '21:00' }, { day: 'Fri', open: '09:00', close: '20:00' }, { day: 'Sat', open: '10:00', close: '18:00' }, { day: 'Sun', open: '10:00', close: '16:00' }],
     pricePerHour: 20,
-    pricingRules: [],
+    pricingRulesApplied: [],
     rating: 0, 
     reviews: [], 
     capacity: 50,
@@ -181,7 +181,7 @@ export let mockFacilities: Facility[] = [
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '06:00', close: '20:00' }, { day: 'Tue', open: '06:00', close: '20:00' }, { day: 'Wed', open: '06:00', close: '20:00' }, { day: 'Thu', open: '06:00', close: '20:00' }, { day: 'Fri', open: '06:00', close: '20:00' }, { day: 'Sat', open: '07:00', close: '19:00' }, { day: 'Sun', open: '07:00', close: '19:00' }],
     pricePerHour: 15,
-    pricingRules: [],
+    pricingRulesApplied: [],
     rating: 0, 
     reviews: [], 
     capacity: 200,
@@ -471,6 +471,40 @@ export let mockEvents: SportEvent[] = [
   }
 ];
 
+export let mockPricingRules: PricingRule[] = [
+    {
+        id: 'price-rule-1',
+        name: 'Weekend Evening Surge',
+        description: 'Higher prices for popular weekend evening slots.',
+        daysOfWeek: ['Sat', 'Sun'],
+        timeRange: { start: '18:00', end: '22:00' },
+        adjustmentType: 'percentage_increase',
+        value: 20, // 20% increase
+        priority: 10,
+        isActive: true,
+    },
+    {
+        id: 'price-rule-2',
+        name: 'Weekday Morning Discount',
+        description: 'Discount for less busy weekday morning hours.',
+        daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        timeRange: { start: '08:00', end: '12:00' },
+        adjustmentType: 'percentage_decrease',
+        value: 15, // 15% decrease
+        priority: 10,
+        isActive: true,
+    },
+    {
+        id: 'price-rule-3',
+        name: 'Holiday Special Pricing',
+        dateRange: { start: '2024-12-20', end: '2024-12-26' },
+        adjustmentType: 'fixed_price',
+        value: 75, // Fixed price of $75 during this period
+        priority: 5, // Higher priority
+        isActive: true,
+    }
+];
+
 export const getAllEvents = (): SportEvent[] => {
   return [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
 }
@@ -619,31 +653,33 @@ export const getAllFacilities = (): Facility[] => {
     }));
 }
 
-export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating'> & { sports: string[], amenities?: string[] }): Facility => {
+export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[] }): Facility => {
   const newFacility: Facility = {
     ...facilityData,
     id: `facility-${Date.now()}`,
     sports: facilityData.sports.map(sportId => getSportById(sportId)).filter(Boolean) as Sport[],
     amenities: (facilityData.amenities || []).map(amenityId => getAmenityById(amenityId)).filter(Boolean) as Amenity[],
     reviews: [],
-    rating: facilityData.rating ?? 0, // Use provided rating or default to 0
-    availableEquipment: facilityData.availableEquipment || [], // Ensure availableEquipment is initialized
-    pricingRules: facilityData.pricingRules || [], // Ensure pricingRules is initialized
+    rating: facilityData.rating ?? 0,
+    operatingHours: facilityData.operatingHours || defaultOperatingHours,
+    availableEquipment: facilityData.availableEquipment || [],
+    pricingRulesApplied: facilityData.pricingRulesApplied || [],
   };
   mockFacilities.push(newFacility);
   return newFacility;
 };
 
-export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'amenities' | 'reviews' | 'rating'> & { sports: string[], amenities?: string[] }): Facility | undefined => {
+export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[] }): Facility | undefined => {
   const facilityIndex = mockFacilities.findIndex(f => f.id === updatedFacilityData.id);
   if (facilityIndex === -1) return undefined;
 
   const updatedFacility: Facility = {
-    ...mockFacilities[facilityIndex], // Preserve existing fields like reviews
+    ...mockFacilities[facilityIndex], 
     ...updatedFacilityData,
     sports: updatedFacilityData.sports.map(sportId => getSportById(sportId)).filter(Boolean) as Sport[],
     amenities: (updatedFacilityData.amenities || []).map(amenityId => getAmenityById(amenityId)).filter(Boolean) as Amenity[],
-    rating: updatedFacilityData.rating ?? mockFacilities[facilityIndex].rating, // Use provided rating or keep existing
+    rating: updatedFacilityData.rating ?? mockFacilities[facilityIndex].rating,
+    operatingHours: updatedFacilityData.operatingHours || mockFacilities[facilityIndex].operatingHours,
   };
   
   mockFacilities[facilityIndex] = updatedFacility;
@@ -653,13 +689,16 @@ export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'a
 export const deleteFacility = (facilityId: string): boolean => {
   const initialLength = mockFacilities.length;
   mockFacilities = mockFacilities.filter(f => f.id !== facilityId);
-  // Also remove associated reviews (optional, depending on desired behavior)
   mockReviews = mockReviews.filter(r => r.facilityId !== facilityId);
-  // Also remove associated rental equipment (optional)
-  // mockRentalEquipment = mockRentalEquipment.filter(re => re.facilityId !== facilityId);
   return mockFacilities.length < initialLength;
 };
 
+const defaultOperatingHours: FacilityOperatingHours[] = [
+  { day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' },
+  { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' },
+  { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' },
+  { day: 'Sun', open: '09:00', close: '20:00' },
+];
 
 
 export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => {
@@ -838,5 +877,35 @@ export const mockPromotionRules: PromotionRule[] = [];
 
 export const mockAdminUsers: UserProfile[] = [
     { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@citysportshub.com'},
-    // Add other mock admin users if needed
 ];
+
+// Pricing Rule Data Management
+export const getAllPricingRules = (): PricingRule[] => {
+    return [...mockPricingRules];
+};
+
+export const getPricingRuleById = (id: string): PricingRule | undefined => {
+    return mockPricingRules.find(rule => rule.id === id);
+};
+
+export const addPricingRule = (ruleData: Omit<PricingRule, 'id'>): PricingRule => {
+    const newRule: PricingRule = {
+        ...ruleData,
+        id: `pr-${Date.now()}-${Math.random().toString(36).substring(2,7)}`,
+    };
+    mockPricingRules.push(newRule);
+    return newRule;
+};
+
+export const updatePricingRule = (updatedRuleData: PricingRule): PricingRule | undefined => {
+    const ruleIndex = mockPricingRules.findIndex(r => r.id === updatedRuleData.id);
+    if (ruleIndex === -1) return undefined;
+    mockPricingRules[ruleIndex] = updatedRuleData;
+    return mockPricingRules[ruleIndex];
+};
+
+export const deletePricingRule = (ruleId: string): boolean => {
+    const initialLength = mockPricingRules.length;
+    mockPricingRules = mockPricingRules.filter(r => r.id !== ruleId);
+    return mockPricingRules.length < initialLength;
+};

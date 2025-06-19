@@ -27,15 +27,16 @@ export interface Review {
 
 export interface PricingRule {
   id: string;
-  name: string; // e.g., "Weekend Evening Surge", "Weekday Morning Discount"
+  name: string;
   description?: string;
-  daysOfWeek?: ('Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun')[]; // Specific days this rule applies to
-  timeRange?: [string, string]; // e.g., ["17:00", "21:00"]
-  dateRange?: [string, string]; // e.g., ["2024-12-20", "2024-12-26"] for holiday pricing
+  daysOfWeek?: ('Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun')[];
+  timeRange?: { start: string; end: string }; // e.g., { start: "17:00", end: "21:00" }
+  dateRange?: { start: string; end: string }; // e.g., { start: "2024-12-20", end: "2024-12-26" } for holiday pricing
   adjustmentType: 'percentage_increase' | 'percentage_decrease' | 'fixed_increase' | 'fixed_decrease' | 'fixed_price';
   value: number; // The actual adjustment value or fixed price
   priority?: number; // To handle overlapping rules, lower numbers apply first
   isActive: boolean;
+  // Future: facilityIds?: string[]; sportIds?: string[]; appliesToMembershipLevel?: string;
 }
 
 export interface PromotionRule {
@@ -65,6 +66,11 @@ export interface RentalEquipment {
   stock: number; // Available quantity
 }
 
+export interface FacilityOperatingHours {
+  day: 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
+  open: string;
+  close: string;
+}
 export interface Facility {
   id: string;
   name:string;
@@ -77,13 +83,9 @@ export interface Facility {
   images: string[]; // URLs to images
   sports: Sport[];
   amenities: Amenity[];
-  operatingHours: {
-    day: 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
-    open: string; // e.g., "08:00"
-    close: string; // e.g., "22:00"
-  }[];
+  operatingHours: FacilityOperatingHours[];
   pricePerHour: number; // Base price, or current default. Dynamic rules would modify this.
-  pricingRules?: PricingRule[]; // Optional array for dynamic pricing rules
+  pricingRulesApplied?: PricingRule[]; // Optional array for dynamic pricing rules
   rating: number; // This will now be dynamically calculated based on reviews
   reviews?: Review[]; // Array of reviews associated with the facility
   capacity?: number;
@@ -166,7 +168,7 @@ export interface ReportData {
 
 export interface MembershipPlan {
   id: string;
-  name: 'Basic' | 'Premium' | 'Pro';
+  name: string; // Changed from specific enum to string to allow admin to define names
   pricePerMonth: number;
   benefits: string[];
 }
