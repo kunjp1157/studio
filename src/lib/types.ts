@@ -36,7 +36,6 @@ export interface PricingRule {
   value: number; // The actual adjustment value or fixed price
   priority?: number; // To handle overlapping rules, lower numbers apply first
   isActive: boolean;
-  // Future: facilityIds?: string[]; sportIds?: string[]; appliesToMembershipLevel?: string;
 }
 
 export interface PromotionRule {
@@ -51,19 +50,18 @@ export interface PromotionRule {
   usageLimit?: number; // How many times this promotion can be used in total. 0 or undefined for unlimited.
   usageLimitPerUser?: number; // How many times a single user can use this promotion. 0 or undefined for unlimited.
   isActive: boolean;
-  // Conditions for applicability could be added later, e.g., specific facilities, sports, user segments, min booking value
 }
 
 export interface RentalEquipment {
   id: string;
-  facilityId: string; // To which facility this specific stock belongs, or could be global if managed centrally
+  facilityId: string; 
   name: string;
   description?: string;
-  pricePerItem: number; // Price per booking or per hour/session
-  priceType: 'per_booking' | 'per_hour'; // To clarify pricing model
+  pricePerItem: number; 
+  priceType: 'per_booking' | 'per_hour'; 
   imageUrl?: string;
   dataAiHint?: string;
-  stock: number; // Available quantity
+  stock: number; 
 }
 
 export interface FacilityOperatingHours {
@@ -76,22 +74,22 @@ export interface Facility {
   name:string;
   type: 'Complex' | 'Court' | 'Field' | 'Studio' | 'Pool';
   address: string;
-  location: string; // Could be more complex, e.g., { lat: number, lng: number }
-  latitude?: number; // Optional latitude
-  longitude?: number; // Optional longitude
+  location: string; 
+  latitude?: number; 
+  longitude?: number; 
   description: string;
-  images: string[]; // URLs to images
+  images: string[]; 
   sports: Sport[];
   amenities: Amenity[];
   operatingHours: FacilityOperatingHours[];
-  pricePerHour: number; // Base price, or current default. Dynamic rules would modify this.
-  pricingRulesApplied?: PricingRule[]; // Optional array for dynamic pricing rules
-  rating: number; // This will now be dynamically calculated based on reviews
-  reviews?: Review[]; // Array of reviews associated with the facility
+  pricePerHour: number; 
+  pricingRulesApplied?: PricingRule[]; 
+  rating: number; 
+  reviews?: Review[]; 
   capacity?: number;
   isPopular?: boolean;
-  isIndoor?: boolean; // Added for indoor/outdoor filter
-  dataAiHint?: string; // For placeholder image generation for the facility itself
+  isIndoor?: boolean; 
+  dataAiHint?: string; 
   availableEquipment?: RentalEquipment[];
 }
 
@@ -105,7 +103,7 @@ export interface RentedItemInfo {
   equipmentId: string;
   name: string;
   quantity: number;
-  priceAtBooking: number; // Unit price at the time of booking
+  priceAtBooking: number; 
   priceTypeAtBooking: 'per_booking' | 'per_hour';
   totalCost: number;
 }
@@ -120,21 +118,21 @@ export interface Booking {
   id: string;
   userId: string;
   facilityId: string;
-  facilityName: string; // Denormalized for easy display
-  facilityImage: string; // Denormalized
-  dataAiHint?: string; // AI hint for the facility image in the booking context
+  facilityName: string; 
+  facilityImage: string; 
+  dataAiHint?: string; 
   date: string; // "YYYY-MM-DD"
   startTime: string; // "HH:MM"
   endTime: string; // "HH:MM"
-  durationHours?: number; // Calculated duration, useful for per_hour rentals
-  numberOfGuests?: number; // Number of guests for the booking
-  baseFacilityPrice?: number; // Price for the facility slot itself
-  equipmentRentalCost?: number; // Total cost for all rented equipment
-  appliedPromotion?: AppliedPromotionInfo; // Details of applied promotion
-  totalPrice: number; // Overall total, after discount
+  durationHours?: number; 
+  numberOfGuests?: number; 
+  baseFacilityPrice?: number; 
+  equipmentRentalCost?: number; 
+  appliedPromotion?: AppliedPromotionInfo; 
+  totalPrice: number; 
   status: 'Confirmed' | 'Pending' | 'Cancelled';
   bookedAt: string; // ISO date string
-  reviewed?: boolean; // Flag to indicate if this booking has been reviewed
+  reviewed?: boolean; 
   rentedEquipment?: RentedItemInfo[];
 }
 
@@ -143,7 +141,7 @@ export interface Achievement {
   name: string;
   description: string;
   icon?: React.ElementType;
-  unlockedAt?: string; // ISO date string when the user unlocked it
+  unlockedAt?: string; 
 }
 
 export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced';
@@ -154,27 +152,34 @@ export interface UserSkill {
   level: SkillLevel;
 }
 
+export type UserRole = 'Admin' | 'FacilityOwner' | 'User';
+export type UserStatus = 'Active' | 'Suspended' | 'PendingApproval';
+
+
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
   phone?: string;
   profilePictureUrl?: string;
-  dataAiHint?: string; // AI hint for the profile picture
+  dataAiHint?: string; 
   preferredSports?: Sport[];
-  favoriteFacilities?: string[]; // Array of facility IDs
+  favoriteFacilities?: string[]; 
   membershipLevel?: 'Basic' | 'Premium' | 'Pro';
   loyaltyPoints?: number;
   achievements?: Achievement[];
   bio?: string;
-  preferredPlayingTimes?: string; // e.g., "Weekends", "Weekday evenings"
+  preferredPlayingTimes?: string; 
   skillLevels?: UserSkill[];
+  role: UserRole;
+  status: UserStatus;
+  joinedAt: string; // ISO date string
 }
 
-export interface AdminUser {
+export interface AdminUser { // This might be redundant if UserProfile.role handles it
   id: string;
   username: string;
-  role: 'Admin' | 'Manager';
+  role: 'Admin' | 'Manager'; // Simplified for specific admin roles if needed
 }
 
 export interface ReportData {
@@ -186,7 +191,7 @@ export interface ReportData {
 
 export interface MembershipPlan {
   id: string;
-  name: string; // Changed from specific enum to string to allow admin to define names
+  name: string; 
   pricePerMonth: number;
   benefits: string[];
 }
@@ -195,7 +200,7 @@ export interface SportEvent {
   id: string;
   name: string;
   facilityId: string;
-  sport: Sport; // For display, store the whole object or just sportId and look up
+  sport: Sport; 
   startDate: string; // ISO date string
   endDate: string; // ISO date string
   description: string;
@@ -206,7 +211,6 @@ export interface SportEvent {
   imageDataAiHint?: string;
 }
 
-// For FacilitySearchForm
 export interface SearchFilters {
   searchTerm: string;
   sport: string;
@@ -217,7 +221,7 @@ export interface SearchFilters {
   indoorOutdoor?: 'any' | 'indoor' | 'outdoor';
 }
 
-export type NotificationType = 'booking_confirmed' | 'booking_cancelled' | 'review_submitted' | 'reminder' | 'promotion' | 'general';
+export type NotificationType = 'booking_confirmed' | 'booking_cancelled' | 'review_submitted' | 'reminder' | 'promotion' | 'general' | 'user_status_changed' | 'facility_approved';
 
 export interface AppNotification {
   id: string;
@@ -227,8 +231,8 @@ export interface AppNotification {
   message: string;
   createdAt: string; // ISO date string
   isRead: boolean;
-  link?: string; // Optional link to navigate to
-  icon?: React.ElementType; // Optional specific icon
+  link?: string; 
+  icon?: React.ElementType; 
 }
 
 export interface BlogPost {
@@ -236,7 +240,7 @@ export interface BlogPost {
   slug: string;
   title: string;
   excerpt: string;
-  content: string; // Could be Markdown or HTML
+  content: string; 
   imageUrl?: string;
   imageAlt?: string;
   authorName: string;
@@ -246,3 +250,5 @@ export interface BlogPost {
   isFeatured?: boolean;
   dataAiHint?: string;
 }
+
+    
