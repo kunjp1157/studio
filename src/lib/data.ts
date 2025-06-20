@@ -1,7 +1,7 @@
 
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel } from './types';
-import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon } from 'lucide-react';
-import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays } from 'date-fns';
+import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2 } from 'lucide-react';
+import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
 
 export const mockSports: Sport[] = [
@@ -10,7 +10,11 @@ export const mockSports: Sport[] = [
   { id: 'sport-3', name: 'Tennis', icon: Activity, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'tennis racket' },
   { id: 'sport-4', name: 'Badminton', icon: Feather, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'badminton shuttlecock' },
   { id: 'sport-5', name: 'Swimming', icon: PersonStanding, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'swimming lane' },
+  { id: 'sport-6', name: 'Yoga', icon: Brain, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'yoga pose' },
   { id: 'sport-7', name: 'Cycling', icon: Bike, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cycling road' },
+  { id: 'sport-8', name: 'Dance', icon: Music, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'dance studio' },
+  { id: 'sport-9', name: 'Camping', icon: Tent, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'camping tent nature' },
+  { id: 'sport-10', name: 'Theatre', icon: Drama, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'theatre stage' },
   { id: 'sport-13', name: 'Cricket', icon: Dices, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cricket bat ball' },
   { id: 'sport-14', name: 'Pool', icon: Target, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'billiards table' },
   { id: 'sport-15', name: 'PC Game/PS5', icon: Gamepad2, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'gaming setup' },
@@ -21,7 +25,7 @@ export const mockAmenities: Amenity[] = [
   { id: 'amenity-2', name: 'WiFi', icon: Wifi },
   { id: 'amenity-3', name: 'Showers', icon: ShowerHead },
   { id: 'amenity-4', name: 'Lockers', icon: Lock },
-  { id: 'amenity-5', name: 'Equipment Rental Signage', icon: PackageSearch }, 
+  { id: 'amenity-5', name: 'Equipment Rental Signage', icon: PackageSearch },
   { id: 'amenity-6', name: 'Cafe', icon: Utensils },
   { id: 'amenity-7', name: 'Accessible', icon: Users },
 ];
@@ -37,18 +41,6 @@ export const mockRentalEquipment: RentalEquipment[] = [
   { id: 'equip-8', facilityId: 'facility-4', name: 'Swim Goggles', pricePerItem: 3, priceType: 'per_booking', stock: 15, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'swim goggles' },
   { id: 'equip-9', facilityId: 'facility-4', name: 'Swim Cap', pricePerItem: 2, priceType: 'per_booking', stock: 20, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'swim cap' },
 ];
-
-export const calculateAverageRating = (reviews: Review[] | undefined): number => {
-  if (!reviews || reviews.length === 0) {
-    return 0;
-  }
-  const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
-  return parseFloat((totalRating / reviews.length).toFixed(1));
-};
-
-export const getReviewsByFacilityId = (facilityId: string): Review[] => {
-  return mockReviews.filter(review => review.facilityId === facilityId);
-};
 
 export let mockReviews: Review[] = [
   {
@@ -95,6 +87,48 @@ export let mockReviews: Review[] = [
   },
 ];
 
+export const defaultOperatingHours: FacilityOperatingHours[] = [
+  { day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' },
+  { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' },
+  { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' },
+  { day: 'Sun', open: '09:00', close: '20:00' },
+];
+
+export const getReviewsByFacilityId = (facilityId: string): Review[] => {
+  return mockReviews.filter(review => review.facilityId === facilityId);
+};
+
+export const calculateAverageRating = (reviews: Review[] | undefined): number => {
+  if (!reviews || reviews.length === 0) {
+    return 0;
+  }
+  const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
+  return parseFloat((totalRating / reviews.length).toFixed(1));
+};
+
+export const getSportById = (id: string): Sport | undefined => {
+  return mockSports.find(sport => sport.id === id);
+};
+
+export const getAmenityById = (id: string): Amenity | undefined => {
+  return mockAmenities.find(amenity => amenity.id === id);
+};
+
+export const getFacilityById = (id: string): Facility | undefined => {
+  const facility = mockFacilities.find(f => f.id === id);
+  if (facility) {
+    const reviews = getReviewsByFacilityId(id);
+    return {
+      ...facility,
+      reviews: reviews,
+      rating: calculateAverageRating(reviews),
+      sports: facility.sports.map(s => getSportById(s.id) || s),
+      amenities: facility.amenities.map(a => getAmenityById(a.id) || a),
+    };
+  }
+  return undefined;
+};
+
 export let mockFacilities: Facility[] = [
   {
     id: 'facility-1',
@@ -102,17 +136,17 @@ export let mockFacilities: Facility[] = [
     type: 'Complex',
     address: '123 Stadium Rd, Metropolis, CA 90210',
     location: 'Metropolis',
-    latitude: 34.0522, 
+    latitude: 34.0522,
     longitude: -118.2437,
     description: 'State-of-the-art multi-sport complex with indoor and outdoor facilities.',
     images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
-    sports: [mockSports[0], mockSports[1], mockSports[2]], 
+    sports: [mockSports[0], mockSports[1], mockSports[2]],
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[2], mockAmenities[3], mockAmenities[5]],
-    operatingHours: [{ day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' }, { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' }, { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' }, { day: 'Sun', open: '09:00', close: '20:00' }],
+    operatingHours: [...defaultOperatingHours],
     pricePerHour: 50,
     pricingRulesApplied: [],
-    rating: 0, 
-    reviews: [], 
+    rating: 0,
+    reviews: [],
     capacity: 100,
     isPopular: true,
     isIndoor: true,
@@ -129,13 +163,13 @@ export let mockFacilities: Facility[] = [
     longitude: -118.2500,
     description: 'Premium tennis courts with beautiful riverside views.',
     images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png'],
-    sports: [mockSports[2]], 
+    sports: [mockSports[2]],
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '07:00', close: '21:00' }, { day: 'Tue', open: '07:00', close: '21:00' }, { day: 'Wed', open: '07:00', close: '21:00' }, { day: 'Thu', open: '07:00', close: '21:00' }, { day: 'Fri', open: '07:00', close: '21:00' }, { day: 'Sat', open: '08:00', close: '18:00' }, { day: 'Sun', open: '08:00', close: '18:00' }],
     pricePerHour: 30,
     pricingRulesApplied: [],
-    rating: 0, 
-    reviews: [], 
+    rating: 0,
+    reviews: [],
     capacity: 4,
     isIndoor: false,
     dataAiHint: 'tennis court outdoor',
@@ -151,13 +185,13 @@ export let mockFacilities: Facility[] = [
     longitude: -118.2300,
     description: 'Affordable and friendly community center with various sports options.',
     images: ['https://placehold.co/800x450.png'],
-    sports: [mockSports[1], mockSports[3]], 
-    amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[6]], 
+    sports: [mockSports[1], mockSports[3]],
+    amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[6]],
     operatingHours: [{ day: 'Mon', open: '09:00', close: '21:00' }, { day: 'Tue', open: '09:00', close: '21:00' }, { day: 'Wed', open: '09:00', close: '21:00' }, { day: 'Thu', open: '09:00', close: '21:00' }, { day: 'Fri', open: '09:00', close: '20:00' }, { day: 'Sat', open: '10:00', close: '18:00' }, { day: 'Sun', open: '10:00', close: '16:00' }],
     pricePerHour: 20,
     pricingRulesApplied: [],
-    rating: 0, 
-    reviews: [], 
+    rating: 0,
+    reviews: [],
     capacity: 50,
     isPopular: true,
     isIndoor: true,
@@ -174,13 +208,13 @@ export let mockFacilities: Facility[] = [
     longitude: -118.2600,
     description: 'Large Olympic-sized swimming pool with dedicated lanes and recreational areas.',
     images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
-    sports: [mockSports[4]], 
+    sports: [mockSports[4]],
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '06:00', close: '20:00' }, { day: 'Tue', open: '06:00', close: '20:00' }, { day: 'Wed', open: '06:00', close: '20:00' }, { day: 'Thu', open: '06:00', close: '20:00' }, { day: 'Fri', open: '06:00', close: '20:00' }, { day: 'Sat', open: '07:00', close: '19:00' }, { day: 'Sun', open: '07:00', close: '19:00' }],
     pricePerHour: 15,
     pricingRulesApplied: [],
-    rating: 0, 
-    reviews: [], 
+    rating: 0,
+    reviews: [],
     capacity: 200,
     isIndoor: true,
     dataAiHint: 'swimming pool olympic',
@@ -189,9 +223,9 @@ export let mockFacilities: Facility[] = [
 ];
 
 mockFacilities.forEach(facility => {
-  const facilityReviews = getReviewsByFacilityId(facility.id); 
+  const facilityReviews = getReviewsByFacilityId(facility.id);
   facility.reviews = facilityReviews;
-  facility.rating = calculateAverageRating(facilityReviews); 
+  facility.rating = calculateAverageRating(facilityReviews);
 });
 
 export const mockAchievements: Achievement[] = [
@@ -202,7 +236,7 @@ export const mockAchievements: Achievement[] = [
   { id: 'ach-5', name: 'Explorer', description: 'Booked 3 different types of sports.', icon: Rocket },
 ];
 
-export const mockUsers: UserProfile[] = [
+export let mockUsers: UserProfile[] = [
   {
     id: 'user-admin',
     name: 'Alex Johnson',
@@ -264,7 +298,6 @@ export const mockUsers: UserProfile[] = [
   }
 ];
 
-// The `mockUser` can be the first user from the list, typically the admin.
 export const mockUser = mockUsers[0];
 
 export let mockBookings: Booking[] = [
@@ -275,16 +308,16 @@ export let mockBookings: Booking[] = [
     facilityName: 'Grand City Arena',
     facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "arena floodlights",
-    date: '2024-07-15', 
+    date: '2024-07-15',
     startTime: '18:00',
     endTime: '19:00',
     durationHours: 1,
     numberOfGuests: 10,
     baseFacilityPrice: 50,
-    equipmentRentalCost: 10, 
-    totalPrice: 60, 
+    equipmentRentalCost: 10,
+    totalPrice: 60,
     status: 'Confirmed',
-    bookedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), 
+    bookedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: true,
     rentedEquipment: [
         { equipmentId: 'equip-1', name: 'Soccer Ball (Size 5)', quantity: 2, priceAtBooking: 5, priceTypeAtBooking: 'per_booking', totalCost: 10 },
@@ -297,16 +330,16 @@ export let mockBookings: Booking[] = [
     facilityName: 'Riverside Tennis Club',
     facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "tennis court sunset",
-    date: '2024-07-20', 
+    date: '2024-07-20',
     startTime: '10:00',
     endTime: '12:00',
     durationHours: 2,
     numberOfGuests: 2,
-    baseFacilityPrice: 60, 
+    baseFacilityPrice: 60,
     equipmentRentalCost: 0,
-    totalPrice: 60, 
+    totalPrice: 60,
     status: 'Confirmed',
-    bookedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), 
+    bookedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
   },
   {
@@ -316,15 +349,15 @@ export let mockBookings: Booking[] = [
     facilityName: 'Community Rec Center',
     facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "indoor basketball",
-    date: '2024-06-25', 
+    date: '2024-06-25',
     startTime: '14:00',
     endTime: '15:30',
     durationHours: 1.5,
     numberOfGuests: 5,
-    baseFacilityPrice: 30, 
+    baseFacilityPrice: 30,
     equipmentRentalCost: 0,
-    totalPrice: 30, 
-    status: 'Confirmed', 
+    totalPrice: 30,
+    status: 'Confirmed',
     bookedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: true,
   },
@@ -335,26 +368,26 @@ export let mockBookings: Booking[] = [
     facilityName: 'Grand City Arena',
     facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "soccer field night",
-    date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+    date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     startTime: '20:00',
     endTime: '21:00',
     durationHours: 1,
-    numberOfGuests: 22, 
+    numberOfGuests: 22,
     baseFacilityPrice: 50,
     equipmentRentalCost: 0,
-    totalPrice: 50, 
+    totalPrice: 50,
     status: 'Confirmed',
-    bookedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), 
+    bookedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
   },
   {
     id: 'booking-5',
-    userId: 'user-regular', 
+    userId: 'user-regular',
     facilityId: 'facility-3',
     facilityName: 'Community Rec Center',
     facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "basketball court aerial",
-    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     startTime: '17:00',
     endTime: '18:00',
     durationHours: 1,
@@ -367,19 +400,19 @@ export let mockBookings: Booking[] = [
   },
   {
     id: 'booking-6',
-    userId: 'user-owner', 
+    userId: 'user-owner',
     facilityId: 'facility-4',
     facilityName: 'Aqua World',
     facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "swimming pool indoor",
-    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     startTime: '09:00',
     endTime: '10:00',
     durationHours: 1,
     numberOfGuests: 1,
     baseFacilityPrice: 15,
     totalPrice: 15,
-    status: 'Cancelled', 
+    status: 'Cancelled',
     bookedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
   },
@@ -390,15 +423,16 @@ export let mockBookings: Booking[] = [
     facilityName: 'Aqua World',
     facilityImage: 'https://placehold.co/300x200.png',
     dataAiHint: "pool diving board",
-    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     startTime: '15:00',
     endTime: '16:00',
     durationHours: 1,
     numberOfGuests: 3,
     baseFacilityPrice: 15,
-    equipmentRentalCost: 6, 
-    totalPrice: 21,
-    status: 'Pending', 
+    equipmentRentalCost: 6,
+    appliedPromotion: { code: 'WELCOME10', discountAmount: 10, description: 'New User Welcome' },
+    totalPrice: 11, // (15 + 6) - 10
+    status: 'Pending',
     bookedAt: new Date(Date.now() - 0.1 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
     rentedEquipment: [
@@ -407,280 +441,13 @@ export let mockBookings: Booking[] = [
   },
 ];
 
-export const mockReportData: ReportData = {
-  totalBookings: 1250,
-  totalRevenue: 45800,
-  facilityUsage: [
-    { facilityName: 'Grand City Arena', bookings: 450 },
-    { facilityName: 'Riverside Tennis Club', bookings: 300 },
-    { facilityName: 'Community Rec Center', bookings: 500 },
-  ],
-  peakHours: [
-    { hour: '18:00', bookings: 200 },
-    { hour: '19:00', bookings: 180 },
-    { hour: '17:00', bookings: 150 },
-  ],
-};
-
-export let mockMembershipPlans: MembershipPlan[] = [
-  {
-    id: 'mem-1',
-    name: 'Basic',
-    pricePerMonth: 10,
-    benefits: ['Access to all facilities', 'Book up to 3 days in advance', 'Online booking'],
-  },
-  {
-    id: 'mem-2',
-    name: 'Premium',
-    pricePerMonth: 25,
-    benefits: ['All Basic benefits', 'Book up to 7 days in advance', '10% discount on bookings', 'Guest passes (2/month)'],
-  },
-  {
-    id: 'mem-3',
-    name: 'Pro',
-    pricePerMonth: 50,
-    benefits: ['All Premium benefits', 'Book up to 14 days in advance', '20% discount on bookings', 'Free equipment rental', 'Priority support'],
-  },
-];
-
-export let mockEvents: SportEvent[] = [
-  {
-    id: 'event-1',
-    name: 'Summer Soccer Tournament',
-    facilityId: 'facility-1',
-    sport: mockSports[0], 
-    startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), 
-    endDate: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString(), 
-    description: 'Annual summer soccer tournament for all skill levels. Join us for a competitive and fun weekend! This event features multiple matches, food trucks, and activities for spectators. Great prizes for winning teams.',
-    entryFee: 20,
-    maxParticipants: 64,
-    registeredParticipants: 25,
-    imageUrl: 'https://placehold.co/600x300.png',
-    imageDataAiHint: "soccer tournament action"
-  },
-  {
-    id: 'event-2',
-    name: 'Tennis Open Day & Clinic',
-    facilityId: 'facility-2',
-    sport: mockSports[2], 
-    startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
-    endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
-    description: 'Come try our tennis courts for free! Coaching available for beginners. Fun for the whole family, with mini-games and refreshments.',
-    entryFee: 0,
-    maxParticipants: 100, 
-    registeredParticipants: 0, 
-    imageUrl: 'https://placehold.co/600x300.png',
-    imageDataAiHint: "tennis players friendly"
-  },
-  {
-    id: 'event-3',
-    name: 'Community Basketball League Finals',
-    facilityId: 'facility-3',
-    sport: mockSports[1], 
-    startDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
-    endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), 
-    description: 'The exciting conclusion to our community basketball league. Witness the crowning of the champions! Spectators welcome, entry is free.',
-    entryFee: 5,
-    maxParticipants: 200, 
-    registeredParticipants: 112, 
-    imageUrl: 'https://placehold.co/600x300.png',
-    imageDataAiHint: "basketball game intensity"
-  },
-   {
-    id: 'event-4',
-    name: 'Badminton Bonanza Weekend',
-    facilityId: 'facility-3', 
-    sport: mockSports[3], 
-    startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), 
-    endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(), 
-    description: 'A full weekend of badminton fun! Singles and doubles tournaments for various age groups. All levels welcome. Coaching sessions available.',
-    entryFee: 15,
-    maxParticipants: 48,
-    registeredParticipants: 15,
-    imageUrl: 'https://placehold.co/600x300.png',
-    imageDataAiHint: "badminton players action"
-  },
-];
-
-export let mockPricingRules: PricingRule[] = [
-    {
-        id: 'price-rule-1',
-        name: 'Weekend Evening Surge',
-        description: 'Higher prices for popular weekend evening slots.',
-        daysOfWeek: ['Sat', 'Sun'],
-        timeRange: { start: '18:00', end: '22:00' },
-        adjustmentType: 'percentage_increase',
-        value: 20, 
-        priority: 10,
-        isActive: true,
-    },
-    {
-        id: 'price-rule-2',
-        name: 'Weekday Morning Discount',
-        description: 'Discount for less busy weekday morning hours.',
-        daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-        timeRange: { start: '08:00', end: '12:00' },
-        adjustmentType: 'percentage_decrease',
-        value: 15, 
-        priority: 10,
-        isActive: true,
-    },
-    {
-        id: 'price-rule-3',
-        name: 'Holiday Special Pricing',
-        dateRange: { start: '2024-12-20', end: '2024-12-26' },
-        adjustmentType: 'fixed_price',
-        value: 75, 
-        priority: 5, 
-        isActive: true,
-    }
-];
-
-export let mockPromotionRules: PromotionRule[] = [
-    {
-        id: 'promo-1',
-        name: 'Summer Kickoff Discount',
-        description: 'Get 15% off any booking in June.',
-        code: 'SUMMER15',
-        discountType: 'percentage',
-        discountValue: 15,
-        startDate: '2024-06-01',
-        endDate: '2024-06-30',
-        usageLimit: 1000,
-        usageLimitPerUser: 1,
-        isActive: true,
-    },
-    {
-        id: 'promo-2',
-        name: 'New User Welcome',
-        description: '$10 off your first booking.',
-        code: 'WELCOME10',
-        discountType: 'fixed_amount',
-        discountValue: 10,
-        usageLimitPerUser: 1,
-        isActive: true,
-    },
-    {
-        id: 'promo-3',
-        name: 'Weekend Warrior Special',
-        description: '20% off weekend bookings (Sat/Sun). No code needed.',
-        discountType: 'percentage',
-        discountValue: 20,
-        isActive: true,
-    }
-];
-
-
-export const getAllEvents = (): SportEvent[] => {
-  return [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
-}
-
-export const getEventById = (id: string): SportEvent | undefined => {
-  const event = mockEvents.find(event => event.id === id);
-  if (event) {
-    const sport = getSportById(event.sport.id); 
-    return sport ? { ...event, sport } : { ...event }; 
-  }
-  return undefined;
-};
-
-export const addEvent = (eventData: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): SportEvent => {
-  const sport = getSportById(eventData.sportId);
-  if (!sport) throw new Error("Invalid sport ID provided for event.");
-  
-  const newEvent: SportEvent = {
-    ...eventData,
-    id: `event-${Date.now()}`,
-    sport: sport, 
-    registeredParticipants: 0, 
-  };
-  mockEvents.push(newEvent);
-  return newEvent;
-};
-
-export const updateEvent = (updatedEventData: Omit<SportEvent, 'sport'> & { sportId: string }): SportEvent | undefined => {
-  const sport = getSportById(updatedEventData.sportId);
-  if (!sport) throw new Error("Invalid sport ID provided for event update.");
-
-  const eventIndex = mockEvents.findIndex(e => e.id === updatedEventData.id);
-  if (eventIndex === -1) return undefined;
-
-  const updatedEventWithFullSport: SportEvent = {
-    ...updatedEventData,
-    sport: sport,
-  };
-
-  mockEvents[eventIndex] = updatedEventWithFullSport;
-  return mockEvents[eventIndex];
-};
-
-export const deleteEvent = (eventId: string): boolean => {
-  const initialLength = mockEvents.length;
-  mockEvents = mockEvents.filter(e => e.id !== eventId);
-  return mockEvents.length < initialLength;
-};
-
-export const registerForEvent = (eventId: string): boolean => {
-  const eventIndex = mockEvents.findIndex(e => e.id === eventId);
-  if (eventIndex === -1) return false;
-
-  if (mockEvents[eventIndex].maxParticipants && mockEvents[eventIndex].registeredParticipants >= mockEvents[eventIndex].maxParticipants!) {
-    return false; 
-  }
-  
-  mockEvents[eventIndex].registeredParticipants += 1;
-  return true;
-};
-
-
-export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Review => {
-  const currentUser = getUserById(reviewData.userId);
-  const newReview: Review = {
-    ...reviewData,
-    id: `review-${mockReviews.length + 1}`,
-    userName: currentUser?.name || 'Anonymous User', 
-    userAvatar: currentUser?.profilePictureUrl,
-    createdAt: new Date().toISOString(),
-  };
-  mockReviews.push(newReview);
-  
-  const facilityIndex = mockFacilities.findIndex(f => f.id === reviewData.facilityId);
-  if (facilityIndex !== -1) {
-    const facilityReviews = getReviewsByFacilityId(reviewData.facilityId);
-    mockFacilities[facilityIndex].reviews = facilityReviews;
-    mockFacilities[facilityIndex].rating = calculateAverageRating(facilityReviews);
-  }
-  
-  const bookingIndex = mockBookings.findIndex(b => b.id === reviewData.bookingId);
-  if (bookingIndex !== -1) {
-    mockBookings[bookingIndex].reviewed = true;
-  }
-  
-  return newReview;
-};
-
-export const getFacilityById = (id: string): Facility | undefined => {
-  const facility = mockFacilities.find(f => f.id === id);
-  if (facility) {
-    const reviews = getReviewsByFacilityId(id);
-    return {
-      ...facility,
-      reviews: reviews,
-      rating: calculateAverageRating(reviews),
-      sports: facility.sports.map(s => getSportById(s.id) || s), 
-      amenities: facility.amenities.map(a => getAmenityById(a.id) || a), 
-    };
-  }
-  return undefined;
-};
-
 export const getBookingsByUserId = (userId: string): Booking[] => {
   return mockBookings.filter(booking => booking.userId === userId);
 };
 
 export const getAllBookings = (): Booking[] => {
   return [...mockBookings].sort((a,b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
-}
+};
 
 export const getAllUsers = (): UserProfile[] => {
     return [...mockUsers];
@@ -688,7 +455,7 @@ export const getAllUsers = (): UserProfile[] => {
 
 export const getUserById = (userId: string): UserProfile | undefined => {
   return mockUsers.find(user => user.id === userId);
-}
+};
 
 export const updateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
     const userIndex = mockUsers.findIndex(user => user.id === userId);
@@ -699,19 +466,9 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
     return mockUsers[userIndex];
 };
 
-
-export const getSportById = (id: string): Sport | undefined => {
-  return mockSports.find(sport => sport.id === id);
-}
-
-export const getAmenityById = (id: string): Amenity | undefined => {
-  return mockAmenities.find(amenity => amenity.id === id);
-}
-
-
 export const getAllSports = (): Sport[] => {
     return mockSports;
-}
+};
 
 export const getAllFacilities = (): Facility[] => {
     return mockFacilities.map(f => ({
@@ -719,7 +476,7 @@ export const getAllFacilities = (): Facility[] => {
       rating: calculateAverageRating(getReviewsByFacilityId(f.id)),
       reviews: getReviewsByFacilityId(f.id)
     }));
-}
+};
 
 export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[] }): Facility => {
   const newFacility: Facility = {
@@ -742,14 +499,14 @@ export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'a
   if (facilityIndex === -1) return undefined;
 
   const updatedFacility: Facility = {
-    ...mockFacilities[facilityIndex], 
+    ...mockFacilities[facilityIndex],
     ...updatedFacilityData,
     sports: updatedFacilityData.sports.map(sportId => getSportById(sportId)).filter(Boolean) as Sport[],
     amenities: (updatedFacilityData.amenities || []).map(amenityId => getAmenityById(amenityId)).filter(Boolean) as Amenity[],
     rating: updatedFacilityData.rating ?? mockFacilities[facilityIndex].rating,
     operatingHours: updatedFacilityData.operatingHours || mockFacilities[facilityIndex].operatingHours,
   };
-  
+
   mockFacilities[facilityIndex] = updatedFacility;
   return updatedFacility;
 };
@@ -761,18 +518,9 @@ export const deleteFacility = (facilityId: string): boolean => {
   return mockFacilities.length < initialLength;
 };
 
-const defaultOperatingHours: FacilityOperatingHours[] = [
-  { day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' },
-  { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' },
-  { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' },
-  { day: 'Sun', open: '09:00', close: '20:00' },
-];
-
-
 export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => {
   return mockRentalEquipment.find(eq => eq.id === id);
-}
-
+};
 
 let mockAppNotifications: AppNotification[] = [
   {
@@ -781,7 +529,7 @@ let mockAppNotifications: AppNotification[] = [
     type: 'booking_confirmed',
     title: 'Booking Confirmed!',
     message: 'Your booking for Grand City Arena on July 15th is confirmed.',
-    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), 
+    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
     isRead: false,
     link: '/account/bookings',
     icon: CheckCircle,
@@ -792,7 +540,7 @@ let mockAppNotifications: AppNotification[] = [
     type: 'reminder',
     title: 'Upcoming Booking Reminder',
     message: 'Your tennis session at Riverside Tennis Club is tomorrow at 10:00 AM.',
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), 
+    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
     isRead: true,
     link: '/account/bookings',
     icon: LucideCalendarDays,
@@ -803,7 +551,7 @@ let mockAppNotifications: AppNotification[] = [
     type: 'promotion',
     title: 'Special Offer Just For You!',
     message: 'Get 20% off your next booking with code SUMMER20.',
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), 
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     isRead: false,
     link: '/facilities',
     icon: Gift,
@@ -850,7 +598,7 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
     isRead: false,
     icon: notificationData.icon || icon,
   };
-  mockAppNotifications.unshift(newNotification); 
+  mockAppNotifications.unshift(newNotification);
   return newNotification;
 };
 
@@ -910,6 +658,27 @@ export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
 };
 
 
+export let mockMembershipPlans: MembershipPlan[] = [
+  {
+    id: 'mem-1',
+    name: 'Basic',
+    pricePerMonth: 10,
+    benefits: ['Access to all facilities', 'Book up to 3 days in advance', 'Online booking'],
+  },
+  {
+    id: 'mem-2',
+    name: 'Premium',
+    pricePerMonth: 25,
+    benefits: ['All Basic benefits', 'Book up to 7 days in advance', '10% discount on bookings', 'Guest passes (2/month)'],
+  },
+  {
+    id: 'mem-3',
+    name: 'Pro',
+    pricePerMonth: 50,
+    benefits: ['All Premium benefits', 'Book up to 14 days in advance', '20% discount on bookings', 'Free equipment rental', 'Priority support'],
+  },
+];
+
 export const getAllMembershipPlans = (): MembershipPlan[] => {
   return [...mockMembershipPlans];
 };
@@ -940,13 +709,194 @@ export const deleteMembershipPlan = (planId: string): boolean => {
   return mockMembershipPlans.length < initialLength;
 };
 
-
 export const mockAdminUsers: UserProfile[] = [
     { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@citysportshub.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString() },
 ];
 
 
+export let mockEvents: SportEvent[] = [
+  {
+    id: 'event-1',
+    name: 'Summer Soccer Tournament',
+    facilityId: 'facility-1',
+    sport: mockSports[0],
+    startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString(),
+    description: 'Annual summer soccer tournament for all skill levels. Join us for a competitive and fun weekend! This event features multiple matches, food trucks, and activities for spectators. Great prizes for winning teams.',
+    entryFee: 20,
+    maxParticipants: 64,
+    registeredParticipants: 25,
+    imageUrl: 'https://placehold.co/600x300.png',
+    imageDataAiHint: "soccer tournament action"
+  },
+  {
+    id: 'event-2',
+    name: 'Tennis Open Day & Clinic',
+    facilityId: 'facility-2',
+    sport: mockSports[2],
+    startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    description: 'Come try our tennis courts for free! Coaching available for beginners. Fun for the whole family, with mini-games and refreshments.',
+    entryFee: 0,
+    maxParticipants: 100,
+    registeredParticipants: 0,
+    imageUrl: 'https://placehold.co/600x300.png',
+    imageDataAiHint: "tennis players friendly"
+  },
+  {
+    id: 'event-3',
+    name: 'Community Basketball League Finals',
+    facilityId: 'facility-3',
+    sport: mockSports[1],
+    startDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
+    description: 'The exciting conclusion to our community basketball league. Witness the crowning of the champions! Spectators welcome, entry is free.',
+    entryFee: 5,
+    maxParticipants: 200,
+    registeredParticipants: 112,
+    imageUrl: 'https://placehold.co/600x300.png',
+    imageDataAiHint: "basketball game intensity"
+  },
+   {
+    id: 'event-4',
+    name: 'Badminton Bonanza Weekend',
+    facilityId: 'facility-3',
+    sport: mockSports[3],
+    startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+    description: 'A full weekend of badminton fun! Singles and doubles tournaments for various age groups. All levels welcome. Coaching sessions available.',
+    entryFee: 15,
+    maxParticipants: 48,
+    registeredParticipants: 15,
+    imageUrl: 'https://placehold.co/600x300.png',
+    imageDataAiHint: "badminton players action"
+  },
+];
+
+export const getAllEvents = (): SportEvent[] => {
+  return [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+};
+
+export const getEventById = (id: string): SportEvent | undefined => {
+  const event = mockEvents.find(event => event.id === id);
+  if (event) {
+    const sport = getSportById(event.sport.id);
+    return sport ? { ...event, sport } : { ...event };
+  }
+  return undefined;
+};
+
+export const addEvent = (eventData: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): SportEvent => {
+  const sport = getSportById(eventData.sportId);
+  if (!sport) throw new Error("Invalid sport ID provided for event.");
+
+  const newEvent: SportEvent = {
+    ...eventData,
+    id: `event-${Date.now()}`,
+    sport: sport,
+    registeredParticipants: 0,
+  };
+  mockEvents.push(newEvent);
+  return newEvent;
+};
+
+export const updateEvent = (updatedEventData: Omit<SportEvent, 'sport'> & { sportId: string }): SportEvent | undefined => {
+  const sport = getSportById(updatedEventData.sportId);
+  if (!sport) throw new Error("Invalid sport ID provided for event update.");
+
+  const eventIndex = mockEvents.findIndex(e => e.id === updatedEventData.id);
+  if (eventIndex === -1) return undefined;
+
+  const updatedEventWithFullSport: SportEvent = {
+    ...updatedEventData,
+    sport: sport,
+  };
+
+  mockEvents[eventIndex] = updatedEventWithFullSport;
+  return mockEvents[eventIndex];
+};
+
+export const deleteEvent = (eventId: string): boolean => {
+  const initialLength = mockEvents.length;
+  mockEvents = mockEvents.filter(e => e.id !== eventId);
+  return mockEvents.length < initialLength;
+};
+
+export const registerForEvent = (eventId: string): boolean => {
+  const eventIndex = mockEvents.findIndex(e => e.id === eventId);
+  if (eventIndex === -1) return false;
+
+  if (mockEvents[eventIndex].maxParticipants && mockEvents[eventIndex].registeredParticipants >= mockEvents[eventIndex].maxParticipants!) {
+    return false;
+  }
+
+  mockEvents[eventIndex].registeredParticipants += 1;
+  return true;
+};
+
+export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Review => {
+  const currentUser = getUserById(reviewData.userId);
+  const newReview: Review = {
+    ...reviewData,
+    id: `review-${mockReviews.length + 1}`,
+    userName: currentUser?.name || 'Anonymous User',
+    userAvatar: currentUser?.profilePictureUrl,
+    createdAt: new Date().toISOString(),
+  };
+  mockReviews.push(newReview);
+
+  const facilityIndex = mockFacilities.findIndex(f => f.id === reviewData.facilityId);
+  if (facilityIndex !== -1) {
+    const facilityReviews = getReviewsByFacilityId(reviewData.facilityId);
+    mockFacilities[facilityIndex].reviews = facilityReviews;
+    mockFacilities[facilityIndex].rating = calculateAverageRating(facilityReviews);
+  }
+
+  const bookingIndex = mockBookings.findIndex(b => b.id === reviewData.bookingId);
+  if (bookingIndex !== -1) {
+    mockBookings[bookingIndex].reviewed = true;
+  }
+
+  return newReview;
+};
+
+export let mockPricingRules: PricingRule[] = [
+    {
+        id: 'price-rule-1',
+        name: 'Weekend Evening Surge',
+        description: 'Higher prices for popular weekend evening slots.',
+        daysOfWeek: ['Sat', 'Sun'],
+        timeRange: { start: '18:00', end: '22:00' },
+        adjustmentType: 'percentage_increase',
+        value: 20,
+        priority: 10,
+        isActive: true,
+    },
+    {
+        id: 'price-rule-2',
+        name: 'Weekday Morning Discount',
+        description: 'Discount for less busy weekday morning hours.',
+        daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        timeRange: { start: '08:00', end: '12:00' },
+        adjustmentType: 'percentage_decrease',
+        value: 15,
+        priority: 10,
+        isActive: true,
+    },
+    {
+        id: 'price-rule-3',
+        name: 'Holiday Special Pricing',
+        dateRange: { start: '2024-12-20', end: '2024-12-26' },
+        adjustmentType: 'fixed_price',
+        value: 75,
+        priority: 5,
+        isActive: true,
+    }
+];
+
 function checkRuleApplicability(rule: PricingRule, date: Date, slot: TimeSlot): boolean {
+  if (!rule.isActive) return false;
+
   if (rule.daysOfWeek && rule.daysOfWeek.length > 0) {
     const dayNames: ('Sun' | 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat')[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const currentDayName = dayNames[getDay(date)];
@@ -987,29 +937,30 @@ export function calculateDynamicPrice(
   for (const rule of activeRules) {
     if (checkRuleApplicability(rule, selectedDate, selectedSlot)) {
       appliedRule = rule;
+      let adjustedHourlyRate = basePricePerHour; // Start with base for adjustments
       switch (rule.adjustmentType) {
         case 'percentage_increase':
-          currentPricePerHour = basePricePerHour * (1 + rule.value / 100);
+          adjustedHourlyRate = basePricePerHour * (1 + rule.value / 100);
           break;
         case 'percentage_decrease':
-          currentPricePerHour = basePricePerHour * (1 - rule.value / 100);
+          adjustedHourlyRate = basePricePerHour * (1 - rule.value / 100);
           break;
         case 'fixed_increase':
-          currentPricePerHour = basePricePerHour + rule.value;
+          adjustedHourlyRate = basePricePerHour + rule.value;
           break;
         case 'fixed_decrease':
-          currentPricePerHour = basePricePerHour - rule.value;
+          adjustedHourlyRate = basePricePerHour - rule.value;
           break;
         case 'fixed_price':
-          currentPricePerHour = rule.value;
+          adjustedHourlyRate = rule.value; // This is the new per-hour rate
           break;
       }
-      currentPricePerHour = Math.max(0, currentPricePerHour); 
-      break; 
+      currentPricePerHour = Math.max(0, adjustedHourlyRate);
+      break;
     }
   }
-  return { 
-    finalPrice: parseFloat((currentPricePerHour * durationHours).toFixed(2)), 
+  return {
+    finalPrice: parseFloat((currentPricePerHour * durationHours).toFixed(2)),
     appliedRuleName: appliedRule?.name,
     appliedRuleDetails: appliedRule
   };
@@ -1046,19 +997,54 @@ export const deletePricingRule = (ruleId: string): boolean => {
     return mockPricingRules.length < initialLength;
 };
 
+export let mockPromotionRules: PromotionRule[] = [
+    {
+        id: 'promo-1',
+        name: 'Summer Kickoff Discount',
+        description: 'Get 15% off any booking in June.',
+        code: 'SUMMER15',
+        discountType: 'percentage',
+        discountValue: 15,
+        startDate: '2024-06-01',
+        endDate: '2024-06-30',
+        usageLimit: 1000,
+        usageLimitPerUser: 1,
+        isActive: true,
+    },
+    {
+        id: 'promo-2',
+        name: 'New User Welcome',
+        description: '$10 off your first booking.',
+        code: 'WELCOME10',
+        discountType: 'fixed_amount',
+        discountValue: 10,
+        usageLimitPerUser: 1,
+        isActive: true,
+    },
+    {
+        id: 'promo-3',
+        name: 'Weekend Warrior Special',
+        description: '20% off weekend bookings (Sat/Sun). No code needed.',
+        discountType: 'percentage',
+        discountValue: 20,
+        isActive: true,
+    }
+];
+
 
 export const getAllPromotionRules = (): PromotionRule[] => {
     return [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
 };
 
 export const getPromotionRuleByCode = (code: string): PromotionRule | undefined => {
-    const rule = mockPromotionRules.find(r => r.code?.toLowerCase() === code.toLowerCase());
-    if (rule && rule.isActive) {
+    const rule = mockPromotionRules.find(r => r.code?.toLowerCase() === code.toLowerCase() && r.isActive);
+    if (rule) {
         const now = new Date();
-        const startDateValid = rule.startDate ? isAfter(now, startOfDay(parseISO(rule.startDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.startDate)), end: endOfDay(parseISO(rule.startDate))}) : true;
-        const endDateValid = rule.endDate ? isBefore(now, endOfDay(parseISO(rule.endDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.endDate)), end: endOfDay(parseISO(rule.endDate))}) : true;
-        
+        const startDateValid = !rule.startDate || isAfter(now, startOfDay(parseISO(rule.startDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.startDate)), end: endOfDay(parseISO(rule.startDate))});
+        const endDateValid = !rule.endDate || isBefore(now, endOfDay(parseISO(rule.endDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.endDate)), end: endOfDay(parseISO(rule.endDate))});
+
         if (startDateValid && endDateValid) {
+            // Note: Usage limit checking (total and per user) is not implemented in this mock
             return rule;
         }
     }
@@ -1066,11 +1052,7 @@ export const getPromotionRuleByCode = (code: string): PromotionRule | undefined 
 };
 
 export const getPromotionRuleById = (id: string): PromotionRule | undefined => {
-    const rule = mockPromotionRules.find(r => r.id === id);
-     if (rule) { 
-        return rule;
-    }
-    return undefined;
+    return mockPromotionRules.find(r => r.id === id);
 };
 
 
@@ -1096,4 +1078,22 @@ export const deletePromotionRule = (ruleId: string): boolean => {
     return mockPromotionRules.length < initialLength;
 };
 
-    
+export const mockReportData: ReportData = {
+  totalBookings: mockBookings.length,
+  totalRevenue: mockBookings.reduce((sum, booking) => sum + (booking.status === 'Confirmed' ? booking.totalPrice : 0), 0),
+  facilityUsage: (() => {
+    const usageMap = new Map<string, number>();
+    mockBookings.forEach(booking => {
+      usageMap.set(booking.facilityId, (usageMap.get(booking.facilityId) || 0) + 1);
+    });
+    return Array.from(usageMap.entries()).map(([facilityId, count]) => ({
+      facilityName: getFacilityById(facilityId)?.name || 'Unknown Facility',
+      bookings: count,
+    }));
+  })(),
+  peakHours: [
+    { hour: '18:00', bookings: mockBookings.filter(b => b.startTime.startsWith('18:')).length || 200 },
+    { hour: '19:00', bookings: mockBookings.filter(b => b.startTime.startsWith('19:')).length || 180 },
+    { hour: '17:00', bookings: mockBookings.filter(b => b.startTime.startsWith('17:')).length || 150 },
+  ],
+};
