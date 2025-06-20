@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { FacilityMap } from '@/components/facilities/FacilityMap';
@@ -109,7 +109,9 @@ export default function FacilitiesPage() {
     setIsLoading(false);
   };
   
-  const facilitiesForMap = facilitiesToShow.filter(f => f.latitude !== undefined && f.longitude !== undefined);
+  const facilitiesForMap = useMemo(() => {
+    return facilitiesToShow.filter(f => f.latitude !== undefined && f.longitude !== undefined);
+  }, [facilitiesToShow]);
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -165,7 +167,7 @@ export default function FacilitiesPage() {
               ))}
             </div>
           )}
-          {facilitiesToShow.length === 0 && !isLoading && (
+          {viewMode === 'grid' && facilitiesToShow.length === 0 && !isLoading && (
             <Alert variant="default" className="mt-8">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>No Facilities Found</AlertTitle>
@@ -188,3 +190,4 @@ export default function FacilitiesPage() {
     </div>
   );
 }
+
