@@ -3,8 +3,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo } from '@/lib/types';
-import { getFacilityById, mockUser, addNotification, getPromotionRuleById } from '@/lib/data';
+import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule } from '@/lib/types';
+import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, mockPricingRules } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X } from 'lucide-react';
+import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInHours, parse } from 'date-fns';
@@ -51,6 +51,7 @@ export default function BookingPage() {
   const [selectedEquipment, setSelectedEquipment] = useState<Map<string, { quantity: number; details: RentalEquipment }>>(new Map());
   const [equipmentRentalCost, setEquipmentRentalCost] = useState(0);
   const [baseFacilityPrice, setBaseFacilityPrice] = useState(0);
+  const [appliedPricingRuleMessage, setAppliedPricingRuleMessage] = useState<string | null>(null);
   
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedPromotionDetails, setAppliedPromotionDetails] = useState<AppliedPromotionInfo | null>(null);
@@ -82,23 +83,53 @@ export default function BookingPage() {
         const slotStartDate = parse(selectedSlot.startTime, 'HH:mm', selectedDate);
         const slotEndDate = parse(selectedSlot.endTime, 'HH:mm', selectedDate);
         if (slotEndDate < slotStartDate) slotEndDate.setDate(slotEndDate.getDate() + 1); // Handle midnight crossover
-        return differenceInHours(slotEndDate, slotStartDate);
+        const diff = differenceInHours(slotEndDate, slotStartDate);
+        return diff > 0 ? diff : 1; // Ensure at least 1 hour
       } catch (error) {
         console.error("Error parsing slot times:", error);
-        return 1; // Default to 1 hour if parsing fails
+        return 1; 
       }
     }
-    return 1; // Default duration if no slot selected
+    return 1; 
   }, [selectedSlot, selectedDate]);
 
 
   useEffect(() => {
-    let facilityCost = 0;
-    if (facility && selectedSlot) {
-      facilityCost = facility.pricePerHour * bookingDurationHours;
+    if (facility && selectedDate && selectedSlot) {
+      const { finalPrice, appliedRuleName, appliedRuleDetails } = calculateDynamicPrice(
+        facility.pricePerHour,
+        selectedDate,
+        selectedSlot,
+        bookingDurationHours
+      );
+      setBaseFacilityPrice(finalPrice);
+
+      if (appliedRuleName && appliedRuleDetails) {
+        let changeDescription = "";
+        const originalHourlyRate = facility.pricePerHour;
+        const newHourlyRate = finalPrice / bookingDurationHours;
+
+        switch (appliedRuleDetails.adjustmentType) {
+            case 'percentage_increase': changeDescription = `(+${appliedRuleDetails.value}%)`; break;
+            case 'percentage_decrease': changeDescription = `(-${appliedRuleDetails.value}%)`; break;
+            case 'fixed_increase': changeDescription = `(+$${appliedRuleDetails.value.toFixed(2)}/hr)`; break;
+            case 'fixed_decrease': changeDescription = `(-$${appliedRuleDetails.value.toFixed(2)}/hr)`; break;
+            case 'fixed_price': changeDescription = `(to $${appliedRuleDetails.value.toFixed(2)}/hr)`; break;
+        }
+        if (newHourlyRate !== originalHourlyRate) {
+             setAppliedPricingRuleMessage(`${appliedRuleName} ${changeDescription}`);
+        } else {
+            setAppliedPricingRuleMessage(null); // No effective change or no rule applied
+        }
+      } else {
+        setAppliedPricingRuleMessage(null);
+      }
+    } else {
+      // Reset if facility, date, or slot is not selected
+      setBaseFacilityPrice(facility ? facility.pricePerHour * bookingDurationHours : 0);
+      setAppliedPricingRuleMessage(null);
     }
-    setBaseFacilityPrice(facilityCost);
-  }, [facility, selectedSlot, bookingDurationHours]);
+  }, [facility, selectedDate, selectedSlot, bookingDurationHours]);
 
   useEffect(() => {
     let rentalCost = 0;
@@ -156,23 +187,21 @@ export default function BookingPage() {
     setIsApplyingPromo(true);
     setPromoError(null);
     
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 700));
-    const promotion = getPromotionRuleById(promoCodeInput.trim());
+    const promotion = getPromotionRuleByCode(promoCodeInput.trim());
 
     if (promotion) {
       const subTotal = baseFacilityPrice + equipmentRentalCost;
       let discountAmount = 0;
       if (promotion.discountType === 'percentage') {
         discountAmount = subTotal * (promotion.discountValue / 100);
-      } else { // fixed_amount
+      } else { 
         discountAmount = promotion.discountValue;
       }
-      // Ensure discount doesn't exceed subtotal
       discountAmount = Math.min(discountAmount, subTotal);
 
       setAppliedPromotionDetails({
-        code: promotion.code || promotion.name, // Use name if no code (for automatic promos, though not fully implemented)
+        code: promotion.code || promotion.name, 
         discountAmount: parseFloat(discountAmount.toFixed(2)),
         description: promotion.name,
       });
@@ -183,7 +212,7 @@ export default function BookingPage() {
       });
     } else {
       setPromoError("Invalid or expired promo code.");
-      setAppliedPromotionDetails(null); // Clear any previously applied promo
+      setAppliedPromotionDetails(null); 
       toast({
         title: "Promo Code Error",
         description: "The entered promo code is invalid or has expired.",
@@ -238,7 +267,7 @@ export default function BookingPage() {
         selectedEquipment.forEach(item => {
             rentedItemsSummary += `${item.quantity}x ${item.details.name}, `;
         });
-        rentedItemsSummary = rentedItemsSummary.slice(0, -2) + "."; // Remove last comma and space
+        rentedItemsSummary = rentedItemsSummary.slice(0, -2) + "."; 
     }
 
     let promotionSummary = "";
@@ -353,7 +382,7 @@ export default function BookingPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center"><PackageSearch className="mr-2 h-5 w-5 text-primary"/>Rent Equipment</CardTitle>
-                  <CardDescription>Add items to your booking. Prices are per {bookingDurationHours} hour(s) if 'per_hour', or fixed if 'per_booking'.</CardDescription>
+                  <CardDescription>Add items to your booking. Prices are per {bookingDurationHours} hour{bookingDurationHours !== 1 ? 's' : ''} if 'per_hour', or fixed if 'per_booking'.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {facility.availableEquipment?.map(equip => (
@@ -440,6 +469,9 @@ export default function BookingPage() {
                 <p className="mb-1">Date: <strong>{selectedDate ? format(selectedDate, 'PPP') : 'N/A'}</strong></p>
                 <p className="mb-1">Time: <strong>{selectedSlot?.startTime} - {selectedSlot?.endTime}</strong> ({bookingDurationHours} hr{bookingDurationHours !== 1 ? 's' : ''})</p>
                 <p className="mb-1">Number of Guests: <strong>{numberOfGuests}</strong></p>
+                {appliedPricingRuleMessage && (
+                  <p className="text-sm text-blue-600 mt-1">Pricing: {appliedPricingRuleMessage}</p>
+                )}
                 {selectedEquipment.size > 0 && (
                     <div className="mt-3 mb-1 pt-3 border-t">
                         <h4 className="font-semibold text-md mb-1">Rented Equipment:</h4>
@@ -511,6 +543,12 @@ export default function BookingPage() {
                 <span className="text-muted-foreground">Facility Cost:</span>
                 <span className="font-medium">${baseFacilityPrice.toFixed(2)}</span>
               </div>
+              {appliedPricingRuleMessage && (
+                <div className="flex justify-between text-xs text-blue-600 items-center">
+                  <span className="flex items-center"><TrendingUp className="mr-1 h-3 w-3"/>Dynamic Pricing:</span>
+                  <span>{appliedPricingRuleMessage}</span>
+                </div>
+              )}
               {selectedEquipment.size > 0 && (
                 <>
                 <div className="flex justify-between items-start">

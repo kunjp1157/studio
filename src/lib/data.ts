@@ -1,7 +1,7 @@
 
-import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo } from './types';
+import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group } from 'lucide-react';
-import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay } from 'date-fns';
 
 
 export const mockSports: Sport[] = [
@@ -897,6 +897,76 @@ export const mockAdminUsers: UserProfile[] = [
 ];
 
 // Pricing Rule Data Management
+function checkRuleApplicability(rule: PricingRule, date: Date, slot: TimeSlot): boolean {
+  if (rule.daysOfWeek && rule.daysOfWeek.length > 0) {
+    const dayNames: ('Sun' | 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat')[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const currentDayName = dayNames[getDay(date)];
+    if (!rule.daysOfWeek.includes(currentDayName)) {
+      return false;
+    }
+  }
+
+  if (rule.timeRange && rule.timeRange.start && rule.timeRange.end) {
+    if (slot.startTime < rule.timeRange.start || slot.startTime >= rule.timeRange.end) {
+      return false;
+    }
+  }
+
+  if (rule.dateRange && rule.dateRange.start && rule.dateRange.end) {
+    const ruleStartDate = startOfDay(parseISO(rule.dateRange.start));
+    const ruleEndDate = endOfDay(parseISO(rule.dateRange.end));
+    if (!isWithinInterval(date, { start: ruleStartDate, end: ruleEndDate })) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function calculateDynamicPrice(
+  basePricePerHour: number,
+  selectedDate: Date,
+  selectedSlot: TimeSlot,
+  durationHours: number
+): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } {
+  let currentPricePerHour = basePricePerHour;
+  let appliedRule: PricingRule | undefined = undefined;
+
+  const activeRules = mockPricingRules
+    .filter(rule => rule.isActive)
+    .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+
+  for (const rule of activeRules) {
+    if (checkRuleApplicability(rule, selectedDate, selectedSlot)) {
+      appliedRule = rule;
+      switch (rule.adjustmentType) {
+        case 'percentage_increase':
+          currentPricePerHour = basePricePerHour * (1 + rule.value / 100);
+          break;
+        case 'percentage_decrease':
+          currentPricePerHour = basePricePerHour * (1 - rule.value / 100);
+          break;
+        case 'fixed_increase':
+          currentPricePerHour = basePricePerHour + rule.value;
+          break;
+        case 'fixed_decrease':
+          currentPricePerHour = basePricePerHour - rule.value;
+          break;
+        case 'fixed_price':
+          currentPricePerHour = rule.value;
+          break;
+      }
+      currentPricePerHour = Math.max(0, currentPricePerHour); // Ensure price doesn't go below 0
+      break; 
+    }
+  }
+  return { 
+    finalPrice: parseFloat((currentPricePerHour * durationHours).toFixed(2)), 
+    appliedRuleName: appliedRule?.name,
+    appliedRuleDetails: appliedRule
+  };
+}
+
+
 export const getAllPricingRules = (): PricingRule[] => {
     return [...mockPricingRules];
 };
@@ -932,18 +1002,28 @@ export const getAllPromotionRules = (): PromotionRule[] => {
     return [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
 };
 
-export const getPromotionRuleById = (id: string): PromotionRule | undefined => {
-    const rule = mockPromotionRules.find(r => r.code?.toLowerCase() === id.toLowerCase() || r.id === id);
+export const getPromotionRuleByCode = (code: string): PromotionRule | undefined => {
+    const rule = mockPromotionRules.find(r => r.code?.toLowerCase() === code.toLowerCase());
     if (rule && rule.isActive) {
         const now = new Date();
         const startDateValid = rule.startDate ? isAfter(now, startOfDay(parseISO(rule.startDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.startDate)), end: endOfDay(parseISO(rule.startDate))}) : true;
         const endDateValid = rule.endDate ? isBefore(now, endOfDay(parseISO(rule.endDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.endDate)), end: endOfDay(parseISO(rule.endDate))}) : true;
+        // Not checking usage limits in this mock
         if (startDateValid && endDateValid) {
             return rule;
         }
     }
     return undefined;
 };
+
+export const getPromotionRuleById = (id: string): PromotionRule | undefined => {
+    const rule = mockPromotionRules.find(r => r.id === id);
+     if (rule && rule.isActive) { // Simplified check for edit form, real validation in getPromotionByCode
+        return rule;
+    }
+    return undefined;
+};
+
 
 export const addPromotionRule = (ruleData: Omit<PromotionRule, 'id'>): PromotionRule => {
     const newRule: PromotionRule = {
@@ -966,5 +1046,3 @@ export const deletePromotionRule = (ruleId: string): boolean => {
     mockPromotionRules = mockPromotionRules.filter(r => r.id !== ruleId);
     return mockPromotionRules.length < initialLength;
 };
-
-
