@@ -3,6 +3,7 @@ import './globals.css';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Toaster } from "@/components/ui/toaster"
+import { PageTransitionWrapper } from '@/components/layout/PageTransitionWrapper';
 
 export const metadata: Metadata = {
   title: 'City Sports Hub',
@@ -24,7 +25,9 @@ export default function RootLayout({
       <body className="font-body antialiased min-h-screen flex flex-col">
         <Header />
         <main className="flex-grow">
-          {children}
+          <PageTransitionWrapper>
+            {children}
+          </PageTransitionWrapper>
         </main>
         <Footer />
         <Toaster />
