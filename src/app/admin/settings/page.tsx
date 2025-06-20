@@ -63,7 +63,7 @@ export default function AdminSettingsPage() {
             <Construction className="h-12 w-12 text-muted-foreground mb-3" />
             <h3 className="text-md font-semibold text-muted-foreground">Configuration Coming Soon</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              API key management interface will be available here.
+              Interface to manage API keys for external services will be implemented here.
             </p>
           </CardContent>
         </Card>
@@ -82,7 +82,7 @@ export default function AdminSettingsPage() {
             <Construction className="h-12 w-12 text-muted-foreground mb-3" />
             <h3 className="text-md font-semibold text-muted-foreground">Configuration Coming Soon</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              General site configuration options are under development.
+              Options for general site configuration, like site identity and regional settings, are planned.
             </p>
           </CardContent>
         </Card>
