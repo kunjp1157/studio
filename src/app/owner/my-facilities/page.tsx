@@ -1,37 +1,148 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, Construction, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import type { Facility } from '@/lib/types';
+import { mockUser, getFacilitiesByOwnerId } from '@/lib/data'; 
+import { PlusCircle, MoreHorizontal, Edit, Eye, Building2, AlertCircle } from 'lucide-react';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
 export default function OwnerFacilitiesPage() {
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Assuming mockUser.id is the ID of the currently logged-in owner
+  const ownerId = mockUser.id; 
+
+  useEffect(() => {
+    setIsLoading(true);
+    // Simulate fetching facilities for the current owner
+    setTimeout(() => {
+      if (!ownerId) {
+        toast({
+            title: "Authentication Error",
+            description: "Could not determine the current user. Please log in again.",
+            variant: "destructive",
+        });
+        setFacilities([]);
+        setIsLoading(false);
+        return;
+      }
+      setFacilities(getFacilitiesByOwnerId(ownerId));
+      setIsLoading(false);
+    }, 500);
+  }, [ownerId, toast]);
+
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <PageTitle title="Manage Your Facilities" description="View, edit, and update details for your listed sports facilities." />
+        <Card className="shadow-lg">
+          <CardHeader>
+             <CardTitle className="flex items-center"><Building2 className="mr-2 h-6 w-6 text-primary"/>Loading Your Facilities...</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-center min-h-[300px]">
+            <LoadingSpinner size={48} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <PageTitle title="Manage Your Facilities" description="View, edit, and update details for your listed sports facilities." />
-
       <Card className="shadow-lg">
-        <CardHeader className="flex flex-row justify-between items-center">
+        <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <CardTitle className="flex items-center">
-                    <Building className="mr-2 h-6 w-6 text-primary" />
-                    Your Facility Listings
-                </CardTitle>
-                <CardDescription>
-                    Here you'll be able to add new facilities, edit existing ones, manage photos, amenities, and operating hours specific to your venues.
-                </CardDescription>
+                <CardTitle className="flex items-center"><Building2 className="mr-2 h-6 w-6 text-primary"/>Your Facility Listings</CardTitle>
+                <CardDescription>Add new facilities or edit details for your existing venues.</CardDescription>
             </div>
-            <Button variant="outline" disabled>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add New Facility
-            </Button>
+            <Link href="/owner/my-facilities/new">
+              <Button><PlusCircle className="mr-2 h-4 w-4" /> Add New Facility</Button>
+            </Link>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center min-h-[300px] text-center">
-          <Construction className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-xl font-semibold text-muted-foreground">Facility Management Tools Under Development</h3>
-          <p className="text-muted-foreground mt-2">
-            The interface for managing your facility details is currently being built. Please check back later.
-          </p>
+        <CardContent>
+            {facilities.length === 0 ? (
+                <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>No Facilities Found</AlertTitle>
+                    <AlertDescription>
+                        You haven't added any facilities yet. 
+                        <Link href="/owner/my-facilities/new" className="font-semibold underline ml-1">Click here to add your first facility!</Link>
+                    </AlertDescription>
+                </Alert>
+            ) : (
+                <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Price/hr</TableHead>
+                        <TableHead className="text-center">Rating</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {facilities.map((facility) => (
+                            <TableRow key={facility.id}>
+                            <TableCell className="font-medium">{facility.name}</TableCell>
+                            <TableCell><Badge variant="outline">{facility.type}</Badge></TableCell>
+                            <TableCell>{facility.location}</TableCell>
+                            <TableCell>${facility.pricePerHour.toFixed(2)}</TableCell>
+                            <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>
+                            <TableCell className="text-right">
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <Link href={`/facilities/${facility.id}`} legacyBehavior passHref>
+                                    <DropdownMenuItem asChild><a><Eye className="mr-2 h-4 w-4" /> View Public Page</a></DropdownMenuItem>
+                                    </Link>
+                                    <Link href={`/owner/my-facilities/${facility.id}/edit`} legacyBehavior passHref>
+                                    <DropdownMenuItem asChild><a><Edit className="mr-2 h-4 w-4" /> Edit Details</a></DropdownMenuItem>
+                                    </Link>
+                                    {/* Delete functionality can be added here later */}
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                    </Table>
+                </div>
+            )}
         </CardContent>
       </Card>
     </div>

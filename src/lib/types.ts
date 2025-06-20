@@ -91,6 +91,7 @@ export interface Facility {
   isIndoor?: boolean; 
   dataAiHint?: string; 
   availableEquipment?: RentalEquipment[];
+  ownerId?: string; // Added ownerId
 }
 
 export interface TimeSlot {

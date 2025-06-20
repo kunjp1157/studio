@@ -114,6 +114,7 @@ export const getAmenityById = (id: string): Amenity | undefined => {
   return mockAmenities.find(amenity => amenity.id === id);
 };
 
+// Placed getFacilityById earlier because mockFacilities initialization might depend on it indirectly via reviews
 export const getFacilityById = (id: string): Facility | undefined => {
   const facility = mockFacilities.find(f => f.id === id);
   if (facility) {
@@ -121,7 +122,7 @@ export const getFacilityById = (id: string): Facility | undefined => {
     return {
       ...facility,
       reviews: reviews,
-      rating: calculateAverageRating(reviews),
+      rating: calculateAverageRating(reviews), // Ensure rating is calculated based on current reviews
       sports: facility.sports.map(s => getSportById(s.id) || s),
       amenities: facility.amenities.map(a => getAmenityById(a.id) || a),
     };
@@ -145,13 +146,14 @@ export let mockFacilities: Facility[] = [
     operatingHours: [...defaultOperatingHours],
     pricePerHour: 50,
     pricingRulesApplied: [],
-    rating: 0,
-    reviews: [],
+    rating: 0, // Initial, will be calculated
+    reviews: [], // Initial, will be populated
     capacity: 100,
     isPopular: true,
     isIndoor: true,
     dataAiHint: 'sports complex stadium',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-1', 'equip-2', 'equip-3'].includes(eq.id)),
+    ownerId: 'user-admin', // Example owner
   },
   {
     id: 'facility-2',
@@ -174,6 +176,7 @@ export let mockFacilities: Facility[] = [
     isIndoor: false,
     dataAiHint: 'tennis court outdoor',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-4', 'equip-5'].includes(eq.id)),
+    ownerId: 'user-owner', // Example owner
   },
   {
     id: 'facility-3',
@@ -197,6 +200,7 @@ export let mockFacilities: Facility[] = [
     isIndoor: true,
     dataAiHint: 'community center indoor',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-6', 'equip-7'].includes(eq.id)),
+    ownerId: 'user-admin', // Example owner
   },
   {
     id: 'facility-4',
@@ -219,14 +223,17 @@ export let mockFacilities: Facility[] = [
     isIndoor: true,
     dataAiHint: 'swimming pool olympic',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-8', 'equip-9'].includes(eq.id)),
+    ownerId: 'user-owner', // Example owner
   },
 ];
 
+// Populate reviews and calculate initial ratings for facilities
 mockFacilities.forEach(facility => {
   const facilityReviews = getReviewsByFacilityId(facility.id);
   facility.reviews = facilityReviews;
   facility.rating = calculateAverageRating(facilityReviews);
 });
+
 
 export const mockAchievements: Achievement[] = [
   { id: 'ach-1', name: 'First Booking', description: 'Congratulations on making your first booking!', icon: Medal, unlockedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() },
@@ -255,7 +262,7 @@ export let mockUsers: UserProfile[] = [
       { sportId: 'sport-1', sportName: 'Soccer', level: 'Intermediate' },
       { sportId: 'sport-3', sportName: 'Tennis', level: 'Beginner' },
     ],
-    role: 'Admin',
+    role: 'Admin', // Alex can also be an owner of some facilities for testing
     status: 'Active',
     joinedAt: subDays(new Date(), 30).toISOString(),
   },
@@ -298,7 +305,7 @@ export let mockUsers: UserProfile[] = [
   }
 ];
 
-export const mockUser = mockUsers[0];
+export const mockUser = mockUsers[0]; // Alex Johnson is the primary mock user
 
 export let mockBookings: Booking[] = [
   {
@@ -473,12 +480,23 @@ export const getAllSports = (): Sport[] => {
 export const getAllFacilities = (): Facility[] => {
     return mockFacilities.map(f => ({
       ...f,
+      rating: calculateAverageRating(getReviewsByFacilityId(f.id)), // Ensure rating is always fresh
+      reviews: getReviewsByFacilityId(f.id)
+    }));
+};
+
+export const getFacilitiesByOwnerId = (ownerId: string): Facility[] => {
+  return mockFacilities
+    .filter(f => f.ownerId === ownerId)
+    .map(f => ({ // Ensure reviews and ratings are fresh for owner's facilities too
+      ...f,
       rating: calculateAverageRating(getReviewsByFacilityId(f.id)),
       reviews: getReviewsByFacilityId(f.id)
     }));
 };
 
-export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[] }): Facility => {
+
+export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], ownerId?: string }): Facility => {
   const newFacility: Facility = {
     ...facilityData,
     id: `facility-${Date.now()}`,
@@ -489,6 +507,7 @@ export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amen
     operatingHours: facilityData.operatingHours || defaultOperatingHours,
     availableEquipment: facilityData.availableEquipment || [],
     pricingRulesApplied: facilityData.pricingRulesApplied || [],
+    ownerId: facilityData.ownerId,
   };
   mockFacilities.push(newFacility);
   return newFacility;
@@ -505,6 +524,7 @@ export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'a
     amenities: (updatedFacilityData.amenities || []).map(amenityId => getAmenityById(amenityId)).filter(Boolean) as Amenity[],
     rating: updatedFacilityData.rating ?? mockFacilities[facilityIndex].rating,
     operatingHours: updatedFacilityData.operatingHours || mockFacilities[facilityIndex].operatingHours,
+    // ownerId is preserved from mockFacilities[facilityIndex] if not in updatedFacilityData
   };
 
   mockFacilities[facilityIndex] = updatedFacility;
@@ -1087,7 +1107,7 @@ export const mockReportData: ReportData = {
       usageMap.set(booking.facilityId, (usageMap.get(booking.facilityId) || 0) + 1);
     });
     return Array.from(usageMap.entries()).map(([facilityId, count]) => ({
-      facilityName: getFacilityById(facilityId)?.name || 'Unknown Facility',
+      facilityName: getFacilityById(facilityId)?.name || 'Unknown Facility', // Uses getFacilityById
       bookings: count,
     }));
   })(),
@@ -1097,3 +1117,4 @@ export const mockReportData: ReportData = {
     { hour: '17:00', bookings: mockBookings.filter(b => b.startTime.startsWith('17:')).length || 150 },
   ],
 };
+
