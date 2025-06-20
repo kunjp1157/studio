@@ -31,7 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon" className="border-r">
+      <Sidebar collapsible="none" className="border-r">
         <SidebarHeader className="p-4 border-b">
           <Link href="/admin" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
             <MountainSnow className="h-7 w-7 text-primary group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8" />
