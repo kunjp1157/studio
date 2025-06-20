@@ -1,4 +1,5 @@
 
+
 export interface Amenity {
   id: string;
   name: string;
@@ -69,6 +70,14 @@ export interface FacilityOperatingHours {
   open: string;
   close: string;
 }
+
+export interface BlockedSlot {
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
+  reason?: string;
+}
+
 export interface Facility {
   id: string;
   name:string;
@@ -91,7 +100,8 @@ export interface Facility {
   isIndoor?: boolean; 
   dataAiHint?: string; 
   availableEquipment?: RentalEquipment[];
-  ownerId?: string; // Added ownerId
+  ownerId?: string;
+  blockedSlots?: BlockedSlot[];
 }
 
 export interface TimeSlot {

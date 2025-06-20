@@ -1,5 +1,6 @@
 
-import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel } from './types';
+
+import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2 } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
@@ -114,7 +115,6 @@ export const getAmenityById = (id: string): Amenity | undefined => {
   return mockAmenities.find(amenity => amenity.id === id);
 };
 
-// Placed getFacilityById earlier because mockFacilities initialization might depend on it indirectly via reviews
 export const getFacilityById = (id: string): Facility | undefined => {
   const facility = mockFacilities.find(f => f.id === id);
   if (facility) {
@@ -122,9 +122,10 @@ export const getFacilityById = (id: string): Facility | undefined => {
     return {
       ...facility,
       reviews: reviews,
-      rating: calculateAverageRating(reviews), // Ensure rating is calculated based on current reviews
+      rating: calculateAverageRating(reviews), 
       sports: facility.sports.map(s => getSportById(s.id) || s),
       amenities: facility.amenities.map(a => getAmenityById(a.id) || a),
+      blockedSlots: facility.blockedSlots || [],
     };
   }
   return undefined;
@@ -146,14 +147,15 @@ export let mockFacilities: Facility[] = [
     operatingHours: [...defaultOperatingHours],
     pricePerHour: 50,
     pricingRulesApplied: [],
-    rating: 0, // Initial, will be calculated
-    reviews: [], // Initial, will be populated
+    rating: 0, 
+    reviews: [], 
     capacity: 100,
     isPopular: true,
     isIndoor: true,
     dataAiHint: 'sports complex stadium',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-1', 'equip-2', 'equip-3'].includes(eq.id)),
-    ownerId: 'user-admin', // Example owner
+    ownerId: 'user-admin',
+    blockedSlots: [],
   },
   {
     id: 'facility-2',
@@ -176,7 +178,8 @@ export let mockFacilities: Facility[] = [
     isIndoor: false,
     dataAiHint: 'tennis court outdoor',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-4', 'equip-5'].includes(eq.id)),
-    ownerId: 'user-owner', // Example owner
+    ownerId: 'user-owner',
+    blockedSlots: [],
   },
   {
     id: 'facility-3',
@@ -200,7 +203,8 @@ export let mockFacilities: Facility[] = [
     isIndoor: true,
     dataAiHint: 'community center indoor',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-6', 'equip-7'].includes(eq.id)),
-    ownerId: 'user-admin', // Example owner
+    ownerId: 'user-admin',
+    blockedSlots: [],
   },
   {
     id: 'facility-4',
@@ -223,17 +227,16 @@ export let mockFacilities: Facility[] = [
     isIndoor: true,
     dataAiHint: 'swimming pool olympic',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-8', 'equip-9'].includes(eq.id)),
-    ownerId: 'user-owner', // Example owner
+    ownerId: 'user-owner',
+    blockedSlots: [],
   },
 ];
 
-// Populate reviews and calculate initial ratings for facilities
 mockFacilities.forEach(facility => {
   const facilityReviews = getReviewsByFacilityId(facility.id);
   facility.reviews = facilityReviews;
   facility.rating = calculateAverageRating(facilityReviews);
 });
-
 
 export const mockAchievements: Achievement[] = [
   { id: 'ach-1', name: 'First Booking', description: 'Congratulations on making your first booking!', icon: Medal, unlockedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() },
@@ -262,7 +265,7 @@ export let mockUsers: UserProfile[] = [
       { sportId: 'sport-1', sportName: 'Soccer', level: 'Intermediate' },
       { sportId: 'sport-3', sportName: 'Tennis', level: 'Beginner' },
     ],
-    role: 'Admin', // Alex can also be an owner of some facilities for testing
+    role: 'Admin',
     status: 'Active',
     joinedAt: subDays(new Date(), 30).toISOString(),
   },
@@ -305,7 +308,7 @@ export let mockUsers: UserProfile[] = [
   }
 ];
 
-export const mockUser = mockUsers[0]; // Alex Johnson is the primary mock user
+export const mockUser = mockUsers[0]; 
 
 export let mockBookings: Booking[] = [
   {
@@ -438,7 +441,7 @@ export let mockBookings: Booking[] = [
     baseFacilityPrice: 15,
     equipmentRentalCost: 6,
     appliedPromotion: { code: 'WELCOME10', discountAmount: 10, description: 'New User Welcome' },
-    totalPrice: 11, // (15 + 6) - 10
+    totalPrice: 11,
     status: 'Pending',
     bookedAt: new Date(Date.now() - 0.1 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
@@ -480,23 +483,25 @@ export const getAllSports = (): Sport[] => {
 export const getAllFacilities = (): Facility[] => {
     return mockFacilities.map(f => ({
       ...f,
-      rating: calculateAverageRating(getReviewsByFacilityId(f.id)), // Ensure rating is always fresh
-      reviews: getReviewsByFacilityId(f.id)
+      rating: calculateAverageRating(getReviewsByFacilityId(f.id)), 
+      reviews: getReviewsByFacilityId(f.id),
+      blockedSlots: f.blockedSlots || [],
     }));
 };
 
 export const getFacilitiesByOwnerId = (ownerId: string): Facility[] => {
   return mockFacilities
     .filter(f => f.ownerId === ownerId)
-    .map(f => ({ // Ensure reviews and ratings are fresh for owner's facilities too
+    .map(f => ({ 
       ...f,
       rating: calculateAverageRating(getReviewsByFacilityId(f.id)),
-      reviews: getReviewsByFacilityId(f.id)
+      reviews: getReviewsByFacilityId(f.id),
+      blockedSlots: f.blockedSlots || [],
     }));
 };
 
 
-export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], ownerId?: string }): Facility => {
+export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours' | 'blockedSlots'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], ownerId?: string, blockedSlots?: BlockedSlot[] }): Facility => {
   const newFacility: Facility = {
     ...facilityData,
     id: `facility-${Date.now()}`,
@@ -508,6 +513,7 @@ export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amen
     availableEquipment: facilityData.availableEquipment || [],
     pricingRulesApplied: facilityData.pricingRulesApplied || [],
     ownerId: facilityData.ownerId,
+    blockedSlots: facilityData.blockedSlots || [],
   };
   mockFacilities.push(newFacility);
   return newFacility;
@@ -524,7 +530,7 @@ export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'a
     amenities: (updatedFacilityData.amenities || []).map(amenityId => getAmenityById(amenityId)).filter(Boolean) as Amenity[],
     rating: updatedFacilityData.rating ?? mockFacilities[facilityIndex].rating,
     operatingHours: updatedFacilityData.operatingHours || mockFacilities[facilityIndex].operatingHours,
-    // ownerId is preserved from mockFacilities[facilityIndex] if not in updatedFacilityData
+    blockedSlots: updatedFacilityData.blockedSlots || mockFacilities[facilityIndex].blockedSlots || [],
   };
 
   mockFacilities[facilityIndex] = updatedFacility;
@@ -537,6 +543,40 @@ export const deleteFacility = (facilityId: string): boolean => {
   mockReviews = mockReviews.filter(r => r.facilityId !== facilityId);
   return mockFacilities.length < initialLength;
 };
+
+export const blockTimeSlot = (facilityId: string, ownerId: string, slot: BlockedSlot): boolean => {
+  const facilityIndex = mockFacilities.findIndex(f => f.id === facilityId && f.ownerId === ownerId);
+  if (facilityIndex === -1) return false;
+
+  if (!mockFacilities[facilityIndex].blockedSlots) {
+    mockFacilities[facilityIndex].blockedSlots = [];
+  }
+  // Prevent duplicate blocks for the exact same date/startTime
+  const existingBlock = mockFacilities[facilityIndex].blockedSlots!.find(
+    bs => bs.date === slot.date && bs.startTime === slot.startTime
+  );
+  if (existingBlock) return false; // Or update it, but for now just prevent duplicates
+
+  mockFacilities[facilityIndex].blockedSlots!.push(slot);
+  mockFacilities[facilityIndex].blockedSlots!.sort((a,b) => {
+    const dateComparison = a.date.localeCompare(b.date);
+    if (dateComparison !== 0) return dateComparison;
+    return a.startTime.localeCompare(b.startTime);
+  });
+  return true;
+};
+
+export const unblockTimeSlot = (facilityId: string, ownerId: string, date: string, startTime: string): boolean => {
+  const facilityIndex = mockFacilities.findIndex(f => f.id === facilityId && f.ownerId === ownerId);
+  if (facilityIndex === -1 || !mockFacilities[facilityIndex].blockedSlots) return false;
+
+  const initialLength = mockFacilities[facilityIndex].blockedSlots!.length;
+  mockFacilities[facilityIndex].blockedSlots = mockFacilities[facilityIndex].blockedSlots!.filter(
+    bs => !(bs.date === date && bs.startTime === startTime)
+  );
+  return mockFacilities[facilityIndex].blockedSlots!.length < initialLength;
+};
+
 
 export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => {
   return mockRentalEquipment.find(eq => eq.id === id);
@@ -957,7 +997,7 @@ export function calculateDynamicPrice(
   for (const rule of activeRules) {
     if (checkRuleApplicability(rule, selectedDate, selectedSlot)) {
       appliedRule = rule;
-      let adjustedHourlyRate = basePricePerHour; // Start with base for adjustments
+      let adjustedHourlyRate = basePricePerHour; 
       switch (rule.adjustmentType) {
         case 'percentage_increase':
           adjustedHourlyRate = basePricePerHour * (1 + rule.value / 100);
@@ -972,11 +1012,11 @@ export function calculateDynamicPrice(
           adjustedHourlyRate = basePricePerHour - rule.value;
           break;
         case 'fixed_price':
-          adjustedHourlyRate = rule.value; // This is the new per-hour rate
+          adjustedHourlyRate = rule.value; 
           break;
       }
       currentPricePerHour = Math.max(0, adjustedHourlyRate);
-      break;
+      break; 
     }
   }
   return {
@@ -1064,7 +1104,6 @@ export const getPromotionRuleByCode = (code: string): PromotionRule | undefined 
         const endDateValid = !rule.endDate || isBefore(now, endOfDay(parseISO(rule.endDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.endDate)), end: endOfDay(parseISO(rule.endDate))});
 
         if (startDateValid && endDateValid) {
-            // Note: Usage limit checking (total and per user) is not implemented in this mock
             return rule;
         }
     }
@@ -1107,7 +1146,7 @@ export const mockReportData: ReportData = {
       usageMap.set(booking.facilityId, (usageMap.get(booking.facilityId) || 0) + 1);
     });
     return Array.from(usageMap.entries()).map(([facilityId, count]) => ({
-      facilityName: getFacilityById(facilityId)?.name || 'Unknown Facility', // Uses getFacilityById
+      facilityName: getFacilityById(facilityId)?.name || 'Unknown Facility', 
       bookings: count,
     }));
   })(),
