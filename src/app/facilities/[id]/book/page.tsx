@@ -15,10 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp } from 'lucide-react';
+import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { format, differenceInHours, parse } from 'date-fns';
+import { format, differenceInHours, parse, formatISO, addHours } from 'date-fns';
 
 // Enhanced mock time slots for a given date
 const getMockTimeSlots = (
@@ -332,6 +332,33 @@ export default function BookingPage() {
     }
   };
 
+  const generateGoogleCalendarLink = () => {
+    if (!facility || !selectedDate || !selectedSlot) return '#';
+
+    const [startHour, startMinute] = selectedSlot.startTime.split(':').map(Number);
+    
+    let eventStartDateLocal = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), startHour, startMinute);
+    let eventEndDateLocal = addHours(eventStartDateLocal, bookingDurationHours);
+
+    // Format for Google Calendar (YYYYMMDDTHHMMSSZ)
+    const formatToGoogleISO = (date: Date) => formatISO(date).replace(/-|:|\.\d{3}/g, '');
+    
+    const startTimeUTC = formatToGoogleISO(eventStartDateLocal);
+    const endTimeUTC = formatToGoogleISO(eventEndDateLocal);
+
+    const title = encodeURIComponent(`Booking: ${facility.name}`);
+    const details = encodeURIComponent(
+      `Booking for ${facility.name} on ${format(selectedDate, 'PPP')} at ${selectedSlot.startTime}.\n` +
+      `Guests: ${numberOfGuests}\n` +
+      (appliedPromotionDetails ? `Promotion: ${appliedPromotionDetails.code} (-$${appliedPromotionDetails.discountAmount.toFixed(2)})\n` : '') +
+      (selectedEquipment.size > 0 ? `Rented Equipment: ${Array.from(selectedEquipment.values()).map(item => `${item.quantity}x ${item.details.name}`).join(', ')}\n` : '') +
+      `Total Cost: $${totalBookingPrice.toFixed(2)}`
+    );
+    const location = encodeURIComponent(facility.address);
+
+    return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startTimeUTC}/${endTimeUTC}&details=${details}&location=${location}`;
+  };
+
 
   if (facility === undefined) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
@@ -497,7 +524,7 @@ export default function BookingPage() {
             </Card>
           )}
 
-          {bookingStep === 'confirmation' && (
+          {bookingStep === 'confirmation' && facility && selectedDate && selectedSlot && (
             <Card className="text-center">
               <CardHeader>
                 <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
@@ -506,7 +533,7 @@ export default function BookingPage() {
               <CardContent>
                 <p className="text-muted-foreground mb-2">Thank you, {mockUser.name}!</p>
                 <p className="mb-1">Your booking for <strong>{facility.name}</strong> is confirmed.</p>
-                <p className="mb-1">Date: <strong>{selectedDate ? format(selectedDate, 'PPP') : 'N/A'}</strong></p>
+                <p className="mb-1">Date: <strong>{format(selectedDate, 'PPP')}</strong></p>
                 <p className="mb-1">Time: <strong>{selectedSlot?.startTime} - {selectedSlot?.endTime}</strong> ({bookingDurationHours} hr{bookingDurationHours !== 1 ? 's' : ''})</p>
                 <p className="mb-1">Number of Guests: <strong>{numberOfGuests}</strong></p>
                 {appliedPricingRuleMessage && (
@@ -542,6 +569,13 @@ export default function BookingPage() {
                 </Alert>
               </CardContent>
               <CardFooter className="flex-col gap-4">
+                 <Button 
+                    onClick={() => window.open(generateGoogleCalendarLink(), '_blank')} 
+                    variant="outline" 
+                    className="w-full"
+                 >
+                    <Link2 className="mr-2 h-4 w-4" /> Add to Google Calendar
+                 </Button>
                  <Button onClick={() => router.push('/account/bookings')} className="w-full">View My Bookings</Button>
                  <Button variant="outline" onClick={() => router.push('/facilities')} className="w-full">Book Another Facility</Button>
               </CardFooter>
@@ -670,3 +704,4 @@ export default function BookingPage() {
     </div>
   );
 }
+
