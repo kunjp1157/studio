@@ -110,6 +110,12 @@ export interface RentedItemInfo {
   totalCost: number;
 }
 
+export interface AppliedPromotionInfo {
+    code: string;
+    discountAmount: number;
+    description: string;
+}
+
 export interface Booking {
   id: string;
   userId: string;
@@ -124,7 +130,8 @@ export interface Booking {
   numberOfGuests?: number; // Number of guests for the booking
   baseFacilityPrice?: number; // Price for the facility slot itself
   equipmentRentalCost?: number; // Total cost for all rented equipment
-  totalPrice: number; // Overall total
+  appliedPromotion?: AppliedPromotionInfo; // Details of applied promotion
+  totalPrice: number; // Overall total, after discount
   status: 'Confirmed' | 'Pending' | 'Cancelled';
   bookedAt: string; // ISO date string
   reviewed?: boolean; // Flag to indicate if this booking has been reviewed

@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo } from '@/lib/types';
-import { getFacilityById, mockUser, addNotification } from '@/lib/data';
+import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo } from '@/lib/types';
+import { getFacilityById, mockUser, addNotification, getPromotionRuleById } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInHours, parse } from 'date-fns';
@@ -51,6 +51,12 @@ export default function BookingPage() {
   const [selectedEquipment, setSelectedEquipment] = useState<Map<string, { quantity: number; details: RentalEquipment }>>(new Map());
   const [equipmentRentalCost, setEquipmentRentalCost] = useState(0);
   const [baseFacilityPrice, setBaseFacilityPrice] = useState(0);
+  
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [appliedPromotionDetails, setAppliedPromotionDetails] = useState<AppliedPromotionInfo | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+
   const [totalBookingPrice, setTotalBookingPrice] = useState(0);
   
   const [bookingStep, setBookingStep] = useState<'details' | 'payment' | 'confirmation'>('details');
@@ -107,8 +113,13 @@ export default function BookingPage() {
   }, [selectedEquipment, bookingDurationHours]);
 
   useEffect(() => {
-    setTotalBookingPrice(baseFacilityPrice + equipmentRentalCost);
-  }, [baseFacilityPrice, equipmentRentalCost]);
+    const subTotal = baseFacilityPrice + equipmentRentalCost;
+    let finalPrice = subTotal;
+    if (appliedPromotionDetails) {
+      finalPrice = Math.max(0, subTotal - appliedPromotionDetails.discountAmount);
+    }
+    setTotalBookingPrice(finalPrice);
+  }, [baseFacilityPrice, equipmentRentalCost, appliedPromotionDetails]);
 
 
   const handleEquipmentSelection = (equip: RentalEquipment, isChecked: boolean) => {
@@ -134,6 +145,61 @@ export default function BookingPage() {
         newMap.set(equipId, { ...item, quantity: newQuantity });
       }
       return newMap;
+    });
+  };
+
+  const handleApplyPromoCode = async () => {
+    if (!promoCodeInput.trim()) {
+      setPromoError("Please enter a promo code.");
+      return;
+    }
+    setIsApplyingPromo(true);
+    setPromoError(null);
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 700));
+    const promotion = getPromotionRuleById(promoCodeInput.trim());
+
+    if (promotion) {
+      const subTotal = baseFacilityPrice + equipmentRentalCost;
+      let discountAmount = 0;
+      if (promotion.discountType === 'percentage') {
+        discountAmount = subTotal * (promotion.discountValue / 100);
+      } else { // fixed_amount
+        discountAmount = promotion.discountValue;
+      }
+      // Ensure discount doesn't exceed subtotal
+      discountAmount = Math.min(discountAmount, subTotal);
+
+      setAppliedPromotionDetails({
+        code: promotion.code || promotion.name, // Use name if no code (for automatic promos, though not fully implemented)
+        discountAmount: parseFloat(discountAmount.toFixed(2)),
+        description: promotion.name,
+      });
+      toast({
+        title: "Promotion Applied!",
+        description: `${promotion.name} (-$${discountAmount.toFixed(2)}) applied successfully.`,
+        className: "bg-green-500 text-white"
+      });
+    } else {
+      setPromoError("Invalid or expired promo code.");
+      setAppliedPromotionDetails(null); // Clear any previously applied promo
+      toast({
+        title: "Promo Code Error",
+        description: "The entered promo code is invalid or has expired.",
+        variant: "destructive"
+      });
+    }
+    setIsApplyingPromo(false);
+  };
+
+  const handleRemovePromotion = () => {
+    setAppliedPromotionDetails(null);
+    setPromoCodeInput('');
+    setPromoError(null);
+    toast({
+        title: "Promotion Removed",
+        description: "The promotion has been removed from your booking.",
     });
   };
 
@@ -174,19 +240,24 @@ export default function BookingPage() {
         });
         rentedItemsSummary = rentedItemsSummary.slice(0, -2) + "."; // Remove last comma and space
     }
+
+    let promotionSummary = "";
+    if (appliedPromotionDetails) {
+        promotionSummary = ` Promotion Applied: ${appliedPromotionDetails.code} (-$${appliedPromotionDetails.discountAmount.toFixed(2)}).`;
+    }
     
     toast({
       title: "Booking Confirmed!",
-      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} for ${numberOfGuests} guest(s) is confirmed.${rentedItemsSummary}`,
+      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} for ${numberOfGuests} guest(s) is confirmed.${rentedItemsSummary}${promotionSummary}`,
       className: "bg-green-500 text-white",
-      duration: 7000,
+      duration: 10000,
     });
 
     if (facility) {
         addNotification(mockUser.id, {
             type: 'booking_confirmed',
             title: 'Booking Confirmed!',
-            message: `Your booking for ${facility.name} (${numberOfGuests} guest(s)) on ${bookingDate} at ${bookingTime} is successful.${rentedItemsSummary}`,
+            message: `Your booking for ${facility.name} (${numberOfGuests} guest(s)) on ${bookingDate} at ${bookingTime} is successful.${rentedItemsSummary}${promotionSummary}`,
             link: '/account/bookings',
         });
     }
@@ -370,7 +441,7 @@ export default function BookingPage() {
                 <p className="mb-1">Time: <strong>{selectedSlot?.startTime} - {selectedSlot?.endTime}</strong> ({bookingDurationHours} hr{bookingDurationHours !== 1 ? 's' : ''})</p>
                 <p className="mb-1">Number of Guests: <strong>{numberOfGuests}</strong></p>
                 {selectedEquipment.size > 0 && (
-                    <div className="mt-3 mb-3 pt-3 border-t">
+                    <div className="mt-3 mb-1 pt-3 border-t">
                         <h4 className="font-semibold text-md mb-1">Rented Equipment:</h4>
                         <ul className="text-sm text-muted-foreground list-none">
                         {Array.from(selectedEquipment.values()).map(item => (
@@ -381,7 +452,14 @@ export default function BookingPage() {
                         </ul>
                     </div>
                 )}
-                <p className="text-lg font-semibold">Total Paid: ${totalBookingPrice.toFixed(2)}</p>
+                {appliedPromotionDetails && (
+                    <div className="mt-3 mb-1 pt-3 border-t">
+                        <h4 className="font-semibold text-md mb-1">Promotion Applied:</h4>
+                        <p className="text-sm text-muted-foreground">{appliedPromotionDetails.description} ({appliedPromotionDetails.code})</p>
+                        <p className="text-sm text-muted-foreground">Discount: -${appliedPromotionDetails.discountAmount.toFixed(2)}</p>
+                    </div>
+                )}
+                <p className="text-lg font-semibold mt-2">Total Paid: ${totalBookingPrice.toFixed(2)}</p>
                 <Alert className="mt-4 text-left">
                   <AlertCircle className="h-4 w-4"/>
                   <AlertTitle>What's Next?</AlertTitle>
@@ -451,6 +529,45 @@ export default function BookingPage() {
                  </div>
                 </>
               )}
+
+              {bookingStep === 'details' && (
+                <div className="pt-2 space-y-2">
+                  <Label htmlFor="promo-code" className="text-sm font-medium">Promo Code</Label>
+                  <div className="flex space-x-2">
+                    <Input 
+                      id="promo-code" 
+                      placeholder="Enter code" 
+                      value={promoCodeInput} 
+                      onChange={(e) => setPromoCodeInput(e.target.value)}
+                      disabled={isApplyingPromo || !!appliedPromotionDetails}
+                      className="h-9"
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={handleApplyPromoCode} 
+                      disabled={isApplyingPromo || !promoCodeInput || !!appliedPromotionDetails}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {isApplyingPromo ? <LoadingSpinner size={16} /> : 'Apply'}
+                    </Button>
+                  </div>
+                  {promoError && <p className="text-xs text-destructive mt-1">{promoError}</p>}
+                </div>
+              )}
+
+              {appliedPromotionDetails && (
+                <div className="pt-2 border-t mt-2">
+                    <div className="flex justify-between items-center text-sm text-green-600">
+                        <span>Promo: {appliedPromotionDetails.code}</span>
+                        <span>-${appliedPromotionDetails.discountAmount.toFixed(2)}</span>
+                    </div>
+                    <Button variant="link" size="sm" className="p-0 h-auto text-xs text-destructive" onClick={handleRemovePromotion}>
+                        <X className="mr-1 h-3 w-3"/>Remove promotion
+                    </Button>
+                </div>
+              )}
+
               <hr />
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total:</span>

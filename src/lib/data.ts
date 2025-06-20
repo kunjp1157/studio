@@ -1,15 +1,15 @@
 
-import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours } from './types';
-import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target } from 'lucide-react';
-import { parseISO } from 'date-fns';
+import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo } from './types';
+import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group } from 'lucide-react';
+import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 
 
 export const mockSports: Sport[] = [
   { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'soccer ball' },
   { id: 'sport-2', name: 'Basketball', icon: Dribbble, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'basketball hoop' },
   { id: 'sport-3', name: 'Tennis', icon: Activity, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'tennis racket' },
-  { id: 'sport-4', name: 'Badminton', icon: Activity, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'badminton shuttlecock' },
-  { id: 'sport-5', name: 'Swimming', icon: Activity, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'swimming lane' },
+  { id: 'sport-4', name: 'Badminton', icon: Feather, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'badminton shuttlecock' },
+  { id: 'sport-5', name: 'Swimming', icon: PersonStanding, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'swimming lane' },
   { id: 'sport-7', name: 'Cycling', icon: Bike, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cycling road' },
   { id: 'sport-13', name: 'Cricket', icon: Dices, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cricket bat ball' },
   { id: 'sport-14', name: 'Pool', icon: Target, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'billiards table' },
@@ -933,7 +933,16 @@ export const getAllPromotionRules = (): PromotionRule[] => {
 };
 
 export const getPromotionRuleById = (id: string): PromotionRule | undefined => {
-    return mockPromotionRules.find(rule => rule.id === id);
+    const rule = mockPromotionRules.find(r => r.code?.toLowerCase() === id.toLowerCase() || r.id === id);
+    if (rule && rule.isActive) {
+        const now = new Date();
+        const startDateValid = rule.startDate ? isAfter(now, startOfDay(parseISO(rule.startDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.startDate)), end: endOfDay(parseISO(rule.startDate))}) : true;
+        const endDateValid = rule.endDate ? isBefore(now, endOfDay(parseISO(rule.endDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.endDate)), end: endOfDay(parseISO(rule.endDate))}) : true;
+        if (startDateValid && endDateValid) {
+            return rule;
+        }
+    }
+    return undefined;
 };
 
 export const addPromotionRule = (ruleData: Omit<PromotionRule, 'id'>): PromotionRule => {
@@ -957,7 +966,5 @@ export const deletePromotionRule = (ruleId: string): boolean => {
     mockPromotionRules = mockPromotionRules.filter(r => r.id !== ruleId);
     return mockPromotionRules.length < initialLength;
 };
-
-
 
 
