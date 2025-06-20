@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Star, MapPin, DollarSign, Zap, Heart, MessageSquare, CalendarCheck2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { StarDisplay } from '@/components/shared/StarDisplay';
+import { cn } from '@/lib/utils';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -42,7 +43,11 @@ export function FacilityCard({ facility }: FacilityCardProps) {
 
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">
+    <Card className={cn(
+      "flex flex-col h-full overflow-hidden rounded-lg",
+      "shadow-lg hover:shadow-2xl",
+      "transition-all duration-300 ease-in-out hover:scale-[1.03]"
+    )}>
       <CardHeader className="p-0 relative">
         <Link href={`/facilities/${facility.id}`}>
           <Image
