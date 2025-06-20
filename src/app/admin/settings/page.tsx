@@ -87,25 +87,6 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
       </div>
-
-       <Card className="shadow-lg mt-8">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Settings className="mr-2 h-6 w-6 text-primary" />
-            Overall Platform Configuration (Original Placeholder)
-          </CardTitle>
-          <CardDescription>
-            This area will allow administrators to manage core system settings, such as payment gateway integrations, notification templates, API keys, and other global configurations.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center min-h-[200px] text-center">
-          <Construction className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-xl font-semibold text-muted-foreground">Settings Panel Under Construction</h3>
-          <p className="text-muted-foreground mt-2">
-            System configuration options are currently being developed. Please check back later.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
