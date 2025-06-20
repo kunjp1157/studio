@@ -1,6 +1,6 @@
 
-import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot } from './types';
-import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group } from 'lucide-react';
+import type { Facility, Sport, Amenity, UserProfile, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel } from './types';
+import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay } from 'date-fns';
 
 
@@ -11,6 +11,10 @@ export const mockSports: Sport[] = [
   { id: 'sport-4', name: 'Badminton', icon: Feather, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'badminton shuttlecock' },
   { id: 'sport-5', name: 'Swimming', icon: PersonStanding, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'swimming lane' },
   { id: 'sport-7', name: 'Cycling', icon: Bike, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cycling road' },
+  { id: 'sport-8', name: 'Yoga', icon:WrapText, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'yoga mat' },
+  { id: 'sport-9', name: 'Dance', icon: Music, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'dance studio' },
+  { id: 'sport-10', name: 'Camping', icon: Tent, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'camping tent' },
+  { id: 'sport-11', name: 'Theatre', icon: Drama, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'theatre stage' },
   { id: 'sport-13', name: 'Cricket', icon: Dices, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cricket bat ball' },
   { id: 'sport-14', name: 'Pool', icon: Target, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'billiards table' },
   { id: 'sport-15', name: 'PC Game/PS5', icon: Gamepad2, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'gaming setup' },
@@ -207,6 +211,7 @@ export const mockUser: UserProfile = {
   id: 'user-123',
   name: 'Alex Johnson',
   email: 'alex.johnson@example.com',
+  phone: '555-123-4567',
   profilePictureUrl: 'https://placehold.co/100x100.png',
   dataAiHint: "user avatar",
   preferredSports: [mockSports[0], mockSports[2]],
@@ -214,8 +219,15 @@ export const mockUser: UserProfile = {
   membershipLevel: 'Premium',
   loyaltyPoints: 1250,
   achievements: [
-    mockAchievements[0], // First Booking
-    mockAchievements[1], // Review Pro
+    mockAchievements[0], 
+    mockAchievements[1], 
+  ],
+  bio: 'Passionate about sports and outdoor activities. Always looking for a good game! I enjoy competitive soccer and relaxing tennis matches.',
+  preferredPlayingTimes: 'Weekday evenings, Weekend mornings',
+  skillLevels: [
+    { sportId: 'sport-1', sportName: 'Soccer', level: 'Intermediate' },
+    { sportId: 'sport-3', sportName: 'Tennis', level: 'Beginner' },
+    { sportId: 'sport-2', sportName: 'Basketball', level: 'Intermediate' },
   ],
 };
 

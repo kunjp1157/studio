@@ -11,14 +11,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { mockUser, mockSports, mockMembershipPlans } from '@/lib/data';
-import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement } from '@/lib/types';
+import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement, UserSkill, SkillLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History } from 'lucide-react';
+import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
+
+const skillLevelsOptions: {value: SkillLevel | "Not Specified", label: string}[] = [
+    { value: "Not Specified", label: "Not Specified" },
+    { value: "Beginner", label: "Beginner" },
+    { value: "Intermediate", label: "Intermediate" },
+    { value: "Advanced", label: "Advanced" },
+];
 
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfileType | null>(null);
@@ -27,14 +35,13 @@ export default function ProfilePage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate fetching user data
     setTimeout(() => {
       setUser(mockUser);
       setIsLoading(false);
     }, 500);
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (!user) return;
     const { name, value } = e.target;
     setUser({ ...user, [name]: value });
@@ -62,13 +69,43 @@ export default function ProfilePage() {
     setUser({ ...user, preferredSports: updatedSports });
   };
 
+  const handleSkillLevelChange = (sportId: string, sportName: string, level: string) => {
+    if (!user) return;
+    let currentSkills = [...(user.skillLevels || [])];
+    const existingSkillIndex = currentSkills.findIndex(skill => skill.sportId === sportId);
+
+    if (level === "Not Specified") {
+      if (existingSkillIndex !== -1) {
+        currentSkills.splice(existingSkillIndex, 1);
+      }
+    } else {
+      const newSkill: UserSkill = { sportId, sportName, level: level as SkillLevel };
+      if (existingSkillIndex !== -1) {
+        currentSkills[existingSkillIndex] = newSkill;
+      } else {
+        currentSkills.push(newSkill);
+      }
+    }
+    setUser({ ...user, skillLevels: currentSkills });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate saving data
     setTimeout(() => {
       setIsEditing(false);
       setIsLoading(false);
+      // In a real app, mockUser would be updated in lib/data.ts if persistence was mocked there
+      // For now, the local user state is what's "saved" for this session
+      mockUser.bio = user?.bio;
+      mockUser.preferredPlayingTimes = user?.preferredPlayingTimes;
+      mockUser.skillLevels = user?.skillLevels;
+      mockUser.name = user?.name || mockUser.name;
+      mockUser.email = user?.email || mockUser.email;
+      mockUser.phone = user?.phone || mockUser.phone;
+      mockUser.membershipLevel = user?.membershipLevel || mockUser.membershipLevel;
+      mockUser.preferredSports = user?.preferredSports || mockUser.preferredSports;
+
       toast({
         title: "Profile Updated",
         description: "Your profile information has been successfully saved.",
@@ -126,61 +163,144 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-8 mt-6">
-              <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
-                <div>
-                  <Label htmlFor="name" className="text-base">Full Name</Label>
-                  <Input id="name" name="name" value={user.name} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
+              <section>
+                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><UserCircle className="mr-2 h-5 w-5 text-primary" />Basic Information</h3>
+                <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div>
+                    <Label htmlFor="name" className="text-base">Full Name</Label>
+                    <Input id="name" name="name" value={user.name} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                    </div>
+                    <div>
+                    <Label htmlFor="email" className="text-base">Email Address</Label>
+                    <Input id="email" name="email" type="email" value={user.email} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                    </div>
+                    <div>
+                    <Label htmlFor="phone" className="text-base">Phone Number (Optional)</Label>
+                    <Input id="phone" name="phone" type="tel" value={user.phone || ''} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                    </div>
+                    <div>
+                    <Label htmlFor="membershipLevel" className="text-base flex items-center"><ShieldCheck className="inline mr-2 h-5 w-5 text-primary" />Membership Level</Label>
+                    <Select 
+                        name="membershipLevel" 
+                        value={user.membershipLevel} 
+                        onValueChange={(value) => handleSelectChange('membershipLevel', value)}
+                        disabled={!isEditing}
+                    >
+                        <SelectTrigger id="membershipLevel" className="mt-1 text-base p-3 h-auto">
+                        <SelectValue placeholder="Select membership" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {mockMembershipPlans.map(plan => (
+                            <SelectItem key={plan.id} value={plan.name} className="text-base">{plan.name}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    </div>
                 </div>
-                <div>
-                  <Label htmlFor="email" className="text-base">Email Address</Label>
-                  <Input id="email" name="email" type="email" value={user.email} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
-                </div>
-                <div>
-                  <Label htmlFor="phone" className="text-base">Phone Number (Optional)</Label>
-                  <Input id="phone" name="phone" type="tel" value={user.phone || ''} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
-                </div>
-                <div>
-                  <Label htmlFor="membershipLevel" className="text-base flex items-center"><ShieldCheck className="inline mr-2 h-5 w-5 text-primary" />Membership Level</Label>
-                  <Select 
-                      name="membershipLevel" 
-                      value={user.membershipLevel} 
-                      onValueChange={(value) => handleSelectChange('membershipLevel', value)}
-                      disabled={!isEditing}
-                  >
-                    <SelectTrigger id="membershipLevel" className="mt-1 text-base p-3 h-auto">
-                      <SelectValue placeholder="Select membership" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockMembershipPlans.map(plan => (
-                        <SelectItem key={plan.id} value={plan.name} className="text-base">{plan.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              </section>
 
-              <div>
-                <Label className="text-base flex items-center"><Heart className="inline mr-2 h-5 w-5 text-destructive" />Preferred Sports</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2 p-4 border rounded-md bg-muted/30">
-                  {mockSports.map(sport => {
-                      const SportIcon = sport.icon || Zap;
-                      return (
-                          <div key={sport.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-background transition-colors">
-                              <Checkbox
-                              id={`sport-${sport.id}`}
-                              checked={user.preferredSports?.some(s => s.id === sport.id) || false}
-                              onCheckedChange={() => handlePreferredSportsChange(sport.id)}
-                              disabled={!isEditing}
-                              className="h-5 w-5"
-                              />
-                              <Label htmlFor={`sport-${sport.id}`} className={`text-base font-normal cursor-pointer flex items-center ${isEditing ? '' : 'text-muted-foreground'}`}>
-                                <SportIcon className="mr-2 h-5 w-5 text-primary" /> {sport.name}
-                              </Label>
-                          </div>
-                      );
-                  })}
+              <Separator />
+
+              <section>
+                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Sparkles className="mr-2 h-5 w-5 text-primary" />Personal Details</h3>
+                 <div>
+                  <Label htmlFor="bio" className="text-base">Bio (Optional)</Label>
+                  {isEditing ? (
+                    <Textarea id="bio" name="bio" placeholder="Tell us a bit about yourself..." value={user.bio || ''} onChange={handleInputChange} className="mt-1 text-base p-3" rows={4}/>
+                  ) : (
+                    <p className="mt-1 text-muted-foreground bg-muted/30 p-3 rounded-md min-h-[60px]">{user.bio || 'No bio provided.'}</p>
+                  )}
                 </div>
-              </div>
+                <div className="mt-6">
+                  <Label htmlFor="preferredPlayingTimes" className="text-base">Preferred Playing Times (Optional)</Label>
+                  {isEditing ? (
+                    <Input id="preferredPlayingTimes" name="preferredPlayingTimes" placeholder="e.g., Weekends, Weekday evenings" value={user.preferredPlayingTimes || ''} onChange={handleInputChange} className="mt-1 text-base p-3"/>
+                  ) : (
+                    <p className="mt-1 text-muted-foreground bg-muted/30 p-3 rounded-md min-h-[40px]">{user.preferredPlayingTimes || 'Not specified.'}</p>
+                  )}
+                </div>
+              </section>
+              
+              <Separator />
+
+              <section>
+                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Heart className="mr-2 h-5 w-5 text-primary" />Sports Preferences</h3>
+                <div>
+                  <Label className="text-base">Preferred Sports</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2 p-4 border rounded-md bg-muted/30">
+                    {mockSports.map(sport => {
+                        const SportIcon = sport.icon || Zap;
+                        return (
+                            <div key={sport.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-background transition-colors">
+                                <Checkbox
+                                id={`sport-${sport.id}`}
+                                checked={user.preferredSports?.some(s => s.id === sport.id) || false}
+                                onCheckedChange={() => handlePreferredSportsChange(sport.id)}
+                                disabled={!isEditing}
+                                className="h-5 w-5"
+                                />
+                                <Label htmlFor={`sport-${sport.id}`} className={`text-base font-normal cursor-pointer flex items-center ${isEditing ? '' : 'text-muted-foreground'}`}>
+                                    <SportIcon className="mr-2 h-5 w-5 text-primary" /> {sport.name}
+                                </Label>
+                            </div>
+                        );
+                    })}
+                  </div>
+                </div>
+              </section>
+
+              <Separator />
+
+              <section>
+                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Dumbbell className="mr-2 h-5 w-5 text-primary" />Skill Levels</h3>
+                <div className="space-y-4 p-4 border rounded-md bg-muted/30">
+                {isEditing ? (
+                    mockSports.map(sport => {
+                        const currentSkill = user.skillLevels?.find(s => s.sportId === sport.id)?.level || "Not Specified";
+                        const SportIcon = sport.icon || Zap;
+                        return (
+                            <div key={`skill-${sport.id}`} className="grid grid-cols-[1fr_auto] items-center gap-4">
+                                <Label htmlFor={`skill-level-${sport.id}`} className="text-base font-normal flex items-center">
+                                   <SportIcon className="mr-2 h-5 w-5 text-primary" /> {sport.name}
+                                </Label>
+                                <Select 
+                                    value={currentSkill} 
+                                    onValueChange={(value) => handleSkillLevelChange(sport.id, sport.name, value)}
+                                >
+                                <SelectTrigger id={`skill-level-${sport.id}`} className="w-[180px] text-sm">
+                                    <SelectValue placeholder="Set level" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {skillLevelsOptions.map(option => (
+                                    <SelectItem key={option.value} value={option.value} className="text-sm">
+                                        {option.label}
+                                    </SelectItem>
+                                    ))}
+                                </SelectContent>
+                                </Select>
+                            </div>
+                        );
+                    })
+                ) : (
+                    user.skillLevels && user.skillLevels.length > 0 ? (
+                        <ul className="list-none space-y-2">
+                        {user.skillLevels.map(skill => {
+                            const sportDetails = mockSports.find(s => s.id === skill.sportId);
+                            const SportIcon = sportDetails?.icon || Zap;
+                            return (
+                                <li key={skill.sportId} className="flex items-center text-base text-muted-foreground">
+                                    <SportIcon className="mr-2 h-5 w-5 text-primary" />
+                                    {skill.sportName}: <span className="font-medium text-foreground ml-1">{skill.level}</span>
+                                </li>
+                            );
+                        })}
+                        </ul>
+                    ) : (
+                        <p className="text-muted-foreground text-sm">No skill levels specified.</p>
+                    )
+                )}
+                </div>
+              </section>
               
               {isEditing && (
                 <div className="flex justify-end space-x-3 pt-4 border-t">

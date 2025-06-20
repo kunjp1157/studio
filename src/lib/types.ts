@@ -146,6 +146,14 @@ export interface Achievement {
   unlockedAt?: string; // ISO date string when the user unlocked it
 }
 
+export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+
+export interface UserSkill {
+  sportId: string;
+  sportName: string;
+  level: SkillLevel;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -158,6 +166,9 @@ export interface UserProfile {
   membershipLevel?: 'Basic' | 'Premium' | 'Pro';
   loyaltyPoints?: number;
   achievements?: Achievement[];
+  bio?: string;
+  preferredPlayingTimes?: string; // e.g., "Weekends", "Weekday evenings"
+  skillLevels?: UserSkill[];
 }
 
 export interface AdminUser {
@@ -235,4 +246,3 @@ export interface BlogPost {
   isFeatured?: boolean;
   dataAiHint?: string;
 }
-
