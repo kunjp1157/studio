@@ -1,12 +1,14 @@
 
 'use client';
 
+import { useState, useCallback } from 'react';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import type { Facility } from '@/lib/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Info } from 'lucide-react';
 import Link from 'next/link';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 interface FacilityMapProps {
   facilities: Facility[];
@@ -14,15 +16,82 @@ interface FacilityMapProps {
   mapWidth?: string;
 }
 
-// These are arbitrary min/max values for scaling mock coordinates
-// In a real app, these would be derived from the actual geographic bounds of facilities
-const MOCK_MIN_LAT = 34.0300;
-const MOCK_MAX_LAT = 34.0700;
-const MOCK_MIN_LON = -118.2700;
-const MOCK_MAX_LON = -118.2200;
+const containerStyle = {
+  width: '100%',
+  height: '100%',
+};
 
-export function FacilityMap({ facilities, mapHeight = '400px', mapWidth = '100%' }: FacilityMapProps) {
-  if (!facilities || facilities.length === 0) {
+// A default center for the map, e.g., center of Metropolis
+const defaultCenter = {
+  lat: 34.0522,
+  lng: -118.2437
+};
+
+export function FacilityMap({ facilities, mapHeight = '500px', mapWidth = '100%' }: FacilityMapProps) {
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
+  });
+
+  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
+
+  const onMarkerClick = (facility: Facility) => {
+    setSelectedFacility(facility);
+  };
+
+  const mapRef = React.useRef<google.maps.Map | null>(null);
+
+  const onMapLoad = React.useCallback(function callback(map: google.maps.Map) {
+    if (facilities.length > 1) {
+      const bounds = new window.google.maps.LatLngBounds();
+      facilities.forEach(facility => {
+        if (facility.latitude && facility.longitude) {
+          bounds.extend(new window.google.maps.LatLng(facility.latitude, facility.longitude));
+        }
+      });
+      map.fitBounds(bounds);
+
+      // Add a listener to adjust zoom after fitting bounds to prevent over-zooming
+      const listener = window.google.maps.event.addListener(map, 'idle', function() {
+        if (map.getZoom()! > 15) map.setZoom(15);
+        window.google.maps.event.removeListener(listener);
+      });
+    } else if (facilities.length === 1 && facilities[0].latitude && facilities[0].longitude) {
+        map.setCenter({ lat: facilities[0].latitude, lng: facilities[0].longitude });
+        map.setZoom(14);
+    } else {
+        map.setCenter(defaultCenter);
+        map.setZoom(12);
+    }
+    mapRef.current = map;
+  }, [facilities]);
+
+  const onUnmount = React.useCallback(function callback(map: google.maps.Map) {
+    mapRef.current = null;
+  }, []);
+
+  if (loadError) {
+    return (
+        <Card style={{ width: mapWidth, height: mapHeight }} className="flex items-center justify-center bg-destructive/10 border-destructive">
+            <div className="text-center text-destructive">
+                <MapPin className="mx-auto h-12 w-12 mb-2" />
+                <p>Error loading Google Maps.</p>
+                <p className="text-xs">Please check your API key and internet connection.</p>
+            </div>
+        </Card>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+        <Card style={{ width: mapWidth, height: mapHeight }} className="flex items-center justify-center bg-muted/50 border-dashed">
+            <LoadingSpinner size={40} />
+            <p className="ml-4 text-muted-foreground">Loading Map...</p>
+        </Card>
+    );
+  }
+  
+  if (facilities.length === 0) {
     return (
       <Card style={{ width: mapWidth, height: mapHeight }} className="flex items-center justify-center bg-muted/50 border-dashed">
         <div className="text-center text-muted-foreground">
@@ -34,80 +103,50 @@ export function FacilityMap({ facilities, mapHeight = '400px', mapWidth = '100%'
     );
   }
 
-  const scaleCoordinate = (value: number, minVal: number, maxVal: number, dimensionMax: number = 100) => {
-    // Ensure value is within bounds to prevent extreme scaling
-    const clampedValue = Math.max(minVal, Math.min(value, maxVal));
-    if (maxVal === minVal) return dimensionMax / 2; // Avoid division by zero
-    return ((clampedValue - minVal) / (maxVal - minVal)) * dimensionMax;
-  };
-
-
   return (
     <Card className="shadow-lg overflow-hidden">
-        <CardHeader>
-            <CardTitle className="flex items-center"><MapPin className="mr-2 h-5 w-5 text-primary"/> Facility Map</CardTitle>
-            <CardDescription>Visual representation of facility locations. Click markers for details.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div
-            className="relative bg-muted/30 border rounded-md"
-            style={{ width: mapWidth, height: mapHeight,  }}
-            role="application"
-            aria-label="Map of facilities"
-            >
-            {/* Background pattern to suggest a map */}
-            <svg width="100%" height="100%" className="absolute inset-0 opacity-20">
-                <defs>
-                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="hsl(var(--border))" strokeWidth="0.5"/>
-                </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid)" />
-            </svg>
+      <CardHeader>
+        <CardTitle className="flex items-center"><MapPin className="mr-2 h-5 w-5 text-primary"/> Facility Map</CardTitle>
+        <CardDescription>Visual representation of facility locations. Click markers for details.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div style={{ height: mapHeight, width: mapWidth }}>
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            onLoad={onMapLoad}
+            onUnmount={onUnmount}
+          >
+            {facilities.map((facility) =>
+              (facility.latitude && facility.longitude) && (
+                <Marker
+                  key={facility.id}
+                  position={{ lat: facility.latitude, lng: facility.longitude }}
+                  onClick={() => onMarkerClick(facility)}
+                />
+              )
+            )}
 
-            {facilities.map((facility) => {
-                if (facility.latitude === undefined || facility.longitude === undefined) {
-                return null; // Skip facilities without coordinates
-                }
-
-                // Scale coordinates to fit within the 0-100% range for top/left positioning
-                // Note: Standard latitude increases North, longitude increases East.
-                // For screen 'top' increases South, 'left' increases East. So latitude needs inversion.
-                const topPercent = 100 - scaleCoordinate(facility.latitude, MOCK_MIN_LAT, MOCK_MAX_LAT);
-                const leftPercent = scaleCoordinate(facility.longitude, MOCK_MIN_LON, MOCK_MAX_LON);
-
-                return (
-                <Popover key={facility.id}>
-                    <PopoverTrigger asChild>
-                    <button
-                        className="absolute transform -translate-x-1/2 -translate-y-1/2 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
-                        style={{
-                        top: `${topPercent}%`,
-                        left: `${leftPercent}%`,
-                        }}
-                        aria-label={`View details for ${facility.name}`}
-                    >
-                        <MapPin className="h-6 w-6 text-primary fill-primary/30 hover:fill-primary/50 transition-colors" />
-                    </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64 z-10" sideOffset={5}>
-                    <div className="space-y-2">
-                        <h4 className="font-semibold leading-none text-base">{facility.name}</h4>
-                        <p className="text-sm text-muted-foreground">{facility.type}</p>
-                        <p className="text-xs text-muted-foreground">{facility.address}</p>
-                        <Link href={`/facilities/${facility.id}`}>
-                        <Button variant="outline" size="sm" className="w-full mt-2">
-                            <Info className="mr-2 h-4 w-4" /> View Details
-                        </Button>
-                        </Link>
-                    </div>
-                    </PopoverContent>
-                </Popover>
-                );
-            })}
-            </div>
-             <p className="text-xs text-muted-foreground mt-2 text-center">Note: This is a simplified visual representation. Coordinates are illustrative.</p>
-        </CardContent>
+            {selectedFacility && (
+              <InfoWindow
+                position={{ lat: selectedFacility.latitude!, lng: selectedFacility.longitude! }}
+                onCloseClick={() => setSelectedFacility(null)}
+              >
+                <div className="space-y-1 p-1 max-w-xs">
+                  <h4 className="font-semibold leading-none text-base">{selectedFacility.name}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedFacility.type}</p>
+                  <p className="text-xs text-muted-foreground">{selectedFacility.address}</p>
+                  <Link href={`/facilities/${selectedFacility.id}`} className="block">
+                    <Button variant="outline" size="sm" className="w-full mt-2">
+                      <Info className="mr-2 h-4 w-4" /> View Details
+                    </Button>
+                  </Link>
+                </div>
+              </InfoWindow>
+            )}
+          </GoogleMap>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2 text-center">Map data from Google Maps.</p>
+      </CardContent>
     </Card>
   );
 }
