@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { FacilityMap } from '@/components/facilities/FacilityMap';
@@ -109,10 +109,6 @@ export default function FacilitiesPage() {
     setIsLoading(false);
   };
   
-  const facilitiesForMap = useMemo(() => {
-    return facilitiesToShow.filter(f => f.latitude !== undefined && f.longitude !== undefined);
-  }, [facilitiesToShow]);
-
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <PageTitle 
@@ -157,7 +153,7 @@ export default function FacilitiesPage() {
         <>
           {viewMode === 'map' && (
             <div className="mb-8">
-              <FacilityMap facilities={facilitiesForMap} mapHeight="500px" />
+              <FacilityMap facilities={facilitiesToShow} mapHeight="500px" />
             </div>
           )}
           {viewMode === 'grid' && facilitiesToShow.length > 0 && (
@@ -176,12 +172,12 @@ export default function FacilitiesPage() {
               </AlertDescription>
             </Alert>
           )}
-           {viewMode === 'map' && facilitiesForMap.length === 0 && !isLoading && (
+           {viewMode === 'map' && facilitiesToShow.length === 0 && !isLoading && (
              <Alert variant="default" className="mt-8">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>No Facilities with Location Data</AlertTitle>
               <AlertDescription>
-                No facilities matching your current search have location data to display on the map.
+                The map view is unavailable as no facilities matching your search have location data.
               </AlertDescription>
             </Alert>
            )}
