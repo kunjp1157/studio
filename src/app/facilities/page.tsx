@@ -4,16 +4,12 @@
 import { useState, useEffect } from 'react';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
-import { FacilityMap } from '@/components/facilities/FacilityMap';
 import { PageTitle } from '@/components/shared/PageTitle';
 import type { Facility, SearchFilters } from '@/lib/types';
 import { mockFacilities } from '@/lib/data';
-import { AlertCircle, LayoutGrid, Map, SortAsc, Star } from 'lucide-react';
+import { AlertCircle, SortAsc } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating-desc';
@@ -22,7 +18,6 @@ export default function FacilitiesPage() {
   const [allFacilities, setAllFacilities] = useState<Facility[]>(mockFacilities);
   const [facilitiesToShow, setFacilitiesToShow] = useState<Facility[]>(mockFacilities);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [sortOption, setSortOption] = useState<SortOption>('default');
 
   useEffect(() => {
@@ -120,13 +115,7 @@ export default function FacilitiesPage() {
         <FacilitySearchForm onSearch={handleSearch} />
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-        <Tabs defaultValue="grid" value={viewMode} onValueChange={(value) => setViewMode(value as 'grid' | 'map')}>
-            <TabsList className="grid w-full grid-cols-2 md:w-auto md:inline-flex">
-            <TabsTrigger value="grid"><LayoutGrid className="mr-2 h-4 w-4" /> Grid View</TabsTrigger>
-            <TabsTrigger value="map"><Map className="mr-2 h-4 w-4" /> Map View</TabsTrigger>
-            </TabsList>
-        </Tabs>
+      <div className="flex justify-end items-center mb-6 gap-4">
         <div className="w-full sm:w-auto">
             <Select value={sortOption} onValueChange={(value) => handleSortChange(value as SortOption)}>
                 <SelectTrigger className="w-full sm:w-[220px]">
@@ -151,19 +140,13 @@ export default function FacilitiesPage() {
          </div>
       ) : (
         <>
-          {viewMode === 'map' && (
-            <div className="mb-8">
-              <FacilityMap facilities={facilitiesToShow} mapHeight="500px" />
-            </div>
-          )}
-          {viewMode === 'grid' && facilitiesToShow.length > 0 && (
+          {facilitiesToShow.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {facilitiesToShow.map((facility) => (
                 <FacilityCard key={facility.id} facility={facility} />
               ))}
             </div>
-          )}
-          {viewMode === 'grid' && facilitiesToShow.length === 0 && !isLoading && (
+          ) : (
             <Alert variant="default" className="mt-8">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>No Facilities Found</AlertTitle>
@@ -172,18 +155,8 @@ export default function FacilitiesPage() {
               </AlertDescription>
             </Alert>
           )}
-           {viewMode === 'map' && facilitiesToShow.length === 0 && !isLoading && (
-             <Alert variant="default" className="mt-8">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>No Facilities with Location Data</AlertTitle>
-              <AlertDescription>
-                The map view is unavailable as no facilities matching your search have location data.
-              </AlertDescription>
-            </Alert>
-           )}
         </>
       )}
     </div>
   );
 }
-
