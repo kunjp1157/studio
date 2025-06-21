@@ -1,3 +1,4 @@
+
 'use client';
 
 import { TrendingUp } from 'lucide-react';
@@ -114,9 +115,9 @@ export function AnalyticsChart<TData extends object>({
         />
         <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
         <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333">{`Value ${value}`}</text>
-        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="#999">
-          {`(Rate ${(percent! * 100).toFixed(2)}%)`}
+        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} className="text-sm fill-foreground">{`Bookings: ${value}`}</text>
+        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} className="text-xs fill-muted-foreground">
+          {`(Share: ${(percent! * 100).toFixed(2)}%)`}
         </text>
       </g>
     );
@@ -167,7 +168,7 @@ export function AnalyticsChart<TData extends object>({
             </LineChart>
           )}
           {type === 'pie' && valueKey && (
-             <ResponsiveContainer width="100%" height={300}>
+             <ResponsiveContainer width="100%" height={350}>
                 <PieChart>
                 <ShadChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
                 <Pie
@@ -176,8 +177,8 @@ export function AnalyticsChart<TData extends object>({
                     data={data}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={80}
+                    outerRadius={110}
                     fill="var(--color-fill)"
                     dataKey={valueKey as string}
                     nameKey={categoryKey as string}
@@ -187,7 +188,7 @@ export function AnalyticsChart<TData extends object>({
                         <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                     ))}
                 </Pie>
-                <ChartLegend content={<ChartLegendContent />} />
+                <ChartLegend content={<ChartLegendContent nameKey={categoryKey as string} />} />
                 </PieChart>
             </ResponsiveContainer>
           )}

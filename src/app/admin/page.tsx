@@ -3,10 +3,10 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import { mockReportData, getAllFacilities, getAllUsers, getAllBookings } from '@/lib/data';
-import { DollarSign, Users, TrendingUp, Ticket, Building2 } from 'lucide-react';
+import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, Construction } from 'lucide-react';
 import type { ChartConfig } from '@/components/ui/chart';
 import { parseISO, getMonth, getYear, format, subMonths, startOfMonth } from 'date-fns';
 import type { Booking } from '@/lib/types';
@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
           categoryKey="month"
         />
       </div>
-       <div className="grid gap-6 md:grid-cols-1">
+       <div className="grid gap-6 lg:grid-cols-2">
          <AnalyticsChart
             title="Facility Usage (All Time Bookings)"
             description="Total bookings per facility."
@@ -169,6 +169,24 @@ export default function AdminDashboardPage() {
             categoryKey="facilityName" 
             valueKey="bookings"   
          />
+         <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle className="flex items-center">
+                    <Activity className="mr-2 h-6 w-6 text-primary" />
+                    Recent Activity
+                </CardTitle>
+                <CardDescription>
+                    This section will show a feed of recent platform activities like new bookings and user registrations.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center min-h-[250px] text-center">
+                 <Construction className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold text-muted-foreground">Feature Coming Soon</h3>
+                <p className="text-muted-foreground mt-1">
+                    An activity feed is under development.
+                </p>
+            </CardContent>
+         </Card>
        </div>
     </div>
   );
