@@ -1,4 +1,3 @@
-
 'use client';
 import Link from 'next/link';
 import {
@@ -11,16 +10,13 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
   SidebarInset,
   SidebarGroup,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MountainSnow, LayoutDashboard, Building2, Users, BarChart3, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag } from 'lucide-react';
+import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { mockUser } from '@/lib/data';
 
@@ -110,23 +106,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup>
-              <SidebarGroupLabel className="group-data-[collapsible=icon]:justify-center">Analytics & Settings</SidebarGroupLabel>
-              <SidebarMenuItem>
-                <Link href="/admin/reports">
-                  <SidebarMenuButton isActive={isActive('/admin/reports')} tooltip="Reports">
-                    <BarChart3 />
-                    <span>Reports</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link href="/admin/settings">
-                  <SidebarMenuButton isActive={isActive('/admin/settings')} tooltip="Settings">
-                    <Settings />
-                    <span>Settings</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:justify-center">Configuration</SidebarGroupLabel>
+                <SidebarMenuItem>
+                    <Link href="/admin/settings">
+                    <SidebarMenuButton isActive={isActive('/admin/settings')} tooltip="Settings">
+                        <Settings />
+                        <span>Settings</span>
+                    </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
             </SidebarGroup>
 
           </SidebarMenu>
