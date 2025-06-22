@@ -115,8 +115,8 @@ export function AnalyticsChart<TData extends object>({
         />
         <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
         <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} className="text-sm fill-foreground">{`Bookings: ${value}`}</text>
-        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} className="text-xs fill-muted-foreground">
+        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} style={{ fill: "hsl(var(--foreground))" }} className="text-sm">{`Bookings: ${value}`}</text>
+        <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} style={{ fill: "hsl(var(--muted-foreground))" }} className="text-xs">
           {`(Share: ${(percent! * 100).toFixed(2)}%)`}
         </text>
       </g>
@@ -147,11 +147,11 @@ export function AnalyticsChart<TData extends object>({
               />
               <YAxis />
               <ShadChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-              <Bar dataKey={dataKey as string} fill="var(--color-fill)" radius={8}>
+              <Bar dataKey={dataKey as string} fill={`var(--color-${String(dataKey)})`} radius={8}>
                 <LabelList
                     position="top"
                     offset={12}
-                    className="fill-foreground"
+                    fill="hsl(var(--foreground))"
                     fontSize={12}
                 />
               </Bar>
@@ -163,7 +163,7 @@ export function AnalyticsChart<TData extends object>({
               <XAxis dataKey={categoryKey as string} tickLine={false} axisLine={false} tickMargin={8} />
               <YAxis tickLine={false} axisLine={false} tickMargin={8} />
               <ShadChartTooltip cursor={false} content={<DefaultChartTooltipContent config={chartConfig}/>} />
-              <Line type="monotone" dataKey={dataKey as string} stroke="var(--color-stroke)" strokeWidth={2} dot={true} />
+              <Line type="monotone" dataKey={dataKey as string} stroke={`var(--color-${String(dataKey)})`} strokeWidth={2} dot={true} />
               <ChartLegend content={<ChartLegendContent />} />
             </LineChart>
           )}
