@@ -2,6 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,31 +12,70 @@ import { BellRing, Globe, Construction } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription, FormMessage } from '@/components/ui/form';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { getSiteSettings, updateSiteSettings } from '@/lib/data';
 import type { SiteSettings } from '@/lib/types';
 
+const settingsFormSchema = z.object({
+  siteName: z.string().min(3, { message: "Site name must be at least 3 characters." }),
+  defaultCurrency: z.enum(['USD', 'EUR', 'GBP', 'INR']),
+  timezone: z.string().min(1, { message: "Please select a timezone." }),
+  maintenanceMode: z.boolean(),
+});
+
+type SettingsFormValues = z.infer<typeof settingsFormSchema>;
+
+// Simple deep object comparison function to avoid adding dependencies
+const deepEqual = (obj1: any, obj2: any): boolean => {
+    if (obj1 === obj2) return true;
+    if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
+        return false;
+    }
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+    if (keys1.length !== keys2.length) return false;
+    for (const key of keys1) {
+        if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
+            return false;
+        }
+    }
+    return true;
+};
+
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const form = useForm<SettingsFormValues>({
+    resolver: zodResolver(settingsFormSchema),
+    defaultValues: getSiteSettings(),
+  });
+
+  // Polling for live updates for other admins
   useEffect(() => {
-    // Fetch initial settings
-    setSettings(getSiteSettings());
-  }, []);
+    const intervalId = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      const formValues = form.getValues();
+      
+      if (!deepEqual(currentSettings, formValues)) {
+        form.reset(currentSettings);
+        toast({
+            title: 'Settings Updated Live',
+            description: 'Another admin updated the settings.',
+        });
+      }
+    }, 3000); // Poll every 3 seconds
 
-  const handleGeneralSettingsSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!settings) return;
+    return () => clearInterval(intervalId);
+  }, [form, toast]);
 
+  const onSubmit = (data: SettingsFormValues) => {
     setIsLoading(true);
-    // In a real app, you would save these settings to your backend/database
     setTimeout(() => {
-        updateSiteSettings(settings);
+        updateSiteSettings(data);
         setIsLoading(false);
         toast({
             title: 'Settings Saved',
@@ -42,16 +84,6 @@ export default function AdminSettingsPage() {
     }, 1000);
   };
   
-  const handleInputChange = (key: keyof SiteSettings, value: string | boolean) => {
-    if (settings) {
-        setSettings({ ...settings, [key]: value });
-    }
-  };
-
-  if (!settings) {
-    return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
-  }
-
   return (
     <div className="space-y-8">
       <PageTitle title="System Settings" description="Configure general settings for the City Sports Hub platform." />
@@ -83,30 +115,27 @@ export default function AdminSettingsPage() {
               General Site Settings
             </CardTitle>
             <CardDescription>
-              Configure global site settings such as site name, default currency, timezone, and maintenance mode.
+              This form is live. Changes made by another admin will appear here automatically.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleGeneralSettingsSubmit} className="space-y-6 pt-2">
-                <div>
-                    <Label htmlFor="siteName">Site Name</Label>
-                    <Input 
-                        id="siteName" 
-                        value={settings.siteName}
-                        onChange={(e) => handleInputChange('siteName', e.target.value)}
-                        className="mt-1" 
-                    />
-                </div>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-2">
+                <FormField control={form.control} name="siteName" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Site Name</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="currency">Default Currency</Label>
-                        <Select 
-                            value={settings.defaultCurrency} 
-                            onValueChange={(value: SiteSettings['defaultCurrency']) => handleInputChange('defaultCurrency', value)}
-                        >
-                            <SelectTrigger id="currency" className="mt-1">
-                                <SelectValue placeholder="Select currency" />
-                            </SelectTrigger>
+                    <FormField control={form.control} name="defaultCurrency" render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Default Currency</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select currency" /></SelectTrigger>
+                            </FormControl>
                             <SelectContent>
                                 <SelectItem value="USD">USD ($)</SelectItem>
                                 <SelectItem value="EUR">EUR (€)</SelectItem>
@@ -114,16 +143,16 @@ export default function AdminSettingsPage() {
                                 <SelectItem value="INR">INR (₹)</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
-                    <div>
-                        <Label htmlFor="timezone">Timezone</Label>
-                        <Select 
-                            value={settings.timezone}
-                            onValueChange={(value) => handleInputChange('timezone', value)}
-                        >
-                             <SelectTrigger id="timezone" className="mt-1">
-                                <SelectValue placeholder="Select timezone" />
-                            </SelectTrigger>
+                        <FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="timezone" render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Timezone</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select timezone" /></SelectTrigger>
+                            </FormControl>
                             <SelectContent className="max-h-60">
                                 <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
                                 <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
@@ -133,28 +162,26 @@ export default function AdminSettingsPage() {
                                 <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                        <FormMessage />
+                        </FormItem>
+                    )} />
                  </div>
-                 <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                        <Label htmlFor="maintenance-mode" className="text-base font-normal">Maintenance Mode</Label>
-                        <p className="text-sm text-muted-foreground">
-                            When enabled, only admins can access the site.
-                        </p>
-                    </div>
-                    <Switch 
-                        id="maintenance-mode" 
-                        aria-label="Toggle maintenance mode"
-                        checked={settings.maintenanceMode}
-                        onCheckedChange={(checked) => handleInputChange('maintenanceMode', checked)}
-                    />
-                </div>
+                 <FormField control={form.control} name="maintenanceMode" render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <FormLabel className="text-base font-normal">Maintenance Mode</FormLabel>
+                            <FormDescription>When enabled, only admins can access the site.</FormDescription>
+                        </div>
+                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                 )} />
                 <div className="flex justify-end pt-2">
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : "Save Settings"}
                     </Button>
                 </div>
-            </form>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>
