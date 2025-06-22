@@ -6,7 +6,7 @@ import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
 import type { Facility, SearchFilters } from '@/lib/types';
-import { mockFacilities } from '@/lib/data';
+import { getAllFacilities } from '@/lib/data';
 import { AlertCircle, SortAsc } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,19 +15,79 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating-desc';
 
 export default function FacilitiesPage() {
-  const [allFacilities, setAllFacilities] = useState<Facility[]>(mockFacilities);
-  const [facilitiesToShow, setFacilitiesToShow] = useState<Facility[]>(mockFacilities);
+  // `allFacilities` is the single source of truth from the data store.
+  const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
+  // `facilitiesToShow` is the list that gets rendered, after filters/sorts.
+  const [facilitiesToShow, setFacilitiesToShow] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortOption, setSortOption] = useState<SortOption>('default');
+  // Store filters in state so we can re-apply them when data changes.
+  const [currentFilters, setCurrentFilters] = useState<SearchFilters | null>(null);
 
+  // This effect handles fetching the data and polling for live updates.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Initialize with all facilities
-      setFacilitiesToShow(sortFacilities(mockFacilities, 'default'));
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchAndSetFacilities = () => {
+      const freshFacilities = getAllFacilities();
+      // Use a functional update to only change state if data is different, preventing needless re-renders.
+      setAllFacilities(currentFacilities => {
+        if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
+            return freshFacilities;
+        }
+        return currentFacilities;
+      });
+      if (isLoading) {
+          setIsLoading(false);
+      }
+    };
+    
+    fetchAndSetFacilities(); // Initial fetch
+
+    const intervalId = setInterval(fetchAndSetFacilities, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(intervalId); // Cleanup
+  }, [isLoading]); // Rerun if isLoading changes, but it will only change once.
+
+  // This effect re-applies filters and sorting whenever the base data, filters, or sort option changes.
+  useEffect(() => {
+    let facilitiesToProcess = [...allFacilities];
+
+    if (currentFilters) {
+      const filters = currentFilters;
+      if (filters.searchTerm) {
+        facilitiesToProcess = facilitiesToProcess.filter(f => 
+          f.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+          f.description.toLowerCase().includes(filters.searchTerm.toLowerCase())
+        );
+      }
+      if (filters.sport) {
+        facilitiesToProcess = facilitiesToProcess.filter(f => f.sports.some(s => s.id === filters.sport));
+      }
+      if (filters.location) {
+        facilitiesToProcess = facilitiesToProcess.filter(f => f.location.toLowerCase().includes(filters.location.toLowerCase()));
+      }
+      if (filters.indoorOutdoor) {
+        facilitiesToProcess = facilitiesToProcess.filter(f => {
+          if (filters.indoorOutdoor === 'indoor') return f.isIndoor === true;
+          if (filters.indoorOutdoor === 'outdoor') return f.isIndoor === false;
+          return true;
+        });
+      }
+      if (filters.priceRange) {
+        facilitiesToProcess = facilitiesToProcess.filter(f => 
+          f.pricePerHour >= filters.priceRange![0] && f.pricePerHour <= filters.priceRange![1]
+        );
+      }
+      if (filters.selectedAmenities && filters.selectedAmenities.length > 0) {
+        facilitiesToProcess = facilitiesToProcess.filter(f => 
+          filters.selectedAmenities!.every(saId => f.amenities.some(fa => fa.id === saId))
+        );
+      }
+    }
+
+    const sorted = sortFacilities(facilitiesToProcess, sortOption);
+    setFacilitiesToShow(sorted);
+
+  }, [allFacilities, currentFilters, sortOption]);
 
   const sortFacilities = (facilities: Facility[], option: SortOption): Facility[] => {
     let sorted = [...facilities];
@@ -43,65 +103,18 @@ export default function FacilitiesPage() {
         break;
       case 'default':
       default:
-        // No specific sort, or could be based on popularity or some default order
-        // For now, let's keep original mock order or sort by popularity then name
         sorted.sort((a,b) => (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0) || a.name.localeCompare(b.name));
         break;
     }
     return sorted;
   };
 
-
   const handleSearch = (filters: SearchFilters) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      let filtered = [...allFacilities];
-
-      if (filters.searchTerm) {
-        filtered = filtered.filter(f => 
-          f.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-          f.description.toLowerCase().includes(filters.searchTerm.toLowerCase())
-        );
-      }
-      if (filters.sport) {
-        filtered = filtered.filter(f => f.sports.some(s => s.id === filters.sport));
-      }
-      if (filters.location) {
-        filtered = filtered.filter(f => f.location.toLowerCase().includes(filters.location.toLowerCase()));
-      }
-      // Date filtering is complex for this mock and usually applies to specific slot availability.
-      
-      if (filters.indoorOutdoor) {
-        filtered = filtered.filter(f => {
-            if (filters.indoorOutdoor === 'indoor') return f.isIndoor === true;
-            if (filters.indoorOutdoor === 'outdoor') return f.isIndoor === false;
-            return true;
-        });
-      }
-
-      if (filters.priceRange) {
-        filtered = filtered.filter(f => 
-            f.pricePerHour >= filters.priceRange![0] && f.pricePerHour <= filters.priceRange![1]
-        );
-      }
-
-      if (filters.selectedAmenities && filters.selectedAmenities.length > 0) {
-        filtered = filtered.filter(f => 
-            filters.selectedAmenities!.every(saId => f.amenities.some(fa => fa.id === saId))
-        );
-      }
-      
-      setFacilitiesToShow(sortFacilities(filtered, sortOption));
-      setIsLoading(false);
-    }, 300);
+    setCurrentFilters(filters);
   };
   
   const handleSortChange = (newSortOption: SortOption) => {
     setSortOption(newSortOption);
-    setIsLoading(true);
-    // Re-sort the currently displayed (potentially filtered) facilities
-    setFacilitiesToShow(prevFacilities => sortFacilities([...prevFacilities], newSortOption));
-    setIsLoading(false);
   };
   
   return (
@@ -131,7 +144,6 @@ export default function FacilitiesPage() {
             </Select>
         </div>
       </div>
-
 
       {isLoading ? (
          <div className="flex justify-center items-center h-96">
