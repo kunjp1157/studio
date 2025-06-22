@@ -64,7 +64,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
 
   useEffect(() => {
     const settingsInterval = setInterval(() => {

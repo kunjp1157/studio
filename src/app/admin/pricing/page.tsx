@@ -39,6 +39,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, parseISO } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminPricingPage() {
   const [rules, setRules] = useState<PricingRule[]>([]);
@@ -46,16 +47,16 @@ export default function AdminPricingPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<PricingRule | null>(null);
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     setTimeout(() => {
       setRules(getAllPricingRules());
       setIsLoading(false);
     }, 300);
-  }, []);
-
-  useEffect(() => {
+    
     const settingsInterval = setInterval(() => {
       const currentSettings = getSiteSettings();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
@@ -79,6 +80,7 @@ export default function AdminPricingPage() {
   };
 
   const formatAdjustment = (rule: PricingRule) => {
+    if (!isMounted) return <Skeleton className="h-5 w-24" />;
     switch (rule.adjustmentType) {
       case 'percentage_increase': return `+${rule.value}%`;
       case 'percentage_decrease': return `-${rule.value}%`;

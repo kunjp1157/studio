@@ -8,6 +8,7 @@ import type { SiteSettings } from '@/lib/types';
 import { getSiteSettings } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function OwnerDashboardPage() {
   // Mock data for display - in a real app, this would be fetched for the logged-in owner
@@ -19,9 +20,11 @@ export default function OwnerDashboardPage() {
     newReviews: 5,
   };
 
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const settingsInterval = setInterval(() => {
       const currentSettings = getSiteSettings();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
@@ -60,7 +63,9 @@ export default function OwnerDashboardPage() {
             <DollarSign className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(ownerStats.monthlyRevenue, currency)}</div>
+            <div className="text-2xl font-bold">
+              {isMounted ? formatCurrency(ownerStats.monthlyRevenue, currency) : <Skeleton className="h-8 w-28" />}
+            </div>
             <p className="text-xs text-muted-foreground">Based on confirmed bookings</p>
           </CardContent>
         </Card>

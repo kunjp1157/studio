@@ -14,6 +14,7 @@ import { StarDisplay } from '@/components/shared/StarDisplay';
 import { cn } from '@/lib/utils';
 import { getSiteSettings } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -21,9 +22,11 @@ interface FacilityCardProps {
 
 export function FacilityCard({ facility }: FacilityCardProps) {
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const settingsInterval = setInterval(() => {
         const currentSettings = getSiteSettings();
         setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
@@ -110,7 +113,8 @@ export function FacilityCard({ facility }: FacilityCardProps) {
         </div>
         <div className="flex items-center text-base font-medium mb-3">
           <DollarSign className="w-4 h-4 mr-1 text-green-500" />
-          <span>{formatCurrency(facility.pricePerHour, currency)}/hr</span>
+          <span>{isMounted ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16 inline-block" />}</span>
+          <span className='ml-1'>/hr</span>
         </div>
 
         <div className="flex items-center text-xs">
@@ -131,5 +135,3 @@ export function FacilityCard({ facility }: FacilityCardProps) {
     </Card>
   );
 }
-
-    

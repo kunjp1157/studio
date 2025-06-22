@@ -37,6 +37,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminMembershipsPage() {
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
@@ -44,16 +45,16 @@ export default function AdminMembershipsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<MembershipPlan | null>(null);
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     setTimeout(() => {
       setPlans(getAllMembershipPlans());
       setIsLoading(false);
     }, 300);
-  }, []);
-
-  useEffect(() => {
+    
     const settingsInterval = setInterval(() => {
       const currentSettings = getSiteSettings();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
@@ -127,7 +128,7 @@ export default function AdminMembershipsPage() {
                     plans.map((plan) => (
                         <TableRow key={plan.id}>
                         <TableCell className="font-medium">{plan.name}</TableCell>
-                        <TableCell>{formatCurrency(plan.pricePerMonth, currency)}</TableCell>
+                        <TableCell>{isMounted ? formatCurrency(plan.pricePerMonth, currency) : <Skeleton className="h-5 w-16" />}</TableCell>
                         <TableCell>
                             <ul className="list-none space-y-1">
                                 {plan.benefits.slice(0, 2).map((benefit, index) => (

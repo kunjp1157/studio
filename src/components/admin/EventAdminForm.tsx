@@ -48,7 +48,7 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
   const [isLoading, setIsLoading] = useState(false);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [sports, setSports] = useState<Sport[]>([]);
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
 
   useEffect(() => {
     // Simulate fetching facilities and sports for select dropdowns

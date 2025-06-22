@@ -20,6 +20,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInHours, parse, formatISO, addHours } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Enhanced mock time slots for a given date
 const getMockTimeSlots = (
@@ -95,24 +96,22 @@ export default function BookingPage() {
   const [bookingStep, setBookingStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
   const [temporarilyBookedSlots, setTemporarilyBookedSlots] = useState<Array<{ date: string; startTime: string }>>([]);
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+  
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Effect for fetching facility data (runs when facilityId changes)
   useEffect(() => {
+    setIsMounted(true);
     if (facilityId) {
       const foundFacility = getFacilityById(facilityId);
       setTimeout(() => setFacility(foundFacility || null), 300); // Simulate fetch
     }
-  }, [facilityId]);
-
-  // Effect for polling currency (runs only once)
-  useEffect(() => {
     const settingsInterval = setInterval(() => {
       const currentSettings = getSiteSettings();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     }, 3000);
     return () => clearInterval(settingsInterval);
-  }, []);
+  }, [facilityId]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -392,6 +391,11 @@ export default function BookingPage() {
   
   const hasRentals = facility.availableEquipment && facility.availableEquipment.length > 0;
 
+  const renderPrice = (price: number) => {
+    if (!isMounted) return <Skeleton className="h-5 w-20 inline-block" />;
+    return formatCurrency(price, currency);
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <Button variant="outline" className="mb-6" onClick={() => router.back()}>
@@ -477,7 +481,7 @@ export default function BookingPage() {
                         <div>
                           <Label htmlFor={`equip-${equip.id}`} className="font-medium">{equip.name}</Label>
                           <p className="text-xs text-muted-foreground">
-                            {formatCurrency(equip.pricePerItem, currency)} / {equip.priceType === 'per_booking' ? 'booking' : 'hour'} (Stock: {equip.stock})
+                            {renderPrice(equip.pricePerItem)} / {equip.priceType === 'per_booking' ? 'booking' : 'hour'} (Stock: {equip.stock})
                           </p>
                         </div>
                       </div>
@@ -528,7 +532,7 @@ export default function BookingPage() {
                   </div>
                    <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
                     {isLoading ? <LoadingSpinner size={20} className="mr-2"/> : <CreditCard className="mr-2 h-5 w-5" />}
-                    {isLoading ? 'Processing...' : `Pay ${formatCurrency(totalBookingPrice, currency)}`}
+                    {isLoading ? 'Processing...' : `Pay ${renderPrice(totalBookingPrice)}`}
                   </Button>
                 </form>
               </CardContent>
@@ -566,10 +570,10 @@ export default function BookingPage() {
                     <div className="mt-3 mb-1 pt-3 border-t">
                         <h4 className="font-semibold text-md mb-1">Promotion Applied:</h4>
                         <p className="text-sm text-muted-foreground">{appliedPromotionDetails.description} ({appliedPromotionDetails.code})</p>
-                        <p className="text-sm text-muted-foreground">Discount: -{formatCurrency(appliedPromotionDetails.discountAmount, currency)}</p>
+                        <p className="text-sm text-muted-foreground">Discount: -{renderPrice(appliedPromotionDetails.discountAmount)}</p>
                     </div>
                 )}
-                <p className="text-lg font-semibold mt-2">Total Paid: {formatCurrency(totalBookingPrice, currency)}</p>
+                <p className="text-lg font-semibold mt-2">Total Paid: {renderPrice(totalBookingPrice)}</p>
                 <Alert className="mt-4 text-left">
                   <AlertCircle className="h-4 w-4"/>
                   <AlertTitle>What's Next?</AlertTitle>
@@ -626,7 +630,7 @@ export default function BookingPage() {
               <hr />
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Facility Cost:</span>
-                <span className="font-medium">{formatCurrency(baseFacilityPrice, currency)}</span>
+                <span className="font-medium">{renderPrice(baseFacilityPrice)}</span>
               </div>
               {appliedPricingRuleMessage && (
                 <div className="flex justify-between text-xs text-blue-600 items-center">
@@ -648,7 +652,7 @@ export default function BookingPage() {
                 </div>
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Rental Cost:</span>
-                    <span className="font-medium">{formatCurrency(equipmentRentalCost, currency)}</span>
+                    <span className="font-medium">{renderPrice(equipmentRentalCost)}</span>
                  </div>
                 </>
               )}
@@ -683,7 +687,7 @@ export default function BookingPage() {
                 <div className="pt-2 border-t mt-2">
                     <div className="flex justify-between items-center text-sm text-green-600">
                         <span>Promo: {appliedPromotionDetails.code}</span>
-                        <span>-{formatCurrency(appliedPromotionDetails.discountAmount, currency)}</span>
+                        <span>-{renderPrice(appliedPromotionDetails.discountAmount)}</span>
                     </div>
                     <Button variant="link" size="sm" className="p-0 h-auto text-xs text-destructive" onClick={handleRemovePromotion}>
                         <X className="mr-1 h-3 w-3"/>Remove promotion
@@ -694,7 +698,7 @@ export default function BookingPage() {
               <hr />
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total:</span>
-                <span>{formatCurrency(totalBookingPrice, currency)}</span>
+                <span>{renderPrice(totalBookingPrice)}</span>
               </div>
             </CardContent>
             {bookingStep === 'details' && (
@@ -715,5 +719,3 @@ export default function BookingPage() {
     </div>
   );
 }
-
-    

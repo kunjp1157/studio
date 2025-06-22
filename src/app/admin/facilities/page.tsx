@@ -39,6 +39,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminFacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
@@ -46,9 +47,11 @@ export default function AdminFacilitiesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [facilityToDelete, setFacilityToDelete] = useState<Facility | null>(null);
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     // Simulate fetching facilities
     setTimeout(() => {
       setFacilities(getAllFacilities());
@@ -142,7 +145,7 @@ export default function AdminFacilitiesPage() {
                         <TableCell className="font-medium">{facility.name}</TableCell>
                         <TableCell><Badge variant="outline">{facility.type}</Badge></TableCell>
                         <TableCell>{facility.location}</TableCell>
-                        <TableCell>{formatCurrency(facility.pricePerHour, currency)}</TableCell>
+                        <TableCell>{isMounted ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16" />}</TableCell>
                         <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>
                         <TableCell className="text-right">
                             <DropdownMenu>
