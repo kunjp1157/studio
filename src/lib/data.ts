@@ -451,6 +451,13 @@ export let mockBookings: Booking[] = [
   },
 ];
 
+export const updateBooking = (bookingId: string, updates: Partial<Booking>): Booking | undefined => {
+    const bookingIndex = mockBookings.findIndex(b => b.id === bookingId);
+    if (bookingIndex === -1) return undefined;
+    mockBookings[bookingIndex] = { ...mockBookings[bookingIndex], ...updates };
+    return mockBookings[bookingIndex];
+};
+
 export const getBookingsByUserId = (userId: string): Booking[] => {
   return mockBookings.filter(booking => booking.userId === userId);
 };
@@ -1156,4 +1163,3 @@ export const mockReportData: ReportData = {
     { hour: '17:00', bookings: mockBookings.filter(b => b.startTime.startsWith('17:')).length || 150 },
   ],
 };
-

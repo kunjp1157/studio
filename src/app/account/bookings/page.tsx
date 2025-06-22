@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review } from '@/lib/types';
-import { mockUser, getBookingsByUserId, getFacilityById, addReview as addMockReview, addNotification } from '@/lib/data';
+import { mockUser, getBookingsByUserId, getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -41,55 +41,75 @@ import { ReviewForm } from '@/components/reviews/ReviewForm';
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    setTimeout(() => {
-      let userBookings = getBookingsByUserId(mockUser.id);
-      userBookings.sort((a, b) => {
-        const aDate = parseISO(a.date + 'T' + a.startTime);
-        const bDate = parseISO(b.date + 'T' + b.startTime);
-        const aIsPast = isPast(aDate);
-        const bIsPast = isPast(bDate);
+  const fetchAndSetBookings = () => {
+    let userBookings = getBookingsByUserId(mockUser.id);
+    userBookings.sort((a, b) => {
+      const aDate = parseISO(a.date + 'T' + a.startTime);
+      const bDate = parseISO(b.date + 'T' + b.startTime);
+      const aIsPast = isPast(aDate);
+      const bIsPast = isPast(bDate);
 
-        if (aIsPast && !bIsPast) return 1;
-        if (!aIsPast && bIsPast) return -1;
-        
-        if (aIsPast) {
-            return bDate.getTime() - aDate.getTime();
-        } else {
-            return aDate.getTime() - bDate.getTime();
-        }
-      });
-      setBookings(userBookings);
+      if (aIsPast && !bIsPast) return 1;
+      if (!aIsPast && bIsPast) return -1;
+      
+      if (aIsPast) {
+          return bDate.getTime() - aDate.getTime();
+      } else {
+          return aDate.getTime() - bDate.getTime();
+      }
+    });
+    setBookings(userBookings);
+  };
+
+  useEffect(() => {
+    // Initial fetch with loading state
+    setIsLoading(true);
+    setTimeout(() => {
+      fetchAndSetBookings();
       setIsLoading(false);
     }, 500);
+
+    // Set up polling to refresh data every 5 seconds
+    const intervalId = setInterval(fetchAndSetBookings, 5000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleCancelBooking = (bookingId: string) => {
-    setIsLoading(true);
+    setIsActionLoading(true);
     setTimeout(() => {
       const bookingToCancel = bookings.find(b => b.id === bookingId);
-      setBookings(prevBookings => 
-        prevBookings.map(b => b.id === bookingId ? { ...b, status: 'Cancelled' } : b)
-      );
-      toast({
-        title: "Booking Cancelled",
-        description: "Your booking has been successfully cancelled.",
-      });
+      const updatedBooking = updateBooking(bookingId, { status: 'Cancelled' });
       
-      if (bookingToCancel) {
-        addNotification(mockUser.id, {
-            type: 'booking_cancelled',
-            title: 'Booking Cancelled',
-            message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} has been cancelled.`,
-            link: '/account/bookings',
+      if (updatedBooking) {
+        fetchAndSetBookings(); // Refetch to ensure data is fresh
+        toast({
+          title: "Booking Cancelled",
+          description: "Your booking has been successfully cancelled.",
+        });
+        
+        if (bookingToCancel) {
+          addNotification(mockUser.id, {
+              type: 'booking_cancelled',
+              title: 'Booking Cancelled',
+              message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} has been cancelled.`,
+              link: '/account/bookings',
+          });
+        }
+      } else {
+        toast({
+            title: "Error",
+            description: "Failed to cancel the booking. Please try again.",
+            variant: "destructive"
         });
       }
-      // In a real app, also trigger backend to send email/SMS confirmation of cancellation.
-      setIsLoading(false);
+      setIsActionLoading(false);
     }, 1000);
   };
 
@@ -110,9 +130,8 @@ export default function BookingsPage() {
         bookingId,
       });
 
-      setBookings(prevBookings =>
-        prevBookings.map(b => b.id === bookingId ? { ...b, reviewed: true } : b)
-      );
+      fetchAndSetBookings(); // Refetch to update reviewed status
+      
       toast({
         title: "Review Submitted!",
         description: `Thank you for reviewing ${selectedBookingForReview.facilityName}.`,
@@ -125,7 +144,6 @@ export default function BookingsPage() {
         message: `Your review for ${selectedBookingForReview.facilityName} has been posted.`,
         link: `/facilities/${selectedBookingForReview.facilityId}`,
       });
-      // In a real app, also trigger backend to potentially notify facility owner or for moderation.
 
       setIsReviewModalOpen(false);
       setSelectedBookingForReview(null);
@@ -142,7 +160,7 @@ export default function BookingsPage() {
   const pastBookings = bookings.filter(b => isPast(parseISO(b.date + 'T' + b.startTime)) || b.status !== 'Confirmed');
 
 
-  if (isLoading && bookings.length === 0) {
+  if (isLoading) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
   }
   
@@ -191,7 +209,7 @@ export default function BookingsPage() {
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" disabled={isLoading}><XCircle className="mr-1 h-4 w-4" /> Cancel</Button>
+                    <Button variant="destructive" size="sm" disabled={isActionLoading}><XCircle className="mr-1 h-4 w-4" /> Cancel</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                     <AlertDialogHeader>
@@ -202,8 +220,8 @@ export default function BookingsPage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleCancelBooking(booking.id)} disabled={isLoading}>
-                        {isLoading ? <LoadingSpinner size={16} /> : 'Yes, Cancel Booking'}
+                        <AlertDialogAction onClick={() => handleCancelBooking(booking.id)} disabled={isActionLoading}>
+                        {isActionLoading ? <LoadingSpinner size={16} /> : 'Yes, Cancel Booking'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                     </AlertDialogContent>

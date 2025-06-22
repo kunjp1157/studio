@@ -34,7 +34,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, UserProfile, Facility } from '@/lib/types';
-import { getAllBookings, getUserById, getFacilityById, mockUser } from '@/lib/data';
+import { getAllBookings, getUserById, getFacilityById, updateBooking, addNotification } from '@/lib/data';
 import { PlusCircle, MoreHorizontal, Eye, Edit, XCircle, DollarSign, Search, FilterX, User, Home, CalendarDays, Clock, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -50,6 +50,7 @@ export default function AdminBookingsPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | Booking['status']>('all');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
 
   const { toast } = useToast();
 
@@ -92,6 +93,31 @@ export default function AdminBookingsPage() {
     setIsDetailsModalOpen(true);
   };
   
+  const handleAdminCancelBooking = () => {
+    if (!bookingToCancel) return;
+
+    const updatedBooking = updateBooking(bookingToCancel.id, { status: 'Cancelled' });
+    
+    if (updatedBooking) {
+      toast({
+        title: "Booking Cancelled",
+        description: `Booking for ${bookingToCancel.facilityName} has been cancelled.`
+      });
+      addNotification(bookingToCancel.userId, {
+        type: 'booking_cancelled',
+        title: 'Booking Cancelled by Admin',
+        message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} was cancelled by an administrator.`,
+        link: '/account/bookings',
+      });
+      
+      const bookingsData = getAllBookings();
+      setAllBookings(bookingsData);
+    } else {
+      toast({ title: "Error", description: "Failed to cancel booking.", variant: "destructive" });
+    }
+    setBookingToCancel(null);
+  };
+
   const getStatusBadgeVariant = (status: Booking['status']): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'Confirmed': return 'default'; // Typically green or primary
@@ -221,7 +247,7 @@ export default function AdminBookingsPage() {
                                 <Edit className="mr-2 h-4 w-4" /> Edit Booking
                               </DropdownMenuItem>
                               {booking.status !== 'Cancelled' && (
-                                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => toast({ title: 'Feature Coming Soon', description: 'Booking cancellation will be available soon.'})}>
+                                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => setBookingToCancel(booking)}>
                                   <XCircle className="mr-2 h-4 w-4" /> Cancel Booking
                                 </DropdownMenuItem>
                               )}
@@ -240,6 +266,23 @@ export default function AdminBookingsPage() {
           </div>
         </CardContent>
       </Card>
+      
+      {bookingToCancel && (
+        <AlertDialog open={!!bookingToCancel} onOpenChange={(open) => !open && setBookingToCancel(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will cancel the booking for {getUserById(bookingToCancel.userId)?.name}. This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleAdminCancelBooking}>Yes, Cancel Booking</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {selectedBooking && (
         <AlertDialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
