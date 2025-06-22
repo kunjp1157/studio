@@ -1,7 +1,10 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Facility } from '@/lib/types';
+import type { Facility, SiteSettings } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,14 +12,28 @@ import { Star, MapPin, DollarSign, Zap, Heart, MessageSquare, CalendarCheck2 } f
 import { useToast } from '@/hooks/use-toast';
 import { StarDisplay } from '@/components/shared/StarDisplay';
 import { cn } from '@/lib/utils';
+import { getSiteSettings } from '@/lib/data';
+import { formatCurrency } from '@/lib/utils';
 
 interface FacilityCardProps {
   facility: Facility;
 }
 
 export function FacilityCard({ facility }: FacilityCardProps) {
-  const SportIcon = facility.sports[0]?.icon || Zap; // Default to Zap icon if no sport icon
   const { toast } = useToast();
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+
+  useEffect(() => {
+    // Polling for site settings like currency
+    const settingsInterval = setInterval(() => {
+        const currentSettings = getSiteSettings();
+        if (currentSettings.defaultCurrency !== currency) {
+            setCurrency(currentSettings.defaultCurrency);
+        }
+    }, 3000);
+
+    return () => clearInterval(settingsInterval);
+  }, [currency]);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation if the button is inside a Link
@@ -28,6 +45,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
     // In a real app, you'd update the user's favorite list here
   };
 
+  const SportIcon = facility.sports[0]?.icon || Zap; // Default to Zap icon if no sport icon
   const reviewCount = facility.reviews?.length || 0;
 
   let availabilityStatus: { text: string; variant: "default" | "secondary" | "destructive" | "outline" } = {
@@ -95,7 +113,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
         </div>
         <div className="flex items-center text-base font-medium mb-3">
           <DollarSign className="w-4 h-4 mr-1 text-green-500" />
-          <span>{facility.pricePerHour}/hr</span>
+          <span>{formatCurrency(facility.pricePerHour, currency)}/hr</span>
         </div>
 
         <div className="flex items-center text-xs">

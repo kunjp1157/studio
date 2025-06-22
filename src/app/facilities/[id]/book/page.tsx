@@ -3,8 +3,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule } from '@/lib/types';
-import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, mockPricingRules } from '@/lib/data';
+import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings } from '@/lib/types';
+import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, mockPricingRules, getSiteSettings } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, Dolla
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInHours, parse, formatISO, addHours } from 'date-fns';
+import { formatCurrency } from '@/lib/utils';
 
 // Enhanced mock time slots for a given date
 const getMockTimeSlots = (
@@ -94,6 +95,7 @@ export default function BookingPage() {
   const [bookingStep, setBookingStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
   const [temporarilyBookedSlots, setTemporarilyBookedSlots] = useState<Array<{ date: string; startTime: string }>>([]);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
 
 
   useEffect(() => {
@@ -101,7 +103,15 @@ export default function BookingPage() {
       const foundFacility = getFacilityById(facilityId);
       setTimeout(() => setFacility(foundFacility || null), 300); // Simulate fetch
     }
-  }, [facilityId]);
+    const settingsInterval = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      if (currentSettings.defaultCurrency !== currency) {
+          setCurrency(currentSettings.defaultCurrency);
+      }
+    }, 3000);
+
+    return () => clearInterval(settingsInterval);
+  }, [facilityId, currency]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -145,9 +155,9 @@ export default function BookingPage() {
         switch (appliedRuleDetails.adjustmentType) {
             case 'percentage_increase': changeDescription = `(+${appliedRuleDetails.value}%)`; break;
             case 'percentage_decrease': changeDescription = `(-${appliedRuleDetails.value}%)`; break;
-            case 'fixed_increase': changeDescription = `(+$${appliedRuleDetails.value.toFixed(2)}/hr)`; break;
-            case 'fixed_decrease': changeDescription = `(-$${appliedRuleDetails.value.toFixed(2)}/hr)`; break;
-            case 'fixed_price': changeDescription = `(to $${appliedRuleDetails.value.toFixed(2)}/hr)`; break;
+            case 'fixed_increase': changeDescription = `(+${formatCurrency(appliedRuleDetails.value, currency)}/hr)`; break;
+            case 'fixed_decrease': changeDescription = `(-${formatCurrency(appliedRuleDetails.value, currency)}/hr)`; break;
+            case 'fixed_price': changeDescription = `(to ${formatCurrency(appliedRuleDetails.value, currency)}/hr)`; break;
         }
         if (newHourlyRate !== originalHourlyRate) {
              setAppliedPricingRuleMessage(`${appliedRuleName} ${changeDescription}`);
@@ -161,7 +171,7 @@ export default function BookingPage() {
       setBaseFacilityPrice(facility ? facility.pricePerHour * bookingDurationHours : 0);
       setAppliedPricingRuleMessage(null);
     }
-  }, [facility, selectedDate, selectedSlot, bookingDurationHours]);
+  }, [facility, selectedDate, selectedSlot, bookingDurationHours, currency]);
 
   useEffect(() => {
     let rentalCost = 0;
@@ -239,7 +249,7 @@ export default function BookingPage() {
       });
       toast({
         title: "Promotion Applied!",
-        description: `${promotion.name} (-$${discountAmount.toFixed(2)}) applied successfully.`,
+        description: `${promotion.name} (-${formatCurrency(discountAmount, currency)}) applied successfully.`,
         className: "bg-green-500 text-white"
       });
     } else {
@@ -312,7 +322,7 @@ export default function BookingPage() {
 
     let promotionSummary = "";
     if (appliedPromotionDetails) {
-        promotionSummary = ` Promotion Applied: ${appliedPromotionDetails.code} (-$${appliedPromotionDetails.discountAmount.toFixed(2)}).`;
+        promotionSummary = ` Promotion Applied: ${appliedPromotionDetails.code} (-${formatCurrency(appliedPromotionDetails.discountAmount, currency)}).`;
     }
     
     toast({
@@ -350,9 +360,9 @@ export default function BookingPage() {
     const details = encodeURIComponent(
       `Booking for ${facility.name} on ${format(selectedDate, 'PPP')} at ${selectedSlot.startTime}.\n` +
       `Guests: ${numberOfGuests}\n` +
-      (appliedPromotionDetails ? `Promotion: ${appliedPromotionDetails.code} (-$${appliedPromotionDetails.discountAmount.toFixed(2)})\n` : '') +
+      (appliedPromotionDetails ? `Promotion: ${appliedPromotionDetails.code} (-${formatCurrency(appliedPromotionDetails.discountAmount, currency)})\n` : '') +
       (selectedEquipment.size > 0 ? `Rented Equipment: ${Array.from(selectedEquipment.values()).map(item => `${item.quantity}x ${item.details.name}`).join(', ')}\n` : '') +
-      `Total Cost: $${totalBookingPrice.toFixed(2)}`
+      `Total Cost: ${formatCurrency(totalBookingPrice, currency)}`
     );
     const location = encodeURIComponent(facility.address);
 
@@ -466,7 +476,7 @@ export default function BookingPage() {
                         <div>
                           <Label htmlFor={`equip-${equip.id}`} className="font-medium">{equip.name}</Label>
                           <p className="text-xs text-muted-foreground">
-                            ${equip.pricePerItem.toFixed(2)} / {equip.priceType === 'per_booking' ? 'booking' : 'hour'} (Stock: {equip.stock})
+                            {formatCurrency(equip.pricePerItem, currency)} / {equip.priceType === 'per_booking' ? 'booking' : 'hour'} (Stock: {equip.stock})
                           </p>
                         </div>
                       </div>
@@ -517,7 +527,7 @@ export default function BookingPage() {
                   </div>
                    <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
                     {isLoading ? <LoadingSpinner size={20} className="mr-2"/> : <CreditCard className="mr-2 h-5 w-5" />}
-                    {isLoading ? 'Processing...' : `Pay $${totalBookingPrice.toFixed(2)}`}
+                    {isLoading ? 'Processing...' : `Pay ${formatCurrency(totalBookingPrice, currency)}`}
                   </Button>
                 </form>
               </CardContent>
@@ -555,10 +565,10 @@ export default function BookingPage() {
                     <div className="mt-3 mb-1 pt-3 border-t">
                         <h4 className="font-semibold text-md mb-1">Promotion Applied:</h4>
                         <p className="text-sm text-muted-foreground">{appliedPromotionDetails.description} ({appliedPromotionDetails.code})</p>
-                        <p className="text-sm text-muted-foreground">Discount: -${appliedPromotionDetails.discountAmount.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">Discount: -{formatCurrency(appliedPromotionDetails.discountAmount, currency)}</p>
                     </div>
                 )}
-                <p className="text-lg font-semibold mt-2">Total Paid: ${totalBookingPrice.toFixed(2)}</p>
+                <p className="text-lg font-semibold mt-2">Total Paid: {formatCurrency(totalBookingPrice, currency)}</p>
                 <Alert className="mt-4 text-left">
                   <AlertCircle className="h-4 w-4"/>
                   <AlertTitle>What's Next?</AlertTitle>
@@ -615,7 +625,7 @@ export default function BookingPage() {
               <hr />
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Facility Cost:</span>
-                <span className="font-medium">${baseFacilityPrice.toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(baseFacilityPrice, currency)}</span>
               </div>
               {appliedPricingRuleMessage && (
                 <div className="flex justify-between text-xs text-blue-600 items-center">
@@ -637,7 +647,7 @@ export default function BookingPage() {
                 </div>
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Rental Cost:</span>
-                    <span className="font-medium">${equipmentRentalCost.toFixed(2)}</span>
+                    <span className="font-medium">{formatCurrency(equipmentRentalCost, currency)}</span>
                  </div>
                 </>
               )}
@@ -672,7 +682,7 @@ export default function BookingPage() {
                 <div className="pt-2 border-t mt-2">
                     <div className="flex justify-between items-center text-sm text-green-600">
                         <span>Promo: {appliedPromotionDetails.code}</span>
-                        <span>-${appliedPromotionDetails.discountAmount.toFixed(2)}</span>
+                        <span>-{formatCurrency(appliedPromotionDetails.discountAmount, currency)}</span>
                     </div>
                     <Button variant="link" size="sm" className="p-0 h-auto text-xs text-destructive" onClick={handleRemovePromotion}>
                         <X className="mr-1 h-3 w-3"/>Remove promotion
@@ -683,7 +693,7 @@ export default function BookingPage() {
               <hr />
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total:</span>
-                <span>${totalBookingPrice.toFixed(2)}</span>
+                <span>{formatCurrency(totalBookingPrice, currency)}</span>
               </div>
             </CardContent>
             {bookingStep === 'details' && (
@@ -704,4 +714,3 @@ export default function BookingPage() {
     </div>
   );
 }
-

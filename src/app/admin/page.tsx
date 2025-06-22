@@ -14,11 +14,13 @@ import {
   getAllBookings,
   getUserById,
   getFacilityById,
+  getSiteSettings,
 } from '@/lib/data';
 import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus } from 'lucide-react';
 import type { ChartConfig } from '@/components/ui/chart';
 import { parseISO, getMonth, getYear, format, subMonths, formatDistanceToNow } from 'date-fns';
-import type { Booking, UserProfile, Facility } from '@/lib/types';
+import type { Booking, UserProfile, Facility, SiteSettings } from '@/lib/types';
+import { formatCurrency } from '@/lib/utils';
 
 const bookingsChartConfig = {
   bookings: { label: 'Bookings', color: 'hsl(var(--chart-1))' },
@@ -101,11 +103,25 @@ export default function AdminDashboardPage() {
   const [activeUsers, setActiveUsers] = useState(0);
   const [totalBookingsThisMonth, setTotalBookingsThisMonth] = useState(0);
   const [totalRevenueThisMonth, setTotalRevenueThisMonth] = useState(0);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
 
   const [monthlyBookingsData, setMonthlyBookingsData] = useState<Array<{ month: string; bookings: number }>>([]);
   const [monthlyRevenueData, setMonthlyRevenueData] = useState<Array<{ month: string; revenue: number }>>([]);
   const [facilityUsageData, setFacilityUsageData] = useState<Array<{ facilityName: string; bookings: number }>>([]);
   const [activityFeed, setActivityFeed] = useState<ActivityFeedItemType[]>([]);
+
+  useEffect(() => {
+    // Polling for site settings like currency
+    const settingsInterval = setInterval(() => {
+        const currentSettings = getSiteSettings();
+        if (currentSettings.defaultCurrency !== currency) {
+            setCurrency(currentSettings.defaultCurrency);
+        }
+    }, 3000);
+
+    return () => clearInterval(settingsInterval);
+  }, [currency]);
+
 
   useEffect(() => {
     const facilities = getAllFacilities();
@@ -190,7 +206,7 @@ export default function AdminDashboardPage() {
             <DollarSign className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenueThisMonth.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenueThisMonth, currency)}</div>
             <p className="text-xs text-muted-foreground">+15.2% from last month (mock)</p>
           </CardContent>
         </Card>
@@ -263,7 +279,7 @@ export default function AdminDashboardPage() {
                     Recent Activity
                 </CardTitle>
                 <CardDescription>
-                  This section will show a feed of recent platform activities like new bookings and user registrations.
+                  A feed of recent platform activities like new bookings and user registrations.
                 </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
