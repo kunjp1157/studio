@@ -1,15 +1,24 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
-import { mockReportData, getAllFacilities, getAllUsers, getAllBookings } from '@/lib/data';
-import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, Construction } from 'lucide-react';
+import {
+  mockReportData,
+  getAllFacilities,
+  getAllUsers,
+  getAllBookings,
+  getUserById,
+  getFacilityById,
+} from '@/lib/data';
+import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus } from 'lucide-react';
 import type { ChartConfig } from '@/components/ui/chart';
-import { parseISO, getMonth, getYear, format, subMonths, startOfMonth } from 'date-fns';
-import type { Booking } from '@/lib/types';
+import { parseISO, getMonth, getYear, format, subMonths, formatDistanceToNow } from 'date-fns';
+import type { Booking, UserProfile, Facility } from '@/lib/types';
 
 const bookingsChartConfig = {
   bookings: { label: 'Bookings', color: 'hsl(var(--chart-1))' },
@@ -20,26 +29,89 @@ const revenueChartConfig = {
 } satisfies ChartConfig;
 
 const facilityUsageChartConfig = {
-    bookings: { label: "Bookings", color: "hsl(var(--chart-1))" },
-    facilityName: { label: "Facility" }
+  bookings: { label: 'Bookings', color: 'hsl(var(--chart-1))' },
+  facilityName: { label: 'Facility' },
 } satisfies ChartConfig;
 
+// Define a unified activity item type
+interface ActivityFeedItemType {
+  type: 'booking' | 'newUser';
+  timestamp: string; // ISO string
+  user: UserProfile | undefined;
+  bookingData?: Booking;
+  facility?: Facility | undefined;
+}
+
+// A sub-component to render each item in the feed
+const ActivityItem = ({ item }: { item: ActivityFeedItemType }) => {
+  if (!item.user) return null;
+
+  const timeAgo = formatDistanceToNow(parseISO(item.timestamp), { addSuffix: true });
+
+  if (item.type === 'booking' && item.bookingData && item.facility) {
+    return (
+      <div className="flex items-start gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+        <Avatar className="h-9 w-9 border">
+          <AvatarImage src={item.user.profilePictureUrl} alt={item.user.name} />
+          <AvatarFallback>{item.user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">
+            <Link href={`/admin/users?q=${item.user.email}`} className="font-semibold hover:underline">{item.user.name}</Link>
+            {' '}booked{' '}
+            <Link href={`/admin/facilities/${item.facility.id}/edit`} className="font-semibold hover:underline">{item.facility.name}</Link>.
+          </p>
+          <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+            <Ticket className="h-3 w-3" /> {timeAgo}
+          </p>
+        </div>
+        <div className="text-sm font-semibold text-green-600 dark:text-green-500 text-right">
+          +${item.bookingData.totalPrice.toFixed(2)}
+        </div>
+      </div>
+    );
+  }
+
+  if (item.type === 'newUser') {
+    return (
+      <div className="flex items-start gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+        <Avatar className="h-9 w-9 border">
+          <AvatarImage src={item.user.profilePictureUrl} alt={item.user.name} />
+          <AvatarFallback>{item.user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">
+            New user{' '}
+            <Link href={`/admin/users?q=${item.user.email}`} className="font-semibold hover:underline">{item.user.name}</Link>
+            {' '}joined the platform.
+          </p>
+          <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+            <UserPlus className="h-3 w-3" /> {timeAgo}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
 
 export default function AdminDashboardPage() {
   const [totalFacilities, setTotalFacilities] = useState(0);
   const [activeUsers, setActiveUsers] = useState(0);
   const [totalBookingsThisMonth, setTotalBookingsThisMonth] = useState(0);
   const [totalRevenueThisMonth, setTotalRevenueThisMonth] = useState(0);
-  
+
   const [monthlyBookingsData, setMonthlyBookingsData] = useState<Array<{ month: string; bookings: number }>>([]);
   const [monthlyRevenueData, setMonthlyRevenueData] = useState<Array<{ month: string; revenue: number }>>([]);
   const [facilityUsageData, setFacilityUsageData] = useState<Array<{ facilityName: string; bookings: number }>>([]);
+  const [activityFeed, setActivityFeed] = useState<ActivityFeedItemType[]>([]);
 
   useEffect(() => {
     const facilities = getAllFacilities();
     const users = getAllUsers();
     const bookings = getAllBookings();
-    
+
     setTotalFacilities(facilities.length);
     setActiveUsers(users.filter(u => u.status === 'Active').length);
 
@@ -53,7 +125,7 @@ export default function AdminDashboardPage() {
     });
     setTotalBookingsThisMonth(bookingsThisMonth.length);
     setTotalRevenueThisMonth(bookingsThisMonth.reduce((sum, b) => sum + b.totalPrice, 0));
-    
+
     // Prepare data for last 6 months charts
     const last6Months: { month: string; year: number; monthKey: string }[] = [];
     for (let i = 5; i >= 0; i--) {
@@ -68,29 +140,44 @@ export default function AdminDashboardPage() {
       if (booking.status === 'Confirmed') {
         const bookingDate = parseISO(booking.bookedAt);
         const monthKey = format(bookingDate, 'yyyy-MM');
-        
         if (last6Months.some(m => m.monthKey === monthKey)) {
-            aggregatedBookings[monthKey] = (aggregatedBookings[monthKey] || 0) + 1;
-            aggregatedRevenue[monthKey] = (aggregatedRevenue[monthKey] || 0) + booking.totalPrice;
+          aggregatedBookings[monthKey] = (aggregatedBookings[monthKey] || 0) + 1;
+          aggregatedRevenue[monthKey] = (aggregatedRevenue[monthKey] || 0) + booking.totalPrice;
         }
       }
     });
-    
+
     setMonthlyBookingsData(last6Months.map(m => ({
       month: m.month,
       bookings: aggregatedBookings[m.monthKey] || 0,
     })));
-
     setMonthlyRevenueData(last6Months.map(m => ({
       month: m.month,
       revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
     })));
 
-    // Facility Usage (comes from mockReportData which is now dynamic)
     setFacilityUsageData(mockReportData.facilityUsage);
+    
+    // Prepare data for activity feed
+    const bookingActivities: ActivityFeedItemType[] = bookings.map(b => ({
+      type: 'booking',
+      timestamp: b.bookedAt,
+      user: getUserById(b.userId),
+      facility: getFacilityById(b.facilityId),
+      bookingData: b,
+    }));
+
+    const newUserActivities: ActivityFeedItemType[] = users.map(u => ({
+      type: 'newUser',
+      timestamp: u.joinedAt,
+      user: u,
+    }));
+
+    const combinedFeed = [...bookingActivities, ...newUserActivities];
+    combinedFeed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    setActivityFeed(combinedFeed.slice(0, 7)); // Show latest 7 activities
 
   }, []);
-
 
   return (
     <div className="space-y-8">
@@ -176,19 +263,22 @@ export default function AdminDashboardPage() {
                     Recent Activity
                 </CardTitle>
                 <CardDescription>
-                    This section will show a feed of recent platform activities like new bookings and user registrations.
+                  This section will show a feed of recent platform activities like new bookings and user registrations.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center min-h-[250px] text-center">
-                 <Construction className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold text-muted-foreground">Feature Coming Soon</h3>
-                <p className="text-muted-foreground mt-1">
-                    An activity feed is under development.
-                </p>
+            <CardContent className="p-0">
+               <div className="space-y-1 p-4 max-h-[300px] overflow-y-auto">
+                  {activityFeed.length > 0 ? (
+                      activityFeed.map((item, index) => <ActivityItem key={index} item={item} />)
+                  ) : (
+                      <p className="text-sm text-center text-muted-foreground py-8">
+                          No recent activity to display.
+                      </p>
+                  )}
+              </div>
             </CardContent>
          </Card>
        </div>
     </div>
   );
 }
-
