@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours } from '@/lib/types';
-import { mockSports, mockAmenities, addFacility as addMockFacility, updateFacility as updateMockFacility } from '@/lib/data';
+import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings } from '@/lib/types';
+import { mockSports, mockAmenities, addFacility as addMockFacility, updateFacility as updateMockFacility, getSiteSettings } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -64,6 +64,15 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+
+  useEffect(() => {
+    const settingsInterval = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    }, 3000);
+    return () => clearInterval(settingsInterval);
+  }, []);
 
   const form = useForm<FacilityFormValues>({
     resolver: zodResolver(facilityFormSchema),
@@ -193,7 +202,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
                 )} />
                 <FormField control={form.control} name="pricePerHour" render={({ field }) => (
                     <FormItem>
-                        <FormLabel className="flex items-center"><DollarSign className="mr-2 h-4 w-4 text-muted-foreground"/>Price Per Hour ($)</FormLabel>
+                        <FormLabel className="flex items-center"><DollarSign className="mr-2 h-4 w-4 text-muted-foreground"/>Price Per Hour ({currency})</FormLabel>
                         <FormControl><Input type="number" step="0.01" placeholder="25.00" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
@@ -424,4 +433,3 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
     </Form>
   );
 }
-

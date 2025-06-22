@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { SportEvent, Facility, Sport } from '@/lib/types';
-import { getAllSports, getAllFacilities, getSportById, addEvent, updateEvent } from '@/lib/data'; 
+import type { SportEvent, Facility, Sport, SiteSettings } from '@/lib/types';
+import { getAllSports, getAllFacilities, getSportById, addEvent, updateEvent, getSiteSettings } from '@/lib/data'; 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,11 +48,18 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
   const [isLoading, setIsLoading] = useState(false);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [sports, setSports] = useState<Sport[]>([]);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
 
   useEffect(() => {
     // Simulate fetching facilities and sports for select dropdowns
     setFacilities(getAllFacilities());
     setSports(getAllSports());
+    
+    const settingsInterval = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    }, 3000);
+    return () => clearInterval(settingsInterval);
   }, []);
 
   const form = useForm<EventFormValues>({
@@ -187,7 +194,7 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="entryFee" render={({ field }) => (
                 <FormItem>
-                    <FormLabel className="flex items-center"><DollarSign className="mr-2 h-4 w-4 text-muted-foreground"/>Entry Fee ($)</FormLabel>
+                    <FormLabel className="flex items-center"><DollarSign className="mr-2 h-4 w-4 text-muted-foreground"/>Entry Fee ({currency})</FormLabel>
                     <FormControl><Input type="number" placeholder="0 for free entry" {...field} /></FormControl>
                     <FormMessage />
                 </FormItem>

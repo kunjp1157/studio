@@ -31,13 +31,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import type { PricingRule } from '@/lib/types';
-import { getAllPricingRules, deletePricingRule as deleteMockPricingRule } from '@/lib/data';
+import type { PricingRule, SiteSettings } from '@/lib/types';
+import { getAllPricingRules, deletePricingRule as deleteMockPricingRule, getSiteSettings } from '@/lib/data';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, parseISO } from 'date-fns';
+import { formatCurrency } from '@/lib/utils';
 
 export default function AdminPricingPage() {
   const [rules, setRules] = useState<PricingRule[]>([]);
@@ -45,12 +46,21 @@ export default function AdminPricingPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<PricingRule | null>(null);
   const { toast } = useToast();
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
 
   useEffect(() => {
     setTimeout(() => {
       setRules(getAllPricingRules());
       setIsLoading(false);
     }, 300);
+  }, []);
+
+  useEffect(() => {
+    const settingsInterval = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    }, 3000);
+    return () => clearInterval(settingsInterval);
   }, []);
 
   const handleDeleteRule = () => {
@@ -72,9 +82,9 @@ export default function AdminPricingPage() {
     switch (rule.adjustmentType) {
       case 'percentage_increase': return `+${rule.value}%`;
       case 'percentage_decrease': return `-${rule.value}%`;
-      case 'fixed_increase': return `+$${rule.value.toFixed(2)}`;
-      case 'fixed_decrease': return `-$${rule.value.toFixed(2)}`;
-      case 'fixed_price': return `Set to $${rule.value.toFixed(2)}`;
+      case 'fixed_increase': return `+${formatCurrency(rule.value, currency)}`;
+      case 'fixed_decrease': return `-${formatCurrency(rule.value, currency)}`;
+      case 'fixed_price': return `Set to ${formatCurrency(rule.value, currency)}`;
       default: return 'N/A';
     }
   };
@@ -217,4 +227,3 @@ export default function AdminPricingPage() {
     </div>
   );
 }
-

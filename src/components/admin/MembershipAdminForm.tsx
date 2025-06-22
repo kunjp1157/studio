@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { MembershipPlan } from '@/lib/types';
-import { addMembershipPlan, updateMembershipPlan } from '@/lib/data';
+import type { MembershipPlan, SiteSettings } from '@/lib/types';
+import { addMembershipPlan, updateMembershipPlan, getSiteSettings } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,6 +34,15 @@ export function MembershipAdminForm({ initialData, onSubmitSuccess }: Membership
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+
+  useEffect(() => {
+    const settingsInterval = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    }, 3000);
+    return () => clearInterval(settingsInterval);
+  }, []);
 
   const form = useForm<MembershipPlanFormValues>({
     resolver: zodResolver(membershipPlanFormSchema),
@@ -125,7 +134,7 @@ export function MembershipAdminForm({ initialData, onSubmitSuccess }: Membership
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    <DollarSign className="mr-2 h-4 w-4 text-muted-foreground" /> Price Per Month ($)
+                    <DollarSign className="mr-2 h-4 w-4 text-muted-foreground" /> Price Per Month ({currency})
                   </FormLabel>
                   <FormControl><Input type="number" step="0.01" placeholder="29.99" {...field} /></FormControl>
                   <FormMessage />

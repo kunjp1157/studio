@@ -4,6 +4,10 @@
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, Building, Ticket, DollarSign, Users, Construction } from 'lucide-react';
+import type { SiteSettings } from '@/lib/types';
+import { getSiteSettings } from '@/lib/data';
+import { formatCurrency } from '@/lib/utils';
+import { useState, useEffect } from 'react';
 
 export default function OwnerDashboardPage() {
   // Mock data for display - in a real app, this would be fetched for the logged-in owner
@@ -14,6 +18,16 @@ export default function OwnerDashboardPage() {
     monthlyRevenue: 1250.75,
     newReviews: 5,
   };
+
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+
+  useEffect(() => {
+    const settingsInterval = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    }, 3000);
+    return () => clearInterval(settingsInterval);
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -46,7 +60,7 @@ export default function OwnerDashboardPage() {
             <DollarSign className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${ownerStats.monthlyRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(ownerStats.monthlyRevenue, currency)}</div>
             <p className="text-xs text-muted-foreground">Based on confirmed bookings</p>
           </CardContent>
         </Card>

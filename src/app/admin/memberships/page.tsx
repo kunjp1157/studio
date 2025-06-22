@@ -30,12 +30,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { MembershipPlan } from '@/lib/types';
-import { getAllMembershipPlans, deleteMembershipPlan as deleteMockMembershipPlan } from '@/lib/data';
+import type { MembershipPlan, SiteSettings } from '@/lib/types';
+import { getAllMembershipPlans, deleteMembershipPlan as deleteMockMembershipPlan, getSiteSettings } from '@/lib/data';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Award, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/utils';
 
 export default function AdminMembershipsPage() {
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
@@ -43,12 +44,21 @@ export default function AdminMembershipsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<MembershipPlan | null>(null);
   const { toast } = useToast();
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
 
   useEffect(() => {
     setTimeout(() => {
       setPlans(getAllMembershipPlans());
       setIsLoading(false);
     }, 300);
+  }, []);
+
+  useEffect(() => {
+    const settingsInterval = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    }, 3000);
+    return () => clearInterval(settingsInterval);
   }, []);
 
   const handleDeletePlan = () => {
@@ -117,7 +127,7 @@ export default function AdminMembershipsPage() {
                     plans.map((plan) => (
                         <TableRow key={plan.id}>
                         <TableCell className="font-medium">{plan.name}</TableCell>
-                        <TableCell>${plan.pricePerMonth.toFixed(2)}</TableCell>
+                        <TableCell>{formatCurrency(plan.pricePerMonth, currency)}</TableCell>
                         <TableCell>
                             <ul className="list-none space-y-1">
                                 {plan.benefits.slice(0, 2).map((benefit, index) => (

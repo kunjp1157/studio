@@ -1166,7 +1166,7 @@ export const mockReportData: ReportData = {
 
 let mockSiteSettings: SiteSettings = {
   siteName: 'City Sports Hub',
-  defaultCurrency: 'USD',
+  defaultCurrency: 'INR',
   timezone: 'America/Los_Angeles',
   maintenanceMode: false,
 };

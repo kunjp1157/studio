@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import type { SportEvent, Facility } from '@/lib/types';
-import { getEventById, getFacilityById, registerForEvent as mockRegisterForEvent, addNotification, mockUser } from '@/lib/data';
+import type { SportEvent, Facility, SiteSettings } from '@/lib/types';
+import { getEventById, getFacilityById, registerForEvent as mockRegisterForEvent, addNotification, mockUser, getSiteSettings } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,7 @@ import { format, parseISO, isPast } from 'date-fns';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/utils';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -25,6 +26,7 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<SportEvent | null | undefined>(undefined);
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
 
   useEffect(() => {
     if (eventId) {
@@ -38,6 +40,14 @@ export default function EventDetailPage() {
       }, 300);
     }
   }, [eventId]);
+  
+  useEffect(() => {
+    const settingsInterval = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    }, 3000);
+    return () => clearInterval(settingsInterval);
+  }, []);
 
   const handleRegisterClick = async () => {
     if (!event) return;
@@ -167,7 +177,7 @@ export default function EventDetailPage() {
                 <div>
                   <p className="font-semibold">Entry Fee</p>
                   <p className="text-muted-foreground">
-                    {event.entryFee !== undefined ? (event.entryFee > 0 ? `$${event.entryFee.toFixed(2)}` : 'Free Entry') : 'Not Specified'}
+                    {event.entryFee !== undefined ? (event.entryFee > 0 ? formatCurrency(event.entryFee, currency) : 'Free Entry') : 'Not Specified'}
                   </p>
                 </div>
               </div>

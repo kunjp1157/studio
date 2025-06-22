@@ -32,12 +32,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import type { Facility } from '@/lib/types';
-import { getAllFacilities, deleteFacility as deleteMockFacility } from '@/lib/data'; // Updated to use getAllFacilities
+import type { Facility, SiteSettings } from '@/lib/types';
+import { getAllFacilities, deleteFacility as deleteMockFacility, getSiteSettings } from '@/lib/data'; // Updated to use getAllFacilities
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/utils';
 
 export default function AdminFacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
@@ -45,6 +46,7 @@ export default function AdminFacilitiesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [facilityToDelete, setFacilityToDelete] = useState<Facility | null>(null);
   const { toast } = useToast();
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
 
   useEffect(() => {
     // Simulate fetching facilities
@@ -52,6 +54,14 @@ export default function AdminFacilitiesPage() {
       setFacilities(getAllFacilities());
       setIsLoading(false);
     }, 500);
+  }, []);
+  
+  useEffect(() => {
+    const settingsInterval = setInterval(() => {
+      const currentSettings = getSiteSettings();
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    }, 3000);
+    return () => clearInterval(settingsInterval);
   }, []);
 
   const handleDeleteFacility = () => {
@@ -132,7 +142,7 @@ export default function AdminFacilitiesPage() {
                         <TableCell className="font-medium">{facility.name}</TableCell>
                         <TableCell><Badge variant="outline">{facility.type}</Badge></TableCell>
                         <TableCell>{facility.location}</TableCell>
-                        <TableCell>${facility.pricePerHour.toFixed(2)}</TableCell>
+                        <TableCell>{formatCurrency(facility.pricePerHour, currency)}</TableCell>
                         <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>
                         <TableCell className="text-right">
                             <DropdownMenu>
@@ -197,4 +207,3 @@ export default function AdminFacilitiesPage() {
     </div>
   );
 }
-
