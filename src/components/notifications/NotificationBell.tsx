@@ -25,17 +25,35 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    // Simulate fetching notifications
+  // Function to fetch notifications and update state
+  const fetchNotifications = () => {
     const userNotifications = getNotificationsForUser(mockUser.id);
-    setNotifications(userNotifications);
-    setUnreadCount(userNotifications.filter(n => !n.isRead).length);
-  }, []);
+    const newUnreadCount = userNotifications.filter(n => !n.isRead).length;
+
+    // Only update state if there's a change to avoid unnecessary re-renders
+    if (newUnreadCount !== unreadCount || notifications.length !== userNotifications.length) {
+      setNotifications(userNotifications);
+      setUnreadCount(newUnreadCount);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch notifications on initial load
+    fetchNotifications();
+
+    // Set up polling every 5 seconds to check for new notifications
+    const intervalId = setInterval(() => {
+      fetchNotifications();
+    }, 5000); // Poll every 5 seconds
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, []); // Note: dependencies removed to avoid resetting interval unnecessarily
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      // Refresh notifications when opening, though in a real app this might be handled by websockets or polling
+      // Also refresh when opening the dropdown for immediate feedback
       const userNotifications = getNotificationsForUser(mockUser.id);
       setNotifications(userNotifications);
       setUnreadCount(userNotifications.filter(n => !n.isRead).length);
@@ -44,16 +62,14 @@ export function NotificationBell() {
 
   const handleMarkAsRead = (notificationId: string) => {
     markNotificationAsRead(mockUser.id, notificationId);
-    const updatedNotifications = getNotificationsForUser(mockUser.id);
-    setNotifications(updatedNotifications);
-    setUnreadCount(updatedNotifications.filter(n => !n.isRead).length);
+    // Immediately refetch to update UI
+    fetchNotifications();
   };
 
   const handleMarkAllRead = () => {
     markAllNotificationsAsRead(mockUser.id);
-    const updatedNotifications = getNotificationsForUser(mockUser.id);
-    setNotifications(updatedNotifications);
-    setUnreadCount(0);
+    // Immediately refetch to update UI
+    fetchNotifications();
   };
   
   const recentNotifications = notifications.slice(0, 5);
