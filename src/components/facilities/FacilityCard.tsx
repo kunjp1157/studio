@@ -21,19 +21,16 @@ interface FacilityCardProps {
 
 export function FacilityCard({ facility }: FacilityCardProps) {
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
 
   useEffect(() => {
-    // Polling for site settings like currency
     const settingsInterval = setInterval(() => {
         const currentSettings = getSiteSettings();
-        if (currentSettings.defaultCurrency !== currency) {
-            setCurrency(currentSettings.defaultCurrency);
-        }
+        setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     }, 3000);
 
     return () => clearInterval(settingsInterval);
-  }, [currency]);
+  }, []);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation if the button is inside a Link
@@ -134,3 +131,5 @@ export function FacilityCard({ facility }: FacilityCardProps) {
     </Card>
   );
 }
+
+    

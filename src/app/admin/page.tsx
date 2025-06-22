@@ -103,24 +103,21 @@ export default function AdminDashboardPage() {
   const [activeUsers, setActiveUsers] = useState(0);
   const [totalBookingsThisMonth, setTotalBookingsThisMonth] = useState(0);
   const [totalRevenueThisMonth, setTotalRevenueThisMonth] = useState(0);
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
 
   const [monthlyBookingsData, setMonthlyBookingsData] = useState<Array<{ month: string; bookings: number }>>([]);
   const [monthlyRevenueData, setMonthlyRevenueData] = useState<Array<{ month: string; revenue: number }>>([]);
   const [facilityUsageData, setFacilityUsageData] = useState<Array<{ facilityName: string; bookings: number }>>([]);
   const [activityFeed, setActivityFeed] = useState<ActivityFeedItemType[]>([]);
-
+  
+  // Effect for polling currency (runs only once)
   useEffect(() => {
-    // Polling for site settings like currency
     const settingsInterval = setInterval(() => {
-        const currentSettings = getSiteSettings();
-        if (currentSettings.defaultCurrency !== currency) {
-            setCurrency(currentSettings.defaultCurrency);
-        }
+      const currentSettings = getSiteSettings();
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     }, 3000);
-
     return () => clearInterval(settingsInterval);
-  }, [currency]);
+  }, []);
 
 
   useEffect(() => {
@@ -298,3 +295,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    

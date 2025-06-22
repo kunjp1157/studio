@@ -95,23 +95,24 @@ export default function BookingPage() {
   const [bookingStep, setBookingStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
   const [temporarilyBookedSlots, setTemporarilyBookedSlots] = useState<Array<{ date: string; startTime: string }>>([]);
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
 
-
+  // Effect for fetching facility data (runs when facilityId changes)
   useEffect(() => {
     if (facilityId) {
       const foundFacility = getFacilityById(facilityId);
       setTimeout(() => setFacility(foundFacility || null), 300); // Simulate fetch
     }
+  }, [facilityId]);
+
+  // Effect for polling currency (runs only once)
+  useEffect(() => {
     const settingsInterval = setInterval(() => {
       const currentSettings = getSiteSettings();
-      if (currentSettings.defaultCurrency !== currency) {
-          setCurrency(currentSettings.defaultCurrency);
-      }
+      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     }, 3000);
-
     return () => clearInterval(settingsInterval);
-  }, [facilityId, currency]);
+  }, []);
 
   useEffect(() => {
     if (selectedDate) {
@@ -714,3 +715,5 @@ export default function BookingPage() {
     </div>
   );
 }
+
+    
