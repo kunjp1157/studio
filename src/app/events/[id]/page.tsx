@@ -17,6 +17,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -26,7 +27,7 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<SportEvent | null | undefined>(undefined);
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>(getSiteSettings().defaultCurrency);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
     if (eventId) {
@@ -46,6 +47,10 @@ export default function EventDetailPage() {
       const currentSettings = getSiteSettings();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     }, 3000);
+    
+    const currentSettings = getSiteSettings();
+    setCurrency(currentSettings.defaultCurrency);
+
     return () => clearInterval(settingsInterval);
   }, []);
 
@@ -177,7 +182,7 @@ export default function EventDetailPage() {
                 <div>
                   <p className="font-semibold">Entry Fee</p>
                   <p className="text-muted-foreground">
-                    {event.entryFee !== undefined ? (event.entryFee > 0 ? formatCurrency(event.entryFee, currency) : 'Free Entry') : 'Not Specified'}
+                    {event.entryFee !== undefined && currency ? (event.entryFee > 0 ? formatCurrency(event.entryFee, currency) : 'Free Entry') : <Skeleton className="h-5 w-20" />}
                   </p>
                 </div>
               </div>

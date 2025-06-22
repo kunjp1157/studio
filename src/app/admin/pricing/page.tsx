@@ -47,11 +47,9 @@ export default function AdminPricingPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<PricingRule | null>(null);
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
-  const [isMounted, setIsMounted] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
     setTimeout(() => {
       setRules(getAllPricingRules());
       setIsLoading(false);
@@ -79,14 +77,13 @@ export default function AdminPricingPage() {
     }, 1000);
   };
 
-  const formatAdjustment = (rule: PricingRule) => {
-    if (!isMounted) return <Skeleton className="h-5 w-24" />;
+  const formatAdjustment = (rule: PricingRule, currentCurrency: SiteSettings['defaultCurrency']) => {
     switch (rule.adjustmentType) {
       case 'percentage_increase': return `+${rule.value}%`;
       case 'percentage_decrease': return `-${rule.value}%`;
-      case 'fixed_increase': return `+${formatCurrency(rule.value, currency)}`;
-      case 'fixed_decrease': return `-${formatCurrency(rule.value, currency)}`;
-      case 'fixed_price': return `Set to ${formatCurrency(rule.value, currency)}`;
+      case 'fixed_increase': return `+${formatCurrency(rule.value, currentCurrency)}`;
+      case 'fixed_decrease': return `-${formatCurrency(rule.value, currentCurrency)}`;
+      case 'fixed_price': return `Set to ${formatCurrency(rule.value, currentCurrency)}`;
       default: return 'N/A';
     }
   };
@@ -144,7 +141,7 @@ export default function AdminPricingPage() {
                   rules.map((rule) => (
                     <TableRow key={rule.id}>
                       <TableCell className="font-medium">{rule.name}</TableCell>
-                      <TableCell>{formatAdjustment(rule)}</TableCell>
+                      <TableCell>{currency ? formatAdjustment(rule, currency) : <Skeleton className="h-5 w-24" />}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {rule.daysOfWeek && rule.daysOfWeek.length > 0 && <div>Days: {rule.daysOfWeek.join(', ')}</div>}
                         {rule.timeRange && <div>Time: {rule.timeRange.start} - {rule.timeRange.end}</div>}

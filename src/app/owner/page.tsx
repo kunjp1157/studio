@@ -20,15 +20,17 @@ export default function OwnerDashboardPage() {
     newReviews: 5,
   };
 
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
-  const [isMounted, setIsMounted] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
     const settingsInterval = setInterval(() => {
       const currentSettings = getSiteSettings();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     }, 3000);
+
+    const currentSettings = getSiteSettings();
+    setCurrency(currentSettings.defaultCurrency);
+    
     return () => clearInterval(settingsInterval);
   }, []);
 
@@ -64,7 +66,7 @@ export default function OwnerDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {isMounted ? formatCurrency(ownerStats.monthlyRevenue, currency) : <Skeleton className="h-8 w-28" />}
+              {currency ? formatCurrency(ownerStats.monthlyRevenue, currency) : <Skeleton className="h-8 w-28" />}
             </div>
             <p className="text-xs text-muted-foreground">Based on confirmed bookings</p>
           </CardContent>

@@ -22,15 +22,18 @@ interface FacilityCardProps {
 
 export function FacilityCard({ facility }: FacilityCardProps) {
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
-  const [isMounted, setIsMounted] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
     const settingsInterval = setInterval(() => {
         const currentSettings = getSiteSettings();
         setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     }, 3000);
+
+    // Set initial value
+    const currentSettings = getSiteSettings();
+    setCurrency(currentSettings.defaultCurrency);
+
 
     return () => clearInterval(settingsInterval);
   }, []);
@@ -113,7 +116,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
         </div>
         <div className="flex items-center text-base font-medium mb-3">
           <DollarSign className="w-4 h-4 mr-1 text-green-500" />
-          <span>{isMounted ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16 inline-block" />}</span>
+          <span>{currency ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16 inline-block" />}</span>
           <span className='ml-1'>/hr</span>
         </div>
 

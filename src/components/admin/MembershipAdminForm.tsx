@@ -34,13 +34,17 @@ export function MembershipAdminForm({ initialData, onSubmitSuccess }: Membership
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
     const settingsInterval = setInterval(() => {
       const currentSettings = getSiteSettings();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     }, 3000);
+
+    const currentSettings = getSiteSettings();
+    setCurrency(currentSettings.defaultCurrency);
+
     return () => clearInterval(settingsInterval);
   }, []);
 

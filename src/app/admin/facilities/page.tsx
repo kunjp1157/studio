@@ -47,11 +47,9 @@ export default function AdminFacilitiesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [facilityToDelete, setFacilityToDelete] = useState<Facility | null>(null);
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
-  const [isMounted, setIsMounted] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
     // Simulate fetching facilities
     setTimeout(() => {
       setFacilities(getAllFacilities());
@@ -145,7 +143,7 @@ export default function AdminFacilitiesPage() {
                         <TableCell className="font-medium">{facility.name}</TableCell>
                         <TableCell><Badge variant="outline">{facility.type}</Badge></TableCell>
                         <TableCell>{facility.location}</TableCell>
-                        <TableCell>{isMounted ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16" />}</TableCell>
+                        <TableCell>{currency ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16" />}</TableCell>
                         <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>
                         <TableCell className="text-right">
                             <DropdownMenu>

@@ -97,11 +97,9 @@ export default function BookingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [temporarilyBookedSlots, setTemporarilyBookedSlots] = useState<Array<{ date: string; startTime: string }>>([]);
   
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
-  const [isMounted, setIsMounted] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
     if (facilityId) {
       const foundFacility = getFacilityById(facilityId);
       setTimeout(() => setFacility(foundFacility || null), 300); // Simulate fetch
@@ -138,7 +136,7 @@ export default function BookingPage() {
 
 
   useEffect(() => {
-    if (facility && selectedDate && selectedSlot) {
+    if (facility && selectedDate && selectedSlot && currency) {
       const { finalPrice, appliedRuleName, appliedRuleDetails } = calculateDynamicPrice(
         facility.pricePerHour,
         selectedDate,
@@ -226,6 +224,7 @@ export default function BookingPage() {
       setPromoError("Please enter a promo code.");
       return;
     }
+    if (!currency) return; // Guard against missing currency
     setIsApplyingPromo(true);
     setPromoError(null);
     
@@ -296,6 +295,7 @@ export default function BookingPage() {
 
   const handlePaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!currency) return;
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsLoading(false);
@@ -343,7 +343,7 @@ export default function BookingPage() {
   };
 
   const generateGoogleCalendarLink = () => {
-    if (!facility || !selectedDate || !selectedSlot) return '#';
+    if (!facility || !selectedDate || !selectedSlot || !currency) return '#';
 
     const [startHour, startMinute] = selectedSlot.startTime.split(':').map(Number);
     
@@ -392,7 +392,7 @@ export default function BookingPage() {
   const hasRentals = facility.availableEquipment && facility.availableEquipment.length > 0;
 
   const renderPrice = (price: number) => {
-    if (!isMounted) return <Skeleton className="h-5 w-20 inline-block" />;
+    if (!currency) return <Skeleton className="h-5 w-20 inline-block" />;
     return formatCurrency(price, currency);
   };
 

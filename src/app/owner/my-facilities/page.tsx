@@ -21,25 +21,26 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import type { Facility } from '@/lib/types';
-import { mockUser, getFacilitiesByOwnerId } from '@/lib/data'; 
+import type { Facility, SiteSettings } from '@/lib/types';
+import { mockUser, getFacilitiesByOwnerId, getSiteSettings } from '@/lib/data'; 
 import { PlusCircle, MoreHorizontal, Edit, Eye, Building2, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function OwnerFacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const { toast } = useToast();
 
-  // Assuming mockUser.id is the ID of the currently logged-in owner
   const ownerId = mockUser.id; 
 
   useEffect(() => {
     setIsLoading(true);
-    // Simulate fetching facilities for the current owner
     setTimeout(() => {
       if (!ownerId) {
         toast({
@@ -54,6 +55,16 @@ export default function OwnerFacilitiesPage() {
       setFacilities(getFacilitiesByOwnerId(ownerId));
       setIsLoading(false);
     }, 500);
+
+    const settingsInterval = setInterval(() => {
+        const currentSettings = getSiteSettings();
+        setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    }, 3000);
+
+    const currentSettings = getSiteSettings();
+    setCurrency(currentSettings.defaultCurrency);
+    
+    return () => clearInterval(settingsInterval);
   }, [ownerId, toast]);
 
 
@@ -115,7 +126,7 @@ export default function OwnerFacilitiesPage() {
                             <TableCell className="font-medium">{facility.name}</TableCell>
                             <TableCell><Badge variant="outline">{facility.type}</Badge></TableCell>
                             <TableCell>{facility.location}</TableCell>
-                            <TableCell>${facility.pricePerHour.toFixed(2)}</TableCell>
+                            <TableCell>{currency ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16" />}</TableCell>
                             <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>
                             <TableCell className="text-right">
                                 <DropdownMenu>

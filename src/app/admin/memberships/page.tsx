@@ -45,11 +45,9 @@ export default function AdminMembershipsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<MembershipPlan | null>(null);
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD');
-  const [isMounted, setIsMounted] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
     setTimeout(() => {
       setPlans(getAllMembershipPlans());
       setIsLoading(false);
@@ -128,7 +126,7 @@ export default function AdminMembershipsPage() {
                     plans.map((plan) => (
                         <TableRow key={plan.id}>
                         <TableCell className="font-medium">{plan.name}</TableCell>
-                        <TableCell>{isMounted ? formatCurrency(plan.pricePerMonth, currency) : <Skeleton className="h-5 w-16" />}</TableCell>
+                        <TableCell>{currency ? formatCurrency(plan.pricePerMonth, currency) : <Skeleton className="h-5 w-16" />}</TableCell>
                         <TableCell>
                             <ul className="list-none space-y-1">
                                 {plan.benefits.slice(0, 2).map((benefit, index) => (

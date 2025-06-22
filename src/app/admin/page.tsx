@@ -104,8 +104,7 @@ export default function AdminDashboardPage() {
   const [activeUsers, setActiveUsers] = useState(0);
   const [totalBookingsThisMonth, setTotalBookingsThisMonth] = useState(0);
   const [totalRevenueThisMonth, setTotalRevenueThisMonth] = useState(0);
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency']>('USD'); // Default to prevent SSR/client mismatch
-  const [isMounted, setIsMounted] = useState(false);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   const [monthlyBookingsData, setMonthlyBookingsData] = useState<Array<{ month: string; bookings: number }>>([]);
   const [monthlyRevenueData, setMonthlyRevenueData] = useState<Array<{ month: string; revenue: number }>>([]);
@@ -113,8 +112,6 @@ export default function AdminDashboardPage() {
   const [activityFeed, setActivityFeed] = useState<ActivityFeedItemType[]>([]);
   
   useEffect(() => {
-    setIsMounted(true); // Indicate that the component has mounted on the client
-
     const fetchAndSetData = () => {
       // Update currency
       const currentSettings = getSiteSettings();
@@ -162,7 +159,7 @@ export default function AdminDashboardPage() {
 
       setMonthlyBookingsData(last6Months.map(m => ({
         month: m.month,
-        bookings: aggregatedBookings[monthKey] || 0,
+        bookings: aggregatedBookings[m.monthKey] || 0,
       })));
       setMonthlyRevenueData(last6Months.map(m => ({
         month: m.month,
@@ -208,7 +205,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {isMounted ? formatCurrency(totalRevenueThisMonth, currency) : <Skeleton className="h-8 w-28" />}
+              {currency ? formatCurrency(totalRevenueThisMonth, currency) : <Skeleton className="h-8 w-28" />}
             </div>
             <p className="text-xs text-muted-foreground">+15.2% from last month (mock)</p>
           </CardContent>
@@ -219,7 +216,7 @@ export default function AdminDashboardPage() {
             <Ticket className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isMounted ? totalBookingsThisMonth.toLocaleString() : <Skeleton className="h-8 w-16" />}</div>
+            <div className="text-2xl font-bold">{totalBookingsThisMonth ? totalBookingsThisMonth.toLocaleString() : <Skeleton className="h-8 w-16" />}</div>
             <p className="text-xs text-muted-foreground">+8.1% from last month (mock)</p>
           </CardContent>
         </Card>
@@ -229,7 +226,7 @@ export default function AdminDashboardPage() {
             <Users className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isMounted ? activeUsers : <Skeleton className="h-8 w-16" />}</div>
+            <div className="text-2xl font-bold">{activeUsers ? activeUsers : <Skeleton className="h-8 w-16" />}</div>
             <p className="text-xs text-muted-foreground">Platform-wide</p>
           </CardContent>
         </Card>
@@ -239,7 +236,7 @@ export default function AdminDashboardPage() {
             <Building2 className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isMounted ? totalFacilities : <Skeleton className="h-8 w-16" />}</div>
+            <div className="text-2xl font-bold">{totalFacilities ? totalFacilities : <Skeleton className="h-8 w-16" />}</div>
             <p className="text-xs text-muted-foreground">Managed & active</p>
           </CardContent>
         </Card>
