@@ -20,6 +20,16 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Image as ImageIcon, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LayoutPanelLeft, LocateFixed, Star } from 'lucide-react';
 
+const rentalEquipmentSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, { message: "Equipment name is required." }),
+  pricePerItem: z.coerce.number().min(0, { message: "Price must be non-negative." }),
+  priceType: z.enum(['per_booking', 'per_hour']),
+  stock: z.coerce.number().int().min(0, { message: "Stock must be a non-negative integer." }),
+  imageUrl: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
+  dataAiHint: z.string().optional(),
+});
+
 const facilityFormSchema = z.object({
   name: z.string().min(3, { message: "Facility name must be at least 3 characters." }),
   type: z.enum(['Complex', 'Court', 'Field', 'Studio', 'Pool']),
@@ -42,7 +52,7 @@ const facilityFormSchema = z.object({
   dataAiHint: z.string().optional(),
   latitude: z.coerce.number().optional(),
   longitude: z.coerce.number().optional(),
-  // availableEquipment: z.array(...) // Placeholder for future equipment management
+  availableEquipment: z.array(rentalEquipmentSchema).optional().default([]),
 });
 
 type FacilityFormValues = z.infer<typeof facilityFormSchema>;
@@ -93,11 +103,13 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
       dataAiHint: initialData.dataAiHint ?? '',
       latitude: initialData.latitude,
       longitude: initialData.longitude,
+      availableEquipment: initialData.availableEquipment || [],
     } : {
       name: '', type: 'Court', address: '', location: '', description: '',
       images: [''], sports: [], amenities: [], operatingHours: defaultOperatingHours,
       pricePerHour: 0, rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
       latitude: undefined, longitude: undefined,
+      availableEquipment: [],
     },
   });
 
@@ -111,35 +123,37 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
     name: "operatingHours"
   });
 
+  const { fields: equipmentFields, append: appendEquipment, remove: removeEquipment } = useFieldArray({
+    control: form.control,
+    name: "availableEquipment"
+  });
 
   const onSubmit = async (data: FacilityFormValues) => {
     setIsLoading(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     const facilityPayload = {
       ...data,
       id: initialData?.id || `facility-${Date.now()}`, // Keep ID if editing, generate if new
-      // The mock functions will handle converting sport/amenity IDs to full objects
     };
 
     try {
         if (initialData) {
-        updateMockFacility(facilityPayload as any); // Cast as any to match Omit type in function for now
+            updateMockFacility(facilityPayload as any); 
         } else {
-        addMockFacility(facilityPayload as any); // Cast as any
+            addMockFacility(facilityPayload as any); 
         }
 
         toast({
-        title: initialData ? "Facility Updated" : "Facility Created",
-        description: `${data.name} has been successfully ${initialData ? 'updated' : 'created'}.`,
+            title: initialData ? "Facility Updated" : "Facility Created",
+            description: `${data.name} has been successfully ${initialData ? 'updated' : 'created'}.`,
         });
         
         if (onSubmitSuccess) {
-        onSubmitSuccess();
+            onSubmitSuccess();
         } else {
-        router.push('/admin/facilities');
-        router.refresh(); // Refresh page to show updated list
+            router.push('/admin/facilities');
+            router.refresh(); 
         }
     } catch (error) {
         console.error("Error saving facility:", error);
@@ -401,25 +415,61 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
             </div>
 
             <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <PackageSearch className="mr-2 h-5 w-5 text-muted-foreground" />
-                  Manage Rental Equipment
-                </CardTitle>
-                <CardDescription>
-                  (Feature Under Development) Define and manage rental equipment available at this facility.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  This section will allow you to add, edit, and remove rental items, set their prices, and manage stock.
-                </p>
-                <Button variant="outline" disabled className="mt-4">
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add Equipment (Coming Soon)
-                </Button>
-              </CardContent>
+                <CardHeader>
+                    <CardTitle className="flex items-center"><PackageSearch className="mr-2 h-5 w-5 text-primary" /> Manage Rental Equipment</CardTitle>
+                    <CardDescription>Define and manage rental equipment available at this facility.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {equipmentFields.map((field, index) => (
+                        <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/30">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-2 right-2 h-7 w-7"
+                                onClick={() => removeEquipment(index)}
+                            >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <span className="sr-only">Remove Equipment</span>
+                            </Button>
+                            <FormField
+                                control={form.control}
+                                name={`availableEquipment.${index}.name`}
+                                render={({ field }) => (
+                                    <FormItem><FormLabel>Equipment Name</FormLabel><FormControl><Input placeholder="e.g., Soccer Ball" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}
+                            />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <FormField control={form.control} name={`availableEquipment.${index}.pricePerItem`} render={({ field }) => (
+                                    <FormItem><FormLabel>Price ({currency})</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name={`availableEquipment.${index}.priceType`} render={({ field }) => (
+                                    <FormItem><FormLabel>Price Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
+                                            <SelectContent><SelectItem value="per_booking">Per Booking</SelectItem><SelectItem value="per_hour">Per Hour</SelectItem></SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                                <FormField control={form.control} name={`availableEquipment.${index}.stock`} render={({ field }) => (
+                                    <FormItem><FormLabel>Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                            </div>
+                             <FormField control={form.control} name={`availableEquipment.${index}.imageUrl`} render={({ field }) => (
+                                <FormItem><FormLabel>Image URL (Optional)</FormLabel><FormControl><Input placeholder="https://placehold.co/100x100.png" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+                    ))}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => appendEquipment({ name: '', pricePerItem: 0, priceType: 'per_booking', stock: 1, imageUrl: '', dataAiHint: '' })}
+                    >
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Equipment
+                    </Button>
+                </CardContent>
             </Card>
-
 
           </CardContent>
         </Card>

@@ -31,7 +31,7 @@ export const mockAmenities: Amenity[] = [
   { id: 'amenity-7', name: 'Accessible', icon: Users },
 ];
 
-export const mockRentalEquipment: RentalEquipment[] = [
+export let mockRentalEquipment: RentalEquipment[] = [
   { id: 'equip-1', facilityId: 'facility-1', name: 'Soccer Ball (Size 5)', pricePerItem: 5, priceType: 'per_booking', stock: 20, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'soccer ball' },
   { id: 'equip-2', facilityId: 'facility-1', name: 'Training Cones (Set of 10)', pricePerItem: 3, priceType: 'per_booking', stock: 15, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'training cones' },
   { id: 'equip-3', facilityId: 'facility-1', name: 'Basketball', pricePerItem: 5, priceType: 'per_booking', stock: 10, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'basketball' },
@@ -508,27 +508,51 @@ export const getFacilitiesByOwnerId = (ownerId: string): Facility[] => {
 };
 
 
-export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours' | 'blockedSlots'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], ownerId?: string, blockedSlots?: BlockedSlot[] }): Facility => {
+export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours' | 'blockedSlots'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], ownerId?: string, blockedSlots?: BlockedSlot[], availableEquipment?: Partial<RentalEquipment>[] }): Facility => {
+  const facilityId = facilityData.id || `facility-${Date.now()}`;
+  const processedEquipment = (facilityData.availableEquipment || []).map(eq => ({
+    id: eq.id || `equip-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    facilityId: facilityId,
+    name: eq.name!,
+    pricePerItem: eq.pricePerItem!,
+    priceType: eq.priceType!,
+    stock: eq.stock!,
+    imageUrl: eq.imageUrl,
+    dataAiHint: eq.dataAiHint,
+  }));
+  
   const newFacility: Facility = {
     ...facilityData,
-    id: `facility-${Date.now()}`,
+    id: facilityId,
     sports: facilityData.sports.map(sportId => getSportById(sportId)).filter(Boolean) as Sport[],
     amenities: (facilityData.amenities || []).map(amenityId => getAmenityById(amenityId)).filter(Boolean) as Amenity[],
     reviews: [],
     rating: facilityData.rating ?? 0,
     operatingHours: facilityData.operatingHours || defaultOperatingHours,
-    availableEquipment: facilityData.availableEquipment || [],
-    pricingRulesApplied: facilityData.pricingRulesApplied || [],
-    ownerId: facilityData.ownerId,
+    availableEquipment: processedEquipment,
+    pricingRulesApplied: [],
+    ownerId: facilityData.ownerId || 'user-admin', 
     blockedSlots: facilityData.blockedSlots || [],
   };
   mockFacilities.push(newFacility);
+  mockRentalEquipment.push(...processedEquipment);
   return newFacility;
 };
 
-export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[] }): Facility | undefined => {
+export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], availableEquipment?: Partial<RentalEquipment>[] }): Facility | undefined => {
   const facilityIndex = mockFacilities.findIndex(f => f.id === updatedFacilityData.id);
   if (facilityIndex === -1) return undefined;
+
+  const processedEquipment = (updatedFacilityData.availableEquipment || []).map(eq => ({
+    id: eq.id || `equip-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    facilityId: updatedFacilityData.id,
+    name: eq.name!,
+    pricePerItem: eq.pricePerItem!,
+    priceType: eq.priceType!,
+    stock: eq.stock!,
+    imageUrl: eq.imageUrl,
+    dataAiHint: eq.dataAiHint,
+  }));
 
   const updatedFacility: Facility = {
     ...mockFacilities[facilityIndex],
@@ -538,9 +562,14 @@ export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'a
     rating: updatedFacilityData.rating ?? mockFacilities[facilityIndex].rating,
     operatingHours: updatedFacilityData.operatingHours || mockFacilities[facilityIndex].operatingHours,
     blockedSlots: updatedFacilityData.blockedSlots || mockFacilities[facilityIndex].blockedSlots || [],
+    availableEquipment: processedEquipment,
   };
 
   mockFacilities[facilityIndex] = updatedFacility;
+  
+  mockRentalEquipment = mockRentalEquipment.filter(eq => eq.facilityId !== updatedFacility.id);
+  mockRentalEquipment.push(...processedEquipment);
+  
   return updatedFacility;
 };
 
@@ -558,11 +587,10 @@ export const blockTimeSlot = (facilityId: string, ownerId: string, slot: Blocked
   if (!mockFacilities[facilityIndex].blockedSlots) {
     mockFacilities[facilityIndex].blockedSlots = [];
   }
-  // Prevent duplicate blocks for the exact same date/startTime
   const existingBlock = mockFacilities[facilityIndex].blockedSlots!.find(
     bs => bs.date === slot.date && bs.startTime === slot.startTime
   );
-  if (existingBlock) return false; // Or update it, but for now just prevent duplicates
+  if (existingBlock) return false; 
 
   mockFacilities[facilityIndex].blockedSlots!.push(slot);
   mockFacilities[facilityIndex].blockedSlots!.sort((a,b) => {
