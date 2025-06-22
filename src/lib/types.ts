@@ -262,4 +262,10 @@ export interface BlogPost {
   dataAiHint?: string;
 }
 
+export interface SiteSettings {
+  siteName: string;
+  defaultCurrency: 'USD' | 'EUR' | 'GBP' | 'INR';
+  timezone: string;
+  maintenanceMode: boolean;
+}
     

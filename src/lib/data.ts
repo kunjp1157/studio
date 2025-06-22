@@ -1,6 +1,6 @@
 
 
-import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot } from './types';
+import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2 } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
@@ -1162,4 +1162,20 @@ export const mockReportData: ReportData = {
     { hour: '19:00', bookings: mockBookings.filter(b => b.startTime.startsWith('19:')).length || 180 },
     { hour: '17:00', bookings: mockBookings.filter(b => b.startTime.startsWith('17:')).length || 150 },
   ],
+};
+
+let mockSiteSettings: SiteSettings = {
+  siteName: 'City Sports Hub',
+  defaultCurrency: 'USD',
+  timezone: 'America/Los_Angeles',
+  maintenanceMode: false,
+};
+
+export const getSiteSettings = (): SiteSettings => {
+  return mockSiteSettings;
+};
+
+export const updateSiteSettings = (newSettings: Partial<SiteSettings>): SiteSettings => {
+  mockSiteSettings = { ...mockSiteSettings, ...newSettings };
+  return mockSiteSettings;
 };

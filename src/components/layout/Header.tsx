@@ -1,18 +1,44 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { MountainSnow, Dices, Wand2, FileText, CalendarDays } from 'lucide-react'; // Added CalendarDays
+import { MountainSnow, Dices, Wand2, FileText, CalendarDays } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { getSiteSettings } from '@/lib/data';
 
 export function Header() {
+  const [siteName, setSiteName] = useState('City Sports Hub'); // Start with a default
+
+  useEffect(() => {
+    // Function to update the site name state
+    const fetchSiteName = () => {
+      const currentSettings = getSiteSettings();
+      // Only update state if the name has actually changed
+      if (currentSettings.siteName !== siteName) {
+        setSiteName(currentSettings.siteName);
+      }
+    };
+
+    // Fetch the name immediately on component mount
+    fetchSiteName();
+
+    // Set up polling to check for updates every 3 seconds
+    const intervalId = setInterval(fetchSiteName, 3000);
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, [siteName]); // Re-run effect if siteName changes to ensure the interval closure has the latest state
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <MountainSnow className="h-6 w-6 text-primary" />
           <span className="font-bold sm:inline-block text-lg font-headline">
-            City Sports Hub
+            {siteName}
           </span>
         </Link>
         <nav className="flex flex-1 items-center space-x-1 sm:space-x-2 md:space-x-4">

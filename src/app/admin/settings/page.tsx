@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,16 +13,27 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { getSiteSettings, updateSiteSettings } from '@/lib/data';
+import type { SiteSettings } from '@/lib/types';
 
 export default function AdminSettingsPage() {
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Fetch initial settings
+    setSettings(getSiteSettings());
+  }, []);
+
   const handleGeneralSettingsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!settings) return;
+
     setIsLoading(true);
     // In a real app, you would save these settings to your backend/database
     setTimeout(() => {
+        updateSiteSettings(settings);
         setIsLoading(false);
         toast({
             title: 'Settings Saved',
@@ -30,6 +41,16 @@ export default function AdminSettingsPage() {
         });
     }, 1000);
   };
+  
+  const handleInputChange = (key: keyof SiteSettings, value: string | boolean) => {
+    if (settings) {
+        setSettings({ ...settings, [key]: value });
+    }
+  };
+
+  if (!settings) {
+    return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -69,12 +90,20 @@ export default function AdminSettingsPage() {
             <form onSubmit={handleGeneralSettingsSubmit} className="space-y-6 pt-2">
                 <div>
                     <Label htmlFor="siteName">Site Name</Label>
-                    <Input id="siteName" defaultValue="City Sports Hub" className="mt-1" />
+                    <Input 
+                        id="siteName" 
+                        value={settings.siteName}
+                        onChange={(e) => handleInputChange('siteName', e.target.value)}
+                        className="mt-1" 
+                    />
                 </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="currency">Default Currency</Label>
-                        <Select defaultValue="USD">
+                        <Select 
+                            value={settings.defaultCurrency} 
+                            onValueChange={(value: SiteSettings['defaultCurrency']) => handleInputChange('defaultCurrency', value)}
+                        >
                             <SelectTrigger id="currency" className="mt-1">
                                 <SelectValue placeholder="Select currency" />
                             </SelectTrigger>
@@ -88,7 +117,10 @@ export default function AdminSettingsPage() {
                     </div>
                     <div>
                         <Label htmlFor="timezone">Timezone</Label>
-                        <Select defaultValue="America/Los_Angeles">
+                        <Select 
+                            value={settings.timezone}
+                            onValueChange={(value) => handleInputChange('timezone', value)}
+                        >
                              <SelectTrigger id="timezone" className="mt-1">
                                 <SelectValue placeholder="Select timezone" />
                             </SelectTrigger>
@@ -110,7 +142,12 @@ export default function AdminSettingsPage() {
                             When enabled, only admins can access the site.
                         </p>
                     </div>
-                    <Switch id="maintenance-mode" aria-label="Toggle maintenance mode" />
+                    <Switch 
+                        id="maintenance-mode" 
+                        aria-label="Toggle maintenance mode"
+                        checked={settings.maintenanceMode}
+                        onCheckedChange={(checked) => handleInputChange('maintenanceMode', checked)}
+                    />
                 </div>
                 <div className="flex justify-end pt-2">
                     <Button type="submit" disabled={isLoading}>
