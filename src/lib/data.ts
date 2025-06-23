@@ -1,5 +1,5 @@
 
-import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings } from './types';
+import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2 } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
@@ -140,7 +140,7 @@ export let mockFacilities: Facility[] = [
     latitude: 34.0522,
     longitude: -118.2437,
     description: 'State-of-the-art multi-sport complex with indoor and outdoor facilities.',
-    images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
+    images: ['https://images.unsplash.com/photo-1540747913346-19e32dc3e97e', 'https://placehold.co/400x250.png', 'https://placehold.co/400x250.png'],
     sports: [mockSports[0], mockSports[1], mockSports[2]],
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[2], mockAmenities[3], mockAmenities[5]],
     operatingHours: [...defaultOperatingHours],
@@ -151,7 +151,7 @@ export let mockFacilities: Facility[] = [
     capacity: 100,
     isPopular: true,
     isIndoor: true,
-    dataAiHint: 'sports complex stadium',
+    dataAiHint: 'sports stadium floodlights',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-1', 'equip-2', 'equip-3'].includes(eq.id)),
     ownerId: 'user-admin',
     blockedSlots: [],
@@ -238,7 +238,7 @@ export let mockFacilities: Facility[] = [
     latitude: 34.0700,
     longitude: -118.2800,
     description: 'State-of-the-art box cricket arena with professional turf and lighting. Perfect for intense 6v6 matches day or night.',
-    images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png'],
+    images: ['https://images.unsplash.com/photo-1598289431512-b97d0917affc', 'https://placehold.co/400x250.png'],
     sports: [mockSports.find(s => s.name === 'Cricket')!],
     amenities: [mockAmenities[0], mockAmenities[3], mockAmenities[5]],
     operatingHours: [...defaultOperatingHours],
