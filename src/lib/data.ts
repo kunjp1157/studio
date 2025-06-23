@@ -238,7 +238,7 @@ export let mockFacilities: Facility[] = [
     latitude: 34.0700,
     longitude: -118.2800,
     description: 'State-of-the-art box cricket arena with professional turf and lighting. Perfect for intense 6v6 matches day or night.',
-    images: ['https://images.unsplash.com/photo-1631293423223-1a282f6f9760'],
+    images: ['https://5.imimg.com/data5/SELLER/Default/2023/3/TF/YN/KO/15707674/box-cricket-setup-500x500.jpg'],
     sports: [mockSports.find(s => s.name === 'Cricket')!],
     amenities: [mockAmenities[0], mockAmenities[3], mockAmenities[5]],
     operatingHours: [...defaultOperatingHours],
