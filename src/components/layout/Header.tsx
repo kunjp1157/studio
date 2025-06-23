@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { MountainSnow, Dices, Wand2, FileText, CalendarDays } from 'lucide-react'; 
+import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettings } from '@/lib/data';
 
@@ -64,6 +64,12 @@ export function Header() {
             <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">
                 <FileText className="h-4 w-4 mr-0 sm:mr-2" />
                 <span className="hidden sm:inline">Blog</span>
+            </Button>
+          </Link>
+          <Link href="/leaderboard">
+            <Button variant="ghost" className="text-sm font-medium px-2 sm:px-3">
+                <Trophy className="h-4 w-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Leaderboard</span>
             </Button>
           </Link>
           <Link href="/recommendation" className="ml-auto md:ml-0">
