@@ -1,5 +1,6 @@
 
 
+
 export interface Team {
   id: string;
   name: string;
@@ -28,6 +29,7 @@ export interface Review {
   userId: string;
   userName: string; 
   userAvatar?: string; 
+  isPublicProfile?: boolean;
   rating: number; 
   comment: string;
   createdAt: string; 
@@ -194,6 +196,7 @@ export interface UserProfile {
   status: UserStatus;
   joinedAt: string; 
   teamIds?: string[];
+  isProfilePublic?: boolean;
 }
 
 export interface AdminUser { 

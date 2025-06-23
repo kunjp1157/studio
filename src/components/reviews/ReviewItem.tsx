@@ -1,6 +1,7 @@
 
 'use client';
 
+import Link from 'next/link';
 import type { Review } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,17 +13,30 @@ interface ReviewItemProps {
 }
 
 export function ReviewItem({ review }: ReviewItemProps) {
+  
+  const UserHeader = () => (
+    <div className="flex flex-row items-center space-x-4">
+      <Avatar className="h-10 w-10">
+        <AvatarImage src={review.userAvatar || `https://placehold.co/40x40.png?text=${review.userName.charAt(0)}`} alt={review.userName} />
+        <AvatarFallback>{review.userName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+      </Avatar>
+      <div>
+        <p className="font-semibold text-sm">{review.userName}</p>
+        <StarDisplay rating={review.rating} starSize={16} />
+      </div>
+    </div>
+  );
+  
   return (
     <Card className="mb-4 shadow-sm">
       <CardHeader className="flex flex-row items-center space-x-4 pb-2">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={review.userAvatar || `https://placehold.co/40x40.png?text=${review.userName.charAt(0)}`} alt={review.userName} />
-          <AvatarFallback>{review.userName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="font-semibold text-sm">{review.userName}</p>
-          <StarDisplay rating={review.rating} starSize={16} />
-        </div>
+         {review.isPublicProfile ? (
+          <Link href={`/users/${review.userId}`} className="hover:opacity-80 transition-opacity">
+            <UserHeader />
+          </Link>
+        ) : (
+          <UserHeader />
+        )}
       </CardHeader>
       <CardContent className="pt-0 pb-3">
         <p className="text-sm text-foreground">{review.comment}</p>

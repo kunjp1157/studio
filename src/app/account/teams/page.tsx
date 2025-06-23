@@ -8,6 +8,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
@@ -18,7 +19,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Team, UserProfile } from '@/lib/types';
 import { mockUser, getTeamsByUserId, getUserById, leaveTeam as mockLeaveTeam } from '@/lib/data';
@@ -67,9 +67,23 @@ export default function MyTeamsPage() {
     }, 1000);
   };
   
+  const MemberAvatar = ({ member, teamCaptainId }: { member: UserProfile, teamCaptainId: string }) => (
+      <Tooltip>
+          <TooltipTrigger asChild>
+              <Avatar className="h-9 w-9 border-2 border-background">
+                  <AvatarImage src={member.profilePictureUrl} alt={member.name} />
+                  <AvatarFallback>{member.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+              </Avatar>
+          </TooltipTrigger>
+          <TooltipContent>
+              <p>{member.name}</p>
+              {member.id === teamCaptainId && <p className="text-xs text-muted-foreground">Captain</p>}
+          </TooltipContent>
+      </Tooltip>
+  );
+
   const TeamCard = ({ team }: { team: Team }) => {
     const members = team.memberIds.map(id => getUserById(id)).filter(Boolean) as UserProfile[];
-    const captain = getUserById(team.captainId);
     const isCaptain = mockUser.id === team.captainId;
     const SportIcon = team.sport.icon || Zap;
 
@@ -91,18 +105,15 @@ export default function MyTeamsPage() {
                 <div className="flex flex-wrap gap-2">
                     <TooltipProvider>
                     {members.map(member => (
-                        <Tooltip key={member.id}>
-                            <TooltipTrigger asChild>
-                                <Avatar className="h-9 w-9 border-2 border-background">
-                                    <AvatarImage src={member.profilePictureUrl} alt={member.name} />
-                                    <AvatarFallback>{member.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{member.name}</p>
-                                {member.id === team.captainId && <p className="text-xs text-muted-foreground">Captain</p>}
-                            </TooltipContent>
-                        </Tooltip>
+                       member.isProfilePublic ? (
+                            <Link key={member.id} href={`/users/${member.id}`} passHref>
+                                <a aria-label={`View profile of ${member.name}`}>
+                                    <MemberAvatar member={member} teamCaptainId={team.captainId} />
+                                </a>
+                            </Link>
+                        ) : (
+                            <MemberAvatar key={member.id} member={member} teamCaptainId={team.captainId} />
+                        )
                     ))}
                     </TooltipProvider>
                 </div>

@@ -1,6 +1,8 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -37,19 +39,31 @@ const LfgRequestCard = ({ request, onInterest }: { request: LfgRequest, onIntere
 
     const SportIcon = sport.icon || Dices;
     
+    const UserHeader = () => (
+        <div className="flex flex-row items-center gap-4">
+            <Avatar className="h-12 w-12 border">
+                <AvatarImage src={user.profilePictureUrl} alt={user.name} />
+                <AvatarFallback>{user.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+            </Avatar>
+            <div>
+                <CardTitle className="text-lg">{user.name}</CardTitle>
+                <CardDescription className="text-xs">
+                    Posted {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
+                </CardDescription>
+            </div>
+        </div>
+    );
+
     return (
         <Card className="flex flex-col h-full shadow-md">
-            <CardHeader className="flex flex-row items-center gap-4">
-                <Avatar className="h-12 w-12 border">
-                    <AvatarImage src={user.profilePictureUrl} alt={user.name} />
-                    <AvatarFallback>{user.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <CardTitle className="text-lg">{user.name}</CardTitle>
-                    <CardDescription className="text-xs">
-                        Posted {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
-                    </CardDescription>
-                </div>
+            <CardHeader>
+                {user.isProfilePublic ? (
+                    <Link href={`/users/${user.id}`} className="hover:opacity-80 transition-opacity">
+                        <UserHeader />
+                    </Link>
+                ) : (
+                    <UserHeader />
+                )}
             </CardHeader>
             <CardContent className="flex-grow space-y-3">
                 <div className="flex items-center gap-2 font-semibold">

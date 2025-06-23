@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -35,6 +36,19 @@ export default function LeaderboardPage() {
     if (rank === 3) return 'text-yellow-700'; // Bronze color
     return 'text-muted-foreground';
   };
+
+  const PlayerInfo = ({ user, isCurrentUser }: { user: UserProfile, isCurrentUser: boolean }) => (
+    <div className="flex items-center gap-3">
+        <Avatar className="h-10 w-10 border">
+            <AvatarImage src={user.profilePictureUrl} alt={user.name} />
+            <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col">
+            <span className="font-medium">{user.name}</span>
+            {isCurrentUser && <span className="text-xs text-primary font-semibold">You</span>}
+        </div>
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -81,16 +95,13 @@ export default function LeaderboardPage() {
                         <span className={cn(getRankColor(rank))}>{rank}</span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 border">
-                            <AvatarImage src={user.profilePictureUrl} alt={user.name} />
-                            <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{user.name}</span>
-                            {isCurrentUser && <span className="text-xs text-primary font-semibold">You</span>}
-                          </div>
-                        </div>
+                        {user.isProfilePublic ? (
+                          <Link href={`/users/${user.id}`} className="hover:underline">
+                            <PlayerInfo user={user} isCurrentUser={isCurrentUser} />
+                          </Link>
+                        ) : (
+                          <PlayerInfo user={user} isCurrentUser={isCurrentUser} />
+                        )}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-lg text-primary">
                         <div className="flex items-center justify-end gap-1.5">

@@ -1,3 +1,4 @@
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -92,42 +93,6 @@ export const defaultOperatingHours: FacilityOperatingHours[] = [
   { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' },
   { day: 'Sun', open: '09:00', close: '20:00' },
 ];
-
-export const getReviewsByFacilityId = (facilityId: string): Review[] => {
-  return mockReviews.filter(review => review.facilityId === facilityId);
-};
-
-export const calculateAverageRating = (reviews: Review[] | undefined): number => {
-  if (!reviews || reviews.length === 0) {
-    return 0;
-  }
-  const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
-  return parseFloat((totalRating / reviews.length).toFixed(1));
-};
-
-export const getSportById = (id: string): Sport | undefined => {
-  return mockSports.find(sport => sport.id === id);
-};
-
-export const getAmenityById = (id: string): Amenity | undefined => {
-  return mockAmenities.find(amenity => amenity.id === id);
-};
-
-export const getFacilityById = (id: string): Facility | undefined => {
-  const facility = mockFacilities.find(f => f.id === id);
-  if (facility) {
-    const reviews = getReviewsByFacilityId(id);
-    return {
-      ...facility,
-      reviews: reviews,
-      rating: calculateAverageRating(reviews), 
-      sports: facility.sports.map(s => getSportById(s.id) || s),
-      amenities: facility.amenities.map(a => getAmenityById(a.id) || a),
-      blockedSlots: facility.blockedSlots || [],
-    };
-  }
-  return undefined;
-};
 
 export let mockFacilities: Facility[] = [
   {
@@ -255,12 +220,6 @@ export let mockFacilities: Facility[] = [
   },
 ];
 
-mockFacilities.forEach(facility => {
-  const facilityReviews = getReviewsByFacilityId(facility.id);
-  facility.reviews = facilityReviews;
-  facility.rating = calculateAverageRating(facilityReviews);
-});
-
 export const mockAchievements: Achievement[] = [
   { id: 'ach-1', name: 'First Booking', description: 'Congratulations on making your first booking!', icon: Medal, unlockedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() },
   { id: 'ach-2', name: 'Review Pro', description: 'You shared your thoughts on 2 facilities!', icon: Star, unlockedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
@@ -292,6 +251,7 @@ export let mockUsers: UserProfile[] = [
     status: 'Active',
     joinedAt: subDays(new Date(), 30).toISOString(),
     teamIds: ['team-1', 'team-2'],
+    isProfilePublic: true,
   },
   {
     id: 'user-regular',
@@ -306,6 +266,7 @@ export let mockUsers: UserProfile[] = [
     favoriteFacilities: ['facility-1'],
     loyaltyPoints: 200,
     teamIds: ['team-1'],
+    isProfilePublic: false,
   },
   {
     id: 'user-owner',
@@ -320,6 +281,7 @@ export let mockUsers: UserProfile[] = [
     joinedAt: subDays(new Date(), 150).toISOString(),
     loyaltyPoints: 500,
     teamIds: ['team-1', 'team-2'],
+    isProfilePublic: true,
   },
   {
     id: 'user-suspended',
@@ -332,6 +294,7 @@ export let mockUsers: UserProfile[] = [
     joinedAt: subDays(new Date(), 60).toISOString(),
     loyaltyPoints: 50,
     teamIds: [],
+    isProfilePublic: false,
   }
 ];
 
@@ -353,80 +316,6 @@ export let mockTeams: Team[] = [
     memberIds: ['user-owner', 'user-admin'],
   },
 ];
-
-export const getTeamById = (teamId: string): Team | undefined => {
-  return mockTeams.find(team => team.id === teamId);
-}
-
-export const getTeamsByUserId = (userId: string): Team[] => {
-  return mockTeams.filter(team => team.memberIds.includes(userId));
-}
-
-export const createTeam = (teamData: { name: string; sportId: string; captainId: string }): Team => {
-  const sport = getSportById(teamData.sportId);
-  if (!sport) {
-    throw new Error('Sport not found');
-  }
-  const newTeam: Team = {
-    id: `team-${Date.now()}`,
-    name: teamData.name,
-    sport,
-    captainId: teamData.captainId,
-    memberIds: [teamData.captainId],
-  };
-  mockTeams.push(newTeam);
-  
-  const user = getUserById(teamData.captainId);
-  if (user) {
-    if (!user.teamIds) {
-      user.teamIds = [];
-    }
-    user.teamIds.push(newTeam.id);
-  }
-  
-  return newTeam;
-}
-
-export const leaveTeam = (teamId: string, userId: string): boolean => {
-  const teamIndex = mockTeams.findIndex(t => t.id === teamId);
-  if (teamIndex === -1) return false;
-
-  const team = mockTeams[teamIndex];
-  if (!team.memberIds.includes(userId)) return false; 
-
-  if (team.captainId === userId && team.memberIds.length > 1) {
-    return false; 
-  }
-
-  if (team.captainId === userId && team.memberIds.length === 1) {
-    mockTeams.splice(teamIndex, 1);
-  } else {
-    team.memberIds = team.memberIds.filter(id => id !== userId);
-  }
-
-  const user = getUserById(userId);
-  if (user && user.teamIds) {
-    user.teamIds = user.teamIds.filter(id => id !== teamId);
-  }
-  
-  return true;
-}
-
-export const addUserToTeam = (teamId: string, userId: string): boolean => {
-  const team = mockTeams.find(t => t.id === teamId);
-  if (!team) return false;
-
-  const user = getUserById(userId);
-  if (!user) return false;
-
-  if (team.memberIds.includes(userId)) return true; 
-
-  team.memberIds.push(userId);
-  if (!user.teamIds) user.teamIds = [];
-  user.teamIds.push(teamId);
-
-  return true;
-};
 
 export let mockBookings: Booking[] = [
   {
@@ -571,6 +460,474 @@ export let mockBookings: Booking[] = [
 
 let mockWaitlist: WaitlistEntry[] = [];
 
+let mockAppNotifications: AppNotification[] = [
+  {
+    id: 'notif-1',
+    userId: 'user-admin',
+    type: 'booking_confirmed',
+    title: 'Booking Confirmed!',
+    message: 'Your booking for Grand City Arena on July 15th is confirmed.',
+    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+    isRead: false,
+    link: '/account/bookings',
+    icon: CheckCircle,
+  },
+  {
+    id: 'notif-2',
+    userId: 'user-admin',
+    type: 'reminder',
+    title: 'Upcoming Booking Reminder',
+    message: 'Your tennis session at Riverside Tennis Club is tomorrow at 10:00 AM.',
+    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    isRead: true,
+    link: '/account/bookings',
+    icon: LucideCalendarDays,
+  },
+  {
+    id: 'notif-3',
+    userId: 'user-admin',
+    type: 'promotion',
+    title: 'Special Offer Just For You!',
+    message: 'Get 20% off your next booking with code SUMMER20.',
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    isRead: false,
+    link: '/facilities',
+    icon: Gift,
+  },
+];
+
+export const mockBlogPosts: BlogPost[] = [
+  {
+    id: 'blog-1',
+    slug: 'top-5-badminton-courts-metropolis',
+    title: 'Top 5 Badminton Courts in Metropolis You Need to Try',
+    excerpt: 'Discover the best places to play badminton in Metropolis, from professional-grade courts to hidden gems perfect for a casual game.',
+    content: '<p>Finding the perfect badminton court can elevate your game. Metropolis boasts a variety of options, but here are our top 5 picks:</p><ol><li><strong>Eagle Badminton Center:</strong> Known for its excellent lighting and well-maintained courts. A favorite among competitive players.</li><li><strong>Community Rec Center (Badminton Hall):</strong> Great value and very accessible. Offers multiple courts and is perfect for all skill levels.</li><li><strong>SkyHigh Sports Complex:</strong> Features dedicated badminton courts with good amenities, including equipment rental.</li><li><strong>Westside Badminton Club:</strong> A members-only club but offers guest passes. Known for its strong community and coaching programs.</li><li><strong>Metro Park Outdoor Courts:</strong> For those who enjoy playing outdoors, Metro Park offers several free-to-use courts, though availability can be a challenge.</li></ol><p>Remember to check booking availability and pricing before you go. Happy smashing!</p>',
+    imageUrl: 'https://placehold.co/800x400.png',
+    imageAlt: 'A badminton court with a net and shuttlecock',
+    authorName: 'Jane Doe, Sports Enthusiast',
+    authorAvatarUrl: 'https://placehold.co/50x50.png',
+    publishedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    tags: ['Badminton', 'Metropolis', 'Sports Venues'],
+    isFeatured: true,
+    dataAiHint: 'badminton court'
+  },
+  {
+    id: 'blog-2',
+    slug: 'choosing-right-soccer-cleats',
+    title: 'Choosing the Right Soccer Cleats: A Beginner\'s Guide',
+    excerpt: 'Your soccer cleats can make a huge difference in your performance and safety. Learn what to look for when buying your next pair.',
+    content: '<p>Selecting the right soccer cleats is crucial for any player, regardless of skill level. Here are key factors to consider:</p><ul><li><strong>Playing Surface:</strong> Firm Ground (FG), Soft Ground (SG), Artificial Grass (AG), Turf (TF), and Indoor (IC) cleats are designed for specific surfaces. Using the wrong type can lead to injury or poor performance.</li><li><strong>Material:</strong> Leather (kangaroo, calfskin) offers a soft touch and molds to your foot, while synthetic materials are often lighter, more durable, and water-resistant.</li><li><strong>Fit:</strong> Cleats should fit snugly without being too tight. There should be minimal space between your toes and the end of the shoe.</li><li><strong>Stud Pattern:</strong> Different stud configurations offer varying levels of traction and stability. Conical studs are good for rotation, while bladed studs offer aggressive traction.</li><li><strong>Your Position:</strong> While not a strict rule, some cleats are marketed towards specific positions (e.g., lighter cleats for wingers, more protective for defenders).</li></ul><p>Try on several pairs and consider your playing style and budget. Investing in good cleats is investing in your game!</p>',
+    imageUrl: 'https://placehold.co/800x400.png',
+    imageAlt: 'A pair of soccer cleats on a grass field',
+    authorName: 'Mike Lee, Soccer Coach',
+    authorAvatarUrl: 'https://placehold.co/50x50.png',
+    publishedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    tags: ['Soccer', 'Equipment', 'Tips'],
+    dataAiHint: 'soccer cleats'
+  },
+  {
+    id: 'blog-3',
+    slug: 'benefits-of-swimming',
+    title: 'Dive In: The Amazing Health Benefits of Regular Swimming',
+    excerpt: 'Swimming is more than just a recreational activity; it\'s a full-body workout with numerous health benefits for all ages.',
+    content: '<p>Looking for a low-impact exercise that delivers high results? Swimming might be your answer. Here’s why:</p><ul><li><strong>Full-Body Workout:</strong> Swimming engages almost all major muscle groups, from your arms and shoulders to your core and legs.</li><li><strong>Low Impact:</strong> The buoyancy of water supports your body, making swimming gentle on your joints. This is great for people with arthritis or injuries.</li><li><strong>Cardiovascular Health:</strong> It’s an excellent aerobic exercise that strengthens your heart and improves lung capacity.</li><li><strong>Weight Management:</strong> Swimming burns a significant amount of calories, aiding in weight loss or maintenance.</li><li><strong>Stress Reduction:</strong> The rhythmic nature of swimming and the sensation of water can be very calming and meditative.</li><li><strong>Improved Flexibility & Balance:</strong> The range of motion involved in different strokes helps improve flexibility.</li></ul><p>Whether you prefer laps in a pool or open water swimming, incorporating it into your routine can lead to significant health improvements.</p>',
+    imageUrl: 'https://placehold.co/800x400.png',
+    imageAlt: 'A person swimming in a clear blue pool',
+    authorName: 'Dr. Aqua Fina',
+    authorAvatarUrl: 'https://placehold.co/50x50.png',
+    publishedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
+    tags: ['Swimming', 'Health', 'Fitness', 'Wellness'],
+    dataAiHint: 'swimming pool'
+  },
+];
+
+export let mockMembershipPlans: MembershipPlan[] = [
+  {
+    id: 'mem-1',
+    name: 'Basic',
+    pricePerMonth: 10,
+    benefits: ['Access to all facilities', 'Book up to 3 days in advance', 'Online booking'],
+  },
+  {
+    id: 'mem-2',
+    name: 'Premium',
+    pricePerMonth: 25,
+    benefits: ['All Basic benefits', 'Book up to 7 days in advance', '10% discount on bookings', 'Guest passes (2/month)'],
+  },
+  {
+    id: 'mem-3',
+    name: 'Pro',
+    pricePerMonth: 50,
+    benefits: ['All Premium benefits', 'Book up to 14 days in advance', '20% discount on bookings', 'Free equipment rental', 'Priority support'],
+  },
+];
+
+export let mockEvents: SportEvent[] = [
+  {
+    id: 'event-1',
+    name: 'Summer Soccer Tournament',
+    facilityId: 'facility-1',
+    sport: mockSports[0],
+    startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString(),
+    description: 'Annual summer soccer tournament for all skill levels. Join us for a competitive and fun weekend! This event features multiple matches, food trucks, and activities for spectators. Great prizes for winning teams.',
+    entryFee: 20,
+    maxParticipants: 64,
+    registeredParticipants: 25,
+    imageUrl: 'https://placehold.co/600x300.png',
+    imageDataAiHint: "soccer tournament action"
+  },
+  {
+    id: 'event-2',
+    name: 'Tennis Open Day & Clinic',
+    facilityId: 'facility-2',
+    sport: mockSports[2],
+    startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    description: 'Come try our tennis courts for free! Coaching available for beginners. Fun for the whole family, with mini-games and refreshments.',
+    entryFee: 0,
+    maxParticipants: 100,
+    registeredParticipants: 0,
+    imageUrl: 'https://placehold.co/600x300.png',
+    imageDataAiHint: "tennis players friendly"
+  },
+  {
+    id: 'event-3',
+    name: 'Community Basketball League Finals',
+    facilityId: 'facility-3',
+    sport: mockSports[1],
+    startDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
+    description: 'The exciting conclusion to our community basketball league. Witness the crowning of the champions! Spectators welcome, entry is free.',
+    entryFee: 5,
+    maxParticipants: 200,
+    registeredParticipants: 112,
+    imageUrl: 'https://placehold.co/600x300.png',
+    imageDataAiHint: "basketball game intensity"
+  },
+   {
+    id: 'event-4',
+    name: 'Badminton Bonanza Weekend',
+    facilityId: 'facility-3',
+    sport: mockSports[3],
+    startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+    description: 'A full weekend of badminton fun! Singles and doubles tournaments for various age groups. All levels welcome. Coaching sessions available.',
+    entryFee: 15,
+    maxParticipants: 48,
+    registeredParticipants: 15,
+    imageUrl: 'https://placehold.co/600x300.png',
+    imageDataAiHint: "badminton players action"
+  },
+];
+
+export let mockPricingRules: PricingRule[] = [
+    {
+        id: 'price-rule-1',
+        name: 'Weekend Evening Surge',
+        description: 'Higher prices for popular weekend evening slots.',
+        daysOfWeek: ['Sat', 'Sun'],
+        timeRange: { start: '18:00', end: '22:00' },
+        adjustmentType: 'percentage_increase',
+        value: 20,
+        priority: 10,
+        isActive: true,
+    },
+    {
+        id: 'price-rule-2',
+        name: 'Weekday Morning Discount',
+        description: 'Discount for less busy weekday morning hours.',
+        daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        timeRange: { start: '08:00', end: '12:00' },
+        adjustmentType: 'percentage_decrease',
+        value: 15,
+        priority: 10,
+        isActive: true,
+    },
+    {
+        id: 'price-rule-3',
+        name: 'Holiday Special Pricing',
+        dateRange: { start: '2024-12-20', end: '2024-12-26' },
+        adjustmentType: 'fixed_price',
+        value: 75,
+        priority: 5,
+        isActive: true,
+    }
+];
+
+export let mockPromotionRules: PromotionRule[] = [
+    {
+        id: 'promo-1',
+        name: 'Summer Kickoff Discount',
+        description: 'Get 15% off any booking in June.',
+        code: 'SUMMER15',
+        discountType: 'percentage',
+        discountValue: 15,
+        startDate: '2024-06-01',
+        endDate: '2024-06-30',
+        usageLimit: 1000,
+        usageLimitPerUser: 1,
+        isActive: true,
+    },
+    {
+        id: 'promo-2',
+        name: 'New User Welcome',
+        description: '$10 off your first booking.',
+        code: 'WELCOME10',
+        discountType: 'fixed_amount',
+        discountValue: 10,
+        usageLimitPerUser: 1,
+        isActive: true,
+    },
+    {
+        id: 'promo-3',
+        name: 'Weekend Warrior Special',
+        description: '20% off weekend bookings (Sat/Sun). No code needed.',
+        discountType: 'percentage',
+        discountValue: 20,
+        isActive: true,
+    }
+];
+
+let mockSiteSettings: SiteSettings = {
+  siteName: 'Sports Arena',
+  defaultCurrency: 'INR',
+  timezone: 'America/Los_Angeles',
+  maintenanceMode: false,
+};
+
+export let mockLfgRequests: LfgRequest[] = [
+    {
+        id: 'lfg-1',
+        userId: 'user-regular', 
+        sportId: 'sport-1', 
+        notes: "Looking for a couple more players for a casual 5-a-side game at Grand City Arena this Saturday afternoon. Skill level doesn't matter, just want to have some fun!",
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'open',
+        interestedUserIds: [],
+    },
+    {
+        id: 'lfg-2',
+        userId: 'user-owner', 
+        sportId: 'sport-3', 
+        notes: "Need a partner for a doubles match at Riverside Tennis Club sometime this week. Intermediate level preferred. Flexible on time.",
+        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        status: 'open',
+        interestedUserIds: ['user-admin'],
+    }
+];
+
+
+// --- FUNCTIONS ---
+// Helper and getter functions are placed before functions that might use them.
+
+export const getUserById = (userId: string): UserProfile | undefined => {
+  return mockUsers.find(user => user.id === userId);
+};
+
+export const getReviewsByFacilityId = (facilityId: string): Review[] => {
+  const reviews = mockReviews.filter(review => review.facilityId === facilityId);
+  return reviews.map(review => {
+    const user = getUserById(review.userId);
+    return {
+      ...review,
+      userName: user?.name || review.userName,
+      userAvatar: user?.profilePictureUrl || review.userAvatar,
+      isPublicProfile: user?.isProfilePublic || false,
+    };
+  });
+};
+
+export const calculateAverageRating = (reviews: Review[] | undefined): number => {
+  if (!reviews || reviews.length === 0) {
+    return 0;
+  }
+  const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
+  return parseFloat((totalRating / reviews.length).toFixed(1));
+};
+
+export const getSportById = (id: string): Sport | undefined => {
+  return mockSports.find(sport => sport.id === id);
+};
+
+export const getAmenityById = (id: string): Amenity | undefined => {
+  return mockAmenities.find(amenity => amenity.id === id);
+};
+
+export const getFacilityById = (id: string): Facility | undefined => {
+  const facility = mockFacilities.find(f => f.id === id);
+  if (facility) {
+    const reviews = getReviewsByFacilityId(id);
+    return {
+      ...facility,
+      reviews: reviews,
+      rating: calculateAverageRating(reviews), 
+      sports: facility.sports.map(s => getSportById(s.id) || s),
+      amenities: facility.amenities.map(a => getAmenityById(a.id) || a),
+      blockedSlots: facility.blockedSlots || [],
+    };
+  }
+  return undefined;
+};
+
+export const getTeamById = (teamId: string): Team | undefined => {
+  return mockTeams.find(team => team.id === teamId);
+};
+
+export const getTeamsByUserId = (userId: string): Team[] => {
+  return mockTeams.filter(team => team.memberIds.includes(userId));
+};
+
+export const getBookingsByUserId = (userId: string): Booking[] => {
+  return mockBookings.filter(booking => booking.userId === userId);
+};
+
+export const getAllBookings = (): Booking[] => {
+  return [...mockBookings].sort((a,b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
+};
+
+export const getAllUsers = (): UserProfile[] => {
+    return [...mockUsers];
+};
+
+export const getAllSports = (): Sport[] => {
+    return mockSports;
+};
+
+export const getAllFacilities = (): Facility[] => {
+    return mockFacilities.map(f => ({
+      ...f,
+      rating: calculateAverageRating(getReviewsByFacilityId(f.id)), 
+      reviews: getReviewsByFacilityId(f.id),
+      blockedSlots: f.blockedSlots || [],
+    }));
+};
+
+export const getFacilitiesByOwnerId = (ownerId: string): Facility[] => {
+  return mockFacilities
+    .filter(f => f.ownerId === ownerId)
+    .map(f => ({ 
+      ...f,
+      rating: calculateAverageRating(getReviewsByFacilityId(f.id)),
+      reviews: getReviewsByFacilityId(f.id),
+      blockedSlots: f.blockedSlots || [],
+    }));
+};
+
+export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => {
+  return mockRentalEquipment.find(eq => eq.id === id);
+};
+
+export const getNotificationsForUser = (userId: string): AppNotification[] => {
+  return mockAppNotifications
+    .filter(n => n.userId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
+export const getAllBlogPosts = (): BlogPost[] => {
+  return mockBlogPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+};
+
+export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
+  return mockBlogPosts.find(post => post.slug === slug);
+};
+
+export const getAllMembershipPlans = (): MembershipPlan[] => {
+  return [...mockMembershipPlans];
+};
+
+export const getMembershipPlanById = (id: string): MembershipPlan | undefined => {
+  return mockMembershipPlans.find(plan => plan.id === id);
+};
+
+export const getAllEvents = (): SportEvent[] => {
+  return [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+};
+
+export const getEventById = (id: string): SportEvent | undefined => {
+  const event = mockEvents.find(event => event.id === id);
+  if (event) {
+    const sport = getSportById(event.sport.id);
+    return sport ? { ...event, sport } : { ...event };
+  }
+  return undefined;
+};
+
+export const getAllPricingRules = (): PricingRule[] => {
+    return [...mockPricingRules];
+};
+
+export const getPricingRuleById = (id: string): PricingRule | undefined => {
+    return mockPricingRules.find(rule => rule.id === id);
+};
+
+export const getAllPromotionRules = (): PromotionRule[] => {
+    return [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
+};
+
+export const getPromotionRuleByCode = (code: string): PromotionRule | undefined => {
+    const rule = mockPromotionRules.find(r => r.code?.toLowerCase() === code.toLowerCase() && r.isActive);
+    if (rule) {
+        const now = new Date();
+        const startDateValid = !rule.startDate || isAfter(now, startOfDay(parseISO(rule.startDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.startDate)), end: endOfDay(parseISO(rule.startDate))});
+        const endDateValid = !rule.endDate || isBefore(now, endOfDay(parseISO(rule.endDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.endDate)), end: endOfDay(parseISO(rule.endDate))});
+
+        if (startDateValid && endDateValid) {
+            return rule;
+        }
+    }
+    return undefined;
+};
+
+export const getPromotionRuleById = (id: string): PromotionRule | undefined => {
+    return mockPromotionRules.find(r => r.id === id);
+};
+
+export const getSiteSettings = (): SiteSettings => {
+  return mockSiteSettings;
+};
+
+export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => {
+    return mockWaitlist.some(entry =>
+        entry.userId === userId &&
+        entry.facilityId === facilityId &&
+        entry.date === date &&
+        entry.startTime === startTime
+    );
+};
+
+export const getOpenLfgRequests = (): LfgRequest[] => {
+    return mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
+// --- DATA MANIPULATION FUNCTIONS ---
+
+export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
+  let icon = Info;
+  switch (notificationData.type) {
+    case 'booking_confirmed': icon = CheckCircle; break;
+    case 'booking_cancelled': icon = XCircle; break;
+    case 'review_submitted': icon = MessageSquareText; break;
+    case 'reminder': icon = LucideCalendarDays; break;
+    case 'promotion': icon = Gift; break;
+    case 'waitlist_opening': icon = BellRing; break;
+    case 'user_status_changed': icon = Edit3; break;
+    case 'matchmaking_interest': icon = Swords; break;
+  }
+
+  const newNotification: AppNotification = {
+    ...notificationData,
+    id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    userId,
+    createdAt: new Date().toISOString(),
+    isRead: false,
+    icon: notificationData.icon || icon,
+  };
+  mockAppNotifications.unshift(newNotification);
+  return newNotification;
+};
+
 const processWaitlistNotifications = (facilityId: string, date: string, startTime: string) => {
     const facility = getFacilityById(facilityId);
     if (!facility) return;
@@ -615,22 +972,6 @@ export const updateBooking = (bookingId: string, updates: Partial<Booking>): Boo
     return mockBookings[bookingIndex];
 };
 
-export const getBookingsByUserId = (userId: string): Booking[] => {
-  return mockBookings.filter(booking => booking.userId === userId);
-};
-
-export const getAllBookings = (): Booking[] => {
-  return [...mockBookings].sort((a,b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
-};
-
-export const getAllUsers = (): UserProfile[] => {
-    return [...mockUsers];
-};
-
-export const getUserById = (userId: string): UserProfile | undefined => {
-  return mockUsers.find(user => user.id === userId);
-};
-
 export const updateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
     const userIndex = mockUsers.findIndex(user => user.id === userId);
     if (userIndex === -1) {
@@ -640,30 +981,71 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
     return mockUsers[userIndex];
 };
 
-export const getAllSports = (): Sport[] => {
-    return mockSports;
+export const createTeam = (teamData: { name: string; sportId: string; captainId: string }): Team => {
+  const sport = getSportById(teamData.sportId);
+  if (!sport) {
+    throw new Error('Sport not found');
+  }
+  const newTeam: Team = {
+    id: `team-${Date.now()}`,
+    name: teamData.name,
+    sport,
+    captainId: teamData.captainId,
+    memberIds: [teamData.captainId],
+  };
+  mockTeams.push(newTeam);
+  
+  const user = getUserById(teamData.captainId);
+  if (user) {
+    if (!user.teamIds) {
+      user.teamIds = [];
+    }
+    user.teamIds.push(newTeam.id);
+  }
+  
+  return newTeam;
 };
 
-export const getAllFacilities = (): Facility[] => {
-    return mockFacilities.map(f => ({
-      ...f,
-      rating: calculateAverageRating(getReviewsByFacilityId(f.id)), 
-      reviews: getReviewsByFacilityId(f.id),
-      blockedSlots: f.blockedSlots || [],
-    }));
+export const leaveTeam = (teamId: string, userId: string): boolean => {
+  const teamIndex = mockTeams.findIndex(t => t.id === teamId);
+  if (teamIndex === -1) return false;
+
+  const team = mockTeams[teamIndex];
+  if (!team.memberIds.includes(userId)) return false; 
+
+  if (team.captainId === userId && team.memberIds.length > 1) {
+    return false; 
+  }
+
+  if (team.captainId === userId && team.memberIds.length === 1) {
+    mockTeams.splice(teamIndex, 1);
+  } else {
+    team.memberIds = team.memberIds.filter(id => id !== userId);
+  }
+
+  const user = getUserById(userId);
+  if (user && user.teamIds) {
+    user.teamIds = user.teamIds.filter(id => id !== teamId);
+  }
+  
+  return true;
 };
 
-export const getFacilitiesByOwnerId = (ownerId: string): Facility[] => {
-  return mockFacilities
-    .filter(f => f.ownerId === ownerId)
-    .map(f => ({ 
-      ...f,
-      rating: calculateAverageRating(getReviewsByFacilityId(f.id)),
-      reviews: getReviewsByFacilityId(f.id),
-      blockedSlots: f.blockedSlots || [],
-    }));
-};
+export const addUserToTeam = (teamId: string, userId: string): boolean => {
+  const team = mockTeams.find(t => t.id === teamId);
+  if (!team) return false;
 
+  const user = getUserById(userId);
+  if (!user) return false;
+
+  if (team.memberIds.includes(userId)) return true; 
+
+  team.memberIds.push(userId);
+  if (!user.teamIds) user.teamIds = [];
+  user.teamIds.push(teamId);
+
+  return true;
+};
 
 export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours' | 'blockedSlots'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], ownerId?: string, blockedSlots?: BlockedSlot[], availableEquipment?: Partial<RentalEquipment>[] }): Facility => {
   const facilityId = facilityData.id || `facility-${Date.now()}`;
@@ -769,53 +1151,6 @@ export const unblockTimeSlot = (facilityId: string, ownerId: string, date: strin
   return mockFacilities[facilityIndex].blockedSlots!.length < initialLength;
 };
 
-
-export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => {
-  return mockRentalEquipment.find(eq => eq.id === id);
-};
-
-let mockAppNotifications: AppNotification[] = [
-  {
-    id: 'notif-1',
-    userId: 'user-admin',
-    type: 'booking_confirmed',
-    title: 'Booking Confirmed!',
-    message: 'Your booking for Grand City Arena on July 15th is confirmed.',
-    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    isRead: false,
-    link: '/account/bookings',
-    icon: CheckCircle,
-  },
-  {
-    id: 'notif-2',
-    userId: 'user-admin',
-    type: 'reminder',
-    title: 'Upcoming Booking Reminder',
-    message: 'Your tennis session at Riverside Tennis Club is tomorrow at 10:00 AM.',
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    isRead: true,
-    link: '/account/bookings',
-    icon: LucideCalendarDays,
-  },
-  {
-    id: 'notif-3',
-    userId: 'user-admin',
-    type: 'promotion',
-    title: 'Special Offer Just For You!',
-    message: 'Get 20% off your next booking with code SUMMER20.',
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    isRead: false,
-    link: '/facilities',
-    icon: Gift,
-  },
-];
-
-export const getNotificationsForUser = (userId: string): AppNotification[] => {
-  return mockAppNotifications
-    .filter(n => n.userId === userId)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-};
-
 export const markNotificationAsRead = (userId: string, notificationId: string): void => {
   const notification = mockAppNotifications.find(n => n.id === notificationId && n.userId === userId);
   if (notification) {
@@ -829,116 +1164,6 @@ export const markAllNotificationsAsRead = (userId: string): void => {
       n.isRead = true;
     }
   });
-};
-
-export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
-  let icon = Info;
-  switch (notificationData.type) {
-    case 'booking_confirmed': icon = CheckCircle; break;
-    case 'booking_cancelled': icon = XCircle; break;
-    case 'review_submitted': icon = MessageSquareText; break;
-    case 'reminder': icon = LucideCalendarDays; break;
-    case 'promotion': icon = Gift; break;
-    case 'waitlist_opening': icon = BellRing; break;
-    case 'user_status_changed': icon = Edit3; break;
-    case 'matchmaking_interest': icon = Swords; break;
-  }
-
-  const newNotification: AppNotification = {
-    ...notificationData,
-    id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    userId,
-    createdAt: new Date().toISOString(),
-    isRead: false,
-    icon: notificationData.icon || icon,
-  };
-  mockAppNotifications.unshift(newNotification);
-  return newNotification;
-};
-
-
-export const mockBlogPosts: BlogPost[] = [
-  {
-    id: 'blog-1',
-    slug: 'top-5-badminton-courts-metropolis',
-    title: 'Top 5 Badminton Courts in Metropolis You Need to Try',
-    excerpt: 'Discover the best places to play badminton in Metropolis, from professional-grade courts to hidden gems perfect for a casual game.',
-    content: '<p>Finding the perfect badminton court can elevate your game. Metropolis boasts a variety of options, but here are our top 5 picks:</p><ol><li><strong>Eagle Badminton Center:</strong> Known for its excellent lighting and well-maintained courts. A favorite among competitive players.</li><li><strong>Community Rec Center (Badminton Hall):</strong> Great value and very accessible. Offers multiple courts and is perfect for all skill levels.</li><li><strong>SkyHigh Sports Complex:</strong> Features dedicated badminton courts with good amenities, including equipment rental.</li><li><strong>Westside Badminton Club:</strong> A members-only club but offers guest passes. Known for its strong community and coaching programs.</li><li><strong>Metro Park Outdoor Courts:</strong> For those who enjoy playing outdoors, Metro Park offers several free-to-use courts, though availability can be a challenge.</li></ol><p>Remember to check booking availability and pricing before you go. Happy smashing!</p>',
-    imageUrl: 'https://placehold.co/800x400.png',
-    imageAlt: 'A badminton court with a net and shuttlecock',
-    authorName: 'Jane Doe, Sports Enthusiast',
-    authorAvatarUrl: 'https://placehold.co/50x50.png',
-    publishedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    tags: ['Badminton', 'Metropolis', 'Sports Venues'],
-    isFeatured: true,
-    dataAiHint: 'badminton court'
-  },
-  {
-    id: 'blog-2',
-    slug: 'choosing-right-soccer-cleats',
-    title: 'Choosing the Right Soccer Cleats: A Beginner\'s Guide',
-    excerpt: 'Your soccer cleats can make a huge difference in your performance and safety. Learn what to look for when buying your next pair.',
-    content: '<p>Selecting the right soccer cleats is crucial for any player, regardless of skill level. Here are key factors to consider:</p><ul><li><strong>Playing Surface:</strong> Firm Ground (FG), Soft Ground (SG), Artificial Grass (AG), Turf (TF), and Indoor (IC) cleats are designed for specific surfaces. Using the wrong type can lead to injury or poor performance.</li><li><strong>Material:</strong> Leather (kangaroo, calfskin) offers a soft touch and molds to your foot, while synthetic materials are often lighter, more durable, and water-resistant.</li><li><strong>Fit:</strong> Cleats should fit snugly without being too tight. There should be minimal space between your toes and the end of the shoe.</li><li><strong>Stud Pattern:</strong> Different stud configurations offer varying levels of traction and stability. Conical studs are good for rotation, while bladed studs offer aggressive traction.</li><li><strong>Your Position:</strong> While not a strict rule, some cleats are marketed towards specific positions (e.g., lighter cleats for wingers, more protective for defenders).</li></ul><p>Try on several pairs and consider your playing style and budget. Investing in good cleats is investing in your game!</p>',
-    imageUrl: 'https://placehold.co/800x400.png',
-    imageAlt: 'A pair of soccer cleats on a grass field',
-    authorName: 'Mike Lee, Soccer Coach',
-    authorAvatarUrl: 'https://placehold.co/50x50.png',
-    publishedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    tags: ['Soccer', 'Equipment', 'Tips'],
-    dataAiHint: 'soccer cleats'
-  },
-  {
-    id: 'blog-3',
-    slug: 'benefits-of-swimming',
-    title: 'Dive In: The Amazing Health Benefits of Regular Swimming',
-    excerpt: 'Swimming is more than just a recreational activity; it\'s a full-body workout with numerous health benefits for all ages.',
-    content: '<p>Looking for a low-impact exercise that delivers high results? Swimming might be your answer. Here’s why:</p><ul><li><strong>Full-Body Workout:</strong> Swimming engages almost all major muscle groups, from your arms and shoulders to your core and legs.</li><li><strong>Low Impact:</strong> The buoyancy of water supports your body, making swimming gentle on your joints. This is great for people with arthritis or injuries.</li><li><strong>Cardiovascular Health:</strong> It’s an excellent aerobic exercise that strengthens your heart and improves lung capacity.</li><li><strong>Weight Management:</strong> Swimming burns a significant amount of calories, aiding in weight loss or maintenance.</li><li><strong>Stress Reduction:</strong> The rhythmic nature of swimming and the sensation of water can be very calming and meditative.</li><li><strong>Improved Flexibility & Balance:</strong> The range of motion involved in different strokes helps improve flexibility.</li></ul><p>Whether you prefer laps in a pool or open water swimming, incorporating it into your routine can lead to significant health improvements.</p>',
-    imageUrl: 'https://placehold.co/800x400.png',
-    imageAlt: 'A person swimming in a clear blue pool',
-    authorName: 'Dr. Aqua Fina',
-    authorAvatarUrl: 'https://placehold.co/50x50.png',
-    publishedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-    tags: ['Swimming', 'Health', 'Fitness', 'Wellness'],
-    dataAiHint: 'swimming pool'
-  },
-];
-
-export const getAllBlogPosts = (): BlogPost[] => {
-  return mockBlogPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-};
-
-export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
-  return mockBlogPosts.find(post => post.slug === slug);
-};
-
-
-export let mockMembershipPlans: MembershipPlan[] = [
-  {
-    id: 'mem-1',
-    name: 'Basic',
-    pricePerMonth: 10,
-    benefits: ['Access to all facilities', 'Book up to 3 days in advance', 'Online booking'],
-  },
-  {
-    id: 'mem-2',
-    name: 'Premium',
-    pricePerMonth: 25,
-    benefits: ['All Basic benefits', 'Book up to 7 days in advance', '10% discount on bookings', 'Guest passes (2/month)'],
-  },
-  {
-    id: 'mem-3',
-    name: 'Pro',
-    pricePerMonth: 50,
-    benefits: ['All Premium benefits', 'Book up to 14 days in advance', '20% discount on bookings', 'Free equipment rental', 'Priority support'],
-  },
-];
-
-export const getAllMembershipPlans = (): MembershipPlan[] => {
-  return [...mockMembershipPlans];
-};
-
-export const getMembershipPlanById = (id: string): MembershipPlan | undefined => {
-  return mockMembershipPlans.find(plan => plan.id === id);
 };
 
 export const addMembershipPlan = (planData: Omit<MembershipPlan, 'id'>): MembershipPlan => {
@@ -961,83 +1186,6 @@ export const deleteMembershipPlan = (planId: string): boolean => {
   const initialLength = mockMembershipPlans.length;
   mockMembershipPlans = mockMembershipPlans.filter(p => p.id !== planId);
   return mockMembershipPlans.length < initialLength;
-};
-
-export const mockAdminUsers: UserProfile[] = [
-    { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@sportsarena.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString() },
-];
-
-
-export let mockEvents: SportEvent[] = [
-  {
-    id: 'event-1',
-    name: 'Summer Soccer Tournament',
-    facilityId: 'facility-1',
-    sport: mockSports[0],
-    startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString(),
-    description: 'Annual summer soccer tournament for all skill levels. Join us for a competitive and fun weekend! This event features multiple matches, food trucks, and activities for spectators. Great prizes for winning teams.',
-    entryFee: 20,
-    maxParticipants: 64,
-    registeredParticipants: 25,
-    imageUrl: 'https://placehold.co/600x300.png',
-    imageDataAiHint: "soccer tournament action"
-  },
-  {
-    id: 'event-2',
-    name: 'Tennis Open Day & Clinic',
-    facilityId: 'facility-2',
-    sport: mockSports[2],
-    startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    description: 'Come try our tennis courts for free! Coaching available for beginners. Fun for the whole family, with mini-games and refreshments.',
-    entryFee: 0,
-    maxParticipants: 100,
-    registeredParticipants: 0,
-    imageUrl: 'https://placehold.co/600x300.png',
-    imageDataAiHint: "tennis players friendly"
-  },
-  {
-    id: 'event-3',
-    name: 'Community Basketball League Finals',
-    facilityId: 'facility-3',
-    sport: mockSports[1],
-    startDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
-    description: 'The exciting conclusion to our community basketball league. Witness the crowning of the champions! Spectators welcome, entry is free.',
-    entryFee: 5,
-    maxParticipants: 200,
-    registeredParticipants: 112,
-    imageUrl: 'https://placehold.co/600x300.png',
-    imageDataAiHint: "basketball game intensity"
-  },
-   {
-    id: 'event-4',
-    name: 'Badminton Bonanza Weekend',
-    facilityId: 'facility-3',
-    sport: mockSports[3],
-    startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
-    description: 'A full weekend of badminton fun! Singles and doubles tournaments for various age groups. All levels welcome. Coaching sessions available.',
-    entryFee: 15,
-    maxParticipants: 48,
-    registeredParticipants: 15,
-    imageUrl: 'https://placehold.co/600x300.png',
-    imageDataAiHint: "badminton players action"
-  },
-];
-
-export const getAllEvents = (): SportEvent[] => {
-  return [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
-};
-
-export const getEventById = (id: string): SportEvent | undefined => {
-  const event = mockEvents.find(event => event.id === id);
-  if (event) {
-    const sport = getSportById(event.sport.id);
-    return sport ? { ...event, sport } : { ...event };
-  }
-  return undefined;
 };
 
 export const addEvent = (eventData: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): SportEvent => {
@@ -1095,6 +1243,7 @@ export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userNam
     id: `review-${mockReviews.length + 1}`,
     userName: currentUser?.name || 'Anonymous User',
     userAvatar: currentUser?.profilePictureUrl,
+    isPublicProfile: currentUser?.isProfilePublic || false,
     createdAt: new Date().toISOString(),
   };
   mockReviews.push(newReview);
@@ -1113,40 +1262,6 @@ export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userNam
 
   return newReview;
 };
-
-export let mockPricingRules: PricingRule[] = [
-    {
-        id: 'price-rule-1',
-        name: 'Weekend Evening Surge',
-        description: 'Higher prices for popular weekend evening slots.',
-        daysOfWeek: ['Sat', 'Sun'],
-        timeRange: { start: '18:00', end: '22:00' },
-        adjustmentType: 'percentage_increase',
-        value: 20,
-        priority: 10,
-        isActive: true,
-    },
-    {
-        id: 'price-rule-2',
-        name: 'Weekday Morning Discount',
-        description: 'Discount for less busy weekday morning hours.',
-        daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-        timeRange: { start: '08:00', end: '12:00' },
-        adjustmentType: 'percentage_decrease',
-        value: 15,
-        priority: 10,
-        isActive: true,
-    },
-    {
-        id: 'price-rule-3',
-        name: 'Holiday Special Pricing',
-        dateRange: { start: '2024-12-20', end: '2024-12-26' },
-        adjustmentType: 'fixed_price',
-        value: 75,
-        priority: 5,
-        isActive: true,
-    }
-];
 
 function checkRuleApplicability(rule: PricingRule, date: Date, slot: TimeSlot): boolean {
   if (!rule.isActive) return false;
@@ -1220,15 +1335,6 @@ export function calculateDynamicPrice(
   };
 }
 
-
-export const getAllPricingRules = (): PricingRule[] => {
-    return [...mockPricingRules];
-};
-
-export const getPricingRuleById = (id: string): PricingRule | undefined => {
-    return mockPricingRules.find(rule => rule.id === id);
-};
-
 export const addPricingRule = (ruleData: Omit<PricingRule, 'id'>): PricingRule => {
     const newRule: PricingRule = {
         ...ruleData,
@@ -1250,64 +1356,6 @@ export const deletePricingRule = (ruleId: string): boolean => {
     mockPricingRules = mockPricingRules.filter(r => r.id !== ruleId);
     return mockPricingRules.length < initialLength;
 };
-
-export let mockPromotionRules: PromotionRule[] = [
-    {
-        id: 'promo-1',
-        name: 'Summer Kickoff Discount',
-        description: 'Get 15% off any booking in June.',
-        code: 'SUMMER15',
-        discountType: 'percentage',
-        discountValue: 15,
-        startDate: '2024-06-01',
-        endDate: '2024-06-30',
-        usageLimit: 1000,
-        usageLimitPerUser: 1,
-        isActive: true,
-    },
-    {
-        id: 'promo-2',
-        name: 'New User Welcome',
-        description: '$10 off your first booking.',
-        code: 'WELCOME10',
-        discountType: 'fixed_amount',
-        discountValue: 10,
-        usageLimitPerUser: 1,
-        isActive: true,
-    },
-    {
-        id: 'promo-3',
-        name: 'Weekend Warrior Special',
-        description: '20% off weekend bookings (Sat/Sun). No code needed.',
-        discountType: 'percentage',
-        discountValue: 20,
-        isActive: true,
-    }
-];
-
-
-export const getAllPromotionRules = (): PromotionRule[] => {
-    return [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
-};
-
-export const getPromotionRuleByCode = (code: string): PromotionRule | undefined => {
-    const rule = mockPromotionRules.find(r => r.code?.toLowerCase() === code.toLowerCase() && r.isActive);
-    if (rule) {
-        const now = new Date();
-        const startDateValid = !rule.startDate || isAfter(now, startOfDay(parseISO(rule.startDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.startDate)), end: endOfDay(parseISO(rule.startDate))});
-        const endDateValid = !rule.endDate || isBefore(now, endOfDay(parseISO(rule.endDate))) || isWithinInterval(now, {start: startOfDay(parseISO(rule.endDate)), end: endOfDay(parseISO(rule.endDate))});
-
-        if (startDateValid && endDateValid) {
-            return rule;
-        }
-    }
-    return undefined;
-};
-
-export const getPromotionRuleById = (id: string): PromotionRule | undefined => {
-    return mockPromotionRules.find(r => r.id === id);
-};
-
 
 export const addPromotionRule = (ruleData: Omit<PromotionRule, 'id'>): PromotionRule => {
     const newRule: PromotionRule = {
@@ -1331,49 +1379,9 @@ export const deletePromotionRule = (ruleId: string): boolean => {
     return mockPromotionRules.length < initialLength;
 };
 
-export const mockReportData: ReportData = {
-  totalBookings: mockBookings.length,
-  totalRevenue: mockBookings.reduce((sum, booking) => sum + (booking.status === 'Confirmed' ? booking.totalPrice : 0), 0),
-  facilityUsage: (() => {
-    const usageMap = new Map<string, number>();
-    mockBookings.forEach(booking => {
-      usageMap.set(booking.facilityId, (usageMap.get(booking.facilityId) || 0) + 1);
-    });
-    return Array.from(usageMap.entries()).map(([facilityId, count]) => ({
-      facilityName: getFacilityById(facilityId)?.name || 'Unknown Facility', 
-      bookings: count,
-    }));
-  })(),
-  peakHours: [
-    { hour: '18:00', bookings: mockBookings.filter(b => b.startTime.startsWith('18:')).length || 200 },
-    { hour: '19:00', bookings: mockBookings.filter(b => b.startTime.startsWith('19:')).length || 180 },
-    { hour: '17:00', bookings: mockBookings.filter(b => b.startTime.startsWith('17:')).length || 150 },
-  ],
-};
-
-let mockSiteSettings: SiteSettings = {
-  siteName: 'Sports Arena',
-  defaultCurrency: 'INR',
-  timezone: 'America/Los_Angeles',
-  maintenanceMode: false,
-};
-
-export const getSiteSettings = (): SiteSettings => {
-  return mockSiteSettings;
-};
-
 export const updateSiteSettings = (newSettings: Partial<SiteSettings>): SiteSettings => {
   mockSiteSettings = { ...mockSiteSettings, ...newSettings };
   return mockSiteSettings;
-};
-
-export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => {
-    return mockWaitlist.some(entry =>
-        entry.userId === userId &&
-        entry.facilityId === facilityId &&
-        entry.date === date &&
-        entry.startTime === startTime
-    );
 };
 
 export const addToWaitlist = (userId: string, facilityId: string, date: string, startTime: string): WaitlistEntry | null => {
@@ -1390,31 +1398,6 @@ export const addToWaitlist = (userId: string, facilityId: string, date: string, 
     };
     mockWaitlist.push(newEntry);
     return newEntry;
-};
-
-export let mockLfgRequests: LfgRequest[] = [
-    {
-        id: 'lfg-1',
-        userId: 'user-regular', 
-        sportId: 'sport-1', 
-        notes: "Looking for a couple more players for a casual 5-a-side game at Grand City Arena this Saturday afternoon. Skill level doesn't matter, just want to have some fun!",
-        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'open',
-        interestedUserIds: [],
-    },
-    {
-        id: 'lfg-2',
-        userId: 'user-owner', 
-        sportId: 'sport-3', 
-        notes: "Need a partner for a doubles match at Riverside Tennis Club sometime this week. Intermediate level preferred. Flexible on time.",
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        status: 'open',
-        interestedUserIds: ['user-admin'],
-    }
-];
-
-export const getOpenLfgRequests = (): LfgRequest[] => {
-    return mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
 export const createLfgRequest = (data: { userId: string; sportId: string; notes: string }): LfgRequest => {
@@ -1457,5 +1440,31 @@ export const expressInterestInLfg = (lfgId: string, interestedUserId: string): L
     return request;
 };
     
+export const mockReportData: ReportData = {
+  totalBookings: mockBookings.length,
+  totalRevenue: mockBookings.reduce((sum, booking) => sum + (booking.status === 'Confirmed' ? booking.totalPrice : 0), 0),
+  facilityUsage: (() => {
+    const usageMap = new Map<string, number>();
+    mockBookings.forEach(booking => {
+      usageMap.set(booking.facilityId, (usageMap.get(booking.facilityId) || 0) + 1);
+    });
+    return Array.from(usageMap.entries()).map(([facilityId, count]) => ({
+      facilityName: getFacilityById(facilityId)?.name || 'Unknown Facility', 
+      bookings: count,
+    }));
+  })(),
+  peakHours: [
+    { hour: '18:00', bookings: mockBookings.filter(b => b.startTime.startsWith('18:')).length || 200 },
+    { hour: '19:00', bookings: mockBookings.filter(b => b.startTime.startsWith('19:')).length || 180 },
+    { hour: '17:00', bookings: mockBookings.filter(b => b.startTime.startsWith('17:')).length || 150 },
+  ],
+};
 
 
+// --- INITIALIZATION ---
+// This runs once when the module is first loaded, ensuring all facilities have their ratings calculated.
+mockFacilities.forEach(facility => {
+  const facilityReviews = getReviewsByFacilityId(facility.id);
+  facility.reviews = facilityReviews;
+  facility.rating = calculateAverageRating(facilityReviews);
+});

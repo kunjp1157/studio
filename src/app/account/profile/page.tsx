@@ -15,11 +15,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { mockUser, mockSports, mockMembershipPlans } from '@/lib/data';
 import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement, UserSkill, SkillLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell } from 'lucide-react';
+import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell, Shield } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
+import { Switch } from '@/components/ui/switch';
 
 const skillLevelsOptions: {value: SkillLevel | "Not Specified", label: string}[] = [
     { value: "Not Specified", label: "Not Specified" },
@@ -88,6 +89,11 @@ export default function ProfilePage() {
     }
     setUser({ ...user, skillLevels: currentSkills });
   };
+  
+   const handleSwitchChange = (checked: boolean) => {
+    if (!user) return;
+    setUser({ ...user, isProfilePublic: checked });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +111,7 @@ export default function ProfilePage() {
       mockUser.phone = user?.phone || mockUser.phone;
       mockUser.membershipLevel = user?.membershipLevel || mockUser.membershipLevel;
       mockUser.preferredSports = user?.preferredSports || mockUser.preferredSports;
+      mockUser.isProfilePublic = user?.isProfilePublic;
 
       toast({
         title: "Profile Updated",
@@ -302,6 +309,24 @@ export default function ProfilePage() {
                 </div>
               </section>
               
+              <Separator />
+
+              <section>
+                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Shield className="mr-2 h-5 w-5 text-primary" /> Privacy Settings</h3>
+                 <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="public-profile-switch" className="text-base font-normal">Public Profile</Label>
+                        <p className="text-sm text-muted-foreground">Allow other users to view your profile, achievements, and skill levels.</p>
+                    </div>
+                    <Switch
+                        id="public-profile-switch"
+                        checked={user.isProfilePublic}
+                        onCheckedChange={handleSwitchChange}
+                        disabled={!isEditing}
+                    />
+                </div>
+              </section>
+
               {isEditing && (
                 <div className="flex justify-end space-x-3 pt-4 border-t">
                   <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); setUser(mockUser); /* Reset changes */ }}>
