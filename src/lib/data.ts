@@ -1231,3 +1231,6 @@ export const updateSiteSettings = (newSettings: Partial<SiteSettings>): SiteSett
   mockSiteSettings = { ...mockSiteSettings, ...newSettings };
   return mockSiteSettings;
 };
+
+
+    
