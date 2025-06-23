@@ -1,5 +1,4 @@
 
-
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, Achievement, FacilityOperatingHours, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2 } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -228,6 +227,31 @@ export let mockFacilities: Facility[] = [
     dataAiHint: 'swimming pool olympic',
     availableEquipment: mockRentalEquipment.filter(eq => ['equip-8', 'equip-9'].includes(eq.id)),
     ownerId: 'user-owner',
+    blockedSlots: [],
+  },
+  {
+    id: 'facility-5',
+    name: 'Metropolis Box Cricket Zone',
+    type: 'Box Cricket',
+    address: '555 Rooftop Way, Metropolis, CA 90215',
+    location: 'Metropolis',
+    latitude: 34.0700,
+    longitude: -118.2800,
+    description: 'State-of-the-art box cricket arena with professional turf and lighting. Perfect for intense 6v6 matches day or night.',
+    images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png'],
+    sports: [mockSports.find(s => s.name === 'Cricket')!],
+    amenities: [mockAmenities[0], mockAmenities[3], mockAmenities[5]],
+    operatingHours: [...defaultOperatingHours],
+    pricePerHour: 45,
+    pricingRulesApplied: [],
+    rating: 4.8,
+    reviews: [],
+    capacity: 12,
+    isPopular: true,
+    isIndoor: true,
+    dataAiHint: 'box cricket night',
+    availableEquipment: [],
+    ownerId: 'user-admin',
     blockedSlots: [],
   },
 ];
