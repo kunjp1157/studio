@@ -160,9 +160,9 @@ export default function AdminPromotionsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <Link href={`/admin/promotions/${promo.id}/edit`} legacyBehavior passHref>
-                              <DropdownMenuItem asChild><a><Edit className="mr-2 h-4 w-4" /> Edit</a></DropdownMenuItem>
-                            </Link>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/admin/promotions/${promo.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-red-600 focus:text-red-600 focus:bg-red-50"
                               onClick={() => setPromotionToDelete(promo)}

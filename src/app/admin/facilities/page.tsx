@@ -155,12 +155,12 @@ export default function AdminFacilitiesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <Link href={`/facilities/${facility.id}`} legacyBehavior passHref>
-                                <DropdownMenuItem asChild><a><Eye className="mr-2 h-4 w-4" /> View Public Page</a></DropdownMenuItem>
-                                </Link>
-                                <Link href={`/admin/facilities/${facility.id}/edit`} legacyBehavior passHref>
-                                <DropdownMenuItem asChild><a><Edit className="mr-2 h-4 w-4" /> Edit</a></DropdownMenuItem>
-                                </Link>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/facilities/${facility.id}`}><Eye className="mr-2 h-4 w-4" /> View Public Page</Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/admin/facilities/${facility.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link>
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                 className="text-red-600 focus:text-red-600 focus:bg-red-50"

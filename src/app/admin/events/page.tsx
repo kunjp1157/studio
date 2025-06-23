@@ -146,12 +146,12 @@ export default function AdminEventsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <Link href={`/events/${event.id}`}>
-                            <DropdownMenuItem><Eye className="mr-2 h-4 w-4" /> View Public Page</DropdownMenuItem>
-                          </Link>
-                          <Link href={`/admin/events/${event.id}/edit`}>
-                            <DropdownMenuItem><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                          </Link>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/events/${event.id}`}><Eye className="mr-2 h-4 w-4" /> View Public Page</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/events/${event.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link>
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             className="text-red-600 focus:text-red-600 focus:bg-red-50"

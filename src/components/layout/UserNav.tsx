@@ -97,38 +97,38 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <Link href="/account/profile">
-            <DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/account/profile">
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
-            </DropdownMenuItem>
-          </Link>
-          <Link href="/account/bookings">
-            <DropdownMenuItem>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/account/bookings">
               <CalendarDays className="mr-2 h-4 w-4" />
               <span>My Bookings</span>
-            </DropdownMenuItem>
-          </Link>
-           <Link href="/account/favorites">
-            <DropdownMenuItem>
+            </Link>
+          </DropdownMenuItem>
+           <DropdownMenuItem asChild>
+            <Link href="/account/favorites">
               <Heart className="mr-2 h-4 w-4" />
               <span>My Favorites</span>
-            </DropdownMenuItem>
-          </Link>
-          <Link href="/account/payment-methods">
-            <DropdownMenuItem>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/account/payment-methods">
               <CreditCard className="mr-2 h-4 w-4" />
               <span>Payment Methods</span>
-            </DropdownMenuItem>
-          </Link>
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <Link href="/admin">
-            <DropdownMenuItem>
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              <span>Admin Dashboard</span>
-            </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/admin">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            <span>Admin Dashboard</span>
           </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
