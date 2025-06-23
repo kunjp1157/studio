@@ -32,7 +32,7 @@ const rentalEquipmentSchema = z.object({
 
 const facilityFormSchema = z.object({
   name: z.string().min(3, { message: "Facility name must be at least 3 characters." }),
-  type: z.enum(['Complex', 'Court', 'Field', 'Studio', 'Pool']),
+  type: z.enum(['Complex', 'Court', 'Field', 'Studio', 'Pool', 'Box Cricket']),
   address: z.string().min(5, { message: "Address is required." }),
   location: z.string().min(2, { message: "Location is required." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
@@ -194,7 +194,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      {['Complex', 'Court', 'Field', 'Studio', 'Pool'].map(type => (
+                      {['Complex', 'Court', 'Field', 'Studio', 'Pool', 'Box Cricket'].map(type => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                       ))}
                     </SelectContent>

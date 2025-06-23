@@ -81,7 +81,7 @@ export interface BlockedSlot {
 export interface Facility {
   id: string;
   name:string;
-  type: 'Complex' | 'Court' | 'Field' | 'Studio' | 'Pool';
+  type: 'Complex' | 'Court' | 'Field' | 'Studio' | 'Pool' | 'Box Cricket';
   address: string;
   location: string; 
   latitude?: number; 
