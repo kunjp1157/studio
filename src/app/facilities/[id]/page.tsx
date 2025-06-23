@@ -11,7 +11,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Star, MapPin, Clock, DollarSign, CalendarPlus, Users, Zap, Heart, MessageSquare, PackageSearch } from 'lucide-react';
+import { Star, MapPin, Clock, DollarSign, CalendarPlus, Users, Zap, Heart, MessageSquare, PackageSearch, ThumbsUp, ThumbsDown, Sparkles } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -19,6 +19,8 @@ import { AlertCircle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { StarDisplay } from '@/components/shared/StarDisplay';
 import { ReviewItem } from '@/components/reviews/ReviewItem';
+import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summarize-reviews';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Mock calendar component for availability preview
 function AvailabilityPreview({ facilityId }: { facilityId: string }) {
@@ -58,6 +60,8 @@ export default function FacilityDetailPage() {
   const facilityId = params.id as string;
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined); // undefined for loading, null for not found
   const { toast } = useToast();
+  const [summary, setSummary] = useState<SummarizeReviewsOutput | null>(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
   useEffect(() => {
     if (facilityId) {
@@ -68,6 +72,27 @@ export default function FacilityDetailPage() {
     }
   }, [facilityId]);
 
+  useEffect(() => {
+    if (facility && facility.reviews && facility.reviews.length >= 3) {
+        const fetchSummary = async () => {
+            setIsSummaryLoading(true);
+            try {
+                const reviewComments = facility.reviews!.map(r => r.comment).filter(Boolean);
+                if (reviewComments.length > 0) {
+                    const result = await summarizeReviews({ reviews: reviewComments });
+                    setSummary(result);
+                }
+            } catch (error) {
+                console.error("Failed to fetch review summary:", error);
+                // Don't show a user-facing error for this, just log it. It's a non-critical feature.
+            } finally {
+                setIsSummaryLoading(false);
+            }
+        };
+        fetchSummary();
+    }
+  }, [facility]);
+
   const handleFavoriteClick = () => {
     if (!facility) return;
     toast({
@@ -75,6 +100,66 @@ export default function FacilityDetailPage() {
       description: `${facility.name} has been added to your favorites.`,
     });
   };
+
+  const AiSummarySkeleton = () => (
+    <Card className="mb-6 animate-pulse bg-muted/30">
+        <CardHeader>
+            <div className="h-6 bg-muted rounded w-1/2"></div>
+            <div className="h-4 bg-muted rounded w-3/4 mt-1"></div>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <div>
+                <div className="h-5 bg-muted rounded w-1/4 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-full mb-1"></div>
+                <div className="h-4 bg-muted rounded w-5/6"></div>
+            </div>
+            <div>
+                <div className="h-5 bg-muted rounded w-1/4 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-full"></div>
+            </div>
+        </CardContent>
+    </Card>
+  );
+
+  const AiSummary = () => (
+    <Card className="mb-6 bg-accent/10 border-accent/30">
+        <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+                <Sparkles className="mr-2 h-5 w-5 text-accent"/>
+                AI Review Summary
+            </CardTitle>
+            <CardDescription>A quick overview based on recent user feedback.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div>
+                <h4 className="font-semibold flex items-center mb-2 text-green-700 dark:text-green-500">
+                    <ThumbsUp className="mr-2 h-4 w-4"/>
+                    Pros
+                </h4>
+                {summary && summary.pros.length > 0 ? (
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-foreground/80">
+                        {summary.pros.map((pro, i) => <li key={`pro-${i}`}>{pro}</li>)}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-muted-foreground italic">No specific pros mentioned frequently.</p>
+                )}
+            </div>
+            <div>
+                <h4 className="font-semibold flex items-center mb-2 text-red-700 dark:text-red-500">
+                    <ThumbsDown className="mr-2 h-4 w-4"/>
+                    Cons
+                </h4>
+                 {summary && summary.cons.length > 0 ? (
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-foreground/80">
+                        {summary.cons.map((con, i) => <li key={`con-${i}`}>{con}</li>)}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-muted-foreground italic">No specific cons mentioned frequently.</p>
+                )}
+            </div>
+        </CardContent>
+    </Card>
+  );
 
   if (facility === undefined) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
@@ -148,6 +233,10 @@ export default function FacilityDetailPage() {
 
 
           <p className="text-lg text-foreground mb-6">{facility.description}</p>
+          
+          {isSummaryLoading && <AiSummarySkeleton />}
+          {!isSummaryLoading && summary && (summary.pros.length > 0 || summary.cons.length > 0) && <AiSummary />}
+
 
           <Tabs defaultValue="details" className="w-full">
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-4">
@@ -309,4 +398,3 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
-
