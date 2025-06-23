@@ -1,5 +1,4 @@
-
-import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry } from './types';
+import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
@@ -342,14 +341,14 @@ export let mockTeams: Team[] = [
   {
     id: 'team-1',
     name: 'Metropolis Mavericks',
-    sport: mockSports[0], // Soccer
+    sport: mockSports[0], 
     captainId: 'user-admin',
     memberIds: ['user-admin', 'user-regular', 'user-owner'],
   },
   {
     id: 'team-2',
     name: 'Riverside Racqueteers',
-    sport: mockSports[2], // Tennis
+    sport: mockSports[2], 
     captainId: 'user-owner',
     memberIds: ['user-owner', 'user-admin'],
   },
@@ -393,22 +392,18 @@ export const leaveTeam = (teamId: string, userId: string): boolean => {
   if (teamIndex === -1) return false;
 
   const team = mockTeams[teamIndex];
-  if (!team.memberIds.includes(userId)) return false; // Not a member
+  if (!team.memberIds.includes(userId)) return false; 
 
   if (team.captainId === userId && team.memberIds.length > 1) {
-    // Cannot leave if captain and there are other members. Must transfer captaincy first (future feature).
     return false; 
   }
 
-  // If captain and last member, delete team
   if (team.captainId === userId && team.memberIds.length === 1) {
     mockTeams.splice(teamIndex, 1);
   } else {
-    // Just a member leaving
     team.memberIds = team.memberIds.filter(id => id !== userId);
   }
 
-  // Remove from user's team list
   const user = getUserById(userId);
   if (user && user.teamIds) {
     user.teamIds = user.teamIds.filter(id => id !== teamId);
@@ -424,7 +419,7 @@ export const addUserToTeam = (teamId: string, userId: string): boolean => {
   const user = getUserById(userId);
   if (!user) return false;
 
-  if (team.memberIds.includes(userId)) return true; // Already a member
+  if (team.memberIds.includes(userId)) return true; 
 
   team.memberIds.push(userId);
   if (!user.teamIds) user.teamIds = [];
@@ -596,7 +591,6 @@ const processWaitlistNotifications = (facilityId: string, date: string, startTim
                 link: `/facilities/${facilityId}/book`,
             });
         }
-        // Clear the waitlist for this slot after notifying
         mockWaitlist = mockWaitlist.filter(entry =>
             !(entry.facilityId === facilityId && entry.date === date && entry.startTime === startTime)
         );
@@ -847,6 +841,7 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
     case 'promotion': icon = Gift; break;
     case 'waitlist_opening': icon = BellRing; break;
     case 'user_status_changed': icon = Edit3; break;
+    case 'matchmaking_interest': icon = Swords; break;
   }
 
   const newNotification: AppNotification = {
@@ -1396,5 +1391,71 @@ export const addToWaitlist = (userId: string, facilityId: string, date: string, 
     mockWaitlist.push(newEntry);
     return newEntry;
 };
+
+export let mockLfgRequests: LfgRequest[] = [
+    {
+        id: 'lfg-1',
+        userId: 'user-regular', 
+        sportId: 'sport-1', 
+        notes: "Looking for a couple more players for a casual 5-a-side game at Grand City Arena this Saturday afternoon. Skill level doesn't matter, just want to have some fun!",
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'open',
+        interestedUserIds: [],
+    },
+    {
+        id: 'lfg-2',
+        userId: 'user-owner', 
+        sportId: 'sport-3', 
+        notes: "Need a partner for a doubles match at Riverside Tennis Club sometime this week. Intermediate level preferred. Flexible on time.",
+        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        status: 'open',
+        interestedUserIds: ['user-admin'],
+    }
+];
+
+export const getOpenLfgRequests = (): LfgRequest[] => {
+    return mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
+export const createLfgRequest = (data: { userId: string; sportId: string; notes: string }): LfgRequest => {
+    const newRequest: LfgRequest = {
+        id: `lfg-${Date.now()}`,
+        userId: data.userId,
+        sportId: data.sportId,
+        notes: data.notes,
+        createdAt: new Date().toISOString(),
+        status: 'open',
+        interestedUserIds: [],
+    };
+    mockLfgRequests.unshift(newRequest);
+    return newRequest;
+};
+
+export const expressInterestInLfg = (lfgId: string, interestedUserId: string): LfgRequest | undefined => {
+    const requestIndex = mockLfgRequests.findIndex(req => req.id === lfgId);
+    if (requestIndex === -1) return undefined;
+
+    const request = mockLfgRequests[requestIndex];
+    if (request.userId === interestedUserId || request.interestedUserIds.includes(interestedUserId)) {
+        return request; 
+    }
+
+    request.interestedUserIds.push(interestedUserId);
+
+    const interestedUser = getUserById(interestedUserId);
+    const sport = getSportById(request.sportId);
+
+    if (interestedUser) {
+        addNotification(request.userId, {
+            type: 'matchmaking_interest',
+            title: 'New Player Interested!',
+            message: `${interestedUser.name} is interested in your post for ${sport?.name || 'a game'}.`,
+            link: '/matchmaking' 
+        });
+    }
+
+    return request;
+};
     
+
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy, Calendar as CalendarIcon } from 'lucide-react'; 
+import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy, Calendar as CalendarIcon, Swords } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettings } from '@/lib/data';
 
@@ -33,7 +33,6 @@ export function Header() {
           </span>
         </Link>
         
-        {/* Main navigation for larger screens */}
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
           <Link href="/facilities"><Button variant="ghost" className="text-sm font-medium">Facilities</Button></Link>
           <Link href="/sports"><Button variant="ghost" className="text-sm font-medium">Sports</Button></Link>
@@ -41,9 +40,9 @@ export function Header() {
           <Link href="/memberships"><Button variant="ghost" className="text-sm font-medium">Memberships</Button></Link>
           <Link href="/blog"><Button variant="ghost" className="text-sm font-medium">Blog</Button></Link>
           <Link href="/leaderboard"><Button variant="ghost" className="text-sm font-medium">Leaderboard</Button></Link>
+          <Link href="/matchmaking"><Button variant="ghost" className="text-sm font-medium">Matchmaking</Button></Link>
         </nav>
 
-        {/* Right-aligned actions */}
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Link href="/recommendation" className="hidden lg:inline-flex">
             <Button variant="ghost">

@@ -11,27 +11,27 @@ export interface Team {
 export interface Amenity {
   id: string;
   name: string;
-  icon?: React.ElementType; // Optional: Lucide icon component
+  icon?: React.ElementType; 
 }
 
 export interface Sport {
   id: string;
   name: string;
-  icon?: React.ElementType; // Optional: Lucide icon component
-  imageUrl?: string; // Optional: URL for a representative image of the sport
-  imageDataAiHint?: string; // Optional: AI hint for the sport's image
+  icon?: React.ElementType; 
+  imageUrl?: string; 
+  imageDataAiHint?: string; 
 }
 
 export interface Review {
   id: string;
   facilityId: string;
   userId: string;
-  userName: string; // Denormalized for easy display
-  userAvatar?: string; // Optional, denormalized
-  rating: number; // 1-5
+  userName: string; 
+  userAvatar?: string; 
+  rating: number; 
   comment: string;
-  createdAt: string; // ISO date string
-  bookingId?: string; // To link review to a specific booking
+  createdAt: string; 
+  bookingId?: string; 
 }
 
 export interface PricingRule {
@@ -39,11 +39,11 @@ export interface PricingRule {
   name: string;
   description?: string;
   daysOfWeek?: ('Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun')[];
-  timeRange?: { start: string; end: string }; // e.g., { start: "17:00", end: "21:00" }
-  dateRange?: { start: string; end: string }; // e.g., { start: "2024-12-20", end: "2024-12-26" } for holiday pricing
+  timeRange?: { start: string; end: string }; 
+  dateRange?: { start: string; end: string }; 
   adjustmentType: 'percentage_increase' | 'percentage_decrease' | 'fixed_increase' | 'fixed_decrease' | 'fixed_price';
-  value: number; // The actual adjustment value or fixed price
-  priority?: number; // To handle overlapping rules, lower numbers apply first
+  value: number; 
+  priority?: number; 
   isActive: boolean;
 }
 
@@ -51,13 +51,13 @@ export interface PromotionRule {
   id: string;
   name: string;
   description?: string;
-  code?: string; // The actual discount code a user would enter, e.g., "SUMMER20"
+  code?: string; 
   discountType: 'percentage' | 'fixed_amount';
-  discountValue: number; // e.g., 20 for 20% or 5 for $5 off
-  startDate?: string; // ISO date string
-  endDate?: string; // ISO date string
-  usageLimit?: number; // How many times this promotion can be used in total. 0 or undefined for unlimited.
-  usageLimitPerUser?: number; // How many times a single user can use this promotion. 0 or undefined for unlimited.
+  discountValue: number; 
+  startDate?: string; 
+  endDate?: string; 
+  usageLimit?: number; 
+  usageLimitPerUser?: number; 
   isActive: boolean;
 }
 
@@ -80,9 +80,9 @@ export interface FacilityOperatingHours {
 }
 
 export interface BlockedSlot {
-  date: string; // YYYY-MM-DD
-  startTime: string; // HH:MM
-  endTime: string; // HH:MM
+  date: string; 
+  startTime: string; 
+  endTime: string; 
   reason?: string;
 }
 
@@ -113,8 +113,8 @@ export interface Facility {
 }
 
 export interface TimeSlot {
-  startTime: string; // "HH:MM"
-  endTime: string; // "HH:MM"
+  startTime: string; 
+  endTime: string; 
   isAvailable: boolean;
 }
 
@@ -140,9 +140,9 @@ export interface Booking {
   facilityName: string; 
   facilityImage: string; 
   dataAiHint?: string; 
-  date: string; // "YYYY-MM-DD"
-  startTime: string; // "HH:MM"
-  endTime: string; // "HH:MM"
+  date: string; 
+  startTime: string; 
+  endTime: string; 
   durationHours?: number; 
   numberOfGuests?: number; 
   baseFacilityPrice?: number; 
@@ -150,7 +150,7 @@ export interface Booking {
   appliedPromotion?: AppliedPromotionInfo; 
   totalPrice: number; 
   status: 'Confirmed' | 'Pending' | 'Cancelled';
-  bookedAt: string; // ISO date string
+  bookedAt: string; 
   reviewed?: boolean; 
   rentedEquipment?: RentedItemInfo[];
 }
@@ -192,14 +192,14 @@ export interface UserProfile {
   skillLevels?: UserSkill[];
   role: UserRole;
   status: UserStatus;
-  joinedAt: string; // ISO date string
+  joinedAt: string; 
   teamIds?: string[];
 }
 
-export interface AdminUser { // This might be redundant if UserProfile.role handles it
+export interface AdminUser { 
   id: string;
   username: string;
-  role: 'Admin' | 'Manager'; // Simplified for specific admin roles if needed
+  role: 'Admin' | 'Manager'; 
 }
 
 export interface ReportData {
@@ -221,8 +221,8 @@ export interface SportEvent {
   name: string;
   facilityId: string;
   sport: Sport; 
-  startDate: string; // ISO date string
-  endDate: string; // ISO date string
+  startDate: string; 
+  endDate: string; 
   description: string;
   entryFee?: number;
   maxParticipants?: number;
@@ -241,7 +241,7 @@ export interface SearchFilters {
   indoorOutdoor?: 'any' | 'indoor' | 'outdoor';
 }
 
-export type NotificationType = 'booking_confirmed' | 'booking_cancelled' | 'review_submitted' | 'reminder' | 'promotion' | 'general' | 'user_status_changed' | 'facility_approved' | 'waitlist_opening';
+export type NotificationType = 'booking_confirmed' | 'booking_cancelled' | 'review_submitted' | 'reminder' | 'promotion' | 'general' | 'user_status_changed' | 'facility_approved' | 'waitlist_opening' | 'matchmaking_interest';
 
 export interface AppNotification {
   id: string;
@@ -249,7 +249,7 @@ export interface AppNotification {
   type: NotificationType;
   title: string;
   message: string;
-  createdAt: string; // ISO date string
+  createdAt: string; 
   isRead: boolean;
   link?: string; 
   icon?: React.ElementType; 
@@ -265,7 +265,7 @@ export interface BlogPost {
   imageAlt?: string;
   authorName: string;
   authorAvatarUrl?: string;
-  publishedAt: string; // ISO date string
+  publishedAt: string; 
   tags?: string[];
   isFeatured?: boolean;
   dataAiHint?: string;
@@ -282,8 +282,18 @@ export interface WaitlistEntry {
     id: string;
     userId: string;
     facilityId: string;
-    date: string; // YYYY-MM-DD
-    startTime: string; // HH:MM
-    createdAt: string; // ISO Date string
+    date: string; 
+    startTime: string; 
+    createdAt: string; 
+}
+
+export interface LfgRequest {
+  id: string;
+  userId: string;
+  sportId: string;
+  notes: string;
+  createdAt: string; 
+  status: 'open' | 'closed';
+  interestedUserIds: string[];
 }
     
