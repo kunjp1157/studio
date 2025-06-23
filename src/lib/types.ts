@@ -1,4 +1,5 @@
 
+
 export interface Team {
   id: string;
   name: string;
@@ -240,7 +241,7 @@ export interface SearchFilters {
   indoorOutdoor?: 'any' | 'indoor' | 'outdoor';
 }
 
-export type NotificationType = 'booking_confirmed' | 'booking_cancelled' | 'review_submitted' | 'reminder' | 'promotion' | 'general' | 'user_status_changed' | 'facility_approved';
+export type NotificationType = 'booking_confirmed' | 'booking_cancelled' | 'review_submitted' | 'reminder' | 'promotion' | 'general' | 'user_status_changed' | 'facility_approved' | 'waitlist_opening';
 
 export interface AppNotification {
   id: string;
@@ -275,5 +276,14 @@ export interface SiteSettings {
   defaultCurrency: 'USD' | 'EUR' | 'GBP' | 'INR';
   timezone: string;
   maintenanceMode: boolean;
+}
+
+export interface WaitlistEntry {
+    id: string;
+    userId: string;
+    facilityId: string;
+    date: string; // YYYY-MM-DD
+    startTime: string; // HH:MM
+    createdAt: string; // ISO Date string
 }
     

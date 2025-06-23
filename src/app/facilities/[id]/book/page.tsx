@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings } from '@/lib/types';
-import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, mockPricingRules, getSiteSettings } from '@/lib/data';
+import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, getSiteSettings, isUserOnWaitlist, addToWaitlist } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2 } from 'lucide-react';
+import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2, BellRing } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInHours, parse, formatISO, addHours } from 'date-fns';
@@ -99,6 +99,9 @@ export default function BookingPage() {
   
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
+  const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
+  const [isOnWaitlist, setIsOnWaitlist] = useState(false);
+
   useEffect(() => {
     if (facilityId) {
       const foundFacility = getFacilityById(facilityId);
@@ -117,6 +120,12 @@ export default function BookingPage() {
       setSelectedSlot(undefined); 
     }
   }, [selectedDate, temporarilyBookedSlots]);
+
+  useEffect(() => {
+    if (selectedSlot && selectedDate && facility) {
+      setIsOnWaitlist(isUserOnWaitlist(mockUser.id, facility.id, format(selectedDate, 'yyyy-MM-dd'), selectedSlot.startTime));
+    }
+  }, [selectedSlot, selectedDate, facility]);
   
   const bookingDurationHours = useMemo(() => {
     if (selectedSlot && selectedDate) {
@@ -342,6 +351,22 @@ export default function BookingPage() {
     }
   };
 
+  const handleJoinWaitlist = async () => {
+    if (!facility || !selectedDate || !selectedSlot) return;
+
+    setIsJoiningWaitlist(true);
+    await new Promise(r => setTimeout(r, 700)); // Simulate API call
+
+    addToWaitlist(mockUser.id, facility.id, format(selectedDate, 'yyyy-MM-dd'), selectedSlot.startTime);
+
+    toast({
+        title: "Added to Waitlist!",
+        description: `We'll notify you if the ${selectedSlot.startTime} slot at ${facility.name} becomes available.`,
+    });
+    setIsOnWaitlist(true);
+    setIsJoiningWaitlist(false);
+  };
+
   const generateGoogleCalendarLink = () => {
     if (!facility || !selectedDate || !selectedSlot || !currency) return '#';
 
@@ -456,11 +481,32 @@ export default function BookingPage() {
                         />
                     </div>
                   )}
+                  {selectedSlot && !selectedSlot.isAvailable && (
+                    <Alert variant="default" className="mt-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Slot Unavailable</AlertTitle>
+                        <AlertDescription>
+                            This time slot is currently booked. You can join the waitlist to be notified if it becomes available.
+                        </AlertDescription>
+                        <div className="mt-4">
+                            {isOnWaitlist ? (
+                                <Button disabled variant="outline" className="w-full">
+                                    <CheckCircle className="mr-2 h-4 w-4" /> You're on the waitlist
+                                </Button>
+                            ) : (
+                                <Button onClick={handleJoinWaitlist} disabled={isJoiningWaitlist} className="w-full">
+                                    {isJoiningWaitlist ? <LoadingSpinner size={16} className="mr-2"/> : <BellRing className="mr-2 h-4 w-4" />}
+                                    Join Waitlist
+                                </Button>
+                            )}
+                        </div>
+                    </Alert>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {hasRentals && selectedSlot && (
+            {hasRentals && selectedSlot && selectedSlot.isAvailable && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center"><PackageSearch className="mr-2 h-5 w-5 text-primary"/>Rent Equipment</CardTitle>
@@ -657,7 +703,7 @@ export default function BookingPage() {
                 </>
               )}
 
-              {bookingStep === 'details' && (
+              {bookingStep === 'details' && selectedSlot?.isAvailable && (
                 <div className="pt-2 space-y-2">
                   <Label htmlFor="promo-code" className="text-sm font-medium">Promo Code</Label>
                   <div className="flex space-x-2">
@@ -707,7 +753,7 @@ export default function BookingPage() {
                   size="lg" 
                   className="w-full" 
                   onClick={proceedToPayment} 
-                  disabled={!selectedDate || !selectedSlot || !numberOfGuests || parseInt(numberOfGuests) < 1}
+                  disabled={!selectedDate || !selectedSlot || !numberOfGuests || parseInt(numberOfGuests) < 1 || !selectedSlot.isAvailable}
                 >
                   Proceed to Payment
                 </Button>

@@ -1,6 +1,6 @@
 
-import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team } from './types';
-import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2 } from 'lucide-react';
+import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry } from './types';
+import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
 
@@ -574,10 +574,50 @@ export let mockBookings: Booking[] = [
   },
 ];
 
+let mockWaitlist: WaitlistEntry[] = [];
+
+const processWaitlistNotifications = (facilityId: string, date: string, startTime: string) => {
+    const facility = getFacilityById(facilityId);
+    if (!facility) return;
+
+    const waitlistedUsers = mockWaitlist.filter(entry =>
+        entry.facilityId === facilityId &&
+        entry.date === date &&
+        entry.startTime === startTime
+    );
+
+    if (waitlistedUsers.length > 0) {
+        console.log(`Notifying ${waitlistedUsers.length} users for slot ${facility.name} at ${date} ${startTime}`);
+        for (const entry of waitlistedUsers) {
+            addNotification(entry.userId, {
+                type: 'waitlist_opening',
+                title: 'Slot Available!',
+                message: `A slot at ${facility.name} for ${date} at ${startTime} is now open! Book now before it's gone.`,
+                link: `/facilities/${facilityId}/book`,
+            });
+        }
+        // Clear the waitlist for this slot after notifying
+        mockWaitlist = mockWaitlist.filter(entry =>
+            !(entry.facilityId === facilityId && entry.date === date && entry.startTime === startTime)
+        );
+    }
+};
+
 export const updateBooking = (bookingId: string, updates: Partial<Booking>): Booking | undefined => {
     const bookingIndex = mockBookings.findIndex(b => b.id === bookingId);
     if (bookingIndex === -1) return undefined;
+    
+    const originalBooking = { ...mockBookings[bookingIndex] };
+    const wasConfirmed = originalBooking.status === 'Confirmed';
+    
     mockBookings[bookingIndex] = { ...mockBookings[bookingIndex], ...updates };
+    
+    const isNowCancelled = updates.status === 'Cancelled';
+
+    if (wasConfirmed && isNowCancelled) {
+        processWaitlistNotifications(originalBooking.facilityId, originalBooking.date, originalBooking.startTime);
+    }
+
     return mockBookings[bookingIndex];
 };
 
@@ -805,6 +845,7 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
     case 'review_submitted': icon = MessageSquareText; break;
     case 'reminder': icon = LucideCalendarDays; break;
     case 'promotion': icon = Gift; break;
+    case 'waitlist_opening': icon = BellRing; break;
     case 'user_status_changed': icon = Edit3; break;
   }
 
@@ -1331,5 +1372,29 @@ export const updateSiteSettings = (newSettings: Partial<SiteSettings>): SiteSett
   return mockSiteSettings;
 };
 
+export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => {
+    return mockWaitlist.some(entry =>
+        entry.userId === userId &&
+        entry.facilityId === facilityId &&
+        entry.date === date &&
+        entry.startTime === startTime
+    );
+};
 
+export const addToWaitlist = (userId: string, facilityId: string, date: string, startTime: string): WaitlistEntry | null => {
+    if (isUserOnWaitlist(userId, facilityId, date, startTime)) {
+        return null;
+    }
+    const newEntry: WaitlistEntry = {
+        id: `wait-${Date.now()}`,
+        userId,
+        facilityId,
+        date,
+        startTime,
+        createdAt: new Date().toISOString(),
+    };
+    mockWaitlist.push(newEntry);
+    return newEntry;
+};
     
+
