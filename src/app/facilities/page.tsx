@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -15,39 +15,34 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating-desc';
 
 export default function FacilitiesPage() {
-  // `allFacilities` is the single source of truth from the data store.
   const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
-  // `facilitiesToShow` is the list that gets rendered, after filters/sorts.
   const [facilitiesToShow, setFacilitiesToShow] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortOption, setSortOption] = useState<SortOption>('default');
-  // Store filters in state so we can re-apply them when data changes.
   const [currentFilters, setCurrentFilters] = useState<SearchFilters | null>(null);
 
-  // This effect handles fetching the data and polling for live updates.
   useEffect(() => {
     const fetchAndSetFacilities = () => {
       const freshFacilities = getAllFacilities();
-      // Use a functional update to only change state if data is different, preventing needless re-renders.
       setAllFacilities(currentFacilities => {
         if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
-            return freshFacilities;
+          return freshFacilities;
         }
         return currentFacilities;
       });
-      if (isLoading) {
-          setIsLoading(false);
-      }
     };
-    
-    fetchAndSetFacilities(); // Initial fetch
 
-    const intervalId = setInterval(fetchAndSetFacilities, 3000); // Poll every 3 seconds
+    // Initial fetch
+    fetchAndSetFacilities();
+    setIsLoading(false);
 
-    return () => clearInterval(intervalId); // Cleanup
-  }, [isLoading]); // Rerun if isLoading changes, but it will only change once.
+    // Set up polling to check for live updates every 3 seconds
+    const intervalId = setInterval(fetchAndSetFacilities, 3000);
 
-  // This effect re-applies filters and sorting whenever the base data, filters, or sort option changes.
+    // Cleanup on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
+
   useEffect(() => {
     let facilitiesToProcess = [...allFacilities];
 
@@ -172,3 +167,4 @@ export default function FacilitiesPage() {
     </div>
   );
 }
+    
