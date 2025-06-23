@@ -2,17 +2,31 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic'; // For client-side map component
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
 import type { Facility, SearchFilters } from '@/lib/types';
 import { getAllFacilities } from '@/lib/data';
-import { AlertCircle, SortAsc } from 'lucide-react';
+import { AlertCircle, SortAsc, LayoutGrid, Map as MapIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Dynamically import the map component to ensure it only runs on the client
+const FacilityMap = dynamic(
+  () => import('@/components/facilities/FacilityMap').then(mod => mod.FacilityMap),
+  { 
+    ssr: false,
+    loading: () => <Skeleton className="h-[600px] w-full rounded-lg" />
+  }
+);
+
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating-desc';
+type ViewMode = 'list' | 'map';
 
 export default function FacilitiesPage() {
   const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
@@ -20,6 +34,7 @@ export default function FacilitiesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [sortOption, setSortOption] = useState<SortOption>('default');
   const [currentFilters, setCurrentFilters] = useState<SearchFilters | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   useEffect(() => {
     const fetchAndSetFacilities = () => {
@@ -123,7 +138,28 @@ export default function FacilitiesPage() {
         <FacilitySearchForm onSearch={handleSearch} />
       </div>
 
-      <div className="flex justify-end items-center mb-6 gap-4">
+      <div className="flex justify-between items-center mb-6 gap-4">
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
+          <Button 
+            variant={viewMode === 'list' ? 'default' : 'ghost'} 
+            size="sm" 
+            onClick={() => setViewMode('list')}
+            className="h-8 px-3"
+          >
+            <LayoutGrid className="mr-2 h-4 w-4" /> List
+          </Button>
+          <Button 
+            variant={viewMode === 'map' ? 'default' : 'ghost'} 
+            size="sm" 
+            onClick={() => setViewMode('map')}
+            className="h-8 px-3"
+          >
+            <MapIcon className="mr-2 h-4 w-4" /> Map
+          </Button>
+        </div>
+
+        {/* Sort Dropdown */}
         <div className="w-full sm:w-auto">
             <Select value={sortOption} onValueChange={(value) => handleSortChange(value as SortOption)}>
                 <SelectTrigger className="w-full sm:w-[220px]">
@@ -148,10 +184,18 @@ export default function FacilitiesPage() {
       ) : (
         <>
           {facilitiesToShow.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {facilitiesToShow.map((facility) => (
-                <FacilityCard key={facility.id} facility={facility} />
-              ))}
+            <div>
+              {viewMode === 'list' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {facilitiesToShow.map((facility) => (
+                    <FacilityCard key={facility.id} facility={facility} />
+                  ))}
+                </div>
+              ) : (
+                 <div className="mt-4">
+                  <FacilityMap facilities={facilitiesToShow} />
+                </div>
+              )}
             </div>
           ) : (
             <Alert variant="default" className="mt-8">
