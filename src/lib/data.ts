@@ -1,23 +1,23 @@
 
-import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings } from './types';
+import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2 } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
 
 export const mockSports: Sport[] = [
-  { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'soccer ball' },
-  { id: 'sport-2', name: 'Basketball', icon: Dribbble, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'basketball hoop' },
-  { id: 'sport-3', name: 'Tennis', icon: Activity, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'tennis racket' },
-  { id: 'sport-4', name: 'Badminton', icon: Feather, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'badminton shuttlecock' },
-  { id: 'sport-5', name: 'Swimming', icon: PersonStanding, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'swimming lane' },
-  { id: 'sport-6', name: 'Yoga', icon: Brain, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'yoga pose' },
-  { id: 'sport-7', name: 'Cycling', icon: Bike, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cycling road' },
-  { id: 'sport-8', name: 'Dance', icon: Music, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'dance studio' },
-  { id: 'sport-9', name: 'Camping', icon: Tent, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'camping tent nature' },
-  { id: 'sport-10', name: 'Theatre', icon: Drama, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'theatre stage' },
-  { id: 'sport-13', name: 'Cricket', icon: Dices, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'cricket bat ball' },
-  { id: 'sport-14', name: 'Pool', icon: Target, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'billiards table' },
-  { id: 'sport-15', name: 'PC Game/PS5', icon: Gamepad2, imageUrl: 'https://placehold.co/400x300.png', imageDataAiHint: 'gaming setup' },
+  { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://images.unsplash.com/photo-1551958214-e6163c125414', imageDataAiHint: 'soccer ball' },
+  { id: 'sport-2', name: 'Basketball', icon: Dribbble, imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc', imageDataAiHint: 'basketball hoop' },
+  { id: 'sport-3', name: 'Tennis', icon: Activity, imageUrl: 'https://images.unsplash.com/photo-1594470117722-de4b9a02ebed', imageDataAiHint: 'tennis racket' },
+  { id: 'sport-4', name: 'Badminton', icon: Feather, imageUrl: 'https://images.unsplash.com/photo-1521587514789-53b8a3b09228', imageDataAiHint: 'badminton shuttlecock' },
+  { id: 'sport-5', name: 'Swimming', icon: PersonStanding, imageUrl: 'https://images.unsplash.com/photo-1590650392358-693608513b68', imageDataAiHint: 'swimming lane' },
+  { id: 'sport-6', name: 'Yoga', icon: Brain, imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b', imageDataAiHint: 'yoga pose' },
+  { id: 'sport-7', name: 'Cycling', icon: Bike, imageUrl: 'https://images.unsplash.com/photo-1576426863875-c217e4287487', imageDataAiHint: 'cycling road' },
+  { id: 'sport-8', name: 'Dance', icon: Music, imageUrl: 'https://images.unsplash.com/photo-1511719111394-550342a5b23d', imageDataAiHint: 'dance studio' },
+  { id: 'sport-9', name: 'Camping', icon: Tent, imageUrl: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d', imageDataAiHint: 'camping tent nature' },
+  { id: 'sport-10', name: 'Theatre', icon: Drama, imageUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91e38a493', imageDataAiHint: 'theatre stage' },
+  { id: 'sport-13', name: 'Cricket', icon: Dices, imageUrl: 'https://images.unsplash.com/photo-1599551154316-276537b02c89', imageDataAiHint: 'cricket bat ball' },
+  { id: 'sport-14', name: 'Pool', icon: Target, imageUrl: 'https://images.unsplash.com/photo-1601758124235-7c98c199e4df', imageDataAiHint: 'billiards table' },
+  { id: 'sport-15', name: 'PC Game/PS5', icon: Gamepad2, imageUrl: 'https://images.unsplash.com/photo-1598550489913-af3c28a2cc73', imageDataAiHint: 'gaming setup' },
 ];
 
 export const mockAmenities: Amenity[] = [
@@ -238,7 +238,7 @@ export let mockFacilities: Facility[] = [
     latitude: 34.0700,
     longitude: -118.2800,
     description: 'State-of-the-art box cricket arena with professional turf and lighting. Perfect for intense 6v6 matches day or night.',
-    images: ['https://5.imimg.com/data5/SELLER/Default/2023/3/TF/YN/KO/15707674/box-cricket-setup-500x500.jpg'],
+    images: ['https://images.unsplash.com/photo-1607962837359-5e7e89f86e22'],
     sports: [mockSports.find(s => s.name === 'Cricket')!],
     amenities: [mockAmenities[0], mockAmenities[3], mockAmenities[5]],
     operatingHours: [...defaultOperatingHours],
@@ -292,6 +292,7 @@ export let mockUsers: UserProfile[] = [
     role: 'Admin',
     status: 'Active',
     joinedAt: subDays(new Date(), 30).toISOString(),
+    teamIds: ['team-1', 'team-2'],
   },
   {
     id: 'user-regular',
@@ -305,6 +306,7 @@ export let mockUsers: UserProfile[] = [
     joinedAt: subDays(new Date(), 90).toISOString(),
     favoriteFacilities: ['facility-1'],
     loyaltyPoints: 200,
+    teamIds: ['team-1'],
   },
   {
     id: 'user-owner',
@@ -318,6 +320,7 @@ export let mockUsers: UserProfile[] = [
     bio: 'Owner of Riverside Tennis Club. Dedicated to providing the best tennis experience.',
     joinedAt: subDays(new Date(), 150).toISOString(),
     loyaltyPoints: 500,
+    teamIds: ['team-1', 'team-2'],
   },
   {
     id: 'user-suspended',
@@ -329,10 +332,106 @@ export let mockUsers: UserProfile[] = [
     status: 'Suspended',
     joinedAt: subDays(new Date(), 60).toISOString(),
     loyaltyPoints: 50,
+    teamIds: [],
   }
 ];
 
 export const mockUser = mockUsers[0]; 
+
+export let mockTeams: Team[] = [
+  {
+    id: 'team-1',
+    name: 'Metropolis Mavericks',
+    sport: mockSports[0], // Soccer
+    captainId: 'user-admin',
+    memberIds: ['user-admin', 'user-regular', 'user-owner'],
+  },
+  {
+    id: 'team-2',
+    name: 'Riverside Racqueteers',
+    sport: mockSports[2], // Tennis
+    captainId: 'user-owner',
+    memberIds: ['user-owner', 'user-admin'],
+  },
+];
+
+export const getTeamById = (teamId: string): Team | undefined => {
+  return mockTeams.find(team => team.id === teamId);
+}
+
+export const getTeamsByUserId = (userId: string): Team[] => {
+  return mockTeams.filter(team => team.memberIds.includes(userId));
+}
+
+export const createTeam = (teamData: { name: string; sportId: string; captainId: string }): Team => {
+  const sport = getSportById(teamData.sportId);
+  if (!sport) {
+    throw new Error('Sport not found');
+  }
+  const newTeam: Team = {
+    id: `team-${Date.now()}`,
+    name: teamData.name,
+    sport,
+    captainId: teamData.captainId,
+    memberIds: [teamData.captainId],
+  };
+  mockTeams.push(newTeam);
+  
+  const user = getUserById(teamData.captainId);
+  if (user) {
+    if (!user.teamIds) {
+      user.teamIds = [];
+    }
+    user.teamIds.push(newTeam.id);
+  }
+  
+  return newTeam;
+}
+
+export const leaveTeam = (teamId: string, userId: string): boolean => {
+  const teamIndex = mockTeams.findIndex(t => t.id === teamId);
+  if (teamIndex === -1) return false;
+
+  const team = mockTeams[teamIndex];
+  if (!team.memberIds.includes(userId)) return false; // Not a member
+
+  if (team.captainId === userId && team.memberIds.length > 1) {
+    // Cannot leave if captain and there are other members. Must transfer captaincy first (future feature).
+    return false; 
+  }
+
+  // If captain and last member, delete team
+  if (team.captainId === userId && team.memberIds.length === 1) {
+    mockTeams.splice(teamIndex, 1);
+  } else {
+    // Just a member leaving
+    team.memberIds = team.memberIds.filter(id => id !== userId);
+  }
+
+  // Remove from user's team list
+  const user = getUserById(userId);
+  if (user && user.teamIds) {
+    user.teamIds = user.teamIds.filter(id => id !== teamId);
+  }
+  
+  return true;
+}
+
+export const addUserToTeam = (teamId: string, userId: string): boolean => {
+  const team = mockTeams.find(t => t.id === teamId);
+  if (!team) return false;
+
+  const user = getUserById(userId);
+  if (!user) return false;
+
+  if (team.memberIds.includes(userId)) return true; // Already a member
+
+  team.memberIds.push(userId);
+  if (!user.teamIds) user.teamIds = [];
+  user.teamIds.push(teamId);
+
+  return true;
+};
 
 export let mockBookings: Booking[] = [
   {

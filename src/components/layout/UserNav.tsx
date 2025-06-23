@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart } from 'lucide-react';
+import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart, Group } from 'lucide-react';
 import { mockUser } from '@/lib/data'; // For mock data
 
 export function UserNav() {
@@ -113,6 +113,12 @@ export function UserNav() {
             <Link href="/account/favorites">
               <Heart className="mr-2 h-4 w-4" />
               <span>My Favorites</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/account/teams">
+              <Group className="mr-2 h-4 w-4" />
+              <span>My Teams</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>

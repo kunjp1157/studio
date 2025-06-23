@@ -1,4 +1,11 @@
 
+export interface Team {
+  id: string;
+  name: string;
+  sport: Sport;
+  captainId: string;
+  memberIds: string[];
+}
 
 export interface Amenity {
   id: string;
@@ -185,6 +192,7 @@ export interface UserProfile {
   role: UserRole;
   status: UserStatus;
   joinedAt: string; // ISO date string
+  teamIds?: string[];
 }
 
 export interface AdminUser { // This might be redundant if UserProfile.role handles it
