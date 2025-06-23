@@ -18,7 +18,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Image as ImageIcon, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LayoutPanelLeft, LocateFixed, Star } from 'lucide-react';
+import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Image as ImageIcon, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LayoutPanelLeft, LocateFixed, Star, Sparkles } from 'lucide-react';
+import { generateImageFromPrompt } from '@/ai/flows/generate-image-flow';
 
 const rentalEquipmentSchema = z.object({
   id: z.string().optional(),
@@ -75,6 +76,8 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [imageGenPrompt, setImageGenPrompt] = useState('');
 
   useEffect(() => {
     const settingsInterval = setInterval(() => {
@@ -127,6 +130,32 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
     control: form.control,
     name: "availableEquipment"
   });
+
+  const handleGenerateImage = async () => {
+      if (!imageGenPrompt) {
+          toast({ title: 'Prompt is empty', description: 'Please describe the image you want to generate.', variant: 'destructive' });
+          return;
+      }
+      setIsGeneratingImage(true);
+      try {
+          const result = await generateImageFromPrompt({ prompt: imageGenPrompt });
+          if (result.imageUrl) {
+              const currentImages = form.getValues('images');
+              const emptyIndex = currentImages.findIndex(img => !img || img.trim() === '');
+              if (emptyIndex !== -1) {
+                  form.setValue(`images.${emptyIndex}`, result.imageUrl, { shouldValidate: true, shouldDirty: true });
+              } else {
+                  appendImage(result.imageUrl);
+              }
+              toast({ title: 'Image Generated!', description: 'The AI-generated image has been added to your facility images.', className: 'bg-green-500 text-white' });
+          }
+      } catch (error) {
+          console.error("Image generation failed", error);
+          toast({ title: 'Image Generation Failed', description: 'Could not generate the image. Please try again.', variant: 'destructive' });
+      } finally {
+          setIsGeneratingImage(false);
+      }
+  };
 
   const onSubmit = async (data: FacilityFormValues) => {
     setIsLoading(true);
@@ -279,6 +308,30 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
                   <FormMessage />
                 </FormItem>
               )} />
+            
+            <Card>
+              <CardHeader>
+                  <CardTitle className="flex items-center"><Sparkles className="mr-2 h-5 w-5 text-primary"/> AI Image Generator (Optional)</CardTitle>
+                  <CardDescription>Don't have a good photo? Describe your facility and let AI create one for you. The generated image will be added to the Image URLs list above.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                  <div>
+                      <Label htmlFor="image-gen-prompt">Image Description</Label>
+                      <Textarea
+                          id="image-gen-prompt"
+                          placeholder="e.g., A modern indoor basketball court with bright lights and polished wooden floors, empty."
+                          value={imageGenPrompt}
+                          onChange={(e) => setImageGenPrompt(e.target.value)}
+                          rows={3}
+                          disabled={isGeneratingImage}
+                      />
+                  </div>
+                  <Button type="button" onClick={handleGenerateImage} disabled={isGeneratingImage || !imageGenPrompt}>
+                      {isGeneratingImage ? <LoadingSpinner size={20} className="mr-2" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                      {isGeneratingImage ? 'Generating...' : 'Generate Image'}
+                  </Button>
+              </CardContent>
+            </Card>
 
 
             <FormField control={form.control} name="sports" render={() => (
