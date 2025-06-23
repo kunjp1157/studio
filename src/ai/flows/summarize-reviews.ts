@@ -6,12 +6,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const SummarizeReviewsInputSchema = z.object({
+const SummarizeReviewsInputSchema = z.object({
   reviews: z.array(z.string()).describe('An array of user review comments.'),
 });
 export type SummarizeReviewsInput = z.infer<typeof SummarizeReviewsInputSchema>;
 
-export const SummarizeReviewsOutputSchema = z.object({
+const SummarizeReviewsOutputSchema = z.object({
   pros: z.array(z.string()).describe('A list of positive points summarized from the reviews.'),
   cons: z.array(z.string()).describe('A list of negative points summarized from the reviews.'),
 });
