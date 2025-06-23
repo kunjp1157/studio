@@ -56,7 +56,7 @@ export default function SignupPage() {
         <CardHeader className="text-center">
           <UserPlus className="mx-auto h-12 w-12 text-primary mb-4" />
           <CardTitle className="text-3xl font-headline">Create an Account</CardTitle>
-          <CardDescription>Join City Sports Hub and start booking facilities today!</CardDescription>
+          <CardDescription>Join Sports Arena and start booking facilities today!</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-4">

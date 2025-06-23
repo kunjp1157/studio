@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { PageTransitionWrapper } from '@/components/layout/PageTransitionWrapper';
 
 export const metadata: Metadata = {
-  title: 'City Sports Hub',
+  title: 'Sports Arena',
   description: 'Book sports facilities in your city with ease.',
 };
 

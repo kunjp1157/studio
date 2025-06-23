@@ -829,7 +829,7 @@ export const deleteMembershipPlan = (planId: string): boolean => {
 };
 
 export const mockAdminUsers: UserProfile[] = [
-    { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@citysportshub.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString() },
+    { ...mockUser, id: 'admin-001', name: 'Admin User', email: 'admin@sportsarena.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString() },
 ];
 
 
@@ -1217,7 +1217,7 @@ export const mockReportData: ReportData = {
 };
 
 let mockSiteSettings: SiteSettings = {
-  siteName: 'City Sports Hub',
+  siteName: 'Sports Arena',
   defaultCurrency: 'INR',
   timezone: 'America/Los_Angeles',
   maintenanceMode: false,

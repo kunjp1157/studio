@@ -85,7 +85,7 @@ export default function AdminSettingsPage() {
   
   return (
     <div className="space-y-8">
-      <PageTitle title="System Settings" description="Configure general settings for the City Sports Hub platform." />
+      <PageTitle title="System Settings" description="Configure general settings for the Sports Arena platform." />
 
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="shadow-lg">

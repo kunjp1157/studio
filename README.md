@@ -1,4 +1,4 @@
-# City Sports Hub - App Requirements
+# Sports Arena - App Requirements
 
 Here's a breakdown of what you'll need to consider to build such a website, encompassing features, technology, and general steps:
 

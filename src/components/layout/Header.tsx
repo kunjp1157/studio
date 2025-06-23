@@ -10,7 +10,7 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettings } from '@/lib/data';
 
 export function Header() {
-  const [siteName, setSiteName] = useState('City Sports Hub'); // Start with a default
+  const [siteName, setSiteName] = useState('Sports Arena'); // Start with a default
 
   useEffect(() => {
     // Function to update the site name state

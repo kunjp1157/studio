@@ -195,7 +195,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <PageTitle title="Admin Dashboard" description="Overview of City Sports Hub activities and performance." />
+      <PageTitle title="Admin Dashboard" description="Overview of Sports Arena activities and performance." />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-md">
