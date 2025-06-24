@@ -1,6 +1,7 @@
 
 
 
+
 export interface Team {
   id: string;
   name: string;
@@ -298,5 +299,8 @@ export interface LfgRequest {
   createdAt: string; 
   status: 'open' | 'closed';
   interestedUserIds: string[];
+  skillLevel?: 'Any' | SkillLevel;
+  playersNeeded?: number;
+  preferredTime?: string;
 }
     

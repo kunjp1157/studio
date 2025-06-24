@@ -706,6 +706,9 @@ export let mockLfgRequests: LfgRequest[] = [
         createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
         status: 'open',
         interestedUserIds: [],
+        skillLevel: 'Any',
+        playersNeeded: 2,
+        preferredTime: 'Saturday Afternoon'
     },
     {
         id: 'lfg-2',
@@ -715,6 +718,9 @@ export let mockLfgRequests: LfgRequest[] = [
         createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         status: 'open',
         interestedUserIds: ['user-admin'],
+        skillLevel: 'Intermediate',
+        playersNeeded: 1,
+        preferredTime: 'Weekday Evenings'
     }
 ];
 
@@ -1400,12 +1406,15 @@ export const addToWaitlist = (userId: string, facilityId: string, date: string, 
     return newEntry;
 };
 
-export const createLfgRequest = (data: { userId: string; sportId: string; notes: string }): LfgRequest => {
+export const createLfgRequest = (data: { userId: string; sportId: string; notes: string; skillLevel?: 'Any' | SkillLevel; playersNeeded?: number; preferredTime?: string; }): LfgRequest => {
     const newRequest: LfgRequest = {
         id: `lfg-${Date.now()}`,
         userId: data.userId,
         sportId: data.sportId,
         notes: data.notes,
+        skillLevel: data.skillLevel,
+        playersNeeded: data.playersNeeded,
+        preferredTime: data.preferredTime,
         createdAt: new Date().toISOString(),
         status: 'open',
         interestedUserIds: [],

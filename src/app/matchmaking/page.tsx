@@ -11,19 +11,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { mockUser, getOpenLfgRequests, createLfgRequest, expressInterestInLfg, mockSports, getUserById, getSportById } from '@/lib/data';
-import type { LfgRequest, UserProfile, Sport } from '@/lib/types';
-import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices } from 'lucide-react';
+import type { LfgRequest, UserProfile, Sport, SkillLevel } from '@/lib/types';
+import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, BarChart, Clock, Users2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
-import { Separator } from '@/components/ui/separator';
 
 const lfgFormSchema = z.object({
   sportId: z.string({ required_error: "Please select a sport." }),
+  skillLevel: z.enum(['Any', 'Beginner', 'Intermediate', 'Advanced']).default('Any'),
+  playersNeeded: z.coerce.number().int().min(1, "Must need at least 1 player").optional(),
+  preferredTime: z.string().max(50, "Keep it brief!").optional(),
   notes: z.string().min(10, { message: "Please provide a few more details (min 10 characters)." }).max(280, { message: "Notes cannot exceed 280 characters." }),
 });
 
@@ -66,14 +70,49 @@ const LfgRequestCard = ({ request, onInterest }: { request: LfgRequest, onIntere
                 )}
             </CardHeader>
             <CardContent className="flex-grow space-y-3">
-                <div className="flex items-center gap-2 font-semibold">
+                <div className="flex items-center gap-2 font-semibold text-md">
                     <SportIcon className="h-5 w-5 text-primary" />
                     <span>Looking for a game of {sport.name}</span>
                 </div>
-                <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md border">{request.notes}</p>
-                 {request.interestedUserIds.length > 0 && (
-                    <div className="text-xs">
-                        <span className="font-semibold">{request.interestedUserIds.length} player(s) interested.</span>
+
+                <div className="space-y-1.5">
+                    {request.skillLevel && request.skillLevel !== 'Any' && (
+                        <div className="flex items-center text-xs text-muted-foreground gap-1.5"><BarChart className="h-3 w-3"/> Skill Level: {request.skillLevel}</div>
+                    )}
+                    {request.playersNeeded && (
+                        <div className="flex items-center text-xs text-muted-foreground gap-1.5"><Users2 className="h-3 w-3"/> Players Needed: {request.playersNeeded}</div>
+                    )}
+                    {request.preferredTime && (
+                        <div className="flex items-center text-xs text-muted-foreground gap-1.5"><Clock className="h-3 w-3"/> Preferred Time: {request.preferredTime}</div>
+                    )}
+                </div>
+
+                <p className="text-sm text-foreground bg-muted/50 p-3 rounded-md border">{request.notes}</p>
+                 
+                {request.interestedUserIds.length > 0 && (
+                    <div className="flex items-center gap-2 pt-2">
+                        <TooltipProvider>
+                            <div className="flex -space-x-2">
+                                {request.interestedUserIds.slice(0,5).map(userId => {
+                                    const interestedUser = getUserById(userId);
+                                    if (!interestedUser) return null;
+                                    return (
+                                        <Tooltip key={userId}>
+                                            <TooltipTrigger>
+                                                <Avatar className="h-7 w-7 border-2 border-background">
+                                                    <AvatarImage src={interestedUser.profilePictureUrl} alt={interestedUser.name}/>
+                                                    <AvatarFallback>{interestedUser.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                                                </Avatar>
+                                            </TooltipTrigger>
+                                            <TooltipContent>{interestedUser.name}</TooltipContent>
+                                        </Tooltip>
+                                    );
+                                })}
+                            </div>
+                        </TooltipProvider>
+                        <span className="text-xs font-medium text-muted-foreground">
+                            {request.interestedUserIds.length} player(s) interested
+                        </span>
                     </div>
                 )}
             </CardContent>
@@ -99,7 +138,7 @@ export default function MatchmakingPage() {
 
   const form = useForm<LfgFormValues>({
     resolver: zodResolver(lfgFormSchema),
-    defaultValues: { sportId: '', notes: '' },
+    defaultValues: { sportId: '', skillLevel: 'Any', playersNeeded: undefined, preferredTime: '', notes: '' },
   });
 
   const fetchRequests = () => {
@@ -145,7 +184,7 @@ export default function MatchmakingPage() {
     <div className="container mx-auto py-8 px-4 md:px-6">
       <PageTitle title="Player Matchmaking" description="Find players for a game or post your own request to build a squad." />
       
-      <div className="grid lg:grid-cols-3 gap-8 items-start">
+      <div className="grid lg:grid-cols-3 gap-8 items-start mt-8">
         <Card className="lg:col-span-1 shadow-lg lg:sticky lg:top-24">
             <CardHeader>
                 <CardTitle className="flex items-center"><PlusCircle className="mr-2 h-5 w-5 text-primary"/>Create a Post</CardTitle>
@@ -168,6 +207,49 @@ export default function MatchmakingPage() {
                                 </FormItem>
                             )}
                         />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="skillLevel"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Skill Level</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger></FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Any">Any</SelectItem>
+                                                <SelectItem value="Beginner">Beginner</SelectItem>
+                                                <SelectItem value="Intermediate">Intermediate</SelectItem>
+                                                <SelectItem value="Advanced">Advanced</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="playersNeeded"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Players Needed</FormLabel>
+                                        <FormControl><Input type="number" min="1" placeholder="e.g., 3" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                         <FormField
+                            control={form.control}
+                            name="preferredTime"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Preferred Time</FormLabel>
+                                    <FormControl><Input placeholder="e.g., Weekend afternoons" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name="notes"
@@ -175,9 +257,8 @@ export default function MatchmakingPage() {
                                 <FormItem>
                                     <FormLabel>Notes</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="e.g., 'Looking for 3 more players for a 5v5 game at Grand City Arena this Saturday afternoon...'" {...field} rows={4}/>
+                                        <Textarea placeholder="e.g., 'Looking for a friendly but competitive game...'" {...field} rows={3}/>
                                     </FormControl>
-                                     <FormDescription>Mention skill level, location preference, etc.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
