@@ -63,19 +63,22 @@ export default function BookingsPage() {
           return aDate.getTime() - bDate.getTime();
       }
     });
-    setBookings(userBookings);
+    setBookings(currentBookings => {
+        if (JSON.stringify(currentBookings) !== JSON.stringify(userBookings)) {
+            return userBookings;
+        }
+        return currentBookings;
+    });
   };
 
   useEffect(() => {
     // Initial fetch with loading state
     setIsLoading(true);
-    setTimeout(() => {
-      fetchAndSetBookings();
-      setIsLoading(false);
-    }, 500);
+    fetchAndSetBookings();
+    setIsLoading(false);
 
-    // Set up polling to refresh data every 5 seconds
-    const intervalId = setInterval(fetchAndSetBookings, 5000);
+    // Set up polling to refresh data every 3 seconds
+    const intervalId = setInterval(fetchAndSetBookings, 3000);
 
     // Cleanup interval on component unmount
     return () => clearInterval(intervalId);

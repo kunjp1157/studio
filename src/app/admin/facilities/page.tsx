@@ -50,19 +50,28 @@ export default function AdminFacilitiesPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    // Simulate fetching facilities
-    setTimeout(() => {
-      setFacilities(getAllFacilities());
-      setIsLoading(false);
-    }, 500);
-  }, []);
-  
-  useEffect(() => {
-    const settingsInterval = setInterval(() => {
+    const fetchAndSetData = () => {
+      const freshFacilities = getAllFacilities();
+      // Using JSON.stringify for simple deep comparison to avoid unnecessary re-renders
+      setFacilities(currentFacilities => {
+          if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
+              return freshFacilities;
+          }
+          return currentFacilities;
+      });
       const currentSettings = getSiteSettings();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
-    return () => clearInterval(settingsInterval);
+    };
+
+    // Initial fetch
+    fetchAndSetData();
+    setIsLoading(false);
+
+    // Set up polling to check for live updates every 3 seconds
+    const intervalId = setInterval(fetchAndSetData, 3000);
+
+    // Cleanup on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleDeleteFacility = () => {

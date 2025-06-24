@@ -80,19 +80,28 @@ export default function AdminUsersPage() {
     resolver: zodResolver(userFormSchema),
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const usersData = getAllUsers();
-      setAllUsers(usersData);
-      setFilteredUsers(usersData);
-      setIsLoading(false);
-    }, 500);
+    const usersData = getAllUsers();
+    // This check helps prevent re-renders if the data hasn't changed.
+    setAllUsers(currentUsers => {
+        if (JSON.stringify(currentUsers) !== JSON.stringify(usersData)) {
+            return usersData;
+        }
+        return currentUsers;
+    });
   };
+
+  useEffect(() => {
+    // Initial fetch
+    fetchUsers();
+    setIsLoading(false);
+    
+    // Set up polling
+    const intervalId = setInterval(fetchUsers, 3000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     let results = allUsers;

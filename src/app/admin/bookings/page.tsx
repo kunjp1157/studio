@@ -55,14 +55,24 @@ export default function AdminBookingsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate fetching all bookings
-    setTimeout(() => {
-      const bookingsData = getAllBookings();
-      setAllBookings(bookingsData);
-      setFilteredBookings(bookingsData);
-      setIsLoading(false);
-    }, 700);
+    const fetchBookings = () => {
+        const bookingsData = getAllBookings();
+        setAllBookings(currentBookings => {
+            if(JSON.stringify(currentBookings) !== JSON.stringify(bookingsData)) {
+                return bookingsData;
+            }
+            return currentBookings;
+        });
+    };
+    
+    fetchBookings();
+    setIsLoading(false);
+
+    const intervalId = setInterval(fetchBookings, 3000);
+    return () => clearInterval(intervalId);
+
   }, []);
+
 
   useEffect(() => {
     let results = allBookings;
