@@ -19,7 +19,7 @@ import { AlertCircle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { StarDisplay } from '@/components/shared/StarDisplay';
 import { ReviewItem } from '@/components/reviews/ReviewItem';
-import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summarize-reviews';
+import { summarizeReviews, type SummarizeReviewsInput } from '@/ai/flows/summarize-reviews';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Mock calendar component for availability preview
@@ -60,7 +60,7 @@ export default function FacilityDetailPage() {
   const facilityId = params.id as string;
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined); // undefined for loading, null for not found
   const { toast } = useToast();
-  const [summary, setSummary] = useState<SummarizeReviewsOutput | null>(null);
+  const [summary, setSummary] = useState<SummarizeReviewsInput | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
   useEffect(() => {
