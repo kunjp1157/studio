@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2, BellRing } from 'lucide-react';
+import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2, BellRing, HandCoins } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInHours, parse, formatISO, addHours } from 'date-fns';
@@ -114,7 +114,7 @@ export default function BookingPage() {
   const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
   const [isOnWaitlist, setIsOnWaitlist] = useState(false);
 
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'cash'>('card');
   const [upiId, setUpiId] = useState('');
 
   useEffect(() => {
@@ -346,6 +346,7 @@ export default function BookingPage() {
 
     const bookingDate = selectedDate ? format(selectedDate, 'PPP') : 'N/A';
     const bookingTime = selectedSlot?.startTime || 'N/A';
+    const isPayAtVenue = paymentMethod === 'cash';
     
     let rentedItemsSummary = "";
     if (selectedEquipment.size > 0) {
@@ -363,7 +364,7 @@ export default function BookingPage() {
     
     toast({
       title: "Booking Confirmed!",
-      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} for ${numberOfGuests} guest(s) is confirmed.${rentedItemsSummary}${promotionSummary}`,
+      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} for ${numberOfGuests} guest(s) is confirmed.${rentedItemsSummary}${promotionSummary} ${isPayAtVenue ? 'Please complete payment at the venue.' : ''}`,
       className: "bg-green-500 text-white",
       duration: 10000,
     });
@@ -372,7 +373,7 @@ export default function BookingPage() {
         addNotification(mockUser.id, {
             type: 'booking_confirmed',
             title: 'Booking Confirmed!',
-            message: `Your booking for ${facility.name} (${numberOfGuests} guest(s)) on ${bookingDate} at ${bookingTime} is successful.${rentedItemsSummary}${promotionSummary}`,
+            message: `Your booking for ${facility.name} (${numberOfGuests} guest(s)) on ${bookingDate} at ${bookingTime} is successful.${rentedItemsSummary}${promotionSummary} ${isPayAtVenue ? 'Payment is due at the venue.' : ''}`,
             link: '/account/bookings',
         });
     }
@@ -585,7 +586,7 @@ export default function BookingPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handlePaymentSubmit} className="space-y-6">
-                  <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'card' | 'upi')}>
+                  <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'card' | 'upi' | 'cash')}>
                       <div className="flex items-center space-x-2 border p-4 rounded-md">
                           <RadioGroupItem value="card" id="card" />
                           <Label htmlFor="card" className="flex items-center text-base"><CreditCard className="mr-2 h-5 w-5"/> Credit/Debit Card</Label>
@@ -593,6 +594,10 @@ export default function BookingPage() {
                       <div className="flex items-center space-x-2 border p-4 rounded-md">
                           <RadioGroupItem value="upi" id="upi" />
                           <Label htmlFor="upi" className="flex items-center text-base"><UpiIcon /> UPI</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border p-4 rounded-md">
+                          <RadioGroupItem value="cash" id="cash" />
+                          <Label htmlFor="cash" className="flex items-center text-base"><HandCoins className="mr-2 h-5 w-5"/> Pay at Venue</Label>
                       </div>
                   </RadioGroup>
 
@@ -641,10 +646,22 @@ export default function BookingPage() {
                         </Alert>
                     </div>
                   )}
+                  
+                  {paymentMethod === 'cash' && (
+                     <div className="space-y-4 pt-4 border-t">
+                        <Alert>
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Pay at Venue</AlertTitle>
+                            <AlertDescription>
+                                You have selected to pay at the venue. Your booking will be confirmed immediately, and payment will be due upon arrival.
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                  )}
 
                    <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-                    {isLoading ? <LoadingSpinner size={20} className="mr-2"/> : (paymentMethod === 'card' ? <CreditCard className="mr-2 h-5 w-5" /> : <UpiIcon />)}
-                    {isLoading ? 'Processing...' : `Pay ${renderPrice(totalBookingPrice)}`}
+                    {isLoading ? <LoadingSpinner size={20} className="mr-2"/> : (paymentMethod === 'card' ? <CreditCard className="mr-2 h-5 w-5" /> : (paymentMethod === 'upi' ? <UpiIcon /> : <HandCoins className="mr-2 h-5 w-5" />))}
+                    {isLoading ? 'Processing...' : (paymentMethod === 'cash' ? 'Confirm Booking' : `Pay ${renderPrice(totalBookingPrice)}`)}
                   </Button>
                 </form>
               </CardContent>
@@ -685,12 +702,15 @@ export default function BookingPage() {
                         <p className="text-sm text-muted-foreground">Discount: -{renderPrice(appliedPromotionDetails.discountAmount)}</p>
                     </div>
                 )}
-                <p className="text-lg font-semibold mt-2">Total Paid: {renderPrice(totalBookingPrice)}</p>
+                <p className="text-lg font-semibold mt-2">Total {paymentMethod === 'cash' ? 'Due' : 'Paid'}: {renderPrice(totalBookingPrice)}</p>
                 <Alert className="mt-4 text-left">
                   <AlertCircle className="h-4 w-4"/>
                   <AlertTitle>What's Next?</AlertTitle>
                   <AlertDescription>
-                    You will receive an email confirmation shortly with all your booking details. 
+                    {paymentMethod === 'cash'
+                      ? 'Your slot is reserved! Please pay the total amount at the facility upon arrival.'
+                      : 'You will receive an email confirmation shortly with all your booking details.'
+                    }
                     You can also view your booking in the "My Bookings" section of your account.
                   </AlertDescription>
                 </Alert>
