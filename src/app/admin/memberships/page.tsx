@@ -31,7 +31,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { MembershipPlan, SiteSettings } from '@/lib/types';
-import { getAllMembershipPlans, deleteMembershipPlan as deleteMockMembershipPlan, getSiteSettings } from '@/lib/data';
+import { getAllMembershipPlans, deleteMembershipPlan as deleteMockMembershipPlan } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Award, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -53,10 +54,13 @@ export default function AdminMembershipsPage() {
       setIsLoading(false);
     }, 300);
     
-    const settingsInterval = setInterval(() => {
-      const currentSettings = getSiteSettings();
+    const fetchSettings = async () => {
+      const currentSettings = await getSiteSettingsAction();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
+    };
+
+    fetchSettings();
+    const settingsInterval = setInterval(fetchSettings, 5000);
     return () => clearInterval(settingsInterval);
   }, []);
 

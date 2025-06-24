@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review } from '@/lib/types';
-import { mockUser, getBookingsByUserId, getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
+import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
+import { getBookingsByUserIdAction } from '@/app/actions';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -46,8 +47,8 @@ export default function BookingsPage() {
   const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
   const { toast } = useToast();
 
-  const fetchAndSetBookings = () => {
-    let userBookings = getBookingsByUserId(mockUser.id);
+  const fetchAndSetBookings = async () => {
+    let userBookings = await getBookingsByUserIdAction(mockUser.id);
     userBookings.sort((a, b) => {
       const aDate = parseISO(a.date + 'T' + a.startTime);
       const bDate = parseISO(b.date + 'T' + b.startTime);
@@ -72,15 +73,10 @@ export default function BookingsPage() {
   };
 
   useEffect(() => {
-    // Initial fetch with loading state
-    setIsLoading(true);
-    fetchAndSetBookings();
-    setIsLoading(false);
+    fetchAndSetBookings().finally(() => setIsLoading(false));
 
-    // Set up polling to refresh data every 3 seconds
     const intervalId = setInterval(fetchAndSetBookings, 3000);
 
-    // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
 

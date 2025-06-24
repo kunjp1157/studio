@@ -33,7 +33,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { Facility, SiteSettings } from '@/lib/types';
-import { getAllFacilities, deleteFacility as deleteMockFacility, getSiteSettings } from '@/lib/data'; // Updated to use getAllFacilities
+import { deleteFacility as deleteMockFacility } from '@/lib/data';
+import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -50,34 +51,28 @@ export default function AdminFacilitiesPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    const fetchAndSetData = () => {
-      const freshFacilities = getAllFacilities();
-      // Using JSON.stringify for simple deep comparison to avoid unnecessary re-renders
+    const fetchAndSetData = async () => {
+      const freshFacilities = await getFacilitiesAction();
       setFacilities(currentFacilities => {
           if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
               return freshFacilities;
           }
           return currentFacilities;
       });
-      const currentSettings = getSiteSettings();
+      const currentSettings = await getSiteSettingsAction();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     };
 
-    // Initial fetch
-    fetchAndSetData();
-    setIsLoading(false);
+    fetchAndSetData().finally(() => setIsLoading(false));
 
-    // Set up polling to check for live updates every 3 seconds
     const intervalId = setInterval(fetchAndSetData, 3000);
 
-    // Cleanup on component unmount
     return () => clearInterval(intervalId);
   }, []);
 
   const handleDeleteFacility = () => {
     if (!facilityToDelete) return;
     setIsDeleting(true);
-    // Simulate API call for deletion
     setTimeout(() => {
       const success = deleteMockFacility(facilityToDelete.id);
       if (success) {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,7 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription, FormMessage } from '@/components/ui/form';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { getSiteSettings, updateSiteSettings } from '@/lib/data';
+import { updateSiteSettings } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import type { SiteSettings } from '@/lib/types';
 
 const settingsFormSchema = z.object({
@@ -50,13 +52,12 @@ export default function AdminSettingsPage() {
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
-    defaultValues: getSiteSettings(),
+    defaultValues: async () => getSiteSettingsAction(),
   });
 
-  // Polling for live updates for other admins
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      const currentSettings = getSiteSettings();
+    const intervalId = setInterval(async () => {
+      const currentSettings = await getSiteSettingsAction();
       const formValues = form.getValues();
       
       if (!deepEqual(currentSettings, formValues)) {

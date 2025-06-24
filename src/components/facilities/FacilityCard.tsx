@@ -12,7 +12,7 @@ import { Star, MapPin, DollarSign, Zap, Heart, MessageSquare, CalendarCheck2 } f
 import { useToast } from '@/hooks/use-toast';
 import { StarDisplay } from '@/components/shared/StarDisplay';
 import { cn } from '@/lib/utils';
-import { getSiteSettings } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -25,14 +25,13 @@ export function FacilityCard({ facility }: FacilityCardProps) {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    const settingsInterval = setInterval(() => {
-        const currentSettings = getSiteSettings();
+    const fetchSettings = async () => {
+        const currentSettings = await getSiteSettingsAction();
         setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
+    };
 
-    // Set initial value
-    const currentSettings = getSiteSettings();
-    setCurrency(currentSettings.defaultCurrency);
+    fetchSettings();
+    const settingsInterval = setInterval(fetchSettings, 5000);
 
 
     return () => clearInterval(settingsInterval);

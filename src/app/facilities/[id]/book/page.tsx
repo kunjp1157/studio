@@ -4,7 +4,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings } from '@/lib/types';
-import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, getSiteSettings, isUserOnWaitlist, addToWaitlist } from '@/lib/data';
+import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -107,10 +108,12 @@ export default function BookingPage() {
       const foundFacility = getFacilityById(facilityId);
       setTimeout(() => setFacility(foundFacility || null), 300); // Simulate fetch
     }
-    const settingsInterval = setInterval(() => {
-      const currentSettings = getSiteSettings();
-      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
+    const fetchSettings = async () => {
+        const settings = await getSiteSettingsAction();
+        setCurrency(settings.defaultCurrency);
+    };
+    fetchSettings();
+    const settingsInterval = setInterval(fetchSettings, 3000);
     return () => clearInterval(settingsInterval);
   }, [facilityId]);
 

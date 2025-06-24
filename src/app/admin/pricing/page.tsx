@@ -32,7 +32,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { PricingRule, SiteSettings } from '@/lib/types';
-import { getAllPricingRules, deletePricingRule as deleteMockPricingRule, getSiteSettings } from '@/lib/data';
+import { getAllPricingRules, deletePricingRule as deleteMockPricingRule } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -55,10 +56,13 @@ export default function AdminPricingPage() {
       setIsLoading(false);
     }, 300);
     
-    const settingsInterval = setInterval(() => {
-      const currentSettings = getSiteSettings();
+    const fetchSettings = async () => {
+      const currentSettings = await getSiteSettingsAction();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
+    };
+
+    fetchSettings();
+    const settingsInterval = setInterval(fetchSettings, 5000);
     return () => clearInterval(settingsInterval);
   }, []);
 

@@ -7,7 +7,7 @@ import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
 import type { Facility, SearchFilters } from '@/lib/types';
-import { getAllFacilities } from '@/lib/data';
+import { getFacilitiesAction } from '@/app/actions';
 import { AlertCircle, SortAsc, LayoutGrid, Map as MapIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -37,8 +37,8 @@ export default function FacilitiesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   useEffect(() => {
-    const fetchAndSetFacilities = () => {
-      const freshFacilities = getAllFacilities();
+    const fetchAndSetFacilities = async () => {
+      const freshFacilities = await getFacilitiesAction();
       setAllFacilities(currentFacilities => {
         if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
           return freshFacilities;
@@ -47,14 +47,10 @@ export default function FacilitiesPage() {
       });
     };
 
-    // Initial fetch
-    fetchAndSetFacilities();
-    setIsLoading(false);
+    fetchAndSetFacilities().finally(() => setIsLoading(false));
 
-    // Set up polling to check for live updates every 3 seconds
     const intervalId = setInterval(fetchAndSetFacilities, 3000);
 
-    // Cleanup on component unmount
     return () => clearInterval(intervalId);
   }, []);
 

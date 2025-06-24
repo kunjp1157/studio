@@ -22,7 +22,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import type { Facility, SiteSettings } from '@/lib/types';
-import { mockUser, getFacilitiesByOwnerId, getSiteSettings } from '@/lib/data'; 
+import { mockUser } from '@/lib/data'; 
+import { getFacilitiesByOwnerIdAction, getSiteSettingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Eye, Building2, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,8 +41,7 @@ export default function OwnerFacilitiesPage() {
   const ownerId = mockUser.id; 
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
+    const fetchData = async () => {
       if (!ownerId) {
         toast({
             title: "Authentication Error",
@@ -49,22 +49,27 @@ export default function OwnerFacilitiesPage() {
             variant: "destructive",
         });
         setFacilities([]);
-        setIsLoading(false);
         return;
       }
-      setFacilities(getFacilitiesByOwnerId(ownerId));
-      setIsLoading(false);
-    }, 500);
+      const [ownerFacilities, settings] = await Promise.all([
+          getFacilitiesByOwnerIdAction(ownerId),
+          getSiteSettingsAction()
+      ]);
 
-    const settingsInterval = setInterval(() => {
-        const currentSettings = getSiteSettings();
-        setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
+      setFacilities(currentFacilities => {
+        if (JSON.stringify(currentFacilities) !== JSON.stringify(ownerFacilities)) {
+            return ownerFacilities;
+        }
+        return currentFacilities;
+      });
+      setCurrency(settings.defaultCurrency);
+    };
 
-    const currentSettings = getSiteSettings();
-    setCurrency(currentSettings.defaultCurrency);
+    fetchData().finally(() => setIsLoading(false));
     
-    return () => clearInterval(settingsInterval);
+    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
   }, [ownerId, toast]);
 
 

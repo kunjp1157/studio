@@ -34,7 +34,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, UserProfile, Facility } from '@/lib/types';
-import { getAllBookings, getUserById, getFacilityById, updateBooking, addNotification } from '@/lib/data';
+import { getUserById, getFacilityById, updateBooking, addNotification } from '@/lib/data';
+import { getAllBookingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Eye, Edit, XCircle, DollarSign, Search, FilterX, User, Home, CalendarDays, Clock, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -55,8 +56,8 @@ export default function AdminBookingsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchBookings = () => {
-        const bookingsData = getAllBookings();
+    const fetchBookings = async () => {
+        const bookingsData = await getAllBookingsAction();
         setAllBookings(currentBookings => {
             if(JSON.stringify(currentBookings) !== JSON.stringify(bookingsData)) {
                 return bookingsData;
@@ -65,8 +66,7 @@ export default function AdminBookingsPage() {
         });
     };
     
-    fetchBookings();
-    setIsLoading(false);
+    fetchBookings().finally(() => setIsLoading(false));
 
     const intervalId = setInterval(fetchBookings, 3000);
     return () => clearInterval(intervalId);
@@ -120,8 +120,7 @@ export default function AdminBookingsPage() {
         link: '/account/bookings',
       });
       
-      const bookingsData = getAllBookings();
-      setAllBookings(bookingsData);
+      getAllBookingsAction().then(setAllBookings);
     } else {
       toast({ title: "Error", description: "Failed to cancel booking.", variant: "destructive" });
     }

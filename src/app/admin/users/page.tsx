@@ -45,7 +45,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { UserProfile, UserRole, UserStatus } from '@/lib/types';
-import { getAllUsers, updateUser as updateMockUser, addNotification, mockUser as adminPerformingAction } from '@/lib/data';
+import { updateUser as updateMockUser, addNotification } from '@/lib/data';
+import { getUsersAction } from '@/app/actions';
 import { MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -80,9 +81,8 @@ export default function AdminUsersPage() {
     resolver: zodResolver(userFormSchema),
   });
 
-  const fetchUsers = () => {
-    const usersData = getAllUsers();
-    // This check helps prevent re-renders if the data hasn't changed.
+  const fetchUsers = async () => {
+    const usersData = await getUsersAction();
     setAllUsers(currentUsers => {
         if (JSON.stringify(currentUsers) !== JSON.stringify(usersData)) {
             return usersData;
@@ -92,14 +92,10 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
-    // Initial fetch
-    fetchUsers();
-    setIsLoading(false);
+    fetchUsers().finally(() => setIsLoading(false));
     
-    // Set up polling
     const intervalId = setInterval(fetchUsers, 3000);
 
-    // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
 
@@ -412,5 +408,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-
-    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,14 +7,14 @@ import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
 import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy, Calendar as CalendarIcon, Swords } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { getSiteSettings } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 
 export function Header() {
   const [siteName, setSiteName] = useState('Sports Arena');
 
   useEffect(() => {
-    const fetchSiteName = () => {
-      const currentSettings = getSiteSettings();
+    const fetchSiteName = async () => {
+      const currentSettings = await getSiteSettingsAction();
       if (currentSettings.siteName !== siteName) {
         setSiteName(currentSettings.siteName);
       }

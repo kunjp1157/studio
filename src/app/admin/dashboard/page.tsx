@@ -9,13 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import {
   mockReportData,
-  getAllFacilities,
-  getAllUsers,
-  getAllBookings,
   getUserById,
   getFacilityById,
-  getSiteSettings,
 } from '@/lib/data';
+import { getFacilitiesAction, getUsersAction, getAllBookingsAction, getSiteSettingsAction } from '@/app/actions';
 import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus } from 'lucide-react';
 import type { ChartConfig } from '@/components/ui/chart';
 import { parseISO, getMonth, getYear, format, subMonths, formatDistanceToNow } from 'date-fns';
@@ -112,16 +109,16 @@ export default function AdminDashboardPage() {
   const [activityFeed, setActivityFeed] = useState<ActivityFeedItemType[]>([]);
   
   useEffect(() => {
-    const fetchAndSetData = () => {
-      // Update currency
-      const currentSettings = getSiteSettings();
+    const fetchAndSetData = async () => {
+      const [currentSettings, facilities, users, bookings] = await Promise.all([
+        getSiteSettingsAction(),
+        getFacilitiesAction(),
+        getUsersAction(),
+        getAllBookingsAction(),
+      ]);
+
       setCurrency(currentSettings.defaultCurrency);
       
-      // Update dashboard stats
-      const facilities = getAllFacilities();
-      const users = getAllUsers();
-      const bookings = getAllBookings();
-
       setTotalFacilities(facilities.length);
       setActiveUsers(users.filter(u => u.status === 'Active').length);
 
@@ -136,7 +133,6 @@ export default function AdminDashboardPage() {
       setTotalBookingsThisMonth(bookingsThisMonth.length);
       setTotalRevenueThisMonth(bookingsThisMonth.reduce((sum, b) => sum + b.totalPrice, 0));
 
-      // Prepare data for last 6 months charts
       const last6Months: { month: string; year: number; monthKey: string }[] = [];
       for (let i = 5; i >= 0; i--) {
         const d = subMonths(now, i);
@@ -168,7 +164,6 @@ export default function AdminDashboardPage() {
 
       setFacilityUsageData(mockReportData.facilityUsage);
       
-      // Prepare data for activity feed
       const bookingActivities: ActivityFeedItemType[] = bookings.map(b => ({
         type: 'booking',
         timestamp: b.bookedAt,

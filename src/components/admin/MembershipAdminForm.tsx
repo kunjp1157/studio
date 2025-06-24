@@ -7,7 +7,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { MembershipPlan, SiteSettings } from '@/lib/types';
-import { addMembershipPlan, updateMembershipPlan, getSiteSettings } from '@/lib/data';
+import { addMembershipPlan, updateMembershipPlan } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,13 +38,12 @@ export function MembershipAdminForm({ initialData, onSubmitSuccess }: Membership
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    const settingsInterval = setInterval(() => {
-      const currentSettings = getSiteSettings();
+    const fetchSettings = async () => {
+      const currentSettings = await getSiteSettingsAction();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
-
-    const currentSettings = getSiteSettings();
-    setCurrency(currentSettings.defaultCurrency);
+    };
+    fetchSettings();
+    const settingsInterval = setInterval(fetchSettings, 5000);
 
     return () => clearInterval(settingsInterval);
   }, []);
