@@ -19,6 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Team, UserProfile } from '@/lib/types';
 import { mockUser, getTeamsByUserId, getUserById, leaveTeam as mockLeaveTeam } from '@/lib/data';
