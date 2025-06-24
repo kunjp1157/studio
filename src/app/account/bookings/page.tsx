@@ -8,9 +8,9 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Booking, Facility, Review } from '@/lib/types';
+import type { Booking, Facility, Review, SiteSettings } from '@/lib/types';
 import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
-import { getBookingsByUserIdAction } from '@/app/actions';
+import { getBookingsByUserIdAction, getSiteSettingsAction } from '@/app/actions';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +37,8 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
+import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function BookingsPage() {
@@ -46,6 +48,15 @@ export default function BookingsPage() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
   const { toast } = useToast();
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+
+  useEffect(() => {
+      const fetchSettings = async () => {
+          const settings = await getSiteSettingsAction();
+          setCurrency(settings.defaultCurrency);
+      };
+      fetchSettings();
+  }, []);
 
   const fetchAndSetBookings = async () => {
     let userBookings = await getBookingsByUserIdAction(mockUser.id);
@@ -167,6 +178,11 @@ export default function BookingsPage() {
     const facilityDetails = getFacilityById(booking.facilityId);
     const bookingIsPast = isPast(parseISO(booking.date + 'T' + booking.startTime));
     
+    const renderPrice = (price: number) => {
+        if (!currency) return <Skeleton className="h-5 w-20 inline-block" />;
+        return formatCurrency(price, currency);
+    };
+
     return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">
         <CardHeader className="p-0 relative">
@@ -194,7 +210,7 @@ export default function BookingsPage() {
         <div className="space-y-1 text-sm text-muted-foreground">
             <div className="flex items-center"><CalendarDays className="w-4 h-4 mr-2 text-primary" /> {format(parseISO(booking.date), 'EEE, MMM d, yyyy')}</div>
             <div className="flex items-center"><Clock className="w-4 h-4 mr-2 text-primary" /> {booking.startTime} - {booking.endTime}</div>
-            <div className="flex items-center"><DollarSign className="w-4 h-4 mr-2 text-primary" /> Total: ${booking.totalPrice.toFixed(2)}</div>
+            <div className="flex items-center"><DollarSign className="w-4 h-4 mr-2 text-primary" /> Total: {renderPrice(booking.totalPrice)}</div>
         </div>
         </CardContent>
         <CardFooter className="p-4 pt-0 space-x-2 flex-wrap gap-y-2">

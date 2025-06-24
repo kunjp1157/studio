@@ -33,14 +33,16 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import type { Booking, UserProfile, Facility } from '@/lib/types';
+import type { Booking, UserProfile, Facility, SiteSettings } from '@/lib/types';
 import { getUserById, getFacilityById, updateBooking, addNotification } from '@/lib/data';
-import { getAllBookingsAction } from '@/app/actions';
+import { getAllBookingsAction, getSiteSettingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Eye, Edit, XCircle, DollarSign, Search, FilterX, User, Home, CalendarDays, Clock, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format, parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function AdminBookingsPage() {
@@ -52,12 +54,18 @@ export default function AdminBookingsPage() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchBookings = async () => {
-        const bookingsData = await getAllBookingsAction();
+        const [bookingsData, settings] = await Promise.all([
+          getAllBookingsAction(),
+          getSiteSettingsAction(),
+        ]);
+        
+        setCurrency(settings.defaultCurrency);
         setAllBookings(currentBookings => {
             if(JSON.stringify(currentBookings) !== JSON.stringify(bookingsData)) {
                 return bookingsData;
@@ -233,7 +241,9 @@ export default function AdminBookingsPage() {
                           <br />
                           <span className="text-xs text-muted-foreground">{booking.startTime} - {booking.endTime}</span>
                         </TableCell>
-                        <TableCell className="text-right">${booking.totalPrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                            {currency ? formatCurrency(booking.totalPrice, currency) : <Skeleton className="h-5 w-16" />}
+                        </TableCell>
                         <TableCell className="text-center">
                           <Badge variant={getStatusBadgeVariant(booking.status)} className={booking.status === 'Confirmed' ? 'bg-green-500 text-white hover:bg-green-600' : ''}>
                             {booking.status}
@@ -327,7 +337,7 @@ export default function AdminBookingsPage() {
                  <hr/>
                 <div>
                     <h4 className="font-semibold mb-1 flex items-center"><DollarSign className="mr-2 h-4 w-4 text-muted-foreground"/>Financials & Status</h4>
-                    <p><strong>Total Price:</strong> ${selectedBooking.totalPrice.toFixed(2)}</p>
+                    <p><strong>Total Price:</strong> {currency ? formatCurrency(selectedBooking.totalPrice, currency) : <Skeleton className="h-5 w-20 inline-block" />}</p>
                     <p className="flex items-center"><strong>Status:</strong>
                         <Badge variant={getStatusBadgeVariant(selectedBooking.status)} className={`ml-2 ${selectedBooking.status === 'Confirmed' ? 'bg-green-500 text-white' : ''}`}>
                             {selectedBooking.status}

@@ -9,7 +9,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getAllFacilities } from '@/lib/data';
+import { getAllFacilities, getSiteSettings } from '@/lib/data';
+import { formatCurrency } from '@/lib/utils';
 
 // Define Input Schema
 const PlanWeekendInputSchema = z.object({
@@ -38,10 +39,11 @@ export type PlanWeekendOutput = z.infer<typeof PlanWeekendOutputSchema>;
 
 // The main exported function that the UI will call
 export async function planWeekend(input: PlanWeekendInput): Promise<PlanWeekendOutput> {
-  // Here, we can inject context into the prompt that isn't part of the direct user input.
   const facilities = getAllFacilities();
+  const settings = getSiteSettings();
+
   const facilityContext = facilities
-    .map(f => `- ${f.name} (Sports: ${f.sports.map(s => s.name).join(', ')}), Location: ${f.location}, Price: $${f.pricePerHour}/hr`)
+    .map(f => `- ${f.name} (Sports: ${f.sports.map(s => s.name).join(', ')}), Location: ${f.location}, Price: ${formatCurrency(f.pricePerHour, settings.defaultCurrency)}/hr`)
     .join('\n');
 
   return planWeekendFlow({ ...input, facilityContext });

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import type { SearchFilters, Amenity as AmenityType } from '@/lib/types';
+import type { SearchFilters, Amenity as AmenityType, SiteSettings } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,15 +15,17 @@ import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, D
 import { mockSports, mockAmenities, mockFacilities } from '@/lib/data'; 
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { formatCurrency } from '@/lib/utils';
 
 
 interface FacilitySearchFormProps {
   onSearch: (filters: SearchFilters) => void;
+  currency: SiteSettings['defaultCurrency'] | null;
 }
 
 const ANY_SPORT_VALUE = "all-sports-filter-value";
 
-export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
+export function FacilitySearchForm({ onSearch, currency }: FacilitySearchFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSport, setSelectedSport] = useState(ANY_SPORT_VALUE);
   const [location, setLocation] = useState('');
@@ -33,7 +35,7 @@ export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
   const [minPrice, maxPrice] = useMemo(() => {
     if (mockFacilities.length === 0) return [0, 100];
     const prices = mockFacilities.map(f => f.pricePerHour);
-    return [Math.min(...prices), Math.max(...prices)];
+    return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
   }, []);
 
   const [priceRange, setPriceRange] = useState<[number, number]>([minPrice, maxPrice]);
@@ -41,6 +43,9 @@ export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
   const [indoorOutdoor, setIndoorOutdoor] = useState<'any' | 'indoor' | 'outdoor'>('any');
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
 
+  useEffect(() => {
+      setPriceRange([minPrice, maxPrice]);
+  }, [minPrice, maxPrice]);
 
   const handleAmenityChange = (amenityId: string) => {
     setSelectedAmenities(prev =>
@@ -191,7 +196,7 @@ export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
                 </div>
                 <div>
                     <Label htmlFor="price-range" className="block text-sm font-medium text-foreground mb-1">
-                        Price Range (${priceRange[0]} - ${priceRange[1]})
+                        Price Range ({currency ? `${formatCurrency(priceRange[0], currency)} - ${formatCurrency(priceRange[1], currency)}` : 'Loading...'})
                     </Label>
                     <div className="flex items-center space-x-2">
                         <DollarSign className="h-5 w-5 text-muted-foreground" />

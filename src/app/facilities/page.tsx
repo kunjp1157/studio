@@ -6,8 +6,8 @@ import dynamic from 'next/dynamic'; // For client-side map component
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
-import type { Facility, SearchFilters } from '@/lib/types';
-import { getFacilitiesAction } from '@/app/actions';
+import type { Facility, SearchFilters, SiteSettings } from '@/lib/types';
+import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { AlertCircle, SortAsc, LayoutGrid, Map as MapIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,9 +43,22 @@ export default function FacilitiesPage() {
   const [sortOption, setSortOption] = useState<SortOption>('default');
   const [currentFilters, setCurrentFilters] = useState<SearchFilters | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    const fetchAndSetFacilities = async () => {
+    const fetchInitialData = async () => {
+      const [freshFacilities, settings] = await Promise.all([
+        getFacilitiesAction(),
+        getSiteSettingsAction()
+      ]);
+      setAllFacilities(freshFacilities);
+      setCurrency(settings.defaultCurrency);
+      setIsLoading(false);
+    };
+
+    fetchInitialData();
+
+    const intervalId = setInterval(async () => {
       const freshFacilities = await getFacilitiesAction();
       setAllFacilities(currentFacilities => {
         if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
@@ -53,11 +66,7 @@ export default function FacilitiesPage() {
         }
         return currentFacilities;
       });
-    };
-
-    fetchAndSetFacilities().finally(() => setIsLoading(false));
-
-    const intervalId = setInterval(fetchAndSetFacilities, 3000);
+    }, 5000);
 
     return () => clearInterval(intervalId);
   }, []);
@@ -151,7 +160,7 @@ export default function FacilitiesPage() {
       />
 
       <div className="mb-8">
-        <FacilitySearchForm onSearch={handleSearch} />
+        <FacilitySearchForm onSearch={handleSearch} currency={currency}/>
       </div>
 
       <div className="flex justify-between items-center mb-6 gap-4">
@@ -228,4 +237,3 @@ export default function FacilitiesPage() {
     </div>
   );
 }
-    

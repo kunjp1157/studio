@@ -43,7 +43,7 @@ interface ActivityFeedItemType {
 }
 
 // A sub-component to render each item in the feed
-const ActivityItem = ({ item }: { item: ActivityFeedItemType }) => {
+const ActivityItem = ({ item, currency }: { item: ActivityFeedItemType, currency: SiteSettings['defaultCurrency'] | null }) => {
   if (!item.user) return null;
 
   const timeAgo = formatDistanceToNow(parseISO(item.timestamp), { addSuffix: true });
@@ -66,7 +66,7 @@ const ActivityItem = ({ item }: { item: ActivityFeedItemType }) => {
           </p>
         </div>
         <div className="text-sm font-semibold text-green-600 dark:text-green-500 text-right">
-          +${item.bookingData.totalPrice.toFixed(2)}
+          {currency ? `+${formatCurrency(item.bookingData.totalPrice, currency)}` : <Skeleton className="h-5 w-16" />}
         </div>
       </div>
     );
@@ -155,11 +155,11 @@ export default function AdminDashboardPage() {
 
       setMonthlyBookingsData(last6Months.map(m => ({
         month: m.month,
-        bookings: aggregatedBookings[monthKey] || 0,
+        bookings: aggregatedBookings[m.monthKey] || 0,
       })));
       setMonthlyRevenueData(last6Months.map(m => ({
         month: m.month,
-        revenue: parseFloat((aggregatedRevenue[monthKey] || 0).toFixed(2)),
+        revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
       })));
 
       setFacilityUsageData(mockReportData.facilityUsage);
@@ -280,7 +280,7 @@ export default function AdminDashboardPage() {
             <CardContent className="p-0">
                <div className="space-y-1 p-4 max-h-[300px] overflow-y-auto">
                   {activityFeed.length > 0 ? (
-                      activityFeed.map((item, index) => <ActivityItem key={index} item={item} />)
+                      activityFeed.map((item, index) => <ActivityItem key={index} item={item} currency={currency} />)
                   ) : (
                       <p className="text-sm text-center text-muted-foreground py-8">
                           No recent activity to display.
@@ -293,4 +293,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-    
