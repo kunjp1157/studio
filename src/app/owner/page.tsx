@@ -5,7 +5,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, Building, Ticket, DollarSign, Users, Construction } from 'lucide-react';
 import type { SiteSettings } from '@/lib/types';
-import { getSiteSettings } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { formatCurrency } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,13 +23,13 @@ export default function OwnerDashboardPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    const settingsInterval = setInterval(() => {
-      const currentSettings = getSiteSettings();
+    const fetchSettings = async () => {
+      const currentSettings = await getSiteSettingsAction();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
+    };
 
-    const currentSettings = getSiteSettings();
-    setCurrency(currentSettings.defaultCurrency);
+    fetchSettings();
+    const settingsInterval = setInterval(fetchSettings, 5000);
     
     return () => clearInterval(settingsInterval);
   }, []);

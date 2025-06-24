@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
       })));
       setMonthlyRevenueData(last6Months.map(m => ({
         month: m.month,
-        revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
+        revenue: parseFloat((aggregatedRevenue[monthKey] || 0).toFixed(2)),
       })));
 
       setFacilityUsageData(mockReportData.facilityUsage);
