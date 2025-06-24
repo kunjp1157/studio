@@ -546,19 +546,19 @@ export let mockMembershipPlans: MembershipPlan[] = [
   {
     id: 'mem-1',
     name: 'Basic',
-    pricePerMonth: 10,
+    pricePerMonth: 800,
     benefits: ['Access to all facilities', 'Book up to 3 days in advance', 'Online booking'],
   },
   {
     id: 'mem-2',
     name: 'Premium',
-    pricePerMonth: 25,
+    pricePerMonth: 2000,
     benefits: ['All Basic benefits', 'Book up to 7 days in advance', '10% discount on bookings', 'Guest passes (2/month)'],
   },
   {
     id: 'mem-3',
     name: 'Pro',
-    pricePerMonth: 50,
+    pricePerMonth: 4000,
     benefits: ['All Premium benefits', 'Book up to 14 days in advance', '20% discount on bookings', 'Free equipment rental', 'Priority support'],
   },
 ];
@@ -693,7 +693,7 @@ export let mockPromotionRules: PromotionRule[] = [
 let mockSiteSettings: SiteSettings = {
   siteName: 'Sports Arena',
   defaultCurrency: 'INR',
-  timezone: 'America/Los_Angeles',
+  timezone: 'Asia/Kolkata',
   maintenanceMode: false,
 };
 
