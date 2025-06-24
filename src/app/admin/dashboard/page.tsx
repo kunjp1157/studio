@@ -155,7 +155,7 @@ export default function AdminDashboardPage() {
 
       setMonthlyBookingsData(last6Months.map(m => ({
         month: m.month,
-        bookings: aggregatedBookings[m.monthKey] || 0,
+        bookings: aggregatedBookings[monthKey] || 0,
       })));
       setMonthlyRevenueData(last6Months.map(m => ({
         month: m.month,

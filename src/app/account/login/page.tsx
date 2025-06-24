@@ -41,6 +41,7 @@ export default function LoginPage() {
       // In a real app, you'd set auth tokens and redirect
       // For now, redirect to homepage, the UserNav will update based on its internal logic
       router.push('/'); 
+      router.refresh(); // Force a refresh to update UserNav state
     } else {
       toast({
         title: 'Login Failed',

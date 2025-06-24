@@ -19,7 +19,7 @@ import { AlertCircle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { StarDisplay } from '@/components/shared/StarDisplay';
 import { ReviewItem } from '@/components/reviews/ReviewItem';
-import { summarizeReviews, type SummarizeReviewsInput } from '@/ai/flows/summarize-reviews';
+import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summarize-reviews';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Mock calendar component for availability preview
@@ -60,7 +60,7 @@ export default function FacilityDetailPage() {
   const facilityId = params.id as string;
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined); // undefined for loading, null for not found
   const { toast } = useToast();
-  const [summary, setSummary] = useState<SummarizeReviewsInput | null>(null);
+  const [summary, setSummary] = useState<SummarizeReviewsOutput | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
   useEffect(() => {
@@ -121,7 +121,12 @@ export default function FacilityDetailPage() {
     </Card>
   );
 
-  const AiSummary = () => (
+  const AiSummary = () => {
+    if (!summary || (summary.pros.length === 0 && summary.cons.length === 0)) {
+        return null;
+    }
+    
+    return (
     <Card className="mb-6 bg-accent/10 border-accent/30">
         <CardHeader>
             <CardTitle className="flex items-center text-xl">
@@ -159,7 +164,7 @@ export default function FacilityDetailPage() {
             </div>
         </CardContent>
     </Card>
-  );
+  )};
 
   if (facility === undefined) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
@@ -235,7 +240,7 @@ export default function FacilityDetailPage() {
           <p className="text-lg text-foreground mb-6">{facility.description}</p>
           
           {isSummaryLoading && <AiSummarySkeleton />}
-          {!isSummaryLoading && summary && (summary.pros.length > 0 || summary.cons.length > 0) && <AiSummary />}
+          {!isSummaryLoading && <AiSummary />}
 
 
           <Tabs defaultValue="details" className="w-full">

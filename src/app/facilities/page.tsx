@@ -11,7 +11,6 @@ import { getFacilitiesAction } from '@/app/actions';
 import { AlertCircle, SortAsc, LayoutGrid, Map as MapIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -22,6 +21,15 @@ const FacilityMap = dynamic(
     ssr: false,
     loading: () => <Skeleton className="h-[600px] w-full rounded-lg" />
   }
+);
+
+const CardSkeleton = () => (
+    <div className="bg-card p-4 rounded-lg shadow-md">
+        <Skeleton className="h-48 w-full rounded mb-4" />
+        <Skeleton className="h-6 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-1/2 mb-2" />
+        <Skeleton className="h-4 w-1/3" />
+    </div>
 );
 
 
@@ -173,10 +181,11 @@ export default function FacilitiesPage() {
       </div>
 
       {isLoading ? (
-         <div className="flex justify-center items-center h-96">
-            <LoadingSpinner size={48} />
-            <p className="ml-4 text-muted-foreground">Loading facilities...</p>
-         </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <CardSkeleton key={index} />
+          ))}
+        </div>
       ) : (
         <>
           {facilitiesToShow.length > 0 ? (

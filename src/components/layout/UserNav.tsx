@@ -18,24 +18,19 @@ import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCar
 import { mockUser } from '@/lib/data'; // For mock data
 
 export function UserNav() {
-  // Mock authentication state. In a real app, this would come from a context or auth service.
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userAvatar, setUserAvatar] = useState('');
 
-  // Effect to prevent hydration mismatch for a potentially random initial state
+  // This effect runs only on the client-side after hydration, preventing mismatches.
   useEffect(() => {
-    // Simulate checking auth status (e.g., from localStorage or an API call)
-    // For now, let's randomly decide if the user is authenticated for demo purposes.
-    // In a real app, this should be a stable check.
-    const authStatus = Math.random() > 0.5; // This is just for demo
-    setIsAuthenticated(authStatus);
-    if (authStatus) {
-      setUserName(mockUser.name);
-      setUserEmail(mockUser.email);
-      setUserAvatar(mockUser.profilePictureUrl || '');
-    }
+    // In a real app, this would be an API call or a check to localStorage/cookies.
+    // For this demo, we'll consistently set the user as logged in to showcase features.
+    setIsAuthenticated(true);
+    setUserName(mockUser.name);
+    setUserEmail(mockUser.email);
+    setUserAvatar(mockUser.profilePictureUrl || '');
   }, []);
 
 
@@ -44,21 +39,17 @@ export function UserNav() {
     // Add actual logout logic here
   };
 
-  // Temporary function to simulate login for testing
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-    setUserName(mockUser.name);
-    setUserEmail(mockUser.email);
-    setUserAvatar(mockUser.profilePictureUrl || '');
-  }
-
+  // If the component renders before the client-side effect runs,
+  // it will show the login/signup buttons, avoiding a server/client mismatch.
   if (!isAuthenticated) {
     return (
       <div className="flex items-center space-x-2">
-        <Button variant="outline" onClick={handleLogin}> {/* Temporary login button */}
-          <LogIn className="mr-2 h-4 w-4" />
-          Login
-        </Button>
+        <Link href="/account/login">
+            <Button variant="outline">
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
+            </Button>
+        </Link>
         <Link href="/account/signup">
           <Button>
             <UserPlus className="mr-2 h-4 w-4" />
