@@ -1,8 +1,4 @@
 
-
-
-
-
 export interface Team {
   id: string;
   name: string;
@@ -14,13 +10,13 @@ export interface Team {
 export interface Amenity {
   id: string;
   name: string;
-  icon?: React.ElementType; 
+  iconName?: string; 
 }
 
 export interface Sport {
   id: string;
   name: string;
-  icon?: React.ElementType; 
+  iconName?: string; 
   imageUrl?: string; 
   imageDataAiHint?: string; 
 }
@@ -163,7 +159,7 @@ export interface Achievement {
   id: string;
   name: string;
   description: string;
-  icon?: React.ElementType;
+  iconName?: string;
   unlockedAt?: string; 
 }
 
@@ -258,7 +254,7 @@ export interface AppNotification {
   createdAt: string; 
   isRead: boolean;
   link?: string; 
-  icon?: React.ElementType; 
+  iconName?: string; 
 }
 
 export interface BlogPost {
@@ -305,4 +301,3 @@ export interface LfgRequest {
   playersNeeded?: number;
   preferredTime?: string;
 }
-    

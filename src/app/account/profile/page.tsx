@@ -21,6 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
+import { getIconComponent } from '@/components/shared/Icon';
 
 const skillLevelsOptions: {value: SkillLevel | "Not Specified", label: string}[] = [
     { value: "Not Specified", label: "Not Specified" },
@@ -236,7 +237,7 @@ export default function ProfilePage() {
                   <Label className="text-base">Preferred Sports</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2 p-4 border rounded-md bg-muted/30">
                     {mockSports.map(sport => {
-                        const SportIcon = sport.icon || Zap;
+                        const SportIcon = getIconComponent(sport.iconName) || Zap;
                         return (
                             <div key={sport.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-background transition-colors">
                                 <Checkbox
@@ -264,7 +265,7 @@ export default function ProfilePage() {
                 {isEditing ? (
                     mockSports.map(sport => {
                         const currentSkill = user.skillLevels?.find(s => s.sportId === sport.id)?.level || "Not Specified";
-                        const SportIcon = sport.icon || Zap;
+                        const SportIcon = getIconComponent(sport.iconName) || Zap;
                         return (
                             <div key={`skill-${sport.id}`} className="grid grid-cols-[1fr_auto] items-center gap-4">
                                 <Label htmlFor={`skill-level-${sport.id}`} className="text-base font-normal flex items-center">
@@ -293,7 +294,7 @@ export default function ProfilePage() {
                         <ul className="list-none space-y-2">
                         {user.skillLevels.map(skill => {
                             const sportDetails = mockSports.find(s => s.id === skill.sportId);
-                            const SportIcon = sportDetails?.icon || Zap;
+                            const SportIcon = getIconComponent(sportDetails?.iconName) || Zap;
                             return (
                                 <li key={skill.sportId} className="flex items-center text-base text-muted-foreground">
                                     <SportIcon className="mr-2 h-5 w-5 text-primary" />
@@ -366,7 +367,7 @@ export default function ProfilePage() {
                         <TooltipProvider>
                         <ul className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {user.achievements.map(ach => {
-                                const AchievementIcon = ach.icon || Medal;
+                                const AchievementIcon = getIconComponent(ach.iconName) || Medal;
                                 return (
                                     <li key={ach.id} className="flex flex-col items-center text-center">
                                     <Tooltip>

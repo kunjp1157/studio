@@ -19,6 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getIconComponent } from '@/components/shared/Icon';
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -100,7 +101,7 @@ export default function EventDetailPage() {
     notFound();
   }
 
-  const SportIcon = event.sport.icon || Zap;
+  const SportIcon = getIconComponent(event.sport.iconName) || Zap;
   const isEventPastStatus = isPast(parseISO(event.endDate));
   const isEventFull = event.maxParticipants && event.registeredParticipants >= event.maxParticipants;
   const canRegister = !isEventPastStatus && !isEventFull;

@@ -21,6 +21,7 @@ import { StarDisplay } from '@/components/shared/StarDisplay';
 import { ReviewItem } from '@/components/reviews/ReviewItem';
 import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summarize-reviews';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getIconComponent } from '@/components/shared/Icon';
 
 // Mock calendar component for availability preview
 function AvailabilityPreview({ facilityId }: { facilityId: string }) {
@@ -271,7 +272,7 @@ export default function FacilityDetailPage() {
                 <CardContent className="pt-6">
                   <ul className="grid grid-cols-2 gap-4">
                     {facility.amenities.map((amenity: Amenity) => {
-                      const IconComponent = amenity.icon || Zap;
+                      const IconComponent = getIconComponent(amenity.iconName) || Zap;
                       return (
                         <li key={amenity.id} className="flex items-center text-foreground">
                           <IconComponent className="w-5 h-5 mr-2 text-primary" />
@@ -288,7 +289,7 @@ export default function FacilityDetailPage() {
                     <CardContent className="pt-6">
                         <ul className="grid grid-cols-2 gap-4">
                             {facility.sports.map((sport: Sport) => {
-                            const IconComponent = sport.icon || Zap;
+                            const IconComponent = getIconComponent(sport.iconName) || Zap;
                             return (
                                 <li key={sport.id} className="flex items-center text-foreground">
                                 <IconComponent className="w-5 h-5 mr-2 text-primary" />

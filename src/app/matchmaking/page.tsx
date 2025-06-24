@@ -22,6 +22,7 @@ import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, BarChart
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
+import { getIconComponent } from '@/components/shared/Icon';
 
 const lfgFormSchema = z.object({
   sportId: z.string({ required_error: "Please select a sport." }),
@@ -41,7 +42,7 @@ const LfgRequestCard = ({ request, onInterest }: { request: LfgRequest, onIntere
     
     if (!user || !sport) return null;
 
-    const SportIcon = sport.icon || Dices;
+    const SportIcon = getIconComponent(sport.iconName) || Dices;
     
     const UserHeader = () => (
         <div className="flex flex-row items-center gap-4">

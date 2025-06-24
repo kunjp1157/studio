@@ -17,6 +17,7 @@ import { CalendarDays, MapPin, Users, Ticket, AlertCircle, Trophy, Zap, FilterX,
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format, parseISO, isSameDay, isPast } from 'date-fns';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { getIconComponent } from '@/components/shared/Icon';
 
 type SortOption = 'date-asc' | 'date-desc' | 'name-asc';
 
@@ -150,7 +151,7 @@ export default function EventsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
           {filteredEvents.map((event) => {
             const facility = getFacilityById(event.facilityId);
-            const SportIcon = event.sport.icon || Zap;
+            const SportIcon = getIconComponent(event.sport.iconName) || Zap;
             const isEventPast = isPast(parseISO(event.endDate));
             const isEventFull = event.maxParticipants && event.registeredParticipants >= event.maxParticipants;
             return (
@@ -219,4 +220,3 @@ export default function EventsPage() {
     </div>
   );
 }
-

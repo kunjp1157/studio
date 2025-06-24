@@ -5,29 +5,29 @@ import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, ge
 
 
 export const mockSports: Sport[] = [
-  { id: 'sport-1', name: 'Soccer', icon: Goal, imageUrl: 'https://images.unsplash.com/photo-1551958214-e6163c125414', imageDataAiHint: 'soccer ball' },
-  { id: 'sport-2', name: 'Basketball', icon: Dribbble, imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc', imageDataAiHint: 'basketball hoop' },
-  { id: 'sport-3', name: 'Tennis', icon: Activity, imageUrl: 'https://images.unsplash.com/photo-1594470117722-de4b9a02ebed', imageDataAiHint: 'tennis racket' },
-  { id: 'sport-4', name: 'Badminton', icon: Feather, imageUrl: 'https://images.unsplash.com/photo-1521587514789-53b8a3b09228', imageDataAiHint: 'badminton shuttlecock' },
-  { id: 'sport-5', name: 'Swimming', icon: PersonStanding, imageUrl: 'https://images.unsplash.com/photo-1590650392358-693608513b68', imageDataAiHint: 'swimming lane' },
-  { id: 'sport-6', name: 'Yoga', icon: Brain, imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b', imageDataAiHint: 'yoga pose' },
-  { id: 'sport-7', name: 'Cycling', icon: Bike, imageUrl: 'https://images.unsplash.com/photo-1576426863875-c217e4287487', imageDataAiHint: 'cycling road' },
-  { id: 'sport-8', name: 'Dance', icon: Music, imageUrl: 'https://images.unsplash.com/photo-1511719111394-550342a5b23d', imageDataAiHint: 'dance studio' },
-  { id: 'sport-9', name: 'Camping', icon: Tent, imageUrl: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d', imageDataAiHint: 'camping tent nature' },
-  { id: 'sport-10', name: 'Theatre', icon: Drama, imageUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91e38a493', imageDataAiHint: 'theatre stage' },
-  { id: 'sport-13', name: 'Cricket', icon: Dices, imageUrl: 'https://images.unsplash.com/photo-1599551154316-276537b02c89', imageDataAiHint: 'cricket bat ball' },
-  { id: 'sport-14', name: 'Pool', icon: Target, imageUrl: 'https://images.unsplash.com/photo-1601758124235-7c98c199e4df', imageDataAiHint: 'billiards table' },
-  { id: 'sport-15', name: 'PC Game/PS5', icon: Gamepad2, imageUrl: 'https://images.unsplash.com/photo-1598550489913-af3c28a2cc73', imageDataAiHint: 'gaming setup' },
+  { id: 'sport-1', name: 'Soccer', iconName: 'Goal', imageUrl: 'https://images.unsplash.com/photo-1551958214-e6163c125414', imageDataAiHint: 'soccer ball' },
+  { id: 'sport-2', name: 'Basketball', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc', imageDataAiHint: 'basketball hoop' },
+  { id: 'sport-3', name: 'Tennis', iconName: 'Activity', imageUrl: 'https://images.unsplash.com/photo-1594470117722-de4b9a02ebed', imageDataAiHint: 'tennis racket' },
+  { id: 'sport-4', name: 'Badminton', iconName: 'Feather', imageUrl: 'https://images.unsplash.com/photo-1521587514789-53b8a3b09228', imageDataAiHint: 'badminton shuttlecock' },
+  { id: 'sport-5', name: 'Swimming', iconName: 'PersonStanding', imageUrl: 'https://images.unsplash.com/photo-1590650392358-693608513b68', imageDataAiHint: 'swimming lane' },
+  { id: 'sport-6', name: 'Yoga', iconName: 'Brain', imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b', imageDataAiHint: 'yoga pose' },
+  { id: 'sport-7', name: 'Cycling', iconName: 'Bike', imageUrl: 'https://images.unsplash.com/photo-1576426863875-c217e4287487', imageDataAiHint: 'cycling road' },
+  { id: 'sport-8', name: 'Dance', iconName: 'Music', imageUrl: 'https://images.unsplash.com/photo-1511719111394-550342a5b23d', imageDataAiHint: 'dance studio' },
+  { id: 'sport-9', name: 'Camping', iconName: 'Tent', imageUrl: 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d', imageDataAiHint: 'camping tent nature' },
+  { id: 'sport-10', name: 'Theatre', iconName: 'Drama', imageUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91e38a493', imageDataAiHint: 'theatre stage' },
+  { id: 'sport-13', name: 'Cricket', iconName: 'Dices', imageUrl: 'https://images.unsplash.com/photo-1599551154316-276537b02c89', imageDataAiHint: 'cricket bat ball' },
+  { id: 'sport-14', name: 'Pool', iconName: 'Target', imageUrl: 'https://images.unsplash.com/photo-1601758124235-7c98c199e4df', imageDataAiHint: 'billiards table' },
+  { id: 'sport-15', name: 'PC Game/PS5', iconName: 'Gamepad2', imageUrl: 'https://images.unsplash.com/photo-1598550489913-af3c28a2cc73', imageDataAiHint: 'gaming setup' },
 ];
 
 export const mockAmenities: Amenity[] = [
-  { id: 'amenity-1', name: 'Parking', icon: ParkingCircle },
-  { id: 'amenity-2', name: 'WiFi', icon: Wifi },
-  { id: 'amenity-3', name: 'Showers', icon: ShowerHead },
-  { id: 'amenity-4', name: 'Lockers', icon: Lock },
-  { id: 'amenity-5', name: 'Equipment Rental Signage', icon: PackageSearch },
-  { id: 'amenity-6', name: 'Cafe', icon: Utensils },
-  { id: 'amenity-7', name: 'Accessible', icon: Users },
+  { id: 'amenity-1', name: 'Parking', iconName: 'ParkingCircle' },
+  { id: 'amenity-2', name: 'WiFi', iconName: 'Wifi' },
+  { id: 'amenity-3', name: 'Showers', iconName: 'ShowerHead' },
+  { id: 'amenity-4', name: 'Lockers', iconName: 'Lock' },
+  { id: 'amenity-5', name: 'Equipment Rental Signage', iconName: 'PackageSearch' },
+  { id: 'amenity-6', name: 'Cafe', iconName: 'Utensils' },
+  { id: 'amenity-7', name: 'Accessible', iconName: 'Users' },
 ];
 
 export let mockRentalEquipment: RentalEquipment[] = [
@@ -221,11 +221,11 @@ export let mockFacilities: Facility[] = [
 ];
 
 export const mockAchievements: Achievement[] = [
-  { id: 'ach-1', name: 'First Booking', description: 'Congratulations on making your first booking!', icon: Medal, unlockedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'ach-2', name: 'Review Pro', description: 'You shared your thoughts on 2 facilities!', icon: Star, unlockedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'ach-3', name: 'Weekend Warrior', description: 'Booked 3 times on a weekend.', icon: Trophy },
-  { id: 'ach-4', name: 'Top Fan', description: 'Visited your favorite facility 5 times.', icon: Heart },
-  { id: 'ach-5', name: 'Explorer', description: 'Booked 3 different types of sports.', icon: Rocket },
+  { id: 'ach-1', name: 'First Booking', description: 'Congratulations on making your first booking!', iconName: 'Medal', unlockedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'ach-2', name: 'Review Pro', description: 'You shared your thoughts on 2 facilities!', iconName: 'Star', unlockedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'ach-3', name: 'Weekend Warrior', description: 'Booked 3 times on a weekend.', iconName: 'Trophy' },
+  { id: 'ach-4', name: 'Top Fan', description: 'Visited your favorite facility 5 times.', iconName: 'Heart' },
+  { id: 'ach-5', name: 'Explorer', description: 'Booked 3 different types of sports.', iconName: 'Rocket' },
 ];
 
 export let mockUsers: UserProfile[] = [
@@ -470,7 +470,7 @@ let mockAppNotifications: AppNotification[] = [
     createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
     isRead: false,
     link: '/account/bookings',
-    icon: CheckCircle,
+    iconName: 'CheckCircle',
   },
   {
     id: 'notif-2',
@@ -481,7 +481,7 @@ let mockAppNotifications: AppNotification[] = [
     createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
     isRead: true,
     link: '/account/bookings',
-    icon: LucideCalendarDays,
+    iconName: 'CalendarDays',
   },
   {
     id: 'notif-3',
@@ -492,7 +492,7 @@ let mockAppNotifications: AppNotification[] = [
     createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     isRead: false,
     link: '/facilities',
-    icon: Gift,
+    iconName: 'Gift',
   },
 ];
 
@@ -910,16 +910,16 @@ export const getOpenLfgRequests = (): LfgRequest[] => {
 // --- DATA MANIPULATION FUNCTIONS ---
 
 export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
-  let icon = Info;
+  let iconName = 'Info';
   switch (notificationData.type) {
-    case 'booking_confirmed': icon = CheckCircle; break;
-    case 'booking_cancelled': icon = XCircle; break;
-    case 'review_submitted': icon = MessageSquareText; break;
-    case 'reminder': icon = LucideCalendarDays; break;
-    case 'promotion': icon = Gift; break;
-    case 'waitlist_opening': icon = BellRing; break;
-    case 'user_status_changed': icon = Edit3; break;
-    case 'matchmaking_interest': icon = Swords; break;
+    case 'booking_confirmed': iconName = 'CheckCircle'; break;
+    case 'booking_cancelled': iconName = 'XCircle'; break;
+    case 'review_submitted': iconName = 'MessageSquareText'; break;
+    case 'reminder': iconName = 'CalendarDays'; break;
+    case 'promotion': iconName = 'Gift'; break;
+    case 'waitlist_opening': iconName = 'BellRing'; break;
+    case 'user_status_changed': iconName = 'Edit3'; break;
+    case 'matchmaking_interest': iconName = 'Swords'; break;
   }
 
   const newNotification: AppNotification = {
@@ -928,7 +928,7 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
     userId,
     createdAt: new Date().toISOString(),
     isRead: false,
-    icon: notificationData.icon || icon,
+    iconName: notificationData.iconName || iconName,
   };
   mockAppNotifications.unshift(newNotification);
   return newNotification;

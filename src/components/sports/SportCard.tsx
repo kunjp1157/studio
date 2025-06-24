@@ -7,13 +7,14 @@ import type { Sport } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { getIconComponent } from '@/components/shared/Icon';
 
 interface SportCardProps {
   sport: Sport;
 }
 
 export function SportCard({ sport }: SportCardProps) {
-  const SportIconComponent = sport.icon;
+  const SportIconComponent = getIconComponent(sport.iconName);
 
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">

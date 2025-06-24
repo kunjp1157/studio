@@ -18,6 +18,7 @@ import { Award, Gem, Heart, Medal, UserCircle, Shield, ShieldCheck, Dumbbell, Za
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { getIconComponent } from '@/components/shared/Icon';
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -100,7 +101,7 @@ export default function PublicProfilePage() {
                         {user.preferredSports && user.preferredSports.length > 0 ? (
                              <ul className="space-y-2">
                                 {user.preferredSports.map(sport => {
-                                    const SportIcon = sport.icon || Zap;
+                                    const SportIcon = getIconComponent(sport.iconName) || Zap;
                                     return (
                                         <li key={sport.id} className="flex items-center text-foreground">
                                             <SportIcon className="mr-2 h-5 w-5 text-primary"/> {sport.name}
@@ -155,7 +156,7 @@ export default function PublicProfilePage() {
                         <TooltipProvider>
                         <ul className="grid grid-cols-4 gap-4">
                             {user.achievements.map(ach => {
-                                const AchievementIcon = ach.icon || Medal;
+                                const AchievementIcon = getIconComponent(ach.iconName) || Medal;
                                 return (
                                     <li key={ach.id} className="flex flex-col items-center text-center">
                                     <Tooltip>

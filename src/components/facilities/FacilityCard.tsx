@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { getSiteSettingsAction } from '@/app/actions';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getIconComponent } from '@/components/shared/Icon';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -47,7 +48,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
     // In a real app, you'd update the user's favorite list here
   };
 
-  const SportIcon = facility.sports[0]?.icon || Zap; // Default to Zap icon if no sport icon
+  const SportIcon = getIconComponent(facility.sports[0]?.iconName) || Zap;
   const reviewCount = facility.reviews?.length || 0;
 
   let availabilityStatus: { text: string; variant: "default" | "secondary" | "destructive" | "outline" } = {

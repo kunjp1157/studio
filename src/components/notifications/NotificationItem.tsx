@@ -6,10 +6,11 @@ import type { AppNotification } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, Info } from 'lucide-react';
 import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { getIconComponent } from '@/components/shared/Icon';
 
 interface NotificationItemProps {
   notification: AppNotification;
@@ -17,7 +18,7 @@ interface NotificationItemProps {
 }
 
 export function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
-  const IconComponent = notification.icon || (() => null); // Default to a null component if no icon
+  const IconComponent = getIconComponent(notification.iconName) || Info;
 
   const content = (
     <div className="flex items-start space-x-3 py-2 px-2 hover:bg-muted/50 rounded-md transition-colors">
@@ -83,4 +84,3 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
     </DropdownMenuItem>
   );
 }
-
