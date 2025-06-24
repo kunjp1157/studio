@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -22,6 +23,8 @@ import { useToast } from '@/hooks/use-toast';
 import { format, differenceInHours, parse, formatISO, addHours } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
 
 // Enhanced mock time slots for a given date
 const getMockTimeSlots = (
@@ -69,6 +72,14 @@ const getMockTimeSlots = (
   return slots;
 };
 
+// Simple UPI Icon component
+const UpiIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5">
+        <path d="M6.46 9.36L4.7 11.12L3 9.46L4.76 7.7L6.46 9.36ZM10 10.9V7.1H8V15H10V12.7C11.39 12.7 12.5 11.94 12.5 10.2C12.5 8.76 11.5 7.6 10 7.6C8.5 7.6 7.5 8.76 7.5 10.2C7.5 11.94 8.61 12.7 10 12.7V10.9H10ZM10 9.4H10.5C10.94 9.4 11.2 9.7 11.2 10.1C11.2 10.5 10.94 10.8 10.5 10.8H10V9.4ZM17.1 7.1L15 11.5L12.9 7.1H11V15H12.9V10.7L14.4 14H15.6L17.1 10.7V15H19V7.1H17.1Z" fill="#1A237E"/>
+        <path d="M21 9.46L19.3 11.12L21 12.78L22.76 11.12L21 9.46Z" fill="#1A237E"/>
+    </svg>
+);
+
 
 export default function BookingPage() {
   const params = useParams();
@@ -102,6 +113,9 @@ export default function BookingPage() {
 
   const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
   const [isOnWaitlist, setIsOnWaitlist] = useState(false);
+
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi'>('card');
+  const [upiId, setUpiId] = useState('');
 
   useEffect(() => {
     if (facilityId) {
@@ -308,6 +322,16 @@ export default function BookingPage() {
   const handlePaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!currency) return;
+
+    if (paymentMethod === 'upi' && !upiId.trim()) {
+        toast({
+            title: 'UPI ID Required',
+            description: 'Please enter your UPI ID to proceed.',
+            variant: 'destructive',
+        });
+        return;
+    }
+
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsLoading(false);
@@ -557,30 +581,69 @@ export default function BookingPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Payment Details</CardTitle>
-                <CardDescription>Enter your payment information to complete the booking.</CardDescription>
+                <CardDescription>Select a payment method to complete the booking.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="card-name">Name on Card</Label>
-                    <Input id="card-name" type="text" placeholder="John Doe" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="card-number">Card Number</Label>
-                    <Input id="card-number" type="text" placeholder="•••• •••• •••• ••••" required />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="expiry-date">Expiry Date</Label>
-                      <Input id="expiry-date" type="text" placeholder="MM/YY" required />
+                <form onSubmit={handlePaymentSubmit} className="space-y-6">
+                  <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'card' | 'upi')}>
+                      <div className="flex items-center space-x-2 border p-4 rounded-md">
+                          <RadioGroupItem value="card" id="card" />
+                          <Label htmlFor="card" className="flex items-center text-base"><CreditCard className="mr-2 h-5 w-5"/> Credit/Debit Card</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border p-4 rounded-md">
+                          <RadioGroupItem value="upi" id="upi" />
+                          <Label htmlFor="upi" className="flex items-center text-base"><UpiIcon /> UPI</Label>
+                      </div>
+                  </RadioGroup>
+
+                  {paymentMethod === 'card' && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <div>
+                        <Label htmlFor="card-name">Name on Card</Label>
+                        <Input id="card-name" type="text" placeholder="John Doe" required />
+                      </div>
+                      <div>
+                        <Label htmlFor="card-number">Card Number</Label>
+                        <Input id="card-number" type="text" placeholder="•••• •••• •••• ••••" required />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="expiry-date">Expiry Date</Label>
+                          <Input id="expiry-date" type="text" placeholder="MM/YY" required />
+                        </div>
+                        <div>
+                          <Label htmlFor="cvc">CVC</Label>
+                          <Input id="cvc" type="text" placeholder="•••" required />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="cvc">CVC</Label>
-                      <Input id="cvc" type="text" placeholder="•••" required />
+                  )}
+
+                  {paymentMethod === 'upi' && (
+                     <div className="space-y-4 pt-4 border-t">
+                        <div>
+                            <Label htmlFor="upi-id">UPI ID</Label>
+                            <Input 
+                                id="upi-id" 
+                                type="text" 
+                                placeholder="yourname@bank" 
+                                value={upiId}
+                                onChange={(e) => setUpiId(e.target.value)}
+                                required 
+                            />
+                        </div>
+                        <Alert>
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>How UPI works</AlertTitle>
+                            <AlertDescription>
+                                After clicking "Pay", you will receive a payment request on your UPI app. You must approve it to confirm the booking.
+                            </AlertDescription>
+                        </Alert>
                     </div>
-                  </div>
+                  )}
+
                    <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-                    {isLoading ? <LoadingSpinner size={20} className="mr-2"/> : <CreditCard className="mr-2 h-5 w-5" />}
+                    {isLoading ? <LoadingSpinner size={20} className="mr-2"/> : (paymentMethod === 'card' ? <CreditCard className="mr-2 h-5 w-5" /> : <UpiIcon />)}
                     {isLoading ? 'Processing...' : `Pay ${renderPrice(totalBookingPrice)}`}
                   </Button>
                 </form>
@@ -768,3 +831,4 @@ export default function BookingPage() {
     </div>
   );
 }
+
