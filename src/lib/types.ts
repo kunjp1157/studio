@@ -2,6 +2,7 @@
 
 
 
+
 export interface Team {
   id: string;
   name: string;
@@ -240,6 +241,7 @@ export interface SearchFilters {
   sport: string;
   location: string;
   date?: Date;
+  time?: string;
   priceRange?: [number, number];
   selectedAmenities?: string[];
   indoorOutdoor?: 'any' | 'indoor' | 'outdoor';

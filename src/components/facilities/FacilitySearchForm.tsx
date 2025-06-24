@@ -11,7 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks } from 'lucide-react';
+import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks, Clock } from 'lucide-react';
 import { mockSports, mockAmenities, mockFacilities } from '@/lib/data'; 
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -28,6 +28,7 @@ export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
   const [selectedSport, setSelectedSport] = useState(ANY_SPORT_VALUE);
   const [location, setLocation] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [time, setTime] = useState('');
   
   const [minPrice, maxPrice] = useMemo(() => {
     if (mockFacilities.length === 0) return [0, 100];
@@ -56,6 +57,7 @@ export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
       sport: selectedSport === ANY_SPORT_VALUE ? '' : selectedSport, 
       location, 
       date: selectedDate,
+      time: time,
       priceRange: priceRange[0] === minPrice && priceRange[1] === maxPrice ? undefined : priceRange, // Only pass if changed from default full range
       selectedAmenities: selectedAmenities.length > 0 ? selectedAmenities : undefined,
       indoorOutdoor: indoorOutdoor === 'any' ? undefined : indoorOutdoor,
@@ -154,7 +156,23 @@ export function FacilitySearchForm({ onSearch }: FacilitySearchFormProps) {
             </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-6 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                 <div>
+                    <Label htmlFor="time-filter" className="block text-sm font-medium text-foreground mb-1">
+                        Time (Requires Date)
+                    </Label>
+                    <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            id="time-filter"
+                            type="time"
+                            value={time}
+                            onChange={(e) => setTime(e.target.value)}
+                            className="pl-10"
+                            disabled={!selectedDate}
+                        />
+                    </div>
+                 </div>
                  <div>
                     <Label htmlFor="indoor-outdoor" className="block text-sm font-medium text-foreground mb-1">
                         Environment

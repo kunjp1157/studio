@@ -96,6 +96,18 @@ export default function FacilitiesPage() {
           filters.selectedAmenities!.every(saId => f.amenities.some(fa => fa.id === saId))
         );
       }
+      // Filter by operating time if both date and time are selected
+      if (filters.date && filters.time) {
+        const selectedDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][filters.date.getDay()] as 'Sun' | 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat';
+        facilitiesToProcess = facilitiesToProcess.filter(facility => {
+            const operatingHoursForDay = facility.operatingHours.find(h => h.day === selectedDay);
+            if (!operatingHoursForDay) {
+                return false; // Facility is not open on this day
+            }
+            // Check if selected time is within the facility's open and close times
+            return filters.time! >= operatingHoursForDay.open && filters.time! < operatingHoursForDay.close;
+        });
+      }
     }
 
     const sorted = sortFacilities(facilitiesToProcess, sortOption);
