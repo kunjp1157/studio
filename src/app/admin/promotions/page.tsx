@@ -31,26 +31,36 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import type { PromotionRule } from '@/lib/types';
+import type { PromotionRule, SiteSettings } from '@/lib/types';
 import { getAllPromotionRules, deletePromotionRule as deleteMockPromotionRule } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Tag, CheckCircle, XCircle, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, parseISO } from 'date-fns';
+import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminPromotionsPage() {
   const [promotions, setPromotions] = useState<PromotionRule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [promotionToDelete, setPromotionToDelete] = useState<PromotionRule | null>(null);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    setTimeout(() => {
-      setPromotions(getAllPromotionRules());
-      setIsLoading(false);
-    }, 300);
+    const fetchInitialData = async () => {
+        const [promoData, settingsData] = await Promise.all([
+            Promise.resolve(getAllPromotionRules()),
+            getSiteSettingsAction()
+        ]);
+        setPromotions(promoData);
+        setCurrency(settingsData.defaultCurrency);
+        setIsLoading(false);
+    };
+    fetchInitialData();
   }, []);
 
   const handleDeletePromotion = () => {
@@ -69,9 +79,10 @@ export default function AdminPromotionsPage() {
   };
 
   const formatDiscount = (promo: PromotionRule) => {
+    if (!currency) return <Skeleton className="h-5 w-20" />;
     return promo.discountType === 'percentage' 
       ? `${promo.discountValue}% off` 
-      : `$${promo.discountValue.toFixed(2)} off`;
+      : `${formatCurrency(promo.discountValue, currency)} off`;
   };
 
   const formatValidity = (promo: PromotionRule) => {

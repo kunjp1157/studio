@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { Facility, Amenity, Sport, Review, RentalEquipment } from '@/lib/types';
+import type { Facility, Amenity, Sport, Review, RentalEquipment, SiteSettings } from '@/lib/types';
 import { getFacilityById } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ import { ReviewItem } from '@/components/reviews/ReviewItem';
 import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summarize-reviews';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getIconComponent } from '@/components/shared/Icon';
+import { formatCurrency } from '@/lib/utils';
 
 // Mock calendar component for availability preview
 function AvailabilityPreview({ facilityId }: { facilityId: string }) {
@@ -60,17 +62,25 @@ export default function FacilityDetailPage() {
   const params = useParams();
   const facilityId = params.id as string;
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined); // undefined for loading, null for not found
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const { toast } = useToast();
   const [summary, setSummary] = useState<SummarizeReviewsOutput | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
   useEffect(() => {
-    if (facilityId) {
-      const foundFacility = getFacilityById(facilityId);
-      setTimeout(() => {
-        setFacility(foundFacility || null);
-      }, 300);
-    }
+    const fetchInitialData = async () => {
+        if (facilityId) {
+            const [foundFacility, settings] = await Promise.all([
+                Promise.resolve(getFacilityById(facilityId)), // This is sync, but wrap in promise for consistency
+                getSiteSettingsAction()
+            ]);
+            setTimeout(() => { // Simulate fetch delay
+                setFacility(foundFacility || null);
+                setCurrency(settings.defaultCurrency);
+            }, 300);
+        }
+    };
+    fetchInitialData();
   }, [facilityId]);
 
   useEffect(() => {
@@ -100,6 +110,11 @@ export default function FacilityDetailPage() {
       title: "Added to Favorites (Mock)",
       description: `${facility.name} has been added to your favorites.`,
     });
+  };
+  
+  const renderPrice = (price: number) => {
+    if (!currency) return <Skeleton className="h-5 w-20 inline-block" />;
+    return formatCurrency(price, currency);
   };
 
   const AiSummarySkeleton = () => (
@@ -233,7 +248,7 @@ export default function FacilityDetailPage() {
               <MapPin className="w-4 h-4 mr-1 text-primary" /> {facility.location}
             </div>
             <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-1 text-green-500" /> {facility.pricePerHour}/hr (facility slot)
+              <DollarSign className="w-4 h-4 mr-1 text-green-500" /> {renderPrice(facility.pricePerHour)}/hr (facility slot)
             </div>
           </div>
 
@@ -324,7 +339,7 @@ export default function FacilityDetailPage() {
                           )}
                           <div className="text-center sm:text-left">
                             <h4 className="font-semibold text-md">{equip.name}</h4>
-                            <p className="text-sm text-muted-foreground">${equip.pricePerItem.toFixed(2)} / {equip.priceType === 'per_booking' ? 'booking' : 'hour'}</p>
+                            <p className="text-sm text-muted-foreground">{renderPrice(equip.pricePerItem)} / {equip.priceType === 'per_booking' ? 'booking' : 'hour'}</p>
                             <p className="text-xs text-muted-foreground">Stock: {equip.stock}</p>
                           </div>
                         </Card>
