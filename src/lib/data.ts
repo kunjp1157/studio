@@ -178,7 +178,7 @@ export let mockFacilities: Facility[] = [
     latitude: 34.0400,
     longitude: -118.2600,
     description: 'Large Olympic-sized swimming pool with dedicated lanes and recreational areas.',
-    images: ['https://images.unsplash.com/photo-1557951224-69b3294a4a51', 'https://images.unsplash.com/photo-1580252194946-8e5436a53696'],
+    images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x250.png'],
     sports: [mockSports[4]],
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '06:00', close: '20:00' }, { day: 'Tue', open: '06:00', close: '20:00' }, { day: 'Wed', open: '06:00', close: '20:00' }, { day: 'Thu', open: '06:00', close: '20:00' }, { day: 'Fri', open: '06:00', close: '20:00' }, { day: 'Sat', open: '07:00', close: '19:00' }, { day: 'Sun', open: '07:00', close: '19:00' }],
