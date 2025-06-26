@@ -248,7 +248,7 @@ export default function FacilityDetailPage() {
               <MapPin className="w-4 h-4 mr-1 text-primary" /> {facility.location}
             </div>
             <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-1 text-green-500" /> {renderPrice(facility.pricePerHour)}/hr (facility slot)
+              {renderPrice(facility.pricePerHour)}/hr (facility slot)
             </div>
           </div>
 

@@ -115,7 +115,6 @@ export function FacilityCard({ facility }: FacilityCardProps) {
           </div>
         </div>
         <div className="flex items-center text-base font-medium mb-3">
-          <DollarSign className="w-4 h-4 mr-1 text-green-500" />
           <span>{currency ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16 inline-block" />}</span>
           <span className='ml-1'>/hr</span>
         </div>
