@@ -91,6 +91,7 @@ export interface Facility {
   name:string;
   type: 'Complex' | 'Court' | 'Field' | 'Studio' | 'Pool' | 'Box Cricket';
   address: string;
+  city: string;
   location: string; 
   latitude?: number; 
   longitude?: number; 
@@ -235,6 +236,7 @@ export interface SportEvent {
 export interface SearchFilters {
   searchTerm: string;
   sport: string;
+  city?: string;
   location: string;
   date?: Date;
   time?: string;

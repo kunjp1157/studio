@@ -45,6 +45,11 @@ export default function FacilitiesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
+  const cities = useMemo(() => {
+      if (allFacilities.length === 0) return [];
+      return [...new Set(allFacilities.map(f => f.city))].sort();
+  }, [allFacilities]);
+
   useEffect(() => {
     const fetchInitialData = async () => {
       const [freshFacilities, settings] = await Promise.all([
@@ -84,6 +89,9 @@ export default function FacilitiesPage() {
       }
       if (filters.sport) {
         facilitiesToProcess = facilitiesToProcess.filter(f => f.sports.some(s => s.id === filters.sport));
+      }
+      if (filters.city) {
+          facilitiesToProcess = facilitiesToProcess.filter(f => f.city === filters.city);
       }
       if (filters.location) {
         facilitiesToProcess = facilitiesToProcess.filter(f => f.location.toLowerCase().includes(filters.location.toLowerCase()));
@@ -160,7 +168,7 @@ export default function FacilitiesPage() {
       />
 
       <div className="mb-8">
-        <FacilitySearchForm onSearch={handleSearch} currency={currency}/>
+        <FacilitySearchForm onSearch={handleSearch} currency={currency} cities={cities} />
       </div>
 
       <div className="flex justify-between items-center mb-6 gap-4">

@@ -11,7 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks, Clock } from 'lucide-react';
+import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks, Clock, Building } from 'lucide-react';
 import { mockSports, mockAmenities, mockFacilities } from '@/lib/data'; 
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -21,13 +21,15 @@ import { formatCurrency } from '@/lib/utils';
 interface FacilitySearchFormProps {
   onSearch: (filters: SearchFilters) => void;
   currency: SiteSettings['defaultCurrency'] | null;
+  cities: string[];
 }
 
 const ANY_SPORT_VALUE = "all-sports-filter-value";
 
-export function FacilitySearchForm({ onSearch, currency }: FacilitySearchFormProps) {
+export function FacilitySearchForm({ onSearch, currency, cities = [] }: FacilitySearchFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSport, setSelectedSport] = useState(ANY_SPORT_VALUE);
+  const [selectedCity, setSelectedCity] = useState('all');
   const [location, setLocation] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState('');
@@ -60,6 +62,7 @@ export function FacilitySearchForm({ onSearch, currency }: FacilitySearchFormPro
     onSearch({ 
       searchTerm, 
       sport: selectedSport === ANY_SPORT_VALUE ? '' : selectedSport, 
+      city: selectedCity === 'all' ? undefined : selectedCity,
       location, 
       date: selectedDate,
       time: time,
@@ -71,7 +74,7 @@ export function FacilitySearchForm({ onSearch, currency }: FacilitySearchFormPro
 
   return (
     <form onSubmit={handleSubmit} className="p-6 bg-card rounded-xl shadow-lg space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
         <div>
           <Label htmlFor="search-term" className="block text-sm font-medium text-foreground mb-1">
             Search Facility
@@ -81,12 +84,32 @@ export function FacilitySearchForm({ onSearch, currency }: FacilitySearchFormPro
             <Input
               id="search-term"
               type="text"
-              placeholder="e.g., Grand Arena, Soccer field"
+              placeholder="e.g., Grand Arena"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
+        </div>
+        
+        <div>
+          <Label htmlFor="city-filter" className="block text-sm font-medium text-foreground mb-1">
+            City
+          </Label>
+          <Select value={selectedCity} onValueChange={setSelectedCity}>
+            <SelectTrigger>
+              <Building className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="All Cities" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Cities</SelectItem>
+              {cities.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
@@ -111,14 +134,14 @@ export function FacilitySearchForm({ onSearch, currency }: FacilitySearchFormPro
 
         <div>
           <Label htmlFor="location" className="block text-sm font-medium text-foreground mb-1">
-            Location
+            Area / Location
           </Label>
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               id="location"
               type="text"
-              placeholder="e.g., Metropolis"
+              placeholder="e.g., Downtown"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="pl-10"

@@ -1,21 +1,27 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
-import type { Facility } from '@/lib/types';
+import type { Facility, SiteSettings } from '@/lib/types';
 import { mockFacilities } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getSiteSettingsAction } from '@/app/actions';
 
 
 export default function HomePage() {
   const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>(mockFacilities);
   const [isLoading, setIsLoading] = useState(true); // Simulate initial loading
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+
+  const cities = useMemo(() => {
+      return [...new Set(mockFacilities.map(f => f.city))].sort();
+  }, []);
 
   useEffect(() => {
     // Simulate API call or data fetching
@@ -23,6 +29,13 @@ export default function HomePage() {
       setFilteredFacilities(mockFacilities);
       setIsLoading(false);
     }, 500); // Short delay for demo
+
+    const fetchSettings = async () => {
+        const settings = await getSiteSettingsAction();
+        setCurrency(settings.defaultCurrency);
+    };
+    fetchSettings();
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -62,7 +75,7 @@ export default function HomePage() {
       />
 
       <div className="mb-12">
-        <FacilitySearchForm onSearch={handleSearch} />
+        <FacilitySearchForm onSearch={handleSearch} currency={currency} cities={cities} />
       </div>
 
       {isLoading ? (
