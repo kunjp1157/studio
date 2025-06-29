@@ -105,7 +105,7 @@ export default function FacilitiesPage() {
       }
       if (filters.priceRange) {
         facilitiesToProcess = facilitiesToProcess.filter(f => 
-          f.pricePerHour >= filters.priceRange![0] && f.pricePerHour <= filters.priceRange![1]
+          f.sportPrices.some(p => p.pricePerHour >= filters.priceRange![0] && p.pricePerHour <= filters.priceRange![1])
         );
       }
       if (filters.selectedAmenities && filters.selectedAmenities.length > 0) {
@@ -136,10 +136,10 @@ export default function FacilitiesPage() {
     let sorted = [...facilities];
     switch (option) {
       case 'price-asc':
-        sorted.sort((a, b) => a.pricePerHour - b.pricePerHour);
+        sorted.sort((a, b) => Math.min(...a.sportPrices.map(p => p.pricePerHour)) - Math.min(...b.sportPrices.map(p => p.pricePerHour)));
         break;
       case 'price-desc':
-        sorted.sort((a, b) => b.pricePerHour - a.pricePerHour);
+        sorted.sort((a, b) => Math.min(...b.sportPrices.map(p => p.pricePerHour)) - Math.min(...a.sportPrices.map(p => p.pricePerHour)));
         break;
       case 'rating-desc':
         sorted.sort((a, b) => b.rating - a.rating);

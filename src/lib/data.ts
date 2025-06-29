@@ -1,5 +1,5 @@
 
-import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest } from './types';
+import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
@@ -107,9 +107,13 @@ export let mockFacilities: Facility[] = [
     description: 'State-of-the-art multi-sport complex with indoor and outdoor facilities.',
     images: ['https://images.unsplash.com/photo-1540747913346-19e32dc3e97e', 'https://images.unsplash.com/photo-1515523110800-9415d13b84a8', 'https://images.unsplash.com/photo-1579952516518-6c21a43665ac'],
     sports: [mockSports[0], mockSports[1], mockSports[2]],
+    sportPrices: [
+        { sportId: 'sport-1', pricePerHour: 3500 },
+        { sportId: 'sport-2', pricePerHour: 3000 },
+        { sportId: 'sport-3', pricePerHour: 2500 }
+    ],
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[2], mockAmenities[3], mockAmenities[5]],
     operatingHours: [...defaultOperatingHours],
-    pricePerHour: 3500,
     pricingRulesApplied: [],
     rating: 0, 
     reviews: [], 
@@ -133,9 +137,9 @@ export let mockFacilities: Facility[] = [
     description: 'Premium tennis courts with beautiful riverside views.',
     images: ['https://images.unsplash.com/photo-1559586829-37a509936a77', 'https://images.unsplash.com/photo-1622201862963-1d214a1a3641'],
     sports: [mockSports[2]],
+    sportPrices: [{ sportId: 'sport-3', pricePerHour: 1200 }],
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '07:00', close: '21:00' }, { day: 'Tue', open: '07:00', close: '21:00' }, { day: 'Wed', open: '07:00', close: '21:00' }, { day: 'Thu', open: '07:00', close: '21:00' }, { day: 'Fri', open: '07:00', close: '21:00' }, { day: 'Sat', open: '08:00', close: '18:00' }, { day: 'Sun', open: '08:00', close: '18:00' }],
-    pricePerHour: 1200,
     pricingRulesApplied: [],
     rating: 0,
     reviews: [],
@@ -158,9 +162,12 @@ export let mockFacilities: Facility[] = [
     description: 'Affordable and friendly community center with various sports options.',
     images: ['https://images.unsplash.com/photo-1577412643533-544a048d94a2'],
     sports: [mockSports[1], mockSports[3]],
+    sportPrices: [
+        { sportId: 'sport-2', pricePerHour: 800 },
+        { sportId: 'sport-4', pricePerHour: 600 }
+    ],
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[6]],
     operatingHours: [{ day: 'Mon', open: '09:00', close: '21:00' }, { day: 'Tue', open: '09:00', close: '21:00' }, { day: 'Wed', open: '09:00', close: '21:00' }, { day: 'Thu', open: '09:00', close: '21:00' }, { day: 'Fri', open: '09:00', close: '20:00' }, { day: 'Sat', open: '10:00', close: '18:00' }, { day: 'Sun', open: '10:00', close: '16:00' }],
-    pricePerHour: 800,
     pricingRulesApplied: [],
     rating: 0,
     reviews: [],
@@ -184,9 +191,9 @@ export let mockFacilities: Facility[] = [
     description: 'Large Olympic-sized swimming pool with dedicated lanes and recreational areas.',
     images: ['https://images.unsplash.com/photo-1557951224-69b3294a4a51', 'https://images.unsplash.com/photo-1612033424847-a83b2a5f5f43'],
     sports: [mockSports[4]],
+    sportPrices: [{ sportId: 'sport-5', pricePerHour: 600 }],
     amenities: [mockAmenities[0], mockAmenities[2], mockAmenities[3]],
     operatingHours: [{ day: 'Mon', open: '06:00', close: '20:00' }, { day: 'Tue', open: '06:00', close: '20:00' }, { day: 'Wed', open: '06:00', close: '20:00' }, { day: 'Thu', open: '06:00', close: '20:00' }, { day: 'Fri', open: '06:00', close: '20:00' }, { day: 'Sat', open: '07:00', close: '19:00' }, { day: 'Sun', open: '07:00', close: '19:00' }],
-    pricePerHour: 600,
     pricingRulesApplied: [],
     rating: 0,
     reviews: [],
@@ -209,9 +216,9 @@ export let mockFacilities: Facility[] = [
     description: 'State-of-the-art box cricket arena with professional turf and lighting. Perfect for intense 6v6 matches day or night.',
     images: ['https://5.imimg.com/data5/SELLER/Default/2024/9/451738361/LQ/PQ/EC/15707674/box-cricket-setup-500x500.png'],
     sports: [mockSports.find(s => s.name === 'Cricket')!],
+    sportPrices: [{ sportId: 'sport-13', pricePerHour: 1500 }],
     amenities: [mockAmenities[0], mockAmenities[3], mockAmenities[5]],
     operatingHours: [...defaultOperatingHours],
-    pricePerHour: 1500,
     pricingRulesApplied: [],
     rating: 4.8,
     reviews: [],
@@ -235,9 +242,13 @@ export let mockFacilities: Facility[] = [
     description: 'Elite training complex for serious athletes. Features advanced equipment and professional-grade fields.',
     images: ['https://images.unsplash.com/photo-1599587123363-e387ae434e3a', 'https://images.unsplash.com/photo-1518611012118-696072aa579a'],
     sports: [mockSports[0], mockSports[1], mockSports[6]],
+    sportPrices: [
+        { sportId: 'sport-1', pricePerHour: 7500 },
+        { sportId: 'sport-2', pricePerHour: 7000 },
+        { sportId: 'sport-7', pricePerHour: 6000 }
+    ],
     amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[2], mockAmenities[3], mockAmenities[4]],
     operatingHours: [...defaultOperatingHours],
-    pricePerHour: 7500,
     pricingRulesApplied: [],
     rating: 4.9,
     reviews: [],
@@ -261,9 +272,12 @@ export let mockFacilities: Facility[] = [
     description: 'Outdoor basketball and tennis courts available for public use. Recently renovated.',
     images: ['https://images.unsplash.com/photo-1605711221437-920ac7e809d4'],
     sports: [mockSports[1], mockSports[2]],
+    sportPrices: [
+        { sportId: 'sport-2', pricePerHour: 500 },
+        { sportId: 'sport-3', pricePerHour: 500 }
+    ],
     amenities: [mockAmenities[0]],
     operatingHours: [...defaultOperatingHours],
-    pricePerHour: 500,
     pricingRulesApplied: [],
     rating: 3.8,
     reviews: [],
@@ -381,6 +395,8 @@ export let mockBookings: Booking[] = [
     facilityName: 'Grand City Arena',
     facilityImage: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e',
     dataAiHint: "arena floodlights",
+    sportId: 'sport-1',
+    sportName: 'Soccer',
     date: '2024-07-15',
     startTime: '18:00',
     endTime: '19:00',
@@ -403,6 +419,8 @@ export let mockBookings: Booking[] = [
     facilityName: 'Riverside Tennis Club',
     facilityImage: 'https://images.unsplash.com/photo-1559586829-37a509936a77',
     dataAiHint: "tennis court sunset",
+    sportId: 'sport-3',
+    sportName: 'Tennis',
     date: '2024-07-20',
     startTime: '10:00',
     endTime: '12:00',
@@ -422,6 +440,8 @@ export let mockBookings: Booking[] = [
     facilityName: 'Community Rec Center',
     facilityImage: 'https://images.unsplash.com/photo-1577412643533-544a048d94a2',
     dataAiHint: "indoor basketball",
+    sportId: 'sport-2',
+    sportName: 'Basketball',
     date: '2024-06-25',
     startTime: '14:00',
     endTime: '15:30',
@@ -441,6 +461,8 @@ export let mockBookings: Booking[] = [
     facilityName: 'Grand City Arena',
     facilityImage: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e',
     dataAiHint: "soccer field night",
+    sportId: 'sport-1',
+    sportName: 'Soccer',
     date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     startTime: '20:00',
     endTime: '21:00',
@@ -460,13 +482,15 @@ export let mockBookings: Booking[] = [
     facilityName: 'Community Rec Center',
     facilityImage: 'https://images.unsplash.com/photo-1577412643533-544a048d94a2',
     dataAiHint: "basketball court aerial",
+    sportId: 'sport-4',
+    sportName: 'Badminton',
     date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     startTime: '17:00',
     endTime: '18:00',
     durationHours: 1,
     numberOfGuests: 1,
-    baseFacilityPrice: 800,
-    totalPrice: 800,
+    baseFacilityPrice: 600,
+    totalPrice: 600,
     status: 'Confirmed',
     bookedAt: new Date(Date.now() - 0.5 * 24 * 60 * 60 * 1000).toISOString(),
     reviewed: false,
@@ -478,6 +502,8 @@ export let mockBookings: Booking[] = [
     facilityName: 'Aqua World',
     facilityImage: 'https://images.unsplash.com/photo-1557951224-69b3294a4a51',
     dataAiHint: "swimming pool indoor",
+    sportId: 'sport-5',
+    sportName: 'Swimming',
     date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     startTime: '09:00',
     endTime: '10:00',
@@ -496,6 +522,8 @@ export let mockBookings: Booking[] = [
     facilityName: 'Aqua World',
     facilityImage: 'https://images.unsplash.com/photo-1557951224-69b3294a4a51',
     dataAiHint: "pool diving board",
+    sportId: 'sport-5',
+    sportName: 'Swimming',
     date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     startTime: '15:00',
     endTime: '16:00',
@@ -1109,7 +1137,7 @@ export const addUserToTeam = (teamId: string, userId: string): boolean => {
   return true;
 };
 
-export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours' | 'blockedSlots'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], ownerId?: string, blockedSlots?: BlockedSlot[], availableEquipment?: Partial<RentalEquipment>[] }): Facility => {
+export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours' | 'blockedSlots' | 'sportPrices'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], ownerId?: string, blockedSlots?: BlockedSlot[], availableEquipment?: Partial<RentalEquipment>[], sportPrices: SportPrice[] }): Facility => {
   const facilityId = facilityData.id || `facility-${Date.now()}`;
   const processedEquipment = (facilityData.availableEquipment || []).map(eq => ({
     id: eq.id || `equip-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -1140,7 +1168,7 @@ export const addFacility = (facilityData: Omit<Facility, 'id' | 'sports' | 'amen
   return newFacility;
 };
 
-export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], availableEquipment?: Partial<RentalEquipment>[] }): Facility | undefined => {
+export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'amenities' | 'reviews' | 'rating' | 'operatingHours' | 'sportPrices'> & { sports: string[], amenities?: string[], operatingHours?: FacilityOperatingHours[], availableEquipment?: Partial<RentalEquipment>[], sportPrices: SportPrice[] }): Facility | undefined => {
   const facilityIndex = mockFacilities.findIndex(f => f.id === updatedFacilityData.id);
   if (facilityIndex === -1) return undefined;
 

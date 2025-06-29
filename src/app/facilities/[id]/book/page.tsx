@@ -1,10 +1,9 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings } from '@/lib/types';
+import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings, Sport } from '@/lib/types';
 import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist } from '@/lib/data';
 import { getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -17,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2, BellRing, HandCoins } from 'lucide-react';
+import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2, BellRing, HandCoins, Dices } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInHours, parse, formatISO, addHours } from 'date-fns';
@@ -88,6 +87,7 @@ export default function BookingPage() {
   const facilityId = params.id as string;
 
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined);
+  const [selectedSportId, setSelectedSportId] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | undefined>(undefined);
@@ -162,9 +162,16 @@ export default function BookingPage() {
 
 
   useEffect(() => {
-    if (facility && selectedDate && selectedSlot && currency) {
+    if (facility && selectedDate && selectedSlot && selectedSportId && currency) {
+      const sportPriceInfo = facility.sportPrices.find(p => p.sportId === selectedSportId);
+      if (!sportPriceInfo) {
+        setBaseFacilityPrice(0);
+        setAppliedPricingRuleMessage(null);
+        return;
+      }
+      
       const { finalPrice, appliedRuleName, appliedRuleDetails } = calculateDynamicPrice(
-        facility.pricePerHour,
+        sportPriceInfo.pricePerHour,
         selectedDate,
         selectedSlot,
         bookingDurationHours
@@ -173,7 +180,6 @@ export default function BookingPage() {
 
       if (appliedRuleName && appliedRuleDetails) {
         let changeDescription = "";
-        const originalHourlyRate = facility.pricePerHour;
         const newHourlyRate = finalPrice / bookingDurationHours;
 
         switch (appliedRuleDetails.adjustmentType) {
@@ -183,7 +189,7 @@ export default function BookingPage() {
             case 'fixed_decrease': changeDescription = `(-${formatCurrency(appliedRuleDetails.value, currency)}/hr)`; break;
             case 'fixed_price': changeDescription = `(to ${formatCurrency(appliedRuleDetails.value, currency)}/hr)`; break;
         }
-        if (newHourlyRate !== originalHourlyRate) {
+        if (newHourlyRate !== sportPriceInfo.pricePerHour) {
              setAppliedPricingRuleMessage(`${appliedRuleName} ${changeDescription}`);
         } else {
             setAppliedPricingRuleMessage(null); 
@@ -192,10 +198,10 @@ export default function BookingPage() {
         setAppliedPricingRuleMessage(null);
       }
     } else {
-      setBaseFacilityPrice(facility ? facility.pricePerHour * bookingDurationHours : 0);
+      setBaseFacilityPrice(0);
       setAppliedPricingRuleMessage(null);
     }
-  }, [facility, selectedDate, selectedSlot, bookingDurationHours, currency]);
+  }, [facility, selectedDate, selectedSlot, bookingDurationHours, currency, selectedSportId]);
 
   useEffect(() => {
     let rentalCost = 0;
@@ -300,10 +306,10 @@ export default function BookingPage() {
   };
 
   const proceedToPayment = () => {
-    if (!selectedDate || !selectedSlot || !facility) {
+    if (!selectedDate || !selectedSlot || !facility || !selectedSportId) {
       toast({
         title: "Missing Information",
-        description: "Please select a date, time slot, and ensure facility details are loaded.",
+        description: "Please select a sport, date, and time slot.",
         variant: "destructive",
       });
       return;
@@ -321,7 +327,7 @@ export default function BookingPage() {
 
   const handlePaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!currency) return;
+    if (!currency || !selectedSportId) return;
 
     if (paymentMethod === 'upi' && !upiId.trim()) {
         toast({
@@ -396,7 +402,7 @@ export default function BookingPage() {
   };
 
   const generateGoogleCalendarLink = () => {
-    if (!facility || !selectedDate || !selectedSlot || !currency) return '#';
+    if (!facility || !selectedDate || !selectedSlot || !currency || !selectedSportId) return '#';
 
     const [startHour, startMinute] = selectedSlot.startTime.split(':').map(Number);
     
@@ -409,7 +415,8 @@ export default function BookingPage() {
     const startTimeUTC = formatToGoogleISO(eventStartDateLocal);
     const endTimeUTC = formatToGoogleISO(eventEndDateLocal);
 
-    const title = encodeURIComponent(`Booking: ${facility.name}`);
+    const sportName = facility.sports.find(s => s.id === selectedSportId)?.name || 'Sport';
+    const title = encodeURIComponent(`Booking: ${facility.name} (${sportName})`);
     const details = encodeURIComponent(
       `Booking for ${facility.name} on ${format(selectedDate, 'PPP')} at ${selectedSlot.startTime}.\n` +
       `Guests: ${numberOfGuests}\n` +
@@ -449,12 +456,15 @@ export default function BookingPage() {
     return formatCurrency(price, currency);
   };
 
+  const selectedSportInfo = selectedSportId ? facility.sports.find(s => s.id === selectedSportId) : null;
+
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <Button variant="outline" className="mb-6" onClick={() => router.back()}>
         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Facility
       </Button>
-      <PageTitle title={`Book ${facility.name}`} description="Select your preferred date, time, and complete your booking." />
+      <PageTitle title={`Book ${facility.name}`} description="Select your preferred sport, date, time, and complete your booking." />
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
@@ -462,8 +472,25 @@ export default function BookingPage() {
             <>
             <Card>
               <CardHeader>
+                <CardTitle className="flex items-center"><Dices className="mr-2 h-5 w-5 text-primary"/>Select Your Sport</CardTitle>
+                <CardDescription>The price per hour varies depending on the sport you choose.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Select onValueChange={setSelectedSportId} value={selectedSportId}>
+                    <SelectTrigger><SelectValue placeholder="Choose a sport to play" /></SelectTrigger>
+                    <SelectContent>
+                        {facility.sports.map(sport => (
+                            <SelectItem key={sport.id} value={sport.id}>{sport.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+
+            <Card className={!selectedSportId ? 'opacity-50 pointer-events-none' : ''}>
+              <CardHeader>
                 <CardTitle className="flex items-center"><CalendarDays className="mr-2 h-5 w-5 text-primary"/> Select Date and Time</CardTitle>
-                <CardDescription>Choose an available slot for your activity.</CardDescription>
+                <CardDescription>Choose an available slot for your activity. {!selectedSportId && '(Please select a sport first)'}</CardDescription>
               </CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-6">
                 <div>
@@ -676,7 +703,7 @@ export default function BookingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-2">Thank you, {mockUser.name}!</p>
-                <p className="mb-1">Your booking for <strong>{facility.name}</strong> is confirmed.</p>
+                <p className="mb-1">Your booking for <strong>{facility.name}</strong> for <strong>{selectedSportInfo?.name}</strong> is confirmed.</p>
                 <p className="mb-1">Date: <strong>{format(selectedDate, 'PPP')}</strong></p>
                 <p className="mb-1">Time: <strong>{selectedSlot?.startTime} - {selectedSlot?.endTime}</strong> ({bookingDurationHours} hr{bookingDurationHours !== 1 ? 's' : ''})</p>
                 <p className="mb-1">Number of Guests: <strong>{numberOfGuests}</strong></p>
@@ -740,6 +767,10 @@ export default function BookingPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Facility:</span>
                 <span className="font-medium">{facility.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Sport:</span>
+                <span className="font-medium">{selectedSportInfo?.name || 'Not Selected'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Date:</span>
@@ -839,7 +870,7 @@ export default function BookingPage() {
                   size="lg" 
                   className="w-full" 
                   onClick={proceedToPayment} 
-                  disabled={!selectedDate || !selectedSlot || !numberOfGuests || parseInt(numberOfGuests) < 1 || !selectedSlot.isAvailable}
+                  disabled={!selectedDate || !selectedSlot || !numberOfGuests || parseInt(numberOfGuests) < 1 || !selectedSlot.isAvailable || !selectedSportId}
                 >
                   Proceed to Payment
                 </Button>
@@ -851,4 +882,3 @@ export default function BookingPage() {
     </div>
   );
 }
-

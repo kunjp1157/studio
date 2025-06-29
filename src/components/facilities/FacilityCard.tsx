@@ -62,6 +62,9 @@ export function FacilityCard({ facility }: FacilityCardProps) {
     availabilityStatus = { text: "Often Booked", variant: "secondary" };
   }
 
+  const minPrice = facility.sportPrices.length > 0
+    ? Math.min(...facility.sportPrices.map(p => p.pricePerHour))
+    : 0;
 
   return (
     <Card className={cn(
@@ -115,7 +118,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
           </div>
         </div>
         <div className="flex items-center text-base font-medium mb-3">
-          <span>{currency ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16 inline-block" />}</span>
+          <span>From {currency ? formatCurrency(minPrice, currency) : <Skeleton className="h-5 w-20 inline-block" />}</span>
           <span className='ml-1'>/hr</span>
         </div>
 

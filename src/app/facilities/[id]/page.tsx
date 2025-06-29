@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Facility, Amenity, Sport, Review, RentalEquipment, SiteSettings } from '@/lib/types';
-import { getFacilityById } from '@/lib/data';
+import { getFacilityById, getSportById } from '@/lib/data';
 import { getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -203,6 +203,7 @@ export default function FacilityDetailPage() {
   
   const reviewCount = facility.reviews?.length || 0;
   const hasRentals = facility.availableEquipment && facility.availableEquipment.length > 0;
+  const minPrice = facility.sportPrices.length > 0 ? Math.min(...facility.sportPrices.map(p => p.pricePerHour)) : 0;
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -248,7 +249,7 @@ export default function FacilityDetailPage() {
               <MapPin className="w-4 h-4 mr-1 text-primary" /> {facility.location}
             </div>
             <div className="flex items-center">
-              {renderPrice(facility.pricePerHour)}/hr (facility slot)
+              Starts from {renderPrice(minPrice)}/hr
             </div>
           </div>
 
@@ -301,16 +302,26 @@ export default function FacilityDetailPage() {
             </TabsContent>
             <TabsContent value="sports">
                 <Card>
-                    <CardContent className="pt-6">
-                        <ul className="grid grid-cols-2 gap-4">
+                    <CardHeader>
+                        <CardTitle>Sports & Pricing</CardTitle>
+                        <CardDescription>Hourly rates for different sports available at this facility.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {facility.sports.map((sport: Sport) => {
-                            const IconComponent = getIconComponent(sport.iconName) || Zap;
-                            return (
-                                <li key={sport.id} className="flex items-center text-foreground">
-                                <IconComponent className="w-5 h-5 mr-2 text-primary" />
-                                {sport.name}
-                                </li>
-                            );
+                              const sportPrice = facility.sportPrices.find(p => p.sportId === sport.id);
+                              const IconComponent = getIconComponent(sport.iconName) || Zap;
+                              return (
+                                  <li key={sport.id} className="flex items-center justify-between text-foreground p-3 border rounded-md">
+                                    <div className="flex items-center">
+                                        <IconComponent className="w-5 h-5 mr-3 text-primary" />
+                                        <span className="font-medium">{sport.name}</span>
+                                    </div>
+                                    <span className="font-semibold text-primary">
+                                        {sportPrice ? renderPrice(sportPrice.pricePerHour) + '/hr' : 'N/A'}
+                                    </span>
+                                  </li>
+                              );
                             })}
                         </ul>
                     </CardContent>

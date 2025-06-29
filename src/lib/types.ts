@@ -86,6 +86,11 @@ export interface BlockedSlot {
   reason?: string;
 }
 
+export interface SportPrice {
+  sportId: string;
+  pricePerHour: number;
+}
+
 export interface Facility {
   id: string;
   name:string;
@@ -98,9 +103,9 @@ export interface Facility {
   description: string;
   images: string[]; 
   sports: Sport[];
+  sportPrices: SportPrice[];
   amenities: Amenity[];
   operatingHours: FacilityOperatingHours[];
-  pricePerHour: number; 
   pricingRulesApplied?: PricingRule[]; 
   rating: number; 
   reviews?: Review[]; 
@@ -140,7 +145,9 @@ export interface Booking {
   facilityId: string;
   facilityName: string; 
   facilityImage: string; 
-  dataAiHint?: string; 
+  dataAiHint?: string;
+  sportId: string;
+  sportName: string;
   date: string; 
   startTime: string; 
   endTime: string; 

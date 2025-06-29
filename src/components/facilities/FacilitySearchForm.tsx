@@ -16,6 +16,7 @@ import { mockSports, mockAmenities, mockFacilities } from '@/lib/data';
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { formatCurrency } from '@/lib/utils';
+import { getIconComponent } from '@/components/shared/Icon';
 
 
 interface FacilitySearchFormProps {
@@ -36,7 +37,8 @@ export function FacilitySearchForm({ onSearch, currency, cities = [] }: Facility
   
   const [minPrice, maxPrice] = useMemo(() => {
     if (mockFacilities.length === 0) return [0, 100];
-    const prices = mockFacilities.map(f => f.pricePerHour);
+    const prices = mockFacilities.flatMap(f => f.sportPrices.map(p => p.pricePerHour));
+    if (prices.length === 0) return [0, 100];
     return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
   }, []);
 
@@ -242,7 +244,7 @@ export function FacilitySearchForm({ onSearch, currency, cities = [] }: Facility
               </Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2 p-4 border rounded-md bg-muted/20">
                 {mockAmenities.map((amenity) => {
-                  const AmenityIcon = amenity.icon || LayoutPanelLeft;
+                  const AmenityIcon = getIconComponent(amenity.iconName) || LayoutPanelLeft;
                   return (
                     <div key={amenity.id} className="flex items-center space-x-2">
                       <Checkbox

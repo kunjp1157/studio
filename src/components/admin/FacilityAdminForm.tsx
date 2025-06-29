@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings } from '@/lib/types';
-import { mockSports, mockAmenities, addFacility as addMockFacility, updateFacility as updateMockFacility, getSiteSettings } from '@/lib/data';
+import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice } from '@/lib/types';
+import { mockSports, mockAmenities, addFacility as addMockFacility, updateFacility as updateMockFacility, getSiteSettings, getSportById } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Image as ImageIcon, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LayoutPanelLeft, LocateFixed, Star, Sparkles } from 'lucide-react';
 import { generateImageFromPrompt } from '@/ai/flows/generate-image-flow';
+import { formatCurrency } from '@/lib/utils';
+
 
 const rentalEquipmentSchema = z.object({
   id: z.string().optional(),
@@ -39,13 +41,16 @@ const facilityFormSchema = z.object({
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
   images: z.array(z.string().url({ message: "Please enter a valid URL or leave empty if not applicable." }).or(z.literal(''))).min(1, { message: "At least one image URL is required (can be placeholder). Use https://placehold.co/800x450.png for placeholders."}).transform(arr => arr.filter(img => img.trim() !== '')),
   sports: z.array(z.string()).min(1, { message: "Select at least one sport." }),
+  sportPrices: z.array(z.object({
+    sportId: z.string(),
+    pricePerHour: z.coerce.number().min(0, "Price must be non-negative."),
+  })).optional().default([]),
   amenities: z.array(z.string()).optional().default([]),
   operatingHours: z.array(z.object({
     day: z.enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
     open: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format (HH:MM)"}),
     close: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format (HH:MM)"}),
   })).length(7, { message: "Operating hours for all 7 days are required."}),
-  pricePerHour: z.coerce.number().min(0, { message: "Price must be a non-negative number." }),
   rating: z.coerce.number().min(0).max(5).optional().default(0),
   capacity: z.coerce.number().min(0).optional().default(0),
   isPopular: z.boolean().optional().default(false),
@@ -54,6 +59,18 @@ const facilityFormSchema = z.object({
   latitude: z.coerce.number().optional(),
   longitude: z.coerce.number().optional(),
   availableEquipment: z.array(rentalEquipmentSchema).optional().default([]),
+}).refine(data => {
+    const selectedSportIds = new Set(data.sports);
+    const pricedSportIds = new Set(data.sportPrices.map(p => p.sportId));
+    for (const sportId of selectedSportIds) {
+      if (!pricedSportIds.has(sportId)) {
+        return false; // A selected sport is missing a price
+      }
+    }
+    return true;
+}, {
+    message: "A price must be set for every selected sport. Please check the Sport Prices section.",
+    path: ["sportPrices"],
 });
 
 type FacilityFormValues = z.infer<typeof facilityFormSchema>;
@@ -96,6 +113,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
     defaultValues: initialData ? {
       ...initialData,
       sports: initialData.sports.map(s => s.id),
+      sportPrices: initialData.sportPrices || [],
       amenities: initialData.amenities.map(a => a.id),
       operatingHours: initialData.operatingHours?.length === 7 ? initialData.operatingHours : defaultOperatingHours,
       images: initialData.images.length > 0 ? initialData.images : [''],
@@ -109,8 +127,8 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
       availableEquipment: initialData.availableEquipment || [],
     } : {
       name: '', type: 'Court', address: '', location: '', description: '',
-      images: [''], sports: [], amenities: [], operatingHours: defaultOperatingHours,
-      pricePerHour: 0, rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
+      images: [''], sports: [], sportPrices: [], amenities: [], operatingHours: defaultOperatingHours,
+      rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
       latitude: undefined, longitude: undefined,
       availableEquipment: [],
     },
@@ -130,6 +148,34 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
     control: form.control,
     name: "availableEquipment"
   });
+
+  const selectedSportIds = form.watch('sports');
+  const sportPrices = form.watch('sportPrices');
+
+  useEffect(() => {
+    const currentPricesMap = new Map((form.getValues('sportPrices') || []).map(p => [p.sportId, p]));
+    let needsUpdate = false;
+    
+    // Add new prices for newly selected sports
+    selectedSportIds.forEach(sportId => {
+        if (!currentPricesMap.has(sportId)) {
+            currentPricesMap.set(sportId, { sportId, pricePerHour: 0 });
+            needsUpdate = true;
+        }
+    });
+
+    // Remove prices for deselected sports
+    currentPricesMap.forEach((_value, sportId) => {
+        if (!selectedSportIds.includes(sportId)) {
+            currentPricesMap.delete(sportId);
+            needsUpdate = true;
+        }
+    });
+
+    if (needsUpdate) {
+        form.setValue('sportPrices', Array.from(currentPricesMap.values()), { shouldValidate: true, shouldDirty: true });
+    }
+  }, [selectedSportIds, form]);
 
   const handleGenerateImage = async () => {
       if (!imageGenPrompt) {
@@ -247,13 +293,6 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
                         <FormMessage />
                     </FormItem>
                 )} />
-                <FormField control={form.control} name="pricePerHour" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center"><DollarSign className="mr-2 h-4 w-4 text-muted-foreground"/>Price Per Hour ({currency})</FormLabel>
-                        <FormControl><Input type="number" step="0.01" placeholder="25.00" {...field} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
             </div>
              <div className="grid md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="latitude" render={({ field }) => (
@@ -365,6 +404,35 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
               </FormItem>
             )} />
             
+            <Card>
+              <CardHeader>
+                <CardTitle className='flex items-center'><DollarSign className="mr-2 h-5 w-5 text-primary"/>Sport Prices</CardTitle>
+                <CardDescription>Set the price per hour for each sport offered at the facility.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  {sportPrices.map((price, index) => {
+                    const sport = getSportById(price.sportId);
+                    if (!sport) return null;
+                    return(
+                      <FormField
+                        key={price.sportId}
+                        control={form.control}
+                        name={`sportPrices.${index}.pricePerHour`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{sport.name} Price Per Hour ({currency})</FormLabel>
+                            <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )
+                  })}
+                  {selectedSportIds?.length === 0 && <p className="text-sm text-muted-foreground">Select one or more sports to set their prices.</p>}
+                  <FormMessage>{form.formState.errors.sportPrices?.root?.message}</FormMessage>
+              </CardContent>
+            </Card>
+
             <FormField control={form.control} name="amenities" render={() => (
               <FormItem>
                 <FormLabel className="flex items-center"><Dices className="mr-2 h-4 w-4 text-muted-foreground"/>Amenities</FormLabel>
