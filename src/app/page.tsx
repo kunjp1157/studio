@@ -5,65 +5,113 @@ import { useState, useEffect, useMemo } from 'react';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
-import type { Facility, SiteSettings } from '@/lib/types';
-import { mockFacilities } from '@/lib/data';
+import type { Facility, SearchFilters, SiteSettings } from '@/lib/types';
+import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { getSiteSettingsAction } from '@/app/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
+const CardSkeleton = () => (
+    <div className="bg-card p-4 rounded-lg shadow-md">
+        <Skeleton className="h-48 w-full rounded mb-4" />
+        <Skeleton className="h-6 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-1/2 mb-2" />
+        <Skeleton className="h-4 w-1/3" />
+    </div>
+);
 
 export default function HomePage() {
-  const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>(mockFacilities);
-  const [isLoading, setIsLoading] = useState(true); // Simulate initial loading
+  const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
+  const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [currentFilters, setCurrentFilters] = useState<SearchFilters | null>(null);
 
   const cities = useMemo(() => {
-      return [...new Set(mockFacilities.map(f => f.city))].sort();
-  }, []);
+    return [...new Set(allFacilities.map(f => f.city))].sort();
+  }, [allFacilities]);
 
   useEffect(() => {
-    // Simulate API call or data fetching
-    const timer = setTimeout(() => {
-      setFilteredFacilities(mockFacilities);
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      const [freshFacilities, settings] = await Promise.all([
+        getFacilitiesAction(),
+        getSiteSettingsAction()
+      ]);
+      setAllFacilities(freshFacilities);
+      setCurrency(settings.defaultCurrency);
       setIsLoading(false);
-    }, 500); // Short delay for demo
-
-    const fetchSettings = async () => {
-        const settings = await getSiteSettingsAction();
-        setCurrency(settings.defaultCurrency);
     };
-    fetchSettings();
 
-    return () => clearTimeout(timer);
+    fetchInitialData();
+
+    const intervalId = setInterval(async () => {
+      const freshFacilities = await getFacilitiesAction();
+      setAllFacilities(currentFacilities => {
+        if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
+          return freshFacilities;
+        }
+        return currentFacilities;
+      });
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
+  
+  useEffect(() => {
+    let facilitiesToProcess = [...allFacilities];
 
-  const handleSearch = (filters: { searchTerm: string; sport: string; location: string; date?: Date }) => {
-    setIsLoading(true);
-    // Simulate filtering delay
-    setTimeout(() => {
-      let facilities = mockFacilities;
-
+    if (currentFilters) {
+      const filters = currentFilters;
       if (filters.searchTerm) {
-        facilities = facilities.filter(f => 
+        facilitiesToProcess = facilitiesToProcess.filter(f => 
           f.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
           f.description.toLowerCase().includes(filters.searchTerm.toLowerCase())
         );
       }
       if (filters.sport) {
-        facilities = facilities.filter(f => f.sports.some(s => s.id === filters.sport));
+        facilitiesToProcess = facilitiesToProcess.filter(f => f.sports.some(s => s.id === filters.sport));
+      }
+      if (filters.city) {
+          facilitiesToProcess = facilitiesToProcess.filter(f => f.city === filters.city);
       }
       if (filters.location) {
-        facilities = facilities.filter(f => f.location.toLowerCase().includes(filters.location.toLowerCase()));
+        facilitiesToProcess = facilitiesToProcess.filter(f => f.location.toLowerCase().includes(filters.location.toLowerCase()));
       }
-      // Date filtering would be more complex, involving checking availability for that date.
-      // For this mock, we'll skip date-based filtering of the facility list itself.
-      // It would typically apply to slot availability within a facility.
+       if (filters.priceRange) {
+        facilitiesToProcess = facilitiesToProcess.filter(f => 
+          f.sportPrices.some(p => p.pricePerHour >= filters.priceRange![0] && p.pricePerHour <= filters.priceRange![1])
+        );
+      }
+      if (filters.selectedAmenities && filters.selectedAmenities.length > 0) {
+        facilitiesToProcess = facilitiesToProcess.filter(f => 
+          filters.selectedAmenities!.every(saId => f.amenities.some(fa => fa.id === saId))
+        );
+      }
+      // Filter by operating time if both date and time are selected
+      if (filters.date && filters.time) {
+        const selectedDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][filters.date.getDay()] as 'Sun' | 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat';
+        facilitiesToProcess = facilitiesToProcess.filter(facility => {
+            const operatingHoursForDay = facility.operatingHours.find(h => h.day === selectedDay);
+            if (!operatingHoursForDay) {
+                return false; // Facility is not open on this day
+            }
+            // Check if selected time is within the facility's open and close times
+            return filters.time! >= operatingHoursForDay.open && filters.time! < operatingHoursForDay.close;
+        });
+      }
+    } else {
+        // On the homepage, we just show popular ones first by default if no filters are applied
+        facilitiesToProcess.sort((a,b) => (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0));
+    }
+    
+    setFilteredFacilities(facilitiesToProcess);
+  }, [allFacilities, currentFilters]);
 
-      setFilteredFacilities(facilities);
-      setIsLoading(false);
-    }, 300);
+  const handleSearch = (filters: SearchFilters) => {
+    setCurrentFilters(filters);
   };
 
   return (
@@ -78,15 +126,10 @@ export default function HomePage() {
         <FacilitySearchForm onSearch={handleSearch} currency={currency} cities={cities} />
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="bg-card p-4 rounded-lg shadow-md animate-pulse">
-              <div className="h-48 bg-muted rounded mb-4"></div>
-              <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
-              <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
-              <div className="h-4 bg-muted rounded w-1/3"></div>
-            </div>
+      {isLoading && filteredFacilities.length === 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <CardSkeleton key={index} />
           ))}
         </div>
       ) : filteredFacilities.length > 0 ? (
