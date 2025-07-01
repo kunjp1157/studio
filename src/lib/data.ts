@@ -1203,9 +1203,34 @@ export const updateFacility = (updatedFacilityData: Omit<Facility, 'sports' | 'a
 };
 
 export const deleteFacility = (facilityId: string): boolean => {
+  // Check for active, future events first. Past events should not block deletion.
+  const hasFutureEvents = mockEvents.some(e => e.facilityId === facilityId && isAfter(parseISO(e.endDate), new Date()));
+
+  if (hasFutureEvents) {
+    // We block deletion if there are future events, as this requires more complex logic (e.g., refunds).
+    return false;
+  }
+
+  // Find and cancel all future bookings for this facility
+  const futureBookings = mockBookings.filter(
+    b => b.facilityId === facilityId && isAfter(parseISO(b.date), subDays(new Date(), 1)) && (b.status === 'Confirmed' || b.status === 'Pending')
+  );
+
+  futureBookings.forEach(booking => {
+    updateBooking(booking.id, { status: 'Cancelled' });
+    addNotification(booking.userId, {
+      type: 'booking_cancelled',
+      title: 'Facility Unavailable',
+      message: `Your booking for ${booking.facilityName} on ${formatDateFns(parseISO(booking.date), 'MMM d, yyyy')} has been cancelled as the facility is no longer available.`,
+      link: '/account/bookings',
+    });
+  });
+  
   const initialLength = mockFacilities.length;
   mockFacilities = mockFacilities.filter(f => f.id !== facilityId);
   mockReviews = mockReviews.filter(r => r.facilityId !== facilityId);
+  mockRentalEquipment = mockRentalEquipment.filter(r => r.facilityId !== facilityId);
+  
   return mockFacilities.length < initialLength;
 };
 

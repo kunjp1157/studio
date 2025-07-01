@@ -84,7 +84,7 @@ export default function AdminFacilitiesPage() {
       } else {
          toast({
           title: "Error Deleting Facility",
-          description: `Could not delete ${facilityToDelete.name}. It might be associated with active bookings or events.`,
+          description: `Could not delete ${facilityToDelete.name}. It may have upcoming events associated with it. Bookings have been automatically cancelled.`,
           variant: "destructive",
         });
       }
