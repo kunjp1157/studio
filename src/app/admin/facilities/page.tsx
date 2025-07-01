@@ -79,12 +79,12 @@ export default function AdminFacilitiesPage() {
         setFacilities(prevFacilities => prevFacilities.filter(f => f.id !== facilityToDelete.id));
         toast({
           title: "Facility Deleted",
-          description: `${facilityToDelete.name} has been successfully deleted.`,
+          description: `"${facilityToDelete.name}" and its future bookings have been removed.`,
         });
       } else {
          toast({
           title: "Error Deleting Facility",
-          description: `Could not delete ${facilityToDelete.name}. It may have upcoming events associated with it. Bookings have been automatically cancelled.`,
+          description: `Could not delete "${facilityToDelete.name}". It may have upcoming events associated with it. Please cancel the events first.`,
           variant: "destructive",
         });
       }
