@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import {
-  mockReportData,
   getUserById,
   getFacilityById,
 } from '@/lib/data';
@@ -162,7 +161,18 @@ export default function AdminDashboardPage() {
         revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
       })));
 
-      setFacilityUsageData(mockReportData.facilityUsage);
+      const facilityUsageMap = new Map<string, number>();
+      bookings.forEach(booking => {
+        if (booking.status === 'Confirmed') {
+            const facilityName = booking.facilityName || getFacilityById(booking.facilityId)?.name || 'Unknown';
+            facilityUsageMap.set(facilityName, (facilityUsageMap.get(facilityName) || 0) + 1);
+        }
+      });
+      const calculatedFacilityUsageData = Array.from(facilityUsageMap.entries()).map(([name, count]) => ({
+          facilityName: name,
+          bookings: count,
+      }));
+      setFacilityUsageData(calculatedFacilityUsageData);
       
       const bookingActivities: ActivityFeedItemType[] = bookings.map(b => ({
         type: 'booking',
