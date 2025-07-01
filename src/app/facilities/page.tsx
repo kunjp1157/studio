@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -57,6 +56,7 @@ export default function FacilitiesPage() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
+      setIsLoading(true);
       const [freshFacilities, settings] = await Promise.all([
         getFacilitiesAction(),
         getSiteSettingsAction()
@@ -68,10 +68,16 @@ export default function FacilitiesPage() {
 
     fetchInitialData();
 
-    const intervalId = setInterval(async () => {
-      const freshFacilities = await getFacilitiesAction();
-      setAllFacilities(freshFacilities);
-    }, 5000);
+    const intervalId = setInterval(() => {
+      getFacilitiesAction().then(freshFacilities => {
+        setAllFacilities(currentFacilities => {
+          if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
+            return freshFacilities;
+          }
+          return currentFacilities;
+        });
+      });
+    }, 3000); // Reduced polling time for snappier updates
 
     return () => clearInterval(intervalId);
   }, []);
