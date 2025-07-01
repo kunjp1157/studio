@@ -60,25 +60,18 @@ export default function AdminBookingsPage() {
 
   useEffect(() => {
     const fetchBookings = async () => {
+        setIsLoading(true);
         const [bookingsData, settings] = await Promise.all([
           getAllBookingsAction(),
           getSiteSettingsAction(),
         ]);
         
         setCurrency(settings.defaultCurrency);
-        setAllBookings(currentBookings => {
-            if(JSON.stringify(currentBookings) !== JSON.stringify(bookingsData)) {
-                return bookingsData;
-            }
-            return currentBookings;
-        });
+        setAllBookings(bookingsData);
+        setIsLoading(false);
     };
     
-    fetchBookings().finally(() => setIsLoading(false));
-
-    const intervalId = setInterval(fetchBookings, 3000);
-    return () => clearInterval(intervalId);
-
+    fetchBookings();
   }, []);
 
 
@@ -128,7 +121,11 @@ export default function AdminBookingsPage() {
         link: '/account/bookings',
       });
       
-      getAllBookingsAction().then(setAllBookings);
+      setAllBookings(prevBookings =>
+        prevBookings.map(b =>
+          b.id === bookingToCancel.id ? { ...b, status: 'Cancelled' } : b
+        )
+      );
     } else {
       toast({ title: "Error", description: "Failed to cancel booking.", variant: "destructive" });
     }
