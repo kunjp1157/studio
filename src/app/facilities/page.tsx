@@ -49,6 +49,11 @@ export default function FacilitiesPage() {
       if (allFacilities.length === 0) return [];
       return [...new Set(allFacilities.map(f => f.city))].sort();
   }, [allFacilities]);
+  
+  const locations = useMemo(() => {
+    if (allFacilities.length === 0) return [];
+    return [...new Set(allFacilities.map(f => f.location))].sort();
+  }, [allFacilities]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -168,7 +173,7 @@ export default function FacilitiesPage() {
       />
 
       <div className="mb-8">
-        <FacilitySearchForm onSearch={handleSearch} currency={currency} cities={cities} />
+        <FacilitySearchForm onSearch={handleSearch} currency={currency} cities={cities} locations={locations} />
       </div>
 
       <div className="flex justify-between items-center mb-6 gap-4">

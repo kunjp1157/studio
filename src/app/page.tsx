@@ -32,6 +32,11 @@ export default function HomePage() {
   const cities = useMemo(() => {
     return [...new Set(allFacilities.map(f => f.city))].sort();
   }, [allFacilities]);
+  
+  const locations = useMemo(() => {
+    return [...new Set(allFacilities.map(f => f.location))].sort();
+  }, [allFacilities]);
+
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -123,7 +128,7 @@ export default function HomePage() {
       />
 
       <div className="mb-12">
-        <FacilitySearchForm onSearch={handleSearch} currency={currency} cities={cities} />
+        <FacilitySearchForm onSearch={handleSearch} currency={currency} cities={cities} locations={locations}/>
       </div>
 
       {isLoading && filteredFacilities.length === 0 ? (

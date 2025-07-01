@@ -23,15 +23,16 @@ interface FacilitySearchFormProps {
   onSearch: (filters: SearchFilters) => void;
   currency: SiteSettings['defaultCurrency'] | null;
   cities: string[];
+  locations: string[];
 }
 
 const ANY_SPORT_VALUE = "all-sports-filter-value";
 
-export function FacilitySearchForm({ onSearch, currency, cities = [] }: FacilitySearchFormProps) {
+export function FacilitySearchForm({ onSearch, currency, cities = [], locations = [] }: FacilitySearchFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSport, setSelectedSport] = useState(ANY_SPORT_VALUE);
   const [selectedCity, setSelectedCity] = useState('all');
-  const [location, setLocation] = useState('');
+  const [location, setLocation] = useState('all');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState('');
   
@@ -65,7 +66,7 @@ export function FacilitySearchForm({ onSearch, currency, cities = [] }: Facility
       searchTerm, 
       sport: selectedSport === ANY_SPORT_VALUE ? '' : selectedSport, 
       city: selectedCity === 'all' ? undefined : selectedCity,
-      location, 
+      location: location === 'all' ? undefined : location, 
       date: selectedDate,
       time: time,
       priceRange: priceRange[0] === minPrice && priceRange[1] === maxPrice ? undefined : priceRange, // Only pass if changed from default full range
@@ -135,20 +136,23 @@ export function FacilitySearchForm({ onSearch, currency, cities = [] }: Facility
         </div>
 
         <div>
-          <Label htmlFor="location" className="block text-sm font-medium text-foreground mb-1">
+          <Label htmlFor="location-filter" className="block text-sm font-medium text-foreground mb-1">
             Area / Location
           </Label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              id="location"
-              type="text"
-              placeholder="e.g., Downtown"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <Select value={location} onValueChange={setLocation}>
+            <SelectTrigger id="location-filter">
+              <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="All Areas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Areas</SelectItem>
+              {locations.map((loc) => (
+                <SelectItem key={loc} value={loc}>
+                  {loc}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div>
