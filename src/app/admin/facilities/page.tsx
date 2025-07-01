@@ -74,17 +74,17 @@ export default function AdminFacilitiesPage() {
     if (!facilityToDelete) return;
     setIsDeleting(true);
     setTimeout(() => {
+      // The deleteMockFacility function now handles cascading deletes.
       const success = deleteMockFacility(facilityToDelete.id);
       if (success) {
-        setFacilities(prevFacilities => prevFacilities.filter(f => f.id !== facilityToDelete.id));
         toast({
           title: "Facility Deleted",
-          description: `"${facilityToDelete.name}" and its future bookings have been removed.`,
+          description: `"${facilityToDelete.name}" and all its associated bookings, events, and reviews have been removed.`,
         });
       } else {
          toast({
           title: "Error Deleting Facility",
-          description: `Could not delete "${facilityToDelete.name}". It may have upcoming events associated with it. Please cancel the events first.`,
+          description: `Could not delete "${facilityToDelete.name}". An unknown error occurred.`,
           variant: "destructive",
         });
       }
@@ -206,7 +206,7 @@ export default function AdminFacilitiesPage() {
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete the facility "{facilityToDelete.name}"
-                and all its associated data, including reviews and potentially bookings.
+                and all its associated data, including bookings, events, and reviews.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
