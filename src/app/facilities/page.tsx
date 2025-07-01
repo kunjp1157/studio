@@ -70,12 +70,7 @@ export default function FacilitiesPage() {
 
     const intervalId = setInterval(async () => {
       const freshFacilities = await getFacilitiesAction();
-      setAllFacilities(currentFacilities => {
-        if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
-          return freshFacilities;
-        }
-        return currentFacilities;
-      });
+      setAllFacilities(freshFacilities);
     }, 5000);
 
     return () => clearInterval(intervalId);
