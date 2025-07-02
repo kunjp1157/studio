@@ -993,6 +993,16 @@ export const getOpenLfgRequests = (): LfgRequest[] => {
 
 // --- DATA MANIPULATION FUNCTIONS ---
 
+export const addBooking = (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Booking => {
+  const newBooking: Booking = {
+    ...bookingData,
+    id: `booking-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    bookedAt: new Date().toISOString(),
+  };
+  mockBookings.push(newBooking);
+  return newBooking;
+};
+
 export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
   let iconName = 'Info';
   switch (notificationData.type) {

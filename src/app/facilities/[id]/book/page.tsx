@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings, Sport } from '@/lib/types';
-import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist } from '@/lib/data';
+import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist, addBooking } from '@/lib/data';
 import { getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -327,63 +327,81 @@ export default function BookingPage() {
 
   const handlePaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!currency || !selectedSportId) return;
+    if (!currency || !selectedSportId || !facility || !selectedDate || !selectedSlot) {
+        toast({ title: "Error", description: "Missing booking details. Please start over.", variant: "destructive" });
+        return;
+    };
 
     if (paymentMethod === 'upi' && !upiId.trim()) {
-        toast({
-            title: 'UPI ID Required',
-            description: 'Please enter your UPI ID to proceed.',
-            variant: 'destructive',
-        });
+        toast({ title: 'UPI ID Required', description: 'Please enter your UPI ID to proceed.', variant: 'destructive' });
         return;
     }
 
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const isPayAtVenue = paymentMethod === 'cash';
+
+    addBooking({
+        userId: mockUser.id,
+        facilityId: facility.id,
+        facilityName: facility.name,
+        facilityImage: facility.images[0] || '',
+        dataAiHint: facility.dataAiHint,
+        sportId: selectedSportId,
+        sportName: facility.sports.find(s => s.id === selectedSportId)?.name || 'Unknown Sport',
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        startTime: selectedSlot.startTime,
+        endTime: selectedSlot.endTime,
+        durationHours: bookingDurationHours,
+        numberOfGuests: parseInt(numberOfGuests, 10),
+        baseFacilityPrice: baseFacilityPrice,
+        equipmentRentalCost: equipmentRentalCost,
+        appliedPromotion: appliedPromotionDetails || undefined,
+        totalPrice: totalBookingPrice,
+        status: isPayAtVenue ? 'Pending' : 'Confirmed',
+        reviewed: false,
+        rentedEquipment: Array.from(selectedEquipment.values()).map(item => ({
+            equipmentId: item.details.id,
+            name: item.details.name,
+            quantity: item.quantity,
+            priceAtBooking: item.details.pricePerItem,
+            priceTypeAtBooking: item.details.priceType,
+            totalCost: item.details.priceType === 'per_booking'
+                ? item.details.pricePerItem * item.quantity
+                : item.details.pricePerItem * item.quantity * bookingDurationHours,
+        })),
+    });
+
     setIsLoading(false);
     setBookingStep('confirmation');
     
-    if (selectedDate && selectedSlot) {
-        setTemporarilyBookedSlots(prev => [
-            ...prev,
-            { date: format(selectedDate, 'yyyy-MM-dd'), startTime: selectedSlot.startTime }
-        ]);
-    }
+    setTemporarilyBookedSlots(prev => [
+        ...prev,
+        { date: format(selectedDate, 'yyyy-MM-dd'), startTime: selectedSlot.startTime }
+    ]);
 
-    const bookingDate = selectedDate ? format(selectedDate, 'PPP') : 'N/A';
-    const bookingTime = selectedSlot?.startTime || 'N/A';
-    const isPayAtVenue = paymentMethod === 'cash';
-    
-    let rentedItemsSummary = "";
-    if (selectedEquipment.size > 0) {
-        rentedItemsSummary = " Rented: ";
-        selectedEquipment.forEach(item => {
-            rentedItemsSummary += `${item.quantity}x ${item.details.name}, `;
-        });
-        rentedItemsSummary = rentedItemsSummary.slice(0, -2) + "."; 
-    }
-
-    let promotionSummary = "";
-    if (appliedPromotionDetails) {
-        promotionSummary = ` Promotion Applied: ${appliedPromotionDetails.code} (-${formatCurrency(appliedPromotionDetails.discountAmount, currency)}).`;
+    const toastTitle = isPayAtVenue ? "Booking Pending" : "Booking Confirmed!";
+    let toastDescription = `Your booking for ${facility.name} on ${format(selectedDate, 'PPP')} at ${selectedSlot.startTime} is successful.`;
+    if (isPayAtVenue) {
+        toastDescription += ' Please pay at the venue to confirm.';
     }
     
     toast({
-      title: "Booking Confirmed!",
-      description: `Your booking for ${facility?.name} on ${bookingDate} at ${bookingTime} for ${numberOfGuests} guest(s) is confirmed.${rentedItemsSummary}${promotionSummary} ${isPayAtVenue ? 'Please complete payment at the venue.' : ''}`,
-      className: "bg-green-500 text-white",
-      duration: 10000,
+      title: toastTitle,
+      description: toastDescription,
+      className: isPayAtVenue ? "" : "bg-green-500 text-white",
+      duration: 8000,
     });
-
-    if (facility) {
-        addNotification(mockUser.id, {
-            type: 'booking_confirmed',
-            title: 'Booking Confirmed!',
-            message: `Your booking for ${facility.name} (${numberOfGuests} guest(s)) on ${bookingDate} at ${bookingTime} is successful.${rentedItemsSummary}${promotionSummary} ${isPayAtVenue ? 'Payment is due at the venue.' : ''}`,
-            link: '/account/bookings',
-        });
-    }
+    
+    addNotification(mockUser.id, {
+        type: 'booking_confirmed',
+        title: toastTitle,
+        message: toastDescription,
+        link: '/account/bookings',
+    });
   };
+
 
   const handleJoinWaitlist = async () => {
     if (!facility || !selectedDate || !selectedSlot) return;
