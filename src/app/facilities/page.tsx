@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -68,16 +69,10 @@ export default function FacilitiesPage() {
 
     fetchInitialData();
 
-    const intervalId = setInterval(() => {
-      getFacilitiesAction().then(freshFacilities => {
-        setAllFacilities(currentFacilities => {
-          if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
-            return freshFacilities;
-          }
-          return currentFacilities;
-        });
-      });
-    }, 3000); // Reduced polling time for snappier updates
+    const intervalId = setInterval(async () => {
+        const freshFacilities = await getFacilitiesAction();
+        setAllFacilities(freshFacilities);
+    }, 3000); 
 
     return () => clearInterval(intervalId);
   }, []);
