@@ -49,6 +49,7 @@ export default function MembershipsPage() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'qr'>('card');
   const [upiId, setUpiId] = useState('');
+  const [membershipQrCodeUrl, setMembershipQrCodeUrl] = useState('');
 
   useEffect(() => {
     setIsLoading(true);
@@ -73,6 +74,23 @@ export default function MembershipsPage() {
     setSelectedPlanForPayment(plan);
     setIsPaymentDialogOpen(true);
   };
+  
+  useEffect(() => {
+    if (isPaymentDialogOpen && paymentMethod === 'qr' && selectedPlanForPayment && currency) {
+        const currentPlanPrice = plans.find(p => p.name === currentUser.membershipLevel)?.pricePerMonth ?? 0;
+        const priceDifference = selectedPlanForPayment.pricePerMonth - currentPlanPrice;
+
+        if (priceDifference > 0) {
+             const upiData = new URLSearchParams({
+                pa: 'mock-merchant@upi',
+                pn: 'Sports Arena Membership',
+                am: priceDifference.toFixed(2),
+                cu: currency,
+            }).toString();
+            setMembershipQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?${upiData}`);
+        }
+    }
+  }, [isPaymentDialogOpen, paymentMethod, selectedPlanForPayment, currency, plans, currentUser.membershipLevel]);
   
   const handleConfirmPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,12 +294,12 @@ export default function MembershipsPage() {
                         />
                     </div>
                 )}
-                 {priceDifference > 0 && paymentMethod === 'qr' && currency && (
+                 {priceDifference > 0 && paymentMethod === 'qr' && membershipQrCodeUrl && (
                      <div className="mt-4 space-y-4 pt-4 border-t text-center">
                         <p className="text-sm text-muted-foreground">Scan the QR code to pay for your upgrade.</p>
                         <div className="flex justify-center">
                             <Image
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=mock-merchant@upi&pn=Sports%20Arena%20Membership&am=${priceDifference.toFixed(2)}&cu=${currency}`}
+                                src={membershipQrCodeUrl}
                                 alt="Scan to pay for membership"
                                 width={180}
                                 height={180}

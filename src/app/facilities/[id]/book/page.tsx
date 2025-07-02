@@ -104,6 +104,7 @@ export default function BookingPage() {
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
   const [totalBookingPrice, setTotalBookingPrice] = useState(0);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
   
   const [bookingStep, setBookingStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
@@ -222,7 +223,17 @@ export default function BookingPage() {
       finalPrice = Math.max(0, subTotal - appliedPromotionDetails.discountAmount);
     }
     setTotalBookingPrice(finalPrice);
-  }, [baseFacilityPrice, equipmentRentalCost, appliedPromotionDetails]);
+
+    if (currency) {
+        const upiData = new URLSearchParams({
+            pa: 'mock-merchant@upi',
+            pn: 'Sports Arena',
+            am: finalPrice.toFixed(2),
+            cu: currency,
+        }).toString();
+        setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?${upiData}`);
+    }
+  }, [baseFacilityPrice, equipmentRentalCost, appliedPromotionDetails, currency]);
 
 
   const handleEquipmentSelection = (equip: RentalEquipment, isChecked: boolean) => {
@@ -700,12 +711,12 @@ export default function BookingPage() {
                     </div>
                   )}
                   
-                  {paymentMethod === 'qr' && currency && (
+                  {paymentMethod === 'qr' && qrCodeUrl && (
                     <div className="space-y-4 pt-4 border-t text-center">
                         <p className="text-sm text-muted-foreground">Scan the QR code below with your UPI app to pay.</p>
                         <div className="flex justify-center">
                             <Image
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=mock-merchant@upi&pn=Sports%20Arena&am=${totalBookingPrice}&cu=${currency}`}
+                                src={qrCodeUrl}
                                 alt="Scan to pay"
                                 width={200}
                                 height={200}
