@@ -8,25 +8,50 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import type { MembershipPlan, SiteSettings, UserProfile } from '@/lib/types';
 import { mockMembershipPlans, mockUser, updateUser } from '@/lib/data';
 import { getSiteSettingsAction } from '@/app/actions';
-import { Award, CheckCircle, Star } from 'lucide-react';
+import { Award, CheckCircle, Star, CreditCard, HandCoins } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+// Simple UPI Icon component (re-using from booking page)
+const UpiIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5">
+        <path d="M6.46 9.36L4.7 11.12L3 9.46L4.76 7.7L6.46 9.36ZM10 10.9V7.1H8V15H10V12.7C11.39 12.7 12.5 11.94 12.5 10.2C12.5 8.76 11.5 7.6 10 7.6C8.5 7.6 7.5 8.76 7.5 10.2C7.5 11.94 8.61 12.7 10 12.7V10.9H10ZM10 9.4H10.5C10.94 9.4 11.2 9.7 11.2 10.1C11.2 10.5 10.94 10.8 10.5 10.8H10V9.4ZM17.1 7.1L15 11.5L12.9 7.1H11V15H12.9V10.7L14.4 14H15.6L17.1 10.7V15H19V7.1H17.1Z" fill="#1A237E"/>
+        <path d="M21 9.46L19.3 11.12L21 12.78L22.76 11.12L21 9.46Z" fill="#1A237E"/>
+    </svg>
+);
+
 
 export default function MembershipsPage() {
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState<string | null>(null); // To track which plan is being updated
-  const [currentUser, setCurrentUser] = useState<UserProfile>(mockUser); // Hold user state
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile>(mockUser);
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<MembershipPlan | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi'>('card');
+  const [upiId, setUpiId] = useState('');
+
   useEffect(() => {
-    // Simulate fetching membership plans
+    setIsLoading(true);
     setTimeout(() => {
-      // Sort plans by price to ensure consistent order
       const sortedPlans = [...mockMembershipPlans].sort((a,b) => a.pricePerMonth - b.pricePerMonth);
       setPlans(sortedPlans);
       setIsLoading(false);
@@ -39,36 +64,48 @@ export default function MembershipsPage() {
     fetchSettings();
   }, []);
 
-  // This effect will react to changes in the mockUser data if it were truly reactive.
-  // For this mock setup, we will manually update our component state.
   useEffect(() => {
     setCurrentUser(mockUser);
   }, [mockUser.membershipLevel]);
 
+  const handleChoosePlan = (plan: MembershipPlan) => {
+    setSelectedPlanForPayment(plan);
+    setIsPaymentDialogOpen(true);
+  };
+  
+  const handleConfirmPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPlanForPayment) return;
 
-  const handleSelectPlan = async (plan: MembershipPlan) => {
-    setIsUpdating(plan.id);
-    await new Promise(resolve => setTimeout(resolve, 700)); // Simulate API call
+    if (paymentMethod === 'upi' && !upiId.trim()) {
+        toast({ title: 'UPI ID Required', description: 'Please enter your UPI ID.', variant: 'destructive' });
+        return;
+    }
+    
+    setIsProcessingPayment(true);
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    updateUser(currentUser.id, { membershipLevel: plan.name as 'Basic' | 'Premium' | 'Pro' });
-    setCurrentUser(prev => ({...prev, membershipLevel: plan.name as 'Basic' | 'Premium' | 'Pro' }));
+    updateUser(currentUser.id, { membershipLevel: selectedPlanForPayment.name as 'Basic' | 'Premium' | 'Pro' });
+    setCurrentUser(prev => ({...prev, membershipLevel: selectedPlanForPayment.name as 'Basic' | 'Premium' | 'Pro' }));
     
     toast({
         title: "Membership Updated!",
-        description: `You are now on the ${plan.name} plan.`,
+        description: `You are now on the ${selectedPlanForPayment.name} plan.`,
         className: 'bg-green-500 text-white'
     });
-    setIsUpdating(null);
+    
+    setIsProcessingPayment(false);
+    setIsPaymentDialogOpen(false);
+    setSelectedPlanForPayment(null);
   };
   
   const getButtonState = (plan: MembershipPlan): { 
       text: string; 
       disabled: boolean; 
       variant: "default" | "secondary" | "outline";
-      priceDiffText?: string;
     } => {
-    if (isUpdating === plan.id) {
-        return { text: "Updating...", disabled: true, variant: 'secondary' };
+    if (isProcessingPayment) {
+        return { text: "Processing...", disabled: true, variant: 'secondary' };
     }
     if (currentUser.membershipLevel === plan.name) {
         return { text: "Current Plan", disabled: true, variant: 'outline' };
@@ -79,13 +116,11 @@ export default function MembershipsPage() {
     const priceDifference = plan.pricePerMonth - currentPlanPrice;
 
     if (priceDifference > 0) {
-      const diffText = currency ? `You will be charged an additional ${formatCurrency(priceDifference, currency)}/month.` : '';
-      return { text: "Upgrade Plan", disabled: false, variant: 'default', priceDiffText: diffText };
+      return { text: "Upgrade Plan", disabled: false, variant: 'default' };
     }
     
     if (priceDifference < 0) {
-      const diffText = currency ? `Your monthly charge will be reduced by ${formatCurrency(Math.abs(priceDifference), currency)}.` : '';
-      return { text: "Downgrade Plan", disabled: false, variant: 'secondary', priceDiffText: diffText };
+      return { text: "Downgrade Plan", disabled: false, variant: 'secondary' };
     }
 
     return { text: "Switch Plan", disabled: false, variant: 'secondary' };
@@ -113,6 +148,9 @@ export default function MembershipsPage() {
     </Card>
   );
 
+  const currentPlanPrice = plans.find(p => p.name === currentUser.membershipLevel)?.pricePerMonth ?? 0;
+  const priceDifference = selectedPlanForPayment ? selectedPlanForPayment.pricePerMonth - currentPlanPrice : 0;
+  
   if (isLoading) {
     return (
       <div className="container mx-auto py-12 px-4 md:px-6">
@@ -134,7 +172,7 @@ export default function MembershipsPage() {
         {plans.map((plan) => {
           const buttonState = getButtonState(plan);
           const isCurrentPlan = currentUser.membershipLevel === plan.name;
-          const isMostPopular = plan.name === 'Premium'; // Hardcoded for design
+          const isMostPopular = plan.name === 'Premium';
           
           return (
           <Card 
@@ -174,16 +212,12 @@ export default function MembershipsPage() {
               </ul>
             </CardContent>
             <CardFooter className="mt-auto p-6 flex-col gap-2">
-              <p className="text-xs text-center text-muted-foreground h-8 flex items-center justify-center">
-                {buttonState.priceDiffText || ''}
-              </p>
               <Button 
                 className={cn('w-full text-lg py-6')}
                 variant={buttonState.variant}
-                onClick={() => handleSelectPlan(plan)}
+                onClick={() => handleChoosePlan(plan)}
                 disabled={buttonState.disabled}
               >
-                {isUpdating === plan.id && <LoadingSpinner size={20} className="mr-2" />}
                 {buttonState.text}
               </Button>
             </CardFooter>
@@ -191,6 +225,65 @@ export default function MembershipsPage() {
         );
         })}
       </div>
+
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Membership Change</DialogTitle>
+              {selectedPlanForPayment && (
+                <DialogDescription>
+                  You are about to {priceDifference > 0 ? 'upgrade to' : 'downgrade to'} the <strong>{selectedPlanForPayment.name}</strong> plan.
+                </DialogDescription>
+              )}
+            </DialogHeader>
+            <div className="py-4">
+              <form onSubmit={handleConfirmPayment}>
+                {priceDifference !== 0 && (
+                   <Alert className="mb-4">
+                      <AlertTitle>{priceDifference > 0 ? 'Upgrade Cost' : 'Plan Change Summary'}</AlertTitle>
+                      <AlertDescription>
+                        {priceDifference > 0 ? `Your first prorated payment will be ${currency ? formatCurrency(priceDifference, currency) : ''}.` : `Your plan will be downgraded at the next billing cycle.`}
+                      </AlertDescription>
+                  </Alert>
+                )}
+                 {priceDifference > 0 && (
+                  <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'card' | 'upi')}>
+                      <div className="flex items-center space-x-2 border p-4 rounded-md">
+                          <RadioGroupItem value="card" id="card" />
+                          <Label htmlFor="card" className="flex items-center text-base"><CreditCard className="mr-2 h-5 w-5"/> Use saved Credit/Debit Card</Label>
+                      </div>
+                       <div className="flex items-center space-x-2 border p-4 rounded-md">
+                          <RadioGroupItem value="upi" id="upi" />
+                          <Label htmlFor="upi" className="flex items-center text-base"><UpiIcon /> UPI</Label>
+                      </div>
+                  </RadioGroup>
+                )}
+                {priceDifference > 0 && paymentMethod === 'upi' && (
+                     <div className="mt-4">
+                        <Label htmlFor="upi-id">UPI ID</Label>
+                        <Input 
+                            id="upi-id" 
+                            type="text" 
+                            placeholder="yourname@bank" 
+                            value={upiId}
+                            onChange={(e) => setUpiId(e.target.value)}
+                            required 
+                        />
+                    </div>
+                )}
+                <DialogFooter className="mt-6">
+                  <Button type="button" variant="outline" onClick={() => setIsPaymentDialogOpen(false)} disabled={isProcessingPayment}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isProcessingPayment}>
+                    {isProcessingPayment && <LoadingSpinner size={20} className="mr-2" />}
+                    {isProcessingPayment ? 'Processing...' : (priceDifference <= 0 ? 'Confirm Change' : 'Confirm & Pay')}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </div>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }
