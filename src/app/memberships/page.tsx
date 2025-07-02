@@ -276,12 +276,12 @@ export default function MembershipsPage() {
                         />
                     </div>
                 )}
-                 {priceDifference > 0 && paymentMethod === 'qr' && (
+                 {priceDifference > 0 && paymentMethod === 'qr' && currency && (
                      <div className="mt-4 space-y-4 pt-4 border-t text-center">
                         <p className="text-sm text-muted-foreground">Scan the QR code to pay for your upgrade.</p>
                         <div className="flex justify-center">
                             <Image
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=mock-merchant@upi&pn=Sports%20Arena%20Membership&am=${priceDifference.toFixed(2)}&cu=INR`}
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=mock-merchant@upi&pn=Sports%20Arena%20Membership&am=${priceDifference.toFixed(2)}&cu=${currency}`}
                                 alt="Scan to pay for membership"
                                 width={180}
                                 height={180}
@@ -313,4 +313,3 @@ export default function MembershipsPage() {
     </div>
   );
 }
-

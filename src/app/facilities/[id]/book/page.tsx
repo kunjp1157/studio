@@ -700,12 +700,12 @@ export default function BookingPage() {
                     </div>
                   )}
                   
-                  {paymentMethod === 'qr' && (
+                  {paymentMethod === 'qr' && currency && (
                     <div className="space-y-4 pt-4 border-t text-center">
                         <p className="text-sm text-muted-foreground">Scan the QR code below with your UPI app to pay.</p>
                         <div className="flex justify-center">
                             <Image
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=mock-merchant@upi&pn=Sports%20Arena&am=${totalBookingPrice}&cu=INR`}
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=mock-merchant@upi&pn=Sports%20Arena&am=${totalBookingPrice}&cu=${currency}`}
                                 alt="Scan to pay"
                                 width={200}
                                 height={200}
