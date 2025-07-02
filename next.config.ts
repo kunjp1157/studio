@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
         hostname: '5.imimg.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.qrserver.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
