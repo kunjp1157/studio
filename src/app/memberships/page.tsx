@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import type { MembershipPlan, SiteSettings, UserProfile } from '@/lib/types';
 import { mockMembershipPlans, mockUser, updateUser } from '@/lib/data';
 import { getSiteSettingsAction } from '@/app/actions';
-import { Award, CheckCircle, Star, CreditCard, HandCoins, QrCode } from 'lucide-react';
+import { Award, CheckCircle, Star, CreditCard, HandCoins, QrCode, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -239,11 +239,11 @@ export default function MembershipsPage() {
             </DialogHeader>
             <div className="py-4">
               <form onSubmit={handleConfirmPayment}>
-                {priceDifference !== 0 && (
+                {priceDifference !== 0 && currency && (
                    <Alert className="mb-4">
                       <AlertTitle>{priceDifference > 0 ? 'Upgrade Cost' : 'Plan Change Summary'}</AlertTitle>
                       <AlertDescription>
-                        {priceDifference > 0 ? `Your first prorated payment will be ${currency ? formatCurrency(priceDifference, currency) : ''}.` : `Your plan will be downgraded at the next billing cycle.`}
+                        {priceDifference > 0 ? `Your first prorated payment will be ${formatCurrency(priceDifference, currency)}.` : `Your plan will be downgraded at the next billing cycle.`}
                       </AlertDescription>
                   </Alert>
                 )}
@@ -313,3 +313,4 @@ export default function MembershipsPage() {
     </div>
   );
 }
+
