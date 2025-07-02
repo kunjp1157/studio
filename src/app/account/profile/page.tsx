@@ -49,11 +49,6 @@ export default function ProfilePage() {
     setUser({ ...user, [name]: value });
   };
   
-  const handleSelectChange = (name: keyof UserProfileType, value: string) => {
-    if (!user) return;
-    setUser({ ...user, [name]: value as UserProfileType[keyof UserProfileType] });
-  };
-
   const handlePreferredSportsChange = (sportId: string) => {
     if (!user) return;
     const currentPreferredSports = user.preferredSports || [];
@@ -110,7 +105,6 @@ export default function ProfilePage() {
       mockUser.name = user?.name || mockUser.name;
       mockUser.email = user?.email || mockUser.email;
       mockUser.phone = user?.phone || mockUser.phone;
-      mockUser.membershipLevel = user?.membershipLevel || mockUser.membershipLevel;
       mockUser.preferredSports = user?.preferredSports || mockUser.preferredSports;
       mockUser.isProfilePublic = user?.isProfilePublic;
 
@@ -187,22 +181,13 @@ export default function ProfilePage() {
                     <Input id="phone" name="phone" type="tel" value={user.phone || ''} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
                     </div>
                     <div>
-                    <Label htmlFor="membershipLevel" className="text-base flex items-center"><ShieldCheck className="inline mr-2 h-5 w-5 text-primary" />Membership Level</Label>
-                    <Select 
-                        name="membershipLevel" 
-                        value={user.membershipLevel} 
-                        onValueChange={(value) => handleSelectChange('membershipLevel', value)}
-                        disabled={!isEditing}
-                    >
-                        <SelectTrigger id="membershipLevel" className="mt-1 text-base p-3 h-auto">
-                        <SelectValue placeholder="Select membership" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {mockMembershipPlans.map(plan => (
-                            <SelectItem key={plan.id} value={plan.name} className="text-base">{plan.name}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
+                        <Label htmlFor="membershipLevel" className="text-base flex items-center"><ShieldCheck className="inline mr-2 h-5 w-5 text-primary" />Membership Level</Label>
+                        <Input 
+                            id="membershipLevel" 
+                            value={user.membershipLevel || 'Basic'} 
+                            disabled 
+                            className="mt-1 text-base p-3 bg-muted/50 font-medium"
+                        />
                     </div>
                 </div>
               </section>
