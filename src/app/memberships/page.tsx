@@ -5,25 +5,30 @@ import { useState, useEffect } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { MembershipPlan, SiteSettings } from '@/lib/types';
-import { mockMembershipPlans } from '@/lib/data';
+import type { MembershipPlan, SiteSettings, UserProfile } from '@/lib/types';
+import { mockMembershipPlans, mockUser, updateUser } from '@/lib/data';
 import { getSiteSettingsAction } from '@/app/actions';
 import { Award, CheckCircle, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 export default function MembershipsPage() {
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState<string | null>(null); // To track which plan is being updated
+  const [currentUser, setCurrentUser] = useState<UserProfile>(mockUser); // Hold user state
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
     // Simulate fetching membership plans
     setTimeout(() => {
-      setPlans(mockMembershipPlans);
+      // Sort plans by price to ensure consistent order
+      const sortedPlans = [...mockMembershipPlans].sort((a,b) => a.pricePerMonth - b.pricePerMonth);
+      setPlans(sortedPlans);
       setIsLoading(false);
     }, 500);
 
@@ -34,13 +39,41 @@ export default function MembershipsPage() {
     fetchSettings();
   }, []);
 
-  const handleSelectPlan = (planName: string) => {
+  // This effect will react to changes in the mockUser data if it were truly reactive.
+  // For this mock setup, we will manually update our component state.
+  useEffect(() => {
+    setCurrentUser(mockUser);
+  }, [mockUser.membershipLevel]);
+
+
+  const handleSelectPlan = async (plan: MembershipPlan) => {
+    setIsUpdating(plan.id);
+    await new Promise(resolve => setTimeout(resolve, 700)); // Simulate API call
+
+    updateUser(currentUser.id, { membershipLevel: plan.name as 'Basic' | 'Premium' | 'Pro' });
+    setCurrentUser(prev => ({...prev, membershipLevel: plan.name as 'Basic' | 'Premium' | 'Pro' }));
+    
     toast({
-        title: "Plan Selected (Mock)",
-        description: `You've selected the ${planName} plan. Proceed to checkout to activate. (This is a mock action)`,
+        title: "Membership Updated!",
+        description: `You are now on the ${plan.name} plan.`,
+        className: 'bg-green-500 text-white'
     });
-    // In a real app, redirect to a checkout/payment page for the selected plan
+    setIsUpdating(null);
   };
+  
+  const getButtonState = (plan: MembershipPlan): { text: string; disabled: boolean; variant: "default" | "secondary" | "outline"; } => {
+    if (isUpdating === plan.id) {
+        return { text: "Updating...", disabled: true, variant: 'secondary' };
+    }
+    if (currentUser.membershipLevel === plan.name) {
+        return { text: "Current Plan", disabled: true, variant: 'outline' };
+    }
+    const currentPlanPrice = plans.find(p => p.name === currentUser.membershipLevel)?.pricePerMonth ?? 0;
+    if (plan.pricePerMonth > currentPlanPrice) {
+        return { text: "Upgrade Plan", disabled: false, variant: 'default' };
+    }
+    return { text: "Downgrade Plan", disabled: false, variant: 'secondary' };
+  }
 
   const renderPrice = (price: number) => {
     if (!currency) return <Skeleton className="h-10 w-28 inline-block" />;
@@ -82,20 +115,31 @@ export default function MembershipsPage() {
       <PageTitle title="Membership Plans" description="Unlock exclusive benefits and discounts with our membership tiers." />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12 items-stretch">
-        {plans.map((plan) => (
+        {plans.map((plan) => {
+          const buttonState = getButtonState(plan);
+          const isCurrentPlan = currentUser.membershipLevel === plan.name;
+          const isMostPopular = plan.name === 'Premium'; // Hardcoded for design
+          
+          return (
           <Card 
             key={plan.id} 
-            className={cn(`flex flex-col h-full shadow-lg hover:shadow-2xl transition-all duration-300 rounded-xl`,
-                        plan.name === 'Premium' && 'border-primary border-2 scale-105 relative bg-background'
+            className={cn(`flex flex-col h-full shadow-lg hover:shadow-2xl transition-all duration-300 rounded-xl relative`,
+                        isMostPopular && !isCurrentPlan && 'border-primary border-2 scale-105 bg-background',
+                        isCurrentPlan && 'border-green-500 border-2 bg-green-500/5'
             )}
           >
-            {plan.name === 'Premium' && (
+            {isMostPopular && !isCurrentPlan && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold flex items-center z-10">
                     <Star className="w-4 h-4 mr-1 fill-current" /> Most Popular
                 </div>
             )}
+             {isCurrentPlan && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center z-10">
+                    <CheckCircle className="w-4 h-4 mr-1" /> Your Plan
+                </div>
+            )}
             <CardHeader className="text-center pt-10">
-              <Award className={cn('mx-auto h-12 w-12 mb-4', plan.name === 'Premium' ? 'text-primary' : 'text-muted-foreground')} />
+              <Award className={cn('mx-auto h-12 w-12 mb-4', isCurrentPlan ? 'text-green-500' : isMostPopular ? 'text-primary' : 'text-muted-foreground')} />
               <CardTitle className="text-3xl font-headline">{plan.name}</CardTitle>
               <div className="text-4xl font-bold text-primary my-2 h-10 flex justify-center items-center">
                 {renderPrice(plan.pricePerMonth)}
@@ -115,15 +159,18 @@ export default function MembershipsPage() {
             </CardContent>
             <CardFooter className="mt-auto p-6">
               <Button 
-                className={cn('w-full text-lg py-6', plan.name === 'Premium' ? '' : 'bg-accent text-accent-foreground hover:bg-accent/90')}
-                variant={plan.name === 'Premium' ? 'default' : 'secondary'}
-                onClick={() => handleSelectPlan(plan.name)}
+                className={cn('w-full text-lg py-6')}
+                variant={buttonState.variant}
+                onClick={() => handleSelectPlan(plan)}
+                disabled={buttonState.disabled}
               >
-                Choose {plan.name}
+                {isUpdating === plan.id && <LoadingSpinner size={20} className="mr-2" />}
+                {buttonState.text}
               </Button>
             </CardFooter>
           </Card>
-        ))}
+        );
+        })}
       </div>
     </div>
   );
