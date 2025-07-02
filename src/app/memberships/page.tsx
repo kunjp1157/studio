@@ -61,18 +61,34 @@ export default function MembershipsPage() {
     setIsUpdating(null);
   };
   
-  const getButtonState = (plan: MembershipPlan): { text: string; disabled: boolean; variant: "default" | "secondary" | "outline"; } => {
+  const getButtonState = (plan: MembershipPlan): { 
+      text: string; 
+      disabled: boolean; 
+      variant: "default" | "secondary" | "outline";
+      priceDiffText?: string;
+    } => {
     if (isUpdating === plan.id) {
         return { text: "Updating...", disabled: true, variant: 'secondary' };
     }
     if (currentUser.membershipLevel === plan.name) {
         return { text: "Current Plan", disabled: true, variant: 'outline' };
     }
-    const currentPlanPrice = plans.find(p => p.name === currentUser.membershipLevel)?.pricePerMonth ?? 0;
-    if (plan.pricePerMonth > currentPlanPrice) {
-        return { text: "Upgrade Plan", disabled: false, variant: 'default' };
+    
+    const currentPlan = plans.find(p => p.name === currentUser.membershipLevel);
+    const currentPlanPrice = currentPlan?.pricePerMonth ?? 0;
+    const priceDifference = plan.pricePerMonth - currentPlanPrice;
+
+    if (priceDifference > 0) {
+      const diffText = currency ? `You will be charged an additional ${formatCurrency(priceDifference, currency)}/month.` : '';
+      return { text: "Upgrade Plan", disabled: false, variant: 'default', priceDiffText: diffText };
     }
-    return { text: "Downgrade Plan", disabled: false, variant: 'secondary' };
+    
+    if (priceDifference < 0) {
+      const diffText = currency ? `Your monthly charge will be reduced by ${formatCurrency(Math.abs(priceDifference), currency)}.` : '';
+      return { text: "Downgrade Plan", disabled: false, variant: 'secondary', priceDiffText: diffText };
+    }
+
+    return { text: "Switch Plan", disabled: false, variant: 'secondary' };
   }
 
   const renderPrice = (price: number) => {
@@ -157,7 +173,10 @@ export default function MembershipsPage() {
                 ))}
               </ul>
             </CardContent>
-            <CardFooter className="mt-auto p-6">
+            <CardFooter className="mt-auto p-6 flex-col gap-2">
+              <p className="text-xs text-center text-muted-foreground h-8 flex items-center justify-center">
+                {buttonState.priceDiffText || ''}
+              </p>
               <Button 
                 className={cn('w-full text-lg py-6')}
                 variant={buttonState.variant}
