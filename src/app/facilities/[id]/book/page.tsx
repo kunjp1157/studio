@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2, BellRing, HandCoins, Dices } from 'lucide-react';
+import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2, BellRing, HandCoins, Dices, QrCode } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInHours, parse, formatISO, addHours } from 'date-fns';
@@ -114,7 +114,7 @@ export default function BookingPage() {
   const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
   const [isOnWaitlist, setIsOnWaitlist] = useState(false);
 
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'cash'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'cash' | 'qr'>('card');
   const [upiId, setUpiId] = useState('');
 
   useEffect(() => {
@@ -341,6 +341,7 @@ export default function BookingPage() {
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     const isPayAtVenue = paymentMethod === 'cash';
+    const isQrPayment = paymentMethod === 'qr';
 
     addBooking({
         userId: mockUser.id,
@@ -359,7 +360,7 @@ export default function BookingPage() {
         equipmentRentalCost: equipmentRentalCost,
         appliedPromotion: appliedPromotionDetails || undefined,
         totalPrice: totalBookingPrice,
-        status: isPayAtVenue ? 'Pending' : 'Confirmed',
+        status: isPayAtVenue || isQrPayment ? 'Pending' : 'Confirmed',
         reviewed: false,
         rentedEquipment: Array.from(selectedEquipment.values()).map(item => ({
             equipmentId: item.details.id,
@@ -381,16 +382,19 @@ export default function BookingPage() {
         { date: format(selectedDate, 'yyyy-MM-dd'), startTime: selectedSlot.startTime }
     ]);
 
-    const toastTitle = isPayAtVenue ? "Booking Pending" : "Booking Confirmed!";
+    const toastTitle = isPayAtVenue || isQrPayment ? "Booking Pending" : "Booking Confirmed!";
     let toastDescription = `Your booking for ${facility.name} on ${format(selectedDate, 'PPP')} at ${selectedSlot.startTime} is successful.`;
     if (isPayAtVenue) {
         toastDescription += ' Please pay at the venue to confirm.';
+    }
+    if (isQrPayment) {
+        toastDescription += ' We will confirm your booking once payment is received.';
     }
     
     toast({
       title: toastTitle,
       description: toastDescription,
-      className: isPayAtVenue ? "" : "bg-green-500 text-white",
+      className: isPayAtVenue || isQrPayment ? "" : "bg-green-500 text-white",
       duration: 8000,
     });
     
@@ -631,7 +635,7 @@ export default function BookingPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handlePaymentSubmit} className="space-y-6">
-                  <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'card' | 'upi' | 'cash')}>
+                  <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'card' | 'upi' | 'cash' | 'qr')}>
                       <div className="flex items-center space-x-2 border p-4 rounded-md">
                           <RadioGroupItem value="card" id="card" />
                           <Label htmlFor="card" className="flex items-center text-base"><CreditCard className="mr-2 h-5 w-5"/> Credit/Debit Card</Label>
@@ -639,6 +643,10 @@ export default function BookingPage() {
                       <div className="flex items-center space-x-2 border p-4 rounded-md">
                           <RadioGroupItem value="upi" id="upi" />
                           <Label htmlFor="upi" className="flex items-center text-base"><UpiIcon /> UPI</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border p-4 rounded-md">
+                          <RadioGroupItem value="qr" id="qr" />
+                          <Label htmlFor="qr" className="flex items-center text-base"><QrCode className="mr-2 h-5 w-5"/> Scan QR Code</Label>
                       </div>
                       <div className="flex items-center space-x-2 border p-4 rounded-md">
                           <RadioGroupItem value="cash" id="cash" />
@@ -692,6 +700,28 @@ export default function BookingPage() {
                     </div>
                   )}
                   
+                  {paymentMethod === 'qr' && (
+                    <div className="space-y-4 pt-4 border-t text-center">
+                        <p className="text-sm text-muted-foreground">Scan the QR code below with your UPI app to pay.</p>
+                        <div className="flex justify-center">
+                            <Image
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=mock-merchant@upi&pn=Sports%20Arena&am=${totalBookingPrice}&cu=INR`}
+                                alt="Scan to pay"
+                                width={200}
+                                height={200}
+                                className="rounded-md border"
+                            />
+                        </div>
+                        <Alert>
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>After Payment</AlertTitle>
+                            <AlertDescription>
+                                Once your payment is complete, click the button below to finalize your booking. We will verify the payment.
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                  )}
+
                   {paymentMethod === 'cash' && (
                      <div className="space-y-4 pt-4 border-t">
                         <Alert>
@@ -705,8 +735,8 @@ export default function BookingPage() {
                   )}
 
                    <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-                    {isLoading ? <LoadingSpinner size={20} className="mr-2"/> : (paymentMethod === 'card' ? <CreditCard className="mr-2 h-5 w-5" /> : (paymentMethod === 'upi' ? <UpiIcon /> : <HandCoins className="mr-2 h-5 w-5" />))}
-                    {isLoading ? 'Processing...' : (paymentMethod === 'cash' ? 'Confirm Booking' : `Pay ${renderPrice(totalBookingPrice)}`)}
+                    {isLoading ? <LoadingSpinner size={20} className="mr-2"/> : (paymentMethod === 'card' ? <CreditCard className="mr-2 h-5 w-5" /> : (paymentMethod === 'upi' ? <UpiIcon /> : (paymentMethod === 'cash' ? <HandCoins className="mr-2 h-5 w-5" /> : <QrCode className="mr-2 h-5 w-5" />)))}
+                    {isLoading ? 'Processing...' : (paymentMethod === 'cash' ? 'Confirm Booking' : (paymentMethod === 'qr' ? 'I Have Paid' : `Pay ${renderPrice(totalBookingPrice)}`))}
                   </Button>
                 </form>
               </CardContent>

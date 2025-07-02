@@ -2,13 +2,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import type { MembershipPlan, SiteSettings, UserProfile } from '@/lib/types';
 import { mockMembershipPlans, mockUser, updateUser } from '@/lib/data';
 import { getSiteSettingsAction } from '@/app/actions';
-import { Award, CheckCircle, Star, CreditCard, HandCoins } from 'lucide-react';
+import { Award, CheckCircle, Star, CreditCard, HandCoins, QrCode } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,7 +47,7 @@ export default function MembershipsPage() {
 
   const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<MembershipPlan | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'qr'>('card');
   const [upiId, setUpiId] = useState('');
 
   useEffect(() => {
@@ -247,7 +248,7 @@ export default function MembershipsPage() {
                   </Alert>
                 )}
                  {priceDifference > 0 && (
-                  <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'card' | 'upi')}>
+                  <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'card' | 'upi' | 'qr')}>
                       <div className="flex items-center space-x-2 border p-4 rounded-md">
                           <RadioGroupItem value="card" id="card" />
                           <Label htmlFor="card" className="flex items-center text-base"><CreditCard className="mr-2 h-5 w-5"/> Use saved Credit/Debit Card</Label>
@@ -255,6 +256,10 @@ export default function MembershipsPage() {
                        <div className="flex items-center space-x-2 border p-4 rounded-md">
                           <RadioGroupItem value="upi" id="upi" />
                           <Label htmlFor="upi" className="flex items-center text-base"><UpiIcon /> UPI</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border p-4 rounded-md">
+                          <RadioGroupItem value="qr" id="mem-qr" />
+                          <Label htmlFor="mem-qr" className="flex items-center text-base"><QrCode className="mr-2 h-5 w-5"/> Scan QR Code</Label>
                       </div>
                   </RadioGroup>
                 )}
@@ -271,13 +276,34 @@ export default function MembershipsPage() {
                         />
                     </div>
                 )}
+                 {priceDifference > 0 && paymentMethod === 'qr' && (
+                     <div className="mt-4 space-y-4 pt-4 border-t text-center">
+                        <p className="text-sm text-muted-foreground">Scan the QR code to pay for your upgrade.</p>
+                        <div className="flex justify-center">
+                            <Image
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=mock-merchant@upi&pn=Sports%20Arena%20Membership&am=${priceDifference.toFixed(2)}&cu=INR`}
+                                alt="Scan to pay for membership"
+                                width={180}
+                                height={180}
+                                className="rounded-md border"
+                            />
+                        </div>
+                         <Alert>
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>After Payment</AlertTitle>
+                            <AlertDescription>
+                                Once your payment is complete, click the button below to confirm your new membership plan.
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                )}
                 <DialogFooter className="mt-6">
                   <Button type="button" variant="outline" onClick={() => setIsPaymentDialogOpen(false)} disabled={isProcessingPayment}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isProcessingPayment}>
                     {isProcessingPayment && <LoadingSpinner size={20} className="mr-2" />}
-                    {isProcessingPayment ? 'Processing...' : (priceDifference <= 0 ? 'Confirm Change' : 'Confirm & Pay')}
+                    {isProcessingPayment ? 'Processing...' : (priceDifference <= 0 ? 'Confirm Change' : (paymentMethod === 'qr' ? 'Confirm Payment' : 'Confirm & Pay'))}
                   </Button>
                 </DialogFooter>
               </form>
