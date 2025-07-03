@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,16 +12,29 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { planWeekend, type PlanWeekendOutput } from '@/ai/flows/weekend-planner';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import type { SiteSettings } from '@/lib/types';
+import { getSiteSettingsAction } from '@/app/actions';
+import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WeekendPlannerPage() {
   const [request, setRequest] = useState(
-    'My two friends and I want to have a sporty weekend in Metropolis. We love soccer but are open to trying tennis. We are free on Saturday and Sunday afternoons. Our total budget for activities is around $150.'
+    'My two friends and I want to have a sporty weekend in Metropolis. We love soccer but are open to trying tennis. We are free on Saturday and Sunday afternoons. Our total budget for activities is around INR 15000.'
   );
   
   const [plan, setPlan] = useState<PlanWeekendOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+        const settings = await getSiteSettingsAction();
+        setCurrency(settings.defaultCurrency);
+    };
+    fetchSettings();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +133,10 @@ export default function WeekendPlannerPage() {
                     <div key={index} className="p-4 border rounded-lg bg-background/50">
                         <h3 className="font-bold text-lg text-primary">{item.day} - {item.time}</h3>
                         <p className="font-semibold text-md flex items-center gap-2"><Activity /> {item.activity} at {item.facilityName}</p>
-                        <p className="text-sm text-muted-foreground flex items-center gap-2"><DollarSign size={14}/> Estimated Cost: ${item.estimatedCost}</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                            <DollarSign size={14}/> 
+                            Estimated Cost: {currency ? formatCurrency(item.estimatedCost, currency) : <Skeleton className="h-4 w-16 inline-block" />}
+                        </p>
                         <p className="text-sm italic text-muted-foreground mt-2 p-2 bg-muted rounded-md">{item.reason}</p>
                     </div>
                 ))}
