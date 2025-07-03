@@ -72,6 +72,20 @@ export default function OwnerFacilitiesPage() {
     return () => clearInterval(interval);
   }, [ownerId, toast]);
 
+  const getPriceRange = (facility: Facility) => {
+    if (!currency) return <Skeleton className="h-5 w-24" />;
+    if (facility.sportPrices.length === 0) return 'N/A';
+    
+    const prices = facility.sportPrices.map(p => p.pricePerHour);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    if (minPrice === maxPrice) {
+      return formatCurrency(minPrice, currency);
+    }
+    return `${formatCurrency(minPrice, currency)} - ${formatCurrency(maxPrice, currency)}`;
+  }
+
 
   if (isLoading) {
     return (
@@ -131,7 +145,7 @@ export default function OwnerFacilitiesPage() {
                             <TableCell className="font-medium">{facility.name}</TableCell>
                             <TableCell><Badge variant="outline">{facility.type}</Badge></TableCell>
                             <TableCell>{facility.location}</TableCell>
-                            <TableCell>{currency ? formatCurrency(facility.pricePerHour, currency) : <Skeleton className="h-5 w-16" />}</TableCell>
+                            <TableCell>{getPriceRange(facility)}</TableCell>
                             <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>
                             <TableCell className="text-right">
                                 <DropdownMenu>
