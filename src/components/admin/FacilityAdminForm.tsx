@@ -57,8 +57,6 @@ const facilityFormSchema = z.object({
   isPopular: z.boolean().optional().default(false),
   isIndoor: z.boolean().optional().default(false),
   dataAiHint: z.string().optional(),
-  latitude: z.coerce.number().optional(),
-  longitude: z.coerce.number().optional(),
   availableEquipment: z.array(rentalEquipmentSchema).optional().default([]),
 }).refine(data => {
     const selectedSportIds = new Set(data.sports);
@@ -123,14 +121,11 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
       capacity: initialData.capacity ?? 0,
       isPopular: initialData.isPopular ?? false,
       dataAiHint: initialData.dataAiHint ?? '',
-      latitude: initialData.latitude,
-      longitude: initialData.longitude,
       availableEquipment: initialData.availableEquipment || [],
     } : {
       name: '', type: 'Court', address: '', city: '', location: '', description: '',
       images: [''], sports: [], sportPrices: [], amenities: [], operatingHours: defaultOperatingHours,
       rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
-      latitude: undefined, longitude: undefined,
       availableEquipment: [],
     },
   });
@@ -298,22 +293,6 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
                     <FormItem>
                         <FormLabel className="flex items-center"><MapPinIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Area / Neighborhood</FormLabel>
                         <FormControl><Input placeholder="e.g., Downtown" {...field} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-            </div>
-             <div className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="latitude" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center"><LocateFixed className="mr-2 h-4 w-4 text-muted-foreground"/>Latitude (Optional)</FormLabel>
-                        <FormControl><Input type="number" step="any" placeholder="e.g., 34.0522" {...field} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-                <FormField control={form.control} name="longitude" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center"><LocateFixed className="mr-2 h-4 w-4 text-muted-foreground"/>Longitude (Optional)</FormLabel>
-                        <FormControl><Input type="number" step="any" placeholder="e.g., -118.2437" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />

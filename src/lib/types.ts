@@ -98,8 +98,6 @@ export interface Facility {
   address: string;
   city: string;
   location: string; 
-  latitude?: number; 
-  longitude?: number; 
   description: string;
   images: string[]; 
   sports: Sport[];

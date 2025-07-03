@@ -102,8 +102,6 @@ export let mockFacilities: Facility[] = [
     address: '123 Stadium Rd, Metropolis, CA 90210',
     city: 'Metropolis',
     location: 'Downtown',
-    latitude: 34.0522,
-    longitude: -118.2437,
     description: 'State-of-the-art multi-sport complex with indoor and outdoor facilities.',
     images: ['https://images.unsplash.com/photo-1540747913346-19e32dc3e97e', 'https://images.unsplash.com/photo-1515523110800-9415d13b84a8', 'https://images.unsplash.com/photo-1579952516518-6c21a43665ac'],
     sports: [mockSports[0], mockSports[1], mockSports[2]],
@@ -132,8 +130,6 @@ export let mockFacilities: Facility[] = [
     address: '45 Green Ave, Metropolis, CA 90211',
     city: 'Metropolis',
     location: 'Riverside',
-    latitude: 34.0550,
-    longitude: -118.2500,
     description: 'Premium tennis courts with beautiful riverside views.',
     images: ['https://images.unsplash.com/photo-1559586829-37a509936a77', 'https://images.unsplash.com/photo-1622201862963-1d214a1a3641'],
     sports: [mockSports[2]],
@@ -157,8 +153,6 @@ export let mockFacilities: Facility[] = [
     address: '789 Park St, Metropolis, CA 90212',
     city: 'Metropolis',
     location: 'Westside',
-    latitude: 34.0600,
-    longitude: -118.2300,
     description: 'Affordable and friendly community center with various sports options.',
     images: ['https://images.unsplash.com/photo-1577412643533-544a048d94a2'],
     sports: [mockSports[1], mockSports[3]],
@@ -186,8 +180,6 @@ export let mockFacilities: Facility[] = [
     address: '101 Splash Ave, Metropolis, CA 90213',
     city: 'Metropolis',
     location: 'South Bay',
-    latitude: 34.0400,
-    longitude: -118.2600,
     description: 'Large Olympic-sized swimming pool with dedicated lanes and recreational areas.',
     images: ['https://images.unsplash.com/photo-1557951224-69b3294a4a51', 'https://images.unsplash.com/photo-1612033424847-a83b2a5f5f43'],
     sports: [mockSports[4]],
@@ -211,8 +203,6 @@ export let mockFacilities: Facility[] = [
     address: '555 Rooftop Way, Metropolis, CA 90215',
     city: 'Metropolis',
     location: 'Eastside',
-    latitude: 34.0700,
-    longitude: -118.2800,
     description: 'State-of-the-art box cricket arena with professional turf and lighting. Perfect for intense 6v6 matches day or night.',
     images: ['https://placehold.co/600x400.png'],
     sports: [mockSports.find(s => s.name === 'Cricket')!],
@@ -237,8 +227,6 @@ export let mockFacilities: Facility[] = [
     address: '100 Wayne Tower, Gotham City, NJ 07001',
     city: 'Gotham City',
     location: 'Financial District',
-    latitude: 40.7128,
-    longitude: -74.0060,
     description: 'Elite training complex for serious athletes. Features advanced equipment and professional-grade fields.',
     images: ['https://images.unsplash.com/photo-1599587123363-e387ae434e3a', 'https://images.unsplash.com/photo-1518611012118-696072aa579a'],
     sports: [mockSports[0], mockSports[1], mockSports[6]],
@@ -267,8 +255,6 @@ export let mockFacilities: Facility[] = [
     address: '777 Penitentiary Rd, Gotham City, NJ 07002',
     city: 'Gotham City',
     location: 'Arkham Island',
-    latitude: 40.7190,
-    longitude: -74.0180,
     description: 'Outdoor basketball and tennis courts available for public use. Recently renovated.',
     images: ['https://images.unsplash.com/photo-1605711221437-920ac7e809d4'],
     sports: [mockSports[1], mockSports[2]],
@@ -906,7 +892,7 @@ export const getFacilitiesByOwnerId = (ownerId: string): Facility[] => {
 };
 
 export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => {
-  return mockRentalEquipment.find(eq => eq.id === id);
+  return mockRentalEquipment.find(eq => eq.id === eq.id);
 };
 
 export const getNotificationsForUser = (userId: string): AppNotification[] => {
