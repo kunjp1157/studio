@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -219,9 +218,11 @@ export default function BookingsPage() {
             </Link>
             {booking.status === 'Confirmed' && !bookingIsPast && (
                 <>
-                <Button variant="outline" size="sm" onClick={() => toast({title: "Feature Coming Soon", description: "Booking modification will be available soon."})}>
-                    <Edit3 className="mr-1 h-4 w-4" /> Modify
-                </Button>
+                <Link href={`/account/bookings/${booking.id}/edit`}>
+                    <Button variant="outline" size="sm">
+                        <Edit3 className="mr-1 h-4 w-4" /> Modify
+                    </Button>
+                </Link>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" disabled={isActionLoading}><XCircle className="mr-1 h-4 w-4" /> Cancel</Button>
