@@ -10,7 +10,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getAllFacilities, getSiteSettings } from '@/lib/data';
-import { formatCurrency } from '@/lib/utils';
 
 // Define Input Schema
 const PlanWeekendInputSchema = z.object({
@@ -45,7 +44,7 @@ export async function planWeekend(input: PlanWeekendInput): Promise<PlanWeekendO
   const facilityContext = facilities
     .map(f => {
         const minPrice = f.sportPrices.length > 0 ? Math.min(...f.sportPrices.map(p => p.pricePerHour)) : 0;
-        return `- ${f.name} (Sports: ${f.sports.map(s => s.name).join(', ')}), Location: ${f.location}, Price from: ${formatCurrency(minPrice, settings.defaultCurrency)}/hr`
+        return `- ${f.name} (Sports: ${f.sports.map(s => s.name).join(', ')}), Location: ${f.location}, Price from: ${minPrice} ${settings.defaultCurrency}/hr`;
     })
     .join('\n');
 
@@ -64,7 +63,7 @@ const prompt = ai.definePrompt({
   output: { schema: PlanWeekendOutputSchema },
   prompt: `You are an expert AI weekend planner for a sports facility booking platform called "Sports Arena". Your goal is to create a fun, logical, and exciting weekend itinerary based on a user's request.
 
-You MUST use the currency {{{currency}}} for all cost estimations in your response. The estimatedCost field should be a number representing the value in {{{currency}}}.
+IMPORTANT: The currency for this platform is {{{currency}}}. All monetary values you provide in your response, especially in the \`estimatedCost\` field, MUST be in {{{currency}}}. Do not use any other currency symbols like '$'. Even if the user mentions a budget in another currency, you must perform your estimations and present your final plan using only {{{currency}}}.
 
 You must use the following list of available facilities to make your suggestions. Do not invent facilities.
 
@@ -78,7 +77,7 @@ Based on the user's request and the available facilities, create a structured we
 - The plan should be logical (e.g., don't schedule back-to-back intense activities without a break).
 - The suggestions should match the user's preferences for sports, budget, and timing.
 - For each item in the plan, provide a short, compelling reason for your choice.
-- The cost estimation should be based on a reasonable duration (e.g., 1-2 hours) and the facility's price. The final number should be in {{{currency}}}.
+- The \`estimatedCost\` field MUST be a number in {{{currency}}}.
 - Finally, provide a friendly and encouraging summary of the entire plan.
 `,
 });
