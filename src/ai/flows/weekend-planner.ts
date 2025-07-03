@@ -27,6 +27,8 @@ const WeekendPlanSuggestionSchema = z.object({
     facilityName: z.string().describe("The name of the recommended facility for this activity."),
     estimatedCost: z.number().describe("A rough estimate of the cost for this activity."),
     reason: z.string().describe("A brief, compelling reason why this specific activity and facility were chosen based on the user's request."),
+    whatToBring: z.string().describe("A short suggestion of what the user should bring for this activity, like 'Non-marking shoes, water bottle'.").optional(),
+    proTip: z.string().describe("A helpful pro-tip for the activity or facility, like 'Book online in advance to save time.'").optional(),
 });
 
 const PlanWeekendOutputSchema = z.object({
@@ -77,6 +79,7 @@ Based on the user's request and the available facilities, create a structured we
 - The plan should be logical (e.g., don't schedule back-to-back intense activities without a break).
 - The suggestions should match the user's preferences for sports, budget, and timing.
 - For each item in the plan, provide a short, compelling reason for your choice.
+- For each activity, also provide a helpful \`proTip\` (e.g., "Arrive 15 minutes early to warm up") and a suggestion for \`whatToBring\` (e.g., "Comfortable sportswear, water bottle").
 - The \`estimatedCost\` field MUST be a number in {{{currency}}}.
 - Finally, provide a friendly and encouraging summary of the entire plan.
 `,

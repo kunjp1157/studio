@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Wand2, Lightbulb, ThumbsDown, AlertCircle, Sparkles, Activity, DollarSign, Search } from 'lucide-react';
+import { Wand2, Lightbulb, ThumbsDown, AlertCircle, Sparkles, Activity, DollarSign, Search, PackageSearch } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { planWeekend, type PlanWeekendOutput } from '@/ai/flows/weekend-planner';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WeekendPlannerPage() {
   const [request, setRequest] = useState(
-    'My two friends and I want to have a sporty weekend in Metropolis. We love soccer but are open to trying tennis. We are free on Saturday and Sunday afternoons. Our total budget for activities is around INR 15000.'
+    'My two friends and I want to have a sporty weekend in Metropolis. We love soccer but are open to trying tennis. We are free on Saturday and Sunday afternoons. Our total budget for activities is around 15000 INR.'
   );
   
   const [plan, setPlan] = useState<PlanWeekendOutput | null>(null);
@@ -138,6 +138,23 @@ export default function WeekendPlannerPage() {
                             Estimated Cost: {currency ? formatCurrency(item.estimatedCost, currency) : <Skeleton className="h-4 w-16 inline-block" />}
                         </p>
                         <p className="text-sm italic text-muted-foreground mt-2 p-2 bg-muted rounded-md">{item.reason}</p>
+
+                        {(item.whatToBring || item.proTip) && (
+                            <div className="mt-3 pt-3 border-t border-dashed space-y-2">
+                                {item.whatToBring && (
+                                    <div className="flex items-start text-xs text-muted-foreground">
+                                        <PackageSearch className="h-4 w-4 mr-2 mt-0.5 shrink-0 text-primary/80" />
+                                        <span><strong>What to Bring:</strong> {item.whatToBring}</span>
+                                    </div>
+                                )}
+                                {item.proTip && (
+                                    <div className="flex items-start text-xs text-muted-foreground">
+                                        <Lightbulb className="h-4 w-4 mr-2 mt-0.5 shrink-0 text-primary/80" />
+                                        <span><strong>Pro Tip:</strong> {item.proTip}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 ))}
               </CardContent>
