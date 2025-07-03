@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -58,6 +57,7 @@ const facilityFormSchema = z.object({
   isIndoor: z.boolean().optional().default(false),
   dataAiHint: z.string().optional(),
   availableEquipment: z.array(rentalEquipmentSchema).optional().default([]),
+  ownerId: z.string().optional(),
 }).refine(data => {
     const selectedSportIds = new Set(data.sports);
     const pricedSportIds = new Set(data.sportPrices.map(p => p.sportId));
@@ -77,6 +77,7 @@ type FacilityFormValues = z.infer<typeof facilityFormSchema>;
 interface FacilityAdminFormProps {
   initialData?: Facility | null; 
   onSubmitSuccess?: () => void;
+  ownerId?: string;
 }
 
 const defaultOperatingHours: FacilityOperatingHours[] = [
@@ -87,7 +88,7 @@ const defaultOperatingHours: FacilityOperatingHours[] = [
 ];
 
 
-export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdminFormProps) {
+export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: FacilityAdminFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -122,11 +123,13 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess }: FacilityAdmi
       isPopular: initialData.isPopular ?? false,
       dataAiHint: initialData.dataAiHint ?? '',
       availableEquipment: initialData.availableEquipment || [],
+      ownerId: initialData.ownerId,
     } : {
       name: '', type: 'Court', address: '', city: '', location: '', description: '',
       images: [''], sports: [], sportPrices: [], amenities: [], operatingHours: defaultOperatingHours,
       rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
       availableEquipment: [],
+      ownerId: ownerId,
     },
   });
 
