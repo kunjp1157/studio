@@ -31,8 +31,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { MembershipPlan, SiteSettings } from '@/lib/types';
-import { getAllMembershipPlans, deleteMembershipPlan as deleteMockMembershipPlan } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
+import { deleteMembershipPlan as deleteMockMembershipPlan } from '@/lib/data';
+import { getSiteSettingsAction, getAllMembershipPlansAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Award, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -49,19 +49,25 @@ export default function AdminMembershipsPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    setTimeout(() => {
-      setPlans(getAllMembershipPlans());
-      setIsLoading(false);
-    }, 300);
-    
-    const fetchSettings = async () => {
-      const currentSettings = await getSiteSettingsAction();
-      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    const fetchAndSetData = async () => {
+      const [freshPlans, settings] = await Promise.all([
+        getAllMembershipPlansAction(),
+        getSiteSettingsAction(),
+      ]);
+      setPlans(currentPlans => {
+          if (JSON.stringify(currentPlans) !== JSON.stringify(freshPlans)) {
+              return freshPlans;
+          }
+          return currentPlans;
+      });
+      setCurrency(prev => settings.defaultCurrency !== prev ? settings.defaultCurrency : prev);
     };
 
-    fetchSettings();
-    const settingsInterval = setInterval(fetchSettings, 5000);
-    return () => clearInterval(settingsInterval);
+    fetchAndSetData().finally(() => setIsLoading(false));
+
+    const intervalId = setInterval(fetchAndSetData, 3000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleDeletePlan = () => {

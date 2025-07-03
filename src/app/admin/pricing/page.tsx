@@ -32,8 +32,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { PricingRule, SiteSettings } from '@/lib/types';
-import { getAllPricingRules, deletePricingRule as deleteMockPricingRule } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
+import { deletePricingRule as deleteMockPricingRule } from '@/lib/data';
+import { getSiteSettingsAction, getAllPricingRulesAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -51,19 +51,25 @@ export default function AdminPricingPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    setTimeout(() => {
-      setRules(getAllPricingRules());
-      setIsLoading(false);
-    }, 300);
-    
-    const fetchSettings = async () => {
-      const currentSettings = await getSiteSettingsAction();
-      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    const fetchAndSetData = async () => {
+      const [freshRules, settings] = await Promise.all([
+        getAllPricingRulesAction(),
+        getSiteSettingsAction(),
+      ]);
+      setRules(currentRules => {
+          if (JSON.stringify(currentRules) !== JSON.stringify(freshRules)) {
+              return freshRules;
+          }
+          return currentRules;
+      });
+      setCurrency(prev => settings.defaultCurrency !== prev ? settings.defaultCurrency : prev);
     };
 
-    fetchSettings();
-    const settingsInterval = setInterval(fetchSettings, 5000);
-    return () => clearInterval(settingsInterval);
+    fetchAndSetData().finally(() => setIsLoading(false));
+
+    const intervalId = setInterval(fetchAndSetData, 3000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleDeleteRule = () => {

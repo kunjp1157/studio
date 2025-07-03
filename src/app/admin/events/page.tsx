@@ -33,7 +33,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { SportEvent } from '@/lib/types';
-import { getAllEvents, deleteEvent as deleteMockEvent, getFacilityById } from '@/lib/data';
+import { deleteEvent as deleteMockEvent, getFacilityById } from '@/lib/data';
+import { getAllEventsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, CalendarDays as EventIcon, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -47,11 +48,21 @@ export default function AdminEventsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate fetching events
-    setTimeout(() => {
-      setEvents(getAllEvents());
-      setIsLoading(false);
-    }, 500);
+    const fetchAndSetData = async () => {
+      const freshEvents = await getAllEventsAction();
+      setEvents(currentEvents => {
+          if (JSON.stringify(currentEvents) !== JSON.stringify(freshEvents)) {
+              return freshEvents;
+          }
+          return currentEvents;
+      });
+    };
+
+    fetchAndSetData().finally(() => setIsLoading(false));
+
+    const intervalId = setInterval(fetchAndSetData, 3000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleDeleteEvent = () => {

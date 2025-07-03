@@ -32,8 +32,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { PromotionRule, SiteSettings } from '@/lib/types';
-import { getAllPromotionRules, deletePromotionRule as deleteMockPromotionRule } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
+import { deletePromotionRule as deleteMockPromotionRule } from '@/lib/data';
+import { getSiteSettingsAction, getAllPromotionRulesAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Tag, CheckCircle, XCircle, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -51,16 +51,25 @@ export default function AdminPromotionsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-        const [promoData, settingsData] = await Promise.all([
-            Promise.resolve(getAllPromotionRules()),
-            getSiteSettingsAction()
-        ]);
-        setPromotions(promoData);
-        setCurrency(settingsData.defaultCurrency);
-        setIsLoading(false);
+    const fetchAndSetData = async () => {
+      const [freshPromos, settings] = await Promise.all([
+        getAllPromotionRulesAction(),
+        getSiteSettingsAction(),
+      ]);
+      setPromotions(currentPromos => {
+          if (JSON.stringify(currentPromos) !== JSON.stringify(freshPromos)) {
+              return freshPromos;
+          }
+          return currentPromos;
+      });
+      setCurrency(prev => settings.defaultCurrency !== prev ? settings.defaultCurrency : prev);
     };
-    fetchInitialData();
+
+    fetchAndSetData().finally(() => setIsLoading(false));
+
+    const intervalId = setInterval(fetchAndSetData, 3000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleDeletePromotion = () => {

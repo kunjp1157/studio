@@ -11,7 +11,11 @@ import {
     getEventById,
     getMembershipPlanById,
     getPricingRuleById,
-    getPromotionRuleById
+    getPromotionRuleById,
+    getAllEvents,
+    getAllMembershipPlans,
+    getAllPricingRules,
+    getAllPromotionRules
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule } from '@/lib/types';
 
@@ -37,4 +41,20 @@ export async function getBookingsByUserIdAction(userId: string): Promise<Booking
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
     return getFacilitiesByOwnerId(ownerId);
+}
+
+export async function getAllEventsAction(): Promise<SportEvent[]> {
+    return getAllEvents();
+}
+
+export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
+    return getAllMembershipPlans();
+}
+
+export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
+    return getAllPricingRules();
+}
+
+export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
+    return getAllPromotionRules();
 }

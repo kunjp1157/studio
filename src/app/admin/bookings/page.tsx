@@ -59,19 +59,26 @@ export default function AdminBookingsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchBookings = async () => {
-        setIsLoading(true);
-        const [bookingsData, settings] = await Promise.all([
-          getAllBookingsAction(),
-          getSiteSettingsAction(),
-        ]);
-        
-        setCurrency(settings.defaultCurrency);
-        setAllBookings(bookingsData);
-        setIsLoading(false);
+    const fetchAndSetData = async () => {
+      const [bookingsData, settings] = await Promise.all([
+        getAllBookingsAction(),
+        getSiteSettingsAction(),
+      ]);
+
+      setAllBookings(currentBookings => {
+        if (JSON.stringify(currentBookings) !== JSON.stringify(bookingsData)) {
+            return bookingsData;
+        }
+        return currentBookings;
+      });
+      setCurrency(prev => settings.defaultCurrency !== prev ? settings.defaultCurrency : prev);
     };
-    
-    fetchBookings();
+
+    fetchAndSetData().finally(() => setIsLoading(false));
+
+    const intervalId = setInterval(fetchAndSetData, 3000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
 
