@@ -978,6 +978,8 @@ export const getSiteSettings = (): SiteSettings => {
   return mockSiteSettings;
 };
 
+let mockWaitlist: WaitlistEntry[] = [];
+
 export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => {
     return mockWaitlist.some(entry =>
         entry.userId === userId &&
@@ -990,6 +992,7 @@ export const isUserOnWaitlist = (userId: string, facilityId: string, date: strin
 export const getOpenLfgRequests = (): LfgRequest[] => {
     return mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
+
 
 // --- DATA MANIPULATION FUNCTIONS ---
 
