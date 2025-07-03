@@ -184,7 +184,7 @@ export default function BookingsPage() {
     };
 
     return (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">
+    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 rounded-lg hover:scale-[1.03]">
         <CardHeader className="p-0 relative">
         <Image
             src={booking.facilityImage || `https://placehold.co/400x200.png?text=${encodeURIComponent(booking.facilityName)}`}

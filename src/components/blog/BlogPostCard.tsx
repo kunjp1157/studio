@@ -17,7 +17,7 @@ interface BlogPostCardProps {
 
 export function BlogPostCard({ post, isFeatured = false }: BlogPostCardProps) {
   return (
-    <Card className={`flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg ${isFeatured ? 'md:col-span-2' : ''}`}>
+    <Card className={`flex flex-col h-full overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 rounded-lg hover:scale-[1.03] ${isFeatured ? 'md:col-span-2' : ''}`}>
       {post.imageUrl && (
         <CardHeader className="p-0 relative">
           <Link href={`/blog/${post.slug}`}>

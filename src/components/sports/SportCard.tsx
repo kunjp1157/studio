@@ -17,7 +17,7 @@ export function SportCard({ sport }: SportCardProps) {
   const SportIconComponent = getIconComponent(sport.iconName);
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg">
+    <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 rounded-lg hover:scale-[1.03]">
       <CardHeader className="p-0 relative">
         <Link href={`/facilities?sport=${sport.id}`} passHref>
           <div className="aspect-[4/3] w-full relative">
