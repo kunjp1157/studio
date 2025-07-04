@@ -766,7 +766,7 @@ let mockSiteSettings: SiteSettings = {
   maintenanceMode: false,
 };
 
-export let mockLfgRequests: LfgRequest[] = [
+let mockLfgRequests: LfgRequest[] = [
     {
         id: 'lfg-1',
         userId: 'user-regular', 
@@ -1018,6 +1018,7 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
   return newNotification;
 };
 
+let mockWaitlist: WaitlistEntry[] = [];
 const processWaitlistNotifications = (facilityId: string, date: string, startTime: string) => {
     const facility = getFacilityById(facilityId);
     if (!facility) return;

@@ -27,6 +27,7 @@ import { Users, PlusCircle, Crown, User, LogOut, Settings, AlertCircle, Zap } fr
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { getIconComponent } from '@/components/shared/Icon';
 
 export default function MyTeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -86,7 +87,7 @@ export default function MyTeamsPage() {
   const TeamCard = ({ team }: { team: Team }) => {
     const members = team.memberIds.map(id => getUserById(id)).filter(Boolean) as UserProfile[];
     const isCaptain = mockUser.id === team.captainId;
-    const SportIcon = team.sport.icon || Zap;
+    const SportIcon = getIconComponent(team.sport.iconName) || Zap;
 
     return (
         <Card className="flex flex-col h-full shadow-lg">
