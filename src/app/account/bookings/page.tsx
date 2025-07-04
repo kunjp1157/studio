@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -38,6 +39,26 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+
+
+const BookingCardSkeleton = () => (
+    <Card className="overflow-hidden shadow-lg">
+        <Skeleton className="h-36 w-full" />
+        <CardContent className="p-4">
+            <Skeleton className="h-6 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-1/2 mb-3" />
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+            </div>
+        </CardContent>
+        <CardFooter className="p-4 pt-0 space-x-2">
+            <Skeleton className="h-8 w-24 rounded-md" />
+            <Skeleton className="h-8 w-24 rounded-md" />
+        </CardFooter>
+    </Card>
+);
 
 
 export default function BookingsPage() {
@@ -170,7 +191,14 @@ export default function BookingsPage() {
 
 
   if (isLoading) {
-    return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
+    return (
+      <div className="container mx-auto py-8 px-4 md:px-6">
+        <PageTitle title="My Bookings" description="Manage your upcoming and past sports facility reservations." />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+            {Array.from({ length: 3 }).map((_, index) => <BookingCardSkeleton key={index} />)}
+        </div>
+      </div>
+    );
   }
   
   const BookingCard = ({ booking }: { booking: Booking }) => {
@@ -283,13 +311,13 @@ export default function BookingsPage() {
       )}
 
       {bookings.length === 0 && !isLoading ? (
-        <Alert>
+        <Alert className="mt-8">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>No Bookings Yet!</AlertTitle>
             <AlertDescription>
             You haven't made any bookings. Start exploring facilities and reserve your spot!
-            <Link href="/facilities">
-                <Button className="mt-4">Browse Facilities</Button>
+            <Link href="/facilities" className="mt-4 inline-block">
+                <Button>Browse Facilities</Button>
             </Link>
             </AlertDescription>
         </Alert>
@@ -318,8 +346,8 @@ export default function BookingsPage() {
                     <AlertTitle>All Clear!</AlertTitle>
                     <AlertDescription>
                     You have no upcoming or past bookings to display at the moment.
-                    <Link href="/facilities">
-                        <Button className="mt-4">Explore Facilities</Button>
+                    <Link href="/facilities" className="mt-4 inline-block">
+                        <Button>Explore Facilities</Button>
                     </Link>
                     </AlertDescription>
                 </Alert>

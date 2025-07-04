@@ -159,13 +159,13 @@ export default function MyTeamsPage() {
        </div>
 
       {teams.length === 0 ? (
-        <Alert>
+        <Alert className="mt-8">
             <Users className="h-4 w-4" />
             <AlertTitle>No Teams Yet!</AlertTitle>
             <AlertDescription>
             You are not part of any team. Why not create one and invite your friends?
-            <Link href="/account/teams/new">
-                <Button className="mt-4">Create a Team</Button>
+            <Link href="/account/teams/new" className="mt-4 inline-block">
+                <Button>Create a Team</Button>
             </Link>
             </AlertDescription>
         </Alert>

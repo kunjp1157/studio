@@ -183,7 +183,31 @@ export default function FacilityDetailPage() {
   )};
 
   if (facility === undefined) {
-    return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
+    return (
+        <div className="container mx-auto py-8 px-4 md:px-6">
+            <div className="grid md:grid-cols-3 gap-8">
+                <div className="md:col-span-2 space-y-6">
+                    <Skeleton className="aspect-video w-full rounded-lg" />
+                    <div className="grid grid-cols-3 gap-2">
+                        <Skeleton className="aspect-video w-full rounded-md" />
+                        <Skeleton className="aspect-video w-full rounded-md" />
+                        <Skeleton className="aspect-video w-full rounded-md" />
+                    </div>
+                    <Skeleton className="h-10 w-3/4" />
+                    <Skeleton className="h-6 w-1/2" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                    </div>
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="md:col-span-1 space-y-6">
+                    <Skeleton className="h-96 w-full rounded-lg" />
+                </div>
+            </div>
+        </div>
+    );
   }
 
   if (!facility) {
