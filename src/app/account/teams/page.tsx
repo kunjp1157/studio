@@ -108,9 +108,7 @@ export default function MyTeamsPage() {
                     {members.map(member => (
                        member.isProfilePublic ? (
                             <Link key={member.id} href={`/users/${member.id}`} passHref>
-                                <a aria-label={`View profile of ${member.name}`}>
-                                    <MemberAvatar member={member} teamCaptainId={team.captainId} />
-                                </a>
+                                <MemberAvatar member={member} teamCaptainId={team.captainId} />
                             </Link>
                         ) : (
                             <MemberAvatar key={member.id} member={member} teamCaptainId={team.captainId} />
