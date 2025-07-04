@@ -527,8 +527,6 @@ export let mockBookings: Booking[] = [
   },
 ];
 
-let mockWaitlist: WaitlistEntry[] = [];
-
 let mockAppNotifications: AppNotification[] = [
   {
     id: 'notif-1',
@@ -793,6 +791,8 @@ let mockLfgRequests: LfgRequest[] = [
     }
 ];
 
+let mockWaitlist: WaitlistEntry[] = [];
+
 
 // --- FUNCTIONS ---
 // Helper and getter functions are placed before functions that might use them.
@@ -1018,7 +1018,6 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
   return newNotification;
 };
 
-let mockWaitlist: WaitlistEntry[] = [];
 const processWaitlistNotifications = (facilityId: string, date: string, startTime: string) => {
     const facility = getFacilityById(facilityId);
     if (!facility) return;
