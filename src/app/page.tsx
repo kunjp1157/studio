@@ -51,13 +51,6 @@ export default function HomePage() {
     };
 
     fetchInitialData();
-
-    const intervalId = setInterval(async () => {
-      const freshFacilities = await getFacilitiesAction();
-      setAllFacilities(freshFacilities);
-    }, 3000);
-
-    return () => clearInterval(intervalId);
   }, []);
   
   useEffect(() => {
