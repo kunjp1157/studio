@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag } from 'lucide-react';
+import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { mockUser } from '@/lib/data';
 
@@ -107,7 +107,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </SidebarGroup>
 
             <SidebarGroup>
-                <SidebarGroupLabel className="group-data-[collapsible=icon]:justify-center">Configuration</SidebarGroupLabel>
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:justify-center">Insights & Settings</SidebarGroupLabel>
+                <SidebarMenuItem>
+                    <Link href="/admin/presentation">
+                      <SidebarMenuButton isActive={isActive('/admin/presentation')} tooltip="AI Presentation">
+                          <LayoutTemplate />
+                          <span>AI Presentation</span>
+                      </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                     <Link href="/admin/settings">
                     <SidebarMenuButton isActive={isActive('/admin/settings')} tooltip="Settings">
