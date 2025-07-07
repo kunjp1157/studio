@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { Facility, SiteSettings } from '@/lib/types';
-import { deleteFacility as deleteMockFacility } from '@/lib/data';
+import { deleteFacility } from '@/lib/data';
 import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -50,47 +50,53 @@ export default function AdminFacilitiesPage() {
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
+  const fetchAndSetData = async () => {
+    try {
+        const [freshFacilities, currentSettings] = await Promise.all([
+            getFacilitiesAction(),
+            getSiteSettingsAction()
+        ]);
+        setFacilities(freshFacilities);
+        setCurrency(currentSettings.defaultCurrency);
+    } catch (error) {
+        console.error("Failed to fetch facilities:", error);
+        toast({
+            title: "Error",
+            description: "Could not load facilities data.",
+            variant: "destructive",
+        });
+    }
+  };
+
   useEffect(() => {
-    const fetchAndSetData = async () => {
-      const freshFacilities = await getFacilitiesAction();
-      setFacilities(currentFacilities => {
-          if (JSON.stringify(currentFacilities) !== JSON.stringify(freshFacilities)) {
-              return freshFacilities;
-          }
-          return currentFacilities;
-      });
-      const currentSettings = await getSiteSettingsAction();
-      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    };
-
     fetchAndSetData().finally(() => setIsLoading(false));
-
-    const intervalId = setInterval(fetchAndSetData, 3000);
-
+    // The polling interval can be removed if you prefer to rely on manual refreshes
+    // or more advanced real-time listeners (which can be implemented later).
+    const intervalId = setInterval(fetchAndSetData, 5000);
     return () => clearInterval(intervalId);
   }, []);
 
-  const handleDeleteFacility = () => {
+  const handleDeleteFacility = async () => {
     if (!facilityToDelete) return;
     setIsDeleting(true);
-    setTimeout(() => {
-      // The deleteMockFacility function now handles cascading deletes.
-      const success = deleteMockFacility(facilityToDelete.id);
-      if (success) {
-        toast({
-          title: "Facility Deleted",
-          description: `"${facilityToDelete.name}" and all its associated bookings, events, and reviews have been removed.`,
-        });
-      } else {
-         toast({
-          title: "Error Deleting Facility",
-          description: `Could not delete "${facilityToDelete.name}". An unknown error occurred.`,
-          variant: "destructive",
-        });
-      }
-      setIsDeleting(false);
-      setFacilityToDelete(null);
-    }, 1000);
+    try {
+      await deleteFacility(facilityToDelete.id);
+      toast({
+        title: "Facility Deleted",
+        description: `"${facilityToDelete.name}" and all its associated bookings, events, and reviews have been removed.`,
+      });
+      // Re-fetch all data to ensure consistency
+      await fetchAndSetData();
+    } catch (error) {
+       toast({
+        title: "Error Deleting Facility",
+        description: `Could not delete "${facilityToDelete.name}". An unknown error occurred.`,
+        variant: "destructive",
+      });
+    } finally {
+        setIsDeleting(false);
+        setFacilityToDelete(null);
+    }
   };
 
   const getPriceRange = (facility: Facility) => {

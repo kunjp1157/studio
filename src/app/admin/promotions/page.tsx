@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { PromotionRule, SiteSettings } from '@/lib/types';
-import { deletePromotionRule as deleteMockPromotionRule } from '@/lib/data';
+import { deletePromotionRule } from '@/lib/data';
 import { getSiteSettingsAction, getAllPromotionRulesAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Tag, CheckCircle, XCircle, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -50,41 +50,50 @@ export default function AdminPromotionsPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const { toast } = useToast();
 
+  const fetchAndSetData = async () => {
+    try {
+        const [freshPromos, settings] = await Promise.all([
+            getAllPromotionRulesAction(),
+            getSiteSettingsAction(),
+        ]);
+        setPromotions(freshPromos);
+        setCurrency(settings.defaultCurrency);
+    } catch (error) {
+        console.error("Failed to fetch promotions:", error);
+        toast({
+            title: "Error",
+            description: "Could not load promotions data.",
+            variant: "destructive",
+        });
+    }
+  };
+
   useEffect(() => {
-    const fetchAndSetData = async () => {
-      const [freshPromos, settings] = await Promise.all([
-        getAllPromotionRulesAction(),
-        getSiteSettingsAction(),
-      ]);
-      setPromotions(currentPromos => {
-          if (JSON.stringify(currentPromos) !== JSON.stringify(freshPromos)) {
-              return freshPromos;
-          }
-          return currentPromos;
-      });
-      setCurrency(prev => settings.defaultCurrency !== prev ? settings.defaultCurrency : prev);
-    };
-
     fetchAndSetData().finally(() => setIsLoading(false));
-
-    const intervalId = setInterval(fetchAndSetData, 3000);
-
+    const intervalId = setInterval(fetchAndSetData, 5000);
     return () => clearInterval(intervalId);
   }, []);
 
-  const handleDeletePromotion = () => {
+  const handleDeletePromotion = async () => {
     if (!promotionToDelete) return;
     setIsDeleting(true);
-    setTimeout(() => {
-      deleteMockPromotionRule(promotionToDelete.id);
-      setPromotions(prevPromotions => prevPromotions.filter(p => p.id !== promotionToDelete.id));
+    try {
+      await deletePromotionRule(promotionToDelete.id);
       toast({
         title: "Promotion Deleted",
         description: `Promotion "${promotionToDelete.name}" has been successfully deleted.`,
       });
-      setIsDeleting(false);
-      setPromotionToDelete(null);
-    }, 1000);
+      await fetchAndSetData();
+    } catch (error) {
+       toast({
+        title: "Error",
+        description: `Could not delete promotion "${promotionToDelete.name}".`,
+        variant: "destructive",
+      });
+    } finally {
+        setIsDeleting(false);
+        setPromotionToDelete(null);
+    }
   };
 
   const formatDiscount = (promo: PromotionRule) => {

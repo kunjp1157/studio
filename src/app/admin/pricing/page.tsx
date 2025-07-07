@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { PricingRule, SiteSettings } from '@/lib/types';
-import { deletePricingRule as deleteMockPricingRule } from '@/lib/data';
+import { deletePricingRule } from '@/lib/data';
 import { getSiteSettingsAction, getAllPricingRulesAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -50,41 +50,50 @@ export default function AdminPricingPage() {
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
+  const fetchAndSetData = async () => {
+    try {
+        const [freshRules, settings] = await Promise.all([
+            getAllPricingRulesAction(),
+            getSiteSettingsAction(),
+        ]);
+        setRules(freshRules);
+        setCurrency(settings.defaultCurrency);
+    } catch (error) {
+        console.error("Failed to fetch pricing rules:", error);
+        toast({
+            title: "Error",
+            description: "Could not load pricing rules data.",
+            variant: "destructive",
+        });
+    }
+  };
+
   useEffect(() => {
-    const fetchAndSetData = async () => {
-      const [freshRules, settings] = await Promise.all([
-        getAllPricingRulesAction(),
-        getSiteSettingsAction(),
-      ]);
-      setRules(currentRules => {
-          if (JSON.stringify(currentRules) !== JSON.stringify(freshRules)) {
-              return freshRules;
-          }
-          return currentRules;
-      });
-      setCurrency(prev => settings.defaultCurrency !== prev ? settings.defaultCurrency : prev);
-    };
-
     fetchAndSetData().finally(() => setIsLoading(false));
-
-    const intervalId = setInterval(fetchAndSetData, 3000);
-
+    const intervalId = setInterval(fetchAndSetData, 5000);
     return () => clearInterval(intervalId);
   }, []);
 
-  const handleDeleteRule = () => {
+  const handleDeleteRule = async () => {
     if (!ruleToDelete) return;
     setIsDeleting(true);
-    setTimeout(() => {
-      deleteMockPricingRule(ruleToDelete.id);
-      setRules(prevRules => prevRules.filter(r => r.id !== ruleToDelete.id));
-      toast({
-        title: "Pricing Rule Deleted",
-        description: `"${ruleToDelete.name}" has been successfully deleted.`,
-      });
-      setIsDeleting(false);
-      setRuleToDelete(null);
-    }, 1000);
+    try {
+        await deletePricingRule(ruleToDelete.id);
+        toast({
+            title: "Pricing Rule Deleted",
+            description: `"${ruleToDelete.name}" has been successfully deleted.`,
+        });
+        await fetchAndSetData();
+    } catch (error) {
+        toast({
+            title: "Error",
+            description: "Could not delete pricing rule.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsDeleting(false);
+        setRuleToDelete(null);
+    }
   };
 
   const formatAdjustment = (rule: PricingRule, currentCurrency: SiteSettings['defaultCurrency']) => {
