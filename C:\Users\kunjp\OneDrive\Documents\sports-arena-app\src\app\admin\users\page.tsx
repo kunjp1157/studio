@@ -30,7 +30,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -38,22 +37,22 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { UserProfile, UserRole, UserStatus } from '@/lib/types';
-import { updateUser as updateMockUser, addNotification } from '@/lib/data';
+import { updateUser, addNotification } from '@/lib/data';
 import { getUsersAction } from '@/app/actions';
-import { MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX } from 'lucide-react';
+import { MoreHorizontal, Eye, Edit, Trash2, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format, parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { useForm, Controller } from 'react-hook-form';
+import { Form, FormField, FormItem } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
@@ -83,20 +82,18 @@ export default function AdminUsersPage() {
   });
 
   const fetchUsers = async () => {
-    const usersData = await getUsersAction();
-    setAllUsers(currentUsers => {
-        if (JSON.stringify(currentUsers) !== JSON.stringify(usersData)) {
-            return usersData;
-        }
-        return currentUsers;
-    });
+    try {
+        const usersData = await getUsersAction();
+        setAllUsers(usersData);
+    } catch(error) {
+        console.error("Failed to fetch users:", error);
+        toast({ title: "Error", description: "Failed to load users data.", variant: "destructive"});
+    }
   };
 
   useEffect(() => {
     fetchUsers().finally(() => setIsLoading(false));
-    
-    const intervalId = setInterval(fetchUsers, 3000);
-
+    const intervalId = setInterval(fetchUsers, 5000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -131,8 +128,8 @@ export default function AdminUsersPage() {
   
   const handleToggleStatus = async (user: UserProfile) => {
     const newStatus: UserStatus = user.status === 'Active' ? 'Suspended' : 'Active';
-    const updatedUser = updateMockUser(user.id, { status: newStatus });
-    if (updatedUser) {
+    try {
+      await updateUser(user.id, { status: newStatus });
       toast({
         title: `User ${newStatus === 'Active' ? 'Activated' : 'Suspended'}`,
         description: `${user.name}'s status has been changed to ${newStatus}.`,
@@ -143,18 +140,18 @@ export default function AdminUsersPage() {
         message: `Your account status has been updated to ${newStatus} by an administrator.`,
         link: '/account/profile',
       });
-      await fetchUsers(); // Re-fetch to update the list
-    } else {
+      fetchUsers(); // Re-fetch to update the list
+    } catch (error) {
       toast({ title: "Error", description: "Failed to update user status.", variant: "destructive" });
     }
   };
 
-  const onEditSubmit = (data: UserFormValues) => {
+  const onEditSubmit = async (data: UserFormValues) => {
     if (!selectedUser) return;
     setIsSubmitting(true);
     
-    setTimeout(async () => { // Simulate API delay
-        const updatedUser = updateMockUser(selectedUser.id, {
+    try {
+        await updateUser(selectedUser.id, {
             name: data.name,
             email: data.email,
             role: data.role,
@@ -162,31 +159,30 @@ export default function AdminUsersPage() {
             membershipLevel: data.membershipLevel,
         });
         
-        if (updatedUser) {
-            toast({
-                title: "User Updated",
-                description: `${data.name}'s profile has been successfully updated.`,
-            });
-            addNotification(selectedUser.id, {
-                type: 'general',
-                title: 'Profile Updated by Admin',
-                message: 'An administrator has updated your profile information.',
-                link: '/account/profile',
-            });
-            setIsEditModalOpen(false);
-            await fetchUsers();
-        } else {
-            toast({ title: "Error", description: "Failed to update user.", variant: "destructive"});
-        }
+        toast({
+            title: "User Updated",
+            description: `${data.name}'s profile has been successfully updated.`,
+        });
+        addNotification(selectedUser.id, {
+            type: 'general',
+            title: 'Profile Updated by Admin',
+            message: 'An administrator has updated your profile information.',
+            link: '/account/profile',
+        });
+        setIsEditModalOpen(false);
+        fetchUsers();
+    } catch (error) {
+        toast({ title: "Error", description: "Failed to update user.", variant: "destructive"});
+    } finally {
         setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
 
   const getStatusBadgeVariant = (status: UserStatus): "default" | "secondary" | "destructive" | "outline" => {
-    if (status === 'Active') return 'default'; // Greenish
+    if (status === 'Active') return 'default';
     if (status === 'Suspended') return 'destructive';
-    if (status === 'PendingApproval') return 'secondary'; // Yellowish
+    if (status === 'PendingApproval') return 'secondary';
     return 'outline';
   };
 
@@ -218,7 +214,6 @@ export default function AdminUsersPage() {
             <CardTitle className="flex items-center"><Users className="mr-2 h-6 w-6 text-primary" />Registered Users</CardTitle>
             <CardDescription>View, edit details, and manage user statuses and roles.</CardDescription>
           </div>
-          {/* Add User button can be added here later */}
         </CardHeader>
         <CardContent>
           <div className="mb-6 flex gap-4">
@@ -336,72 +331,76 @@ export default function AdminUsersPage() {
                     <DialogTitle>Edit User: {selectedUser.name}</DialogTitle>
                     <DialogDescription>Modify the user's details below.</DialogDescription>
                 </DialogHeader>
-                <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-6 py-4">
-                    <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem>
-                            <Label htmlFor="edit-name">Full Name</Label>
-                            <Input id="edit-name" {...field} />
-                            {form.formState.errors.name && <p className="text-xs text-destructive mt-1">{form.formState.errors.name.message}</p>}
-                        </FormItem>
-                    )} />
-                    <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem>
-                            <Label htmlFor="edit-email">Email Address</Label>
-                            <Input id="edit-email" type="email" {...field} />
-                            {form.formState.errors.email && <p className="text-xs text-destructive mt-1">{form.formState.errors.email.message}</p>}
-                        </FormItem>
-                    )} />
-                     <FormField control={form.control} name="membershipLevel" render={({ field }) => (
-                        <FormItem>
-                            <Label htmlFor="edit-membershipLevel">Membership Level</Label>
-                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <SelectTrigger id="edit-membershipLevel"><SelectValue placeholder="Select membership" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Basic">Basic</SelectItem>
-                                    <SelectItem value="Premium">Premium</SelectItem>
-                                    <SelectItem value="Pro">Pro</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {form.formState.errors.membershipLevel && <p className="text-xs text-destructive mt-1">{form.formState.errors.membershipLevel.message}</p>}
-                        </FormItem>
-                    )} />
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="role" render={({ field }) => (
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-6 py-4">
+                        <FormField control={form.control} name="name" render={({ field }) => (
                             <FormItem>
-                                <Label htmlFor="edit-role">Role</Label>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <SelectTrigger id="edit-role"><SelectValue placeholder="Select role" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="User">User</SelectItem>
-                                        <SelectItem value="FacilityOwner">Facility Owner</SelectItem>
-                                        <SelectItem value="Admin">Admin</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {form.formState.errors.role && <p className="text-xs text-destructive mt-1">{form.formState.errors.role.message}</p>}
+                                <Label htmlFor="edit-name">Full Name</Label>
+                                <Input id="edit-name" {...field} />
+                                {form.formState.errors.name && <p className="text-xs text-destructive mt-1">{form.formState.errors.name.message}</p>}
                             </FormItem>
                         )} />
-                        <FormField control={form.control} name="status" render={({ field }) => (
+                        <FormField control={form.control} name="email" render={({ field }) => (
                             <FormItem>
-                                <Label htmlFor="edit-status">Status</Label>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <SelectTrigger id="edit-status"><SelectValue placeholder="Select status" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Active">Active</SelectItem>
-                                        <SelectItem value="Suspended">Suspended</SelectItem>
-                                        <SelectItem value="PendingApproval">Pending Approval</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {form.formState.errors.status && <p className="text-xs text-destructive mt-1">{form.formState.errors.status.message}</p>}
+                                <Label htmlFor="edit-email">Email Address</Label>
+                                <Input id="edit-email" type="email" {...field} />
+                                {form.formState.errors.email && <p className="text-xs text-destructive mt-1">{form.formState.errors.email.message}</p>}
                             </FormItem>
                         )} />
-                    </div>
-                    <DialogClose asChild>
-                         <Button type="button" variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <LoadingSpinner size={16} /> : 'Save Changes'}
-                    </Button>
-                </form>
+                        <FormField control={form.control} name="membershipLevel" render={({ field }) => (
+                            <FormItem>
+                                <Label htmlFor="edit-membershipLevel">Membership Level</Label>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <SelectTrigger id="edit-membershipLevel"><SelectValue placeholder="Select membership" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Basic">Basic</SelectItem>
+                                        <SelectItem value="Premium">Premium</SelectItem>
+                                        <SelectItem value="Pro">Pro</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {form.formState.errors.membershipLevel && <p className="text-xs text-destructive mt-1">{form.formState.errors.membershipLevel.message}</p>}
+                            </FormItem>
+                        )} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="role" render={({ field }) => (
+                                <FormItem>
+                                    <Label htmlFor="edit-role">Role</Label>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <SelectTrigger id="edit-role"><SelectValue placeholder="Select role" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="User">User</SelectItem>
+                                            <SelectItem value="FacilityOwner">Facility Owner</SelectItem>
+                                            <SelectItem value="Admin">Admin</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {form.formState.errors.role && <p className="text-xs text-destructive mt-1">{form.formState.errors.role.message}</p>}
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="status" render={({ field }) => (
+                                <FormItem>
+                                    <Label htmlFor="edit-status">Status</Label>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <SelectTrigger id="edit-status"><SelectValue placeholder="Select status" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Active">Active</SelectItem>
+                                            <SelectItem value="Suspended">Suspended</SelectItem>
+                                            <SelectItem value="PendingApproval">Pending Approval</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {form.formState.errors.status && <p className="text-xs text-destructive mt-1">{form.formState.errors.status.message}</p>}
+                                </FormItem>
+                            )} />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? <LoadingSpinner size={16} /> : 'Save Changes'}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
             </DialogContent>
         </Dialog>
     )}

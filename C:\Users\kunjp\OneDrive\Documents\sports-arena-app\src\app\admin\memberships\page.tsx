@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { MembershipPlan, SiteSettings } from '@/lib/types';
-import { deleteMembershipPlan as deleteMockMembershipPlan } from '@/lib/data';
+import { deleteMembershipPlan } from '@/lib/data';
 import { getSiteSettingsAction, getAllMembershipPlansAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Award, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -49,40 +49,49 @@ export default function AdminMembershipsPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   const fetchAndSetData = async () => {
-    const [freshPlans, settings] = await Promise.all([
-      getAllMembershipPlansAction(),
-      getSiteSettingsAction(),
-    ]);
-    setPlans(currentPlans => {
-        if (JSON.stringify(currentPlans) !== JSON.stringify(freshPlans)) {
-            return freshPlans;
-        }
-        return currentPlans;
-    });
-    setCurrency(prev => settings.defaultCurrency !== prev ? settings.defaultCurrency : prev);
+    try {
+        const [freshPlans, settings] = await Promise.all([
+            getAllMembershipPlansAction(),
+            getSiteSettingsAction(),
+        ]);
+        setPlans(freshPlans);
+        setCurrency(settings.defaultCurrency);
+    } catch (error) {
+        console.error("Failed to fetch membership plans:", error);
+        toast({
+            title: "Error",
+            description: "Could not load membership plans.",
+            variant: "destructive",
+        });
+    }
   };
 
   useEffect(() => {
     fetchAndSetData().finally(() => setIsLoading(false));
-
-    const intervalId = setInterval(fetchAndSetData, 3000);
-
+    const intervalId = setInterval(fetchAndSetData, 5000);
     return () => clearInterval(intervalId);
   }, []);
 
-  const handleDeletePlan = () => {
+  const handleDeletePlan = async () => {
     if (!planToDelete) return;
     setIsDeleting(true);
-    setTimeout(async () => {
-      deleteMockMembershipPlan(planToDelete.id);
+    try {
+      await deleteMembershipPlan(planToDelete.id);
       toast({
         title: "Membership Plan Deleted",
         description: `"${planToDelete.name}" has been successfully deleted.`,
       });
-      await fetchAndSetData(); // Re-fetch data
-      setIsDeleting(false);
-      setPlanToDelete(null);
-    }, 1000);
+      setPlans(prevPlans => prevPlans.filter(p => p.id !== planToDelete.id));
+    } catch (error) {
+       toast({
+        title: "Error",
+        description: "Could not delete membership plan.",
+        variant: "destructive",
+      });
+    } finally {
+        setIsDeleting(false);
+        setPlanToDelete(null);
+    }
   };
 
   if (isLoading) {
