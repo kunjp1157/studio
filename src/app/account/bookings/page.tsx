@@ -109,16 +109,23 @@ export default function BookingsPage() {
     const fetchRelatedFacilities = async () => {
         if (bookings.length > 0) {
             const facilityIds = [...new Set(bookings.map(b => b.facilityId))];
-            const facilityPromises = facilityIds.map(id => getFacilityById(id).then(f => ({id, data: f})));
-            const facilitiesData = await Promise.all(facilityPromises);
-            setFacilities(prev => facilitiesData.reduce((acc, {id, data}) => {
-                if (data) acc[id] = data;
-                return acc;
-            }, {...prev}));
+            const facilityPromises = facilityIds.map(async id => {
+                if (facilities[id]) return null;
+                const facility = await getFacilityById(id);
+                return {id, data: facility};
+            });
+            const facilitiesData = (await Promise.all(facilityPromises)).filter(Boolean);
+
+            if(facilitiesData.length > 0) {
+              setFacilities(prev => facilitiesData.reduce((acc, {id, data}) => {
+                  if (data) acc[id] = data;
+                  return acc;
+              }, {...prev}));
+            }
         }
     };
     fetchRelatedFacilities();
-  }, [bookings]);
+  }, [bookings, facilities]);
 
   const handleCancelBooking = async (bookingId: string) => {
     setIsActionLoading(true);

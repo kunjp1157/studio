@@ -1,3 +1,4 @@
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -455,7 +456,16 @@ export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userNam
 export const addMembershipPlan = (plan: Omit<MembershipPlan, 'id'>): MembershipPlan => { const newPlan = { ...plan, id: `mem-${Date.now()}`}; mockMembershipPlans.push(newPlan); return newPlan; };
 export const updateMembershipPlan = (plan: MembershipPlan): void => { const index = mockMembershipPlans.findIndex(p => p.id === plan.id); if (index !== -1) mockMembershipPlans[index] = plan; };
 export const deleteMembershipPlan = (id: string): void => { mockMembershipPlans = mockMembershipPlans.filter(p => p.id !== id); };
-export const addEvent = (event: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): void => { const sport = getSportById(event.sportId); if(sport) mockEvents.push({ ...event, id: `evt-${Date.now()}`, sport, registeredParticipants: 0, facilityName: getFacilityById(event.facilityId)?.name || 'Unknown Facility' }); };
+export const addEvent = (event: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): void => { 
+  const sport = getSportById(event.sportId); 
+  const fetchFacilityName = async () => {
+    const facility = await getFacilityById(event.facilityId);
+    if(sport) {
+      mockEvents.push({ ...event, id: `evt-${Date.now()}`, sport, registeredParticipants: 0, facilityName: facility?.name || 'Unknown Facility' });
+    }
+  };
+  fetchFacilityName();
+};
 export const updateEvent = (event: SportEvent): void => { const index = mockEvents.findIndex(e => e.id === event.id); if (index !== -1) mockEvents[index] = event; };
 export const deleteEvent = (id: string): void => { mockEvents = mockEvents.filter(e => e.id !== id); };
 export const registerForEvent = (eventId: string): boolean => { const event = mockEvents.find(e => e.id === eventId); if (event && (!event.maxParticipants || event.registeredParticipants < event.maxParticipants)) { event.registeredParticipants++; return true; } return false; };

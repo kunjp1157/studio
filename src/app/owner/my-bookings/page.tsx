@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Ticket, Construction } from 'lucide-react';
+import { Ticket } from 'lucide-react';
 import { listenToOwnerBookings, mockUser } from '@/lib/data';
 import type { Booking } from '@/lib/types';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
