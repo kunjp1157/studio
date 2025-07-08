@@ -2,13 +2,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BellRing, Globe, Construction } from 'lucide-react';
+import { BellRing, Globe, Construction, Mail, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription, For
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { updateSiteSettings } from '@/lib/data';
 import { getSiteSettingsAction } from '@/app/actions';
-import type { SiteSettings } from '@/lib/types';
+import type { SiteSettings, NotificationTemplate, NotificationType } from '@/lib/types';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Textarea } from '@/components/ui/textarea';
 
 const settingsFormSchema = z.object({
   siteName: z.string().min(3, { message: "Site name must be at least 3 characters." }),
@@ -26,33 +28,45 @@ const settingsFormSchema = z.object({
   timezone: z.string().min(1, { message: "Please select a timezone." }),
   maintenanceMode: z.boolean(),
 });
-
 type SettingsFormValues = z.infer<typeof settingsFormSchema>;
 
-// Simple deep object comparison function to avoid adding dependencies
-const deepEqual = (obj1: any, obj2: any): boolean => {
-    if (obj1 === obj2) return true;
-    if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
-        return false;
-    }
-    const keys1 = Object.keys(obj1);
-    const keys2 = Object.keys(obj2);
-    if (keys1.length !== keys2.length) return false;
-    for (const key of keys1) {
-        if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
-            return false;
-        }
-    }
-    return true;
-};
+const notificationTemplateSchema = z.object({
+    type: z.string(), // Keep as string for hidden value
+    label: z.string(), // Display only
+    description: z.string(), // Display only
+    emailEnabled: z.boolean(),
+    smsEnabled: z.boolean(),
+    emailSubject: z.string().min(1, "Email subject cannot be empty if email is enabled."),
+    emailBody: z.string().min(1, "Email body cannot be empty if email is enabled."),
+    smsBody: z.string().optional(),
+});
+const notificationsFormSchema = z.object({
+  templates: z.array(notificationTemplateSchema)
+});
+type NotificationsFormValues = z.infer<typeof notificationsFormSchema>;
+
 
 export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isNotificationLoading, setIsNotificationLoading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: async () => getSiteSettingsAction(),
+  });
+  
+  const notificationForm = useForm<NotificationsFormValues>({
+      resolver: zodResolver(notificationsFormSchema),
+      defaultValues: async () => {
+          const settings = await getSiteSettingsAction();
+          return { templates: settings.notificationTemplates || [] };
+      }
+  });
+
+  const { fields } = useFieldArray({
+      control: notificationForm.control,
+      name: "templates"
   });
 
   useEffect(() => {
@@ -60,26 +74,43 @@ export default function AdminSettingsPage() {
       const currentSettings = await getSiteSettingsAction();
       const formValues = form.getValues();
       
-      if (!deepEqual(currentSettings, formValues)) {
+      // Simple check to avoid deep comparison issues
+      if (currentSettings.siteName !== formValues.siteName || currentSettings.maintenanceMode !== formValues.maintenanceMode) {
         form.reset(currentSettings);
+        notificationForm.reset({ templates: currentSettings.notificationTemplates });
         toast({
             title: 'Settings Updated Live',
-            description: 'Another admin updated the settings.',
+            description: 'Another admin updated the site settings. Your form has been refreshed.',
         });
       }
-    }, 3000); // Poll every 3 seconds
+    }, 5000); 
 
     return () => clearInterval(intervalId);
-  }, [form, toast]);
+  }, [form, notificationForm, toast]);
 
   const onSubmit = (data: SettingsFormValues) => {
     setIsLoading(true);
     setTimeout(() => {
-        updateSiteSettings(data);
+        const currentSettings = getSiteSettings();
+        updateSiteSettings({ ...currentSettings, ...data });
         setIsLoading(false);
         toast({
             title: 'Settings Saved',
             description: 'General site settings have been updated.',
+        });
+    }, 1000);
+  };
+
+  const onNotificationSubmit = (data: NotificationsFormValues) => {
+    setIsNotificationLoading(true);
+    setTimeout(() => {
+        const currentSettings = getSiteSettings();
+        const templates = data.templates.map(t => ({ ...t, type: t.type as NotificationType }));
+        updateSiteSettings({ ...currentSettings, notificationTemplates: templates });
+        setIsNotificationLoading(false);
+        toast({
+            title: 'Notification Settings Saved',
+            description: 'Notification templates and triggers have been updated.',
         });
     }, 1000);
   };
@@ -88,7 +119,7 @@ export default function AdminSettingsPage() {
     <div className="space-y-8">
       <PageTitle title="System Settings" description="Configure general settings for the Sports Arena platform." />
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-8 items-start">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -99,12 +130,71 @@ export default function AdminSettingsPage() {
               Customize email and SMS notification templates, and configure notification triggers and delivery settings.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center min-h-[150px] text-center">
-            <Construction className="h-12 w-12 text-muted-foreground mb-3" />
-            <h3 className="text-md font-semibold text-muted-foreground">Configuration Coming Soon</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Notification management tools are under development.
-            </p>
+          <CardContent>
+             <Form {...notificationForm}>
+              <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-6">
+                <Accordion type="multiple" className="w-full">
+                  {fields.map((field, index) => (
+                    <AccordionItem key={field.id} value={field.type}>
+                      <AccordionTrigger>
+                        <div className="flex flex-col text-left">
+                            <span className="font-semibold">{field.label}</span>
+                            <span className="text-xs text-muted-foreground font-normal">{field.description}</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pt-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={notificationForm.control} name={`templates.${index}.emailEnabled`} render={({ field: switchField }) => (
+                                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                                    <div className="space-y-0.5">
+                                        <FormLabel className="text-sm font-normal flex items-center"><Mail className="mr-2 h-4 w-4"/> Email</FormLabel>
+                                    </div>
+                                    <FormControl><Switch checked={switchField.value} onCheckedChange={switchField.onChange} /></FormControl>
+                                </FormItem>
+                            )} />
+                             <FormField control={notificationForm.control} name={`templates.${index}.smsEnabled`} render={({ field: switchField }) => (
+                                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                                    <div className="space-y-0.5">
+                                        <FormLabel className="text-sm font-normal flex items-center"><MessageSquare className="mr-2 h-4 w-4"/> SMS</FormLabel>
+                                    </div>
+                                    <FormControl><Switch checked={switchField.value} onCheckedChange={switchField.onChange} /></FormControl>
+                                </FormItem>
+                            )} />
+                        </div>
+                         <FormField control={notificationForm.control} name={`templates.${index}.emailSubject`} render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Email Subject</FormLabel>
+                                <FormControl><Input placeholder="Subject line for the email..." {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={notificationForm.control} name={`templates.${index}.emailBody`} render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Email Body</FormLabel>
+                                <FormControl><Textarea placeholder="Body of the email. You can use placeholders like {{userName}}." {...field} rows={4} /></FormControl>
+                                <FormDescription className="text-xs">Available placeholders: {{userName}}, {{facilityName}}, {{date}}, {{time}}, {{bookingId}}</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={notificationForm.control} name={`templates.${index}.smsBody`} render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>SMS Body</FormLabel>
+                                <FormControl><Input placeholder="SMS message content..." {...field} /></FormControl>
+                                <FormDescription className="text-xs">Keep it short and concise for SMS.</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+                <div className="flex justify-end pt-4">
+                    <Button type="submit" disabled={isNotificationLoading}>
+                        {isNotificationLoading ? <LoadingSpinner size={20} className="mr-2" /> : "Save Notification Settings"}
+                    </Button>
+                </div>
+              </form>
+            </Form>
           </CardContent>
         </Card>
 

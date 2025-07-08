@@ -1,4 +1,5 @@
 
+
 export interface Team {
   id: string;
   name: string;
@@ -280,11 +281,23 @@ export interface BlogPost {
   dataAiHint?: string;
 }
 
+export interface NotificationTemplate {
+  type: NotificationType;
+  label: string;
+  description: string;
+  emailEnabled: boolean;
+  smsEnabled: boolean;
+  emailSubject: string;
+  emailBody: string;
+  smsBody?: string;
+}
+
 export interface SiteSettings {
   siteName: string;
   defaultCurrency: 'USD' | 'EUR' | 'GBP' | 'INR';
   timezone: string;
   maintenanceMode: boolean;
+  notificationTemplates?: NotificationTemplate[];
 }
 
 export interface WaitlistEntry {
