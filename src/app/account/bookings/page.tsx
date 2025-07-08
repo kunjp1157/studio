@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review, SiteSettings } from '@/lib/types';
-import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
-import { getBookingsByUserIdAction, getSiteSettingsAction } from '@/app/actions';
+import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking, listenToUserBookings, getSiteSettings } from '@/lib/data';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -69,56 +68,64 @@ export default function BookingsPage() {
   const [selectedBookingForReview, setSelectedBookingForReview] = useState<Booking | null>(null);
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [facilities, setFacilities] = useState<Record<string, Facility>>({});
 
   useEffect(() => {
-      const fetchSettings = async () => {
-          const settings = await getSiteSettingsAction();
-          setCurrency(settings.defaultCurrency);
-      };
-      fetchSettings();
-  }, []);
+      const settings = getSiteSettings();
+      setCurrency(settings.defaultCurrency);
 
-  const fetchAndSetBookings = async () => {
-    let userBookings = await getBookingsByUserIdAction(mockUser.id);
-    userBookings.sort((a, b) => {
-      const aDate = parseISO(a.date + 'T' + a.startTime);
-      const bDate = parseISO(b.date + 'T' + b.startTime);
-      const aIsPast = isPast(aDate);
-      const bIsPast = isPast(bDate);
+      const unsubscribe = listenToUserBookings(
+          mockUser.id, 
+          (userBookings) => {
+              userBookings.sort((a, b) => {
+                const aDate = parseISO(a.date + 'T' + a.startTime);
+                const bDate = parseISO(b.date + 'T' + b.startTime);
+                const aIsPast = isPast(aDate);
+                const bIsPast = isPast(bDate);
 
-      if (aIsPast && !bIsPast) return 1;
-      if (!aIsPast && bIsPast) return -1;
-      
-      if (aIsPast) {
-          return bDate.getTime() - aDate.getTime();
-      } else {
-          return aDate.getTime() - bDate.getTime();
-      }
-    });
-    setBookings(currentBookings => {
-        if (JSON.stringify(currentBookings) !== JSON.stringify(userBookings)) {
-            return userBookings;
+                if (aIsPast && !bIsPast) return 1;
+                if (!aIsPast && bIsPast) return -1;
+                
+                if (aIsPast) {
+                    return bDate.getTime() - aDate.getTime();
+                } else {
+                    return aDate.getTime() - bDate.getTime();
+                }
+              });
+              setBookings(userBookings);
+              setIsLoading(false);
+          },
+          (error) => {
+              console.error("Failed to listen to user bookings:", error);
+              toast({ title: "Error", description: "Could not load real-time bookings.", variant: "destructive" });
+              setIsLoading(false);
+          }
+      );
+
+      return () => unsubscribe();
+  }, [toast]);
+
+  useEffect(() => {
+    const fetchRelatedFacilities = async () => {
+        if (bookings.length > 0) {
+            const facilityIds = [...new Set(bookings.map(b => b.facilityId))];
+            const facilityPromises = facilityIds.map(id => getFacilityById(id).then(f => ({id, data: f})));
+            const facilitiesData = await Promise.all(facilityPromises);
+            setFacilities(prev => facilitiesData.reduce((acc, {id, data}) => {
+                if (data) acc[id] = data;
+                return acc;
+            }, {...prev}));
         }
-        return currentBookings;
-    });
-  };
+    };
+    fetchRelatedFacilities();
+  }, [bookings]);
 
-  useEffect(() => {
-    fetchAndSetBookings().finally(() => setIsLoading(false));
-
-    const intervalId = setInterval(fetchAndSetBookings, 3000);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
-  const handleCancelBooking = (bookingId: string) => {
+  const handleCancelBooking = async (bookingId: string) => {
     setIsActionLoading(true);
-    setTimeout(() => {
-      const bookingToCancel = bookings.find(b => b.id === bookingId);
-      const updatedBooking = updateBooking(bookingId, { status: 'Cancelled' });
-      
-      if (updatedBooking) {
-        fetchAndSetBookings(); // Refetch to ensure data is fresh
+    const bookingToCancel = bookings.find(b => b.id === bookingId);
+
+    try {
+        await updateBooking(bookingId, { status: 'Cancelled' });
         toast({
           title: "Booking Cancelled",
           description: "Your booking has been successfully cancelled.",
@@ -132,15 +139,15 @@ export default function BookingsPage() {
               link: '/account/bookings',
           });
         }
-      } else {
+    } catch (error) {
         toast({
             title: "Error",
             description: "Failed to cancel the booking. Please try again.",
             variant: "destructive"
         });
-      }
-      setIsActionLoading(false);
-    }, 1000);
+    } finally {
+        setIsActionLoading(false);
+    }
   };
 
   const handleOpenReviewModal = (booking: Booking) => {
@@ -152,7 +159,7 @@ export default function BookingsPage() {
     if (!selectedBookingForReview) return;
 
     try {
-      addMockReview({
+      await addMockReview({
         facilityId: selectedBookingForReview.facilityId,
         userId: mockUser.id,
         rating,
@@ -160,8 +167,6 @@ export default function BookingsPage() {
         bookingId,
       });
 
-      fetchAndSetBookings(); // Refetch to update reviewed status
-      
       toast({
         title: "Review Submitted!",
         description: `Thank you for reviewing ${selectedBookingForReview.facilityName}.`,
@@ -202,7 +207,7 @@ export default function BookingsPage() {
   }
   
   const BookingCard = ({ booking }: { booking: Booking }) => {
-    const facilityDetails = getFacilityById(booking.facilityId);
+    const facilityDetails = facilities[booking.facilityId];
     const bookingIsPast = isPast(parseISO(booking.date + 'T' + booking.startTime));
     
     const renderPrice = (price: number) => {

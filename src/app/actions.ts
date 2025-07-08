@@ -19,6 +19,9 @@ import {
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule } from '@/lib/types';
 
+// Note: With real-time listeners, many 'getAll' actions might become less necessary on the client,
+// but they are kept for server-side operations or initial data hydration.
+
 export async function getFacilitiesAction(): Promise<Facility[]> {
   return getAllFacilities();
 }

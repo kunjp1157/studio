@@ -4,35 +4,62 @@
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, Building, Ticket, DollarSign, Users, Construction } from 'lucide-react';
-import type { SiteSettings } from '@/lib/types';
-import { getSiteSettingsAction } from '@/app/actions';
+import type { SiteSettings, Booking } from '@/lib/types';
+import { getSiteSettings, listenToOwnerBookings, mockUser } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getMonth, getYear, parseISO } from 'date-fns';
 
 export default function OwnerDashboardPage() {
-  // Mock data for display - in a real app, this would be fetched for the logged-in owner
-  const ownerStats = {
-    activeListings: 2,
-    totalBookingsThisMonth: 35,
-    upcomingBookings: 8,
-    monthlyRevenue: 1250.75,
-    newReviews: 5,
-  };
-
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const ownerId = mockUser.id; // In a real app, get this from auth state
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      const currentSettings = await getSiteSettingsAction();
-      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    };
-
-    fetchSettings();
-    const settingsInterval = setInterval(fetchSettings, 5000);
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
     
-    return () => clearInterval(settingsInterval);
-  }, []);
+    if (ownerId) {
+      const unsubscribe = listenToOwnerBookings(
+        ownerId,
+        (ownerBookings) => {
+          setBookings(ownerBookings);
+          setIsLoading(false);
+        },
+        (error) => {
+          console.error("Error listening to owner bookings:", error);
+          setIsLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    }
+  }, [ownerId]);
+
+
+  const ownerStats = bookings.reduce((acc, booking) => {
+      const bookingDate = parseISO(booking.bookedAt);
+      const now = new Date();
+      
+      if (booking.status === 'Confirmed') {
+        acc.totalBookings += 1;
+        if (getMonth(bookingDate) === getMonth(now) && getYear(bookingDate) === getYear(now)) {
+            acc.totalBookingsThisMonth += 1;
+            acc.monthlyRevenue += booking.totalPrice;
+        }
+      }
+      if (booking.status === 'Confirmed' && parseISO(booking.date) > now) {
+          acc.upcomingBookings += 1;
+      }
+      return acc;
+  }, {
+      totalBookingsThisMonth: 0,
+      monthlyRevenue: 0,
+      upcomingBookings: 0,
+      totalBookings: 0,
+  });
 
   return (
     <div className="space-y-8">
@@ -41,12 +68,12 @@ export default function OwnerDashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Facility Listings</CardTitle>
+            <CardTitle className="text-sm font-medium">Upcoming Bookings</CardTitle>
             <Building className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ownerStats.activeListings}</div>
-            <p className="text-xs text-muted-foreground">Currently managed by you</p>
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : ownerStats.upcomingBookings}</div>
+            <p className="text-xs text-muted-foreground">Confirmed future bookings</p>
           </CardContent>
         </Card>
         <Card className="shadow-md">
@@ -55,18 +82,18 @@ export default function OwnerDashboardPage() {
             <Ticket className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ownerStats.totalBookingsThisMonth}</div>
-            <p className="text-xs text-muted-foreground">+10% from last month (mock)</p>
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : ownerStats.totalBookingsThisMonth}</div>
+            <p className="text-xs text-muted-foreground">Live data for current month</p>
           </CardContent>
         </Card>
         <Card className="shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Estimated Revenue (Month)</CardTitle>
+            <CardTitle className="text-sm font-medium">Revenue (This Month)</CardTitle>
             <DollarSign className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {currency ? formatCurrency(ownerStats.monthlyRevenue, currency) : <Skeleton className="h-8 w-28" />}
+              {isLoading || !currency ? <Skeleton className="h-8 w-28" /> : formatCurrency(ownerStats.monthlyRevenue, currency)}
             </div>
             <p className="text-xs text-muted-foreground">Based on confirmed bookings</p>
           </CardContent>

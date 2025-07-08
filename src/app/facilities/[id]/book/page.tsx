@@ -1,11 +1,10 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings, Sport } from '@/lib/types';
-import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist, addBooking } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
+import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings, Sport, Booking } from '@/lib/types';
+import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist, addBooking, getBookingsForFacilityOnDate, getSiteSettings } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,54 +18,24 @@ import Image from 'next/image';
 import { AlertCircle, CheckCircle, CreditCard, CalendarDays, Clock, Users, DollarSign, ArrowLeft, PackageSearch, Minus, Plus, ShoppingCart, Tag, X, TrendingUp, Link2, BellRing, HandCoins, Dices, QrCode } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { format, differenceInHours, parse, formatISO, addHours } from 'date-fns';
+import { format, differenceInHours, parse, formatISO, addHours, startOfDay } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-
-// Enhanced mock time slots for a given date
-const getMockTimeSlots = (
-  date: Date,
-  temporarilyBooked: Array<{ date: string; startTime: string }>
+const generateTimeSlots = (
+  bookedSlots: string[]
 ): TimeSlot[] => {
   const slots: TimeSlot[] = [];
   const startHour = 8;
   const endHour = 22;
-  const dayOfWeek = date.getDay(); // 0 for Sunday, 6 for Saturday
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-  const formattedDate = format(date, 'yyyy-MM-dd');
 
   for (let i = startHour; i < endHour; i++) {
     const startTime = `${String(i).padStart(2, '0')}:00`;
     const endTime = `${String(i + 1).padStart(2, '0')}:00`;
-    const isPeakHour = i >= 18 && i <= 20; // 6 PM to 8 PM (slot starts at 8 PM ends at 9 PM)
+    const isAvailable = !bookedSlots.includes(startTime);
 
-    const isTemporarilyBooked = temporarilyBooked.some(
-      (bookedSlot) => bookedSlot.date === formattedDate && bookedSlot.startTime === startTime
-    );
-
-    let availabilityScore = 1.0; // Start with fully available
-
-    if (isWeekend) {
-      availabilityScore -= 0.25; // Reduce availability by 25% on weekends
-    }
-    if (isPeakHour) {
-      availabilityScore -= 0.35; // Reduce availability by 35% during peak hours
-    }
-    if (isWeekend && isPeakHour) {
-      availabilityScore -= 0.15; // Additional reduction for weekend peak hours
-    }
-
-    // Ensure a minimum chance of being available, e.g., 10% unless temporarily booked
-    const randomThreshold = Math.max(0.1, Math.min(0.9, availabilityScore));
-    const isAvailable = !isTemporarilyBooked && Math.random() < randomThreshold;
-
-    slots.push({
-      startTime,
-      endTime,
-      isAvailable,
-    });
+    slots.push({ startTime, endTime, isAvailable });
   }
   return slots;
 };
@@ -90,6 +59,7 @@ export default function BookingPage() {
   const [selectedSportId, setSelectedSportId] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [isSlotsLoading, setIsSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | undefined>(undefined);
   const [numberOfGuests, setNumberOfGuests] = useState<string>("1");
   
@@ -108,7 +78,6 @@ export default function BookingPage() {
   
   const [bookingStep, setBookingStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
-  const [temporarilyBookedSlots, setTemporarilyBookedSlots] = useState<Array<{ date: string; startTime: string }>>([]);
   
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
@@ -120,28 +89,42 @@ export default function BookingPage() {
 
   useEffect(() => {
     if (facilityId) {
-      const foundFacility = getFacilityById(facilityId);
-      setTimeout(() => setFacility(foundFacility || null), 300); // Simulate fetch
+      getFacilityById(facilityId).then(foundFacility => {
+          setTimeout(() => setFacility(foundFacility || null), 300); // Simulate fetch
+      });
     }
-    const fetchSettings = async () => {
-        const settings = await getSiteSettingsAction();
-        setCurrency(settings.defaultCurrency);
-    };
-    fetchSettings();
-    const settingsInterval = setInterval(fetchSettings, 3000);
-    return () => clearInterval(settingsInterval);
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
   }, [facilityId]);
+
+  const fetchAndUpdateSlots = useCallback(async (date: Date) => {
+    if (!facilityId) return;
+    setIsSlotsLoading(true);
+    try {
+        const formattedDate = format(date, 'yyyy-MM-dd');
+        const bookings = await getBookingsForFacilityOnDate(facilityId, formattedDate);
+        const bookedStartTimes = bookings.map(b => b.startTime);
+        const slots = generateTimeSlots(bookedStartTimes);
+        setTimeSlots(slots);
+    } catch (error) {
+        console.error("Error fetching bookings for slots:", error);
+        toast({ title: "Error", description: "Could not fetch available slots.", variant: "destructive" });
+        setTimeSlots(generateTimeSlots([])); // Show all as available on error
+    } finally {
+        setIsSlotsLoading(false);
+        setSelectedSlot(undefined);
+    }
+  }, [facilityId, toast]);
 
   useEffect(() => {
     if (selectedDate) {
-      setTimeSlots(getMockTimeSlots(selectedDate, temporarilyBookedSlots));
-      setSelectedSlot(undefined); 
+        fetchAndUpdateSlots(selectedDate);
     }
-  }, [selectedDate, temporarilyBookedSlots]);
+  }, [selectedDate, fetchAndUpdateSlots]);
 
   useEffect(() => {
     if (selectedSlot && selectedDate && facility) {
-      setIsOnWaitlist(isUserOnWaitlist(mockUser.id, facility.id, format(selectedDate, 'yyyy-MM-dd'), selectedSlot.startTime));
+      isUserOnWaitlist(mockUser.id, facility.id, format(selectedDate, 'yyyy-MM-dd'), selectedSlot.startTime).then(setIsOnWaitlist);
     }
   }, [selectedSlot, selectedDate, facility]);
   
@@ -272,7 +255,7 @@ export default function BookingPage() {
     setPromoError(null);
     
     await new Promise(resolve => setTimeout(resolve, 700));
-    const promotion = getPromotionRuleByCode(promoCodeInput.trim());
+    const promotion = await getPromotionRuleByCode(promoCodeInput.trim());
 
     if (promotion) {
       const subTotal = baseFacilityPrice + equipmentRentalCost;
@@ -354,67 +337,63 @@ export default function BookingPage() {
     const isPayAtVenue = paymentMethod === 'cash';
     const isQrPayment = paymentMethod === 'qr';
 
-    addBooking({
-        userId: mockUser.id,
-        facilityId: facility.id,
-        facilityName: facility.name,
-        facilityImage: facility.images[0] || '',
-        dataAiHint: facility.dataAiHint,
-        sportId: selectedSportId,
-        sportName: facility.sports.find(s => s.id === selectedSportId)?.name || 'Unknown Sport',
-        date: format(selectedDate, 'yyyy-MM-dd'),
-        startTime: selectedSlot.startTime,
-        endTime: selectedSlot.endTime,
-        durationHours: bookingDurationHours,
-        numberOfGuests: parseInt(numberOfGuests, 10),
-        baseFacilityPrice: baseFacilityPrice,
-        equipmentRentalCost: equipmentRentalCost,
-        appliedPromotion: appliedPromotionDetails || undefined,
-        totalPrice: totalBookingPrice,
-        status: isPayAtVenue || isQrPayment ? 'Pending' : 'Confirmed',
-        reviewed: false,
-        rentedEquipment: Array.from(selectedEquipment.values()).map(item => ({
-            equipmentId: item.details.id,
-            name: item.details.name,
-            quantity: item.quantity,
-            priceAtBooking: item.details.pricePerItem,
-            priceTypeAtBooking: item.details.priceType,
-            totalCost: item.details.priceType === 'per_booking'
-                ? item.details.pricePerItem * item.quantity
-                : item.details.pricePerItem * item.quantity * bookingDurationHours,
-        })),
-    });
+    try {
+        await addBooking({
+            userId: mockUser.id,
+            facilityId: facility.id,
+            facilityName: facility.name,
+            facilityImage: facility.images[0] || '',
+            dataAiHint: facility.dataAiHint,
+            sportId: selectedSportId,
+            sportName: facility.sports.find(s => s.id === selectedSportId)?.name || 'Unknown Sport',
+            date: format(selectedDate, 'yyyy-MM-dd'),
+            startTime: selectedSlot.startTime,
+            endTime: selectedSlot.endTime,
+            durationHours: bookingDurationHours,
+            numberOfGuests: parseInt(numberOfGuests, 10),
+            baseFacilityPrice: baseFacilityPrice,
+            equipmentRentalCost: equipmentRentalCost,
+            appliedPromotion: appliedPromotionDetails || undefined,
+            totalPrice: totalBookingPrice,
+            status: isPayAtVenue || isQrPayment ? 'Pending' : 'Confirmed',
+            reviewed: false,
+            rentedEquipment: Array.from(selectedEquipment.values()).map(item => ({
+                equipmentId: item.details.id,
+                name: item.details.name,
+                quantity: item.quantity,
+                priceAtBooking: item.details.pricePerItem,
+                priceTypeAtBooking: item.details.priceType,
+                totalCost: item.details.priceType === 'per_booking'
+                    ? item.details.pricePerItem * item.quantity
+                    : item.details.pricePerItem * item.quantity * bookingDurationHours,
+            })),
+        });
 
-    setIsLoading(false);
-    setBookingStep('confirmation');
-    
-    setTemporarilyBookedSlots(prev => [
-        ...prev,
-        { date: format(selectedDate, 'yyyy-MM-dd'), startTime: selectedSlot.startTime }
-    ]);
-
-    const toastTitle = isPayAtVenue || isQrPayment ? "Booking Pending" : "Booking Confirmed!";
-    let toastDescription = `Your booking for ${facility.name} on ${format(selectedDate, 'PPP')} at ${selectedSlot.startTime} is successful.`;
-    if (isPayAtVenue) {
-        toastDescription += ' Please pay at the venue to confirm.';
+        setIsLoading(false);
+        setBookingStep('confirmation');
+        
+        const toastTitle = isPayAtVenue || isQrPayment ? "Booking Pending" : "Booking Confirmed!";
+        let toastDescription = `Your booking for ${facility.name} on ${format(selectedDate, 'PPP')} at ${selectedSlot.startTime} is successful.`;
+        if (isPayAtVenue) toastDescription += ' Please pay at the venue to confirm.';
+        if (isQrPayment) toastDescription += ' We will confirm your booking once payment is received.';
+        
+        toast({
+          title: toastTitle,
+          description: toastDescription,
+          className: isPayAtVenue || isQrPayment ? "" : "bg-green-500 text-white",
+          duration: 8000,
+        });
+        
+        addNotification(mockUser.id, {
+            type: 'booking_confirmed',
+            title: toastTitle,
+            message: toastDescription,
+            link: '/account/bookings',
+        });
+    } catch (error) {
+        setIsLoading(false);
+        toast({ title: "Booking Failed", description: "Could not save the booking. Please try again.", variant: "destructive" });
     }
-    if (isQrPayment) {
-        toastDescription += ' We will confirm your booking once payment is received.';
-    }
-    
-    toast({
-      title: toastTitle,
-      description: toastDescription,
-      className: isPayAtVenue || isQrPayment ? "" : "bg-green-500 text-white",
-      duration: 8000,
-    });
-    
-    addNotification(mockUser.id, {
-        type: 'booking_confirmed',
-        title: toastTitle,
-        message: toastDescription,
-        link: '/account/bookings',
-    });
   };
 
 
@@ -422,16 +401,18 @@ export default function BookingPage() {
     if (!facility || !selectedDate || !selectedSlot) return;
 
     setIsJoiningWaitlist(true);
-    await new Promise(r => setTimeout(r, 700)); // Simulate API call
-
-    addToWaitlist(mockUser.id, facility.id, format(selectedDate, 'yyyy-MM-dd'), selectedSlot.startTime);
-
-    toast({
-        title: "Added to Waitlist!",
-        description: `We'll notify you if the ${selectedSlot.startTime} slot at ${facility.name} becomes available.`,
-    });
-    setIsOnWaitlist(true);
-    setIsJoiningWaitlist(false);
+    try {
+        await addToWaitlist(mockUser.id, facility.id, format(selectedDate, 'yyyy-MM-dd'), selectedSlot.startTime);
+        toast({
+            title: "Added to Waitlist!",
+            description: `We'll notify you if the ${selectedSlot.startTime} slot at ${facility.name} becomes available.`,
+        });
+        setIsOnWaitlist(true);
+    } catch (error) {
+        toast({ title: "Error", description: "Could not add to waitlist. Please try again.", variant: "destructive" });
+    } finally {
+        setIsJoiningWaitlist(false);
+    }
   };
 
   const generateGoogleCalendarLink = () => {
@@ -442,7 +423,6 @@ export default function BookingPage() {
     let eventStartDateLocal = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), startHour, startMinute);
     let eventEndDateLocal = addHours(eventStartDateLocal, bookingDurationHours);
 
-    // Format for Google Calendar (YYYYMMDDTHHMMSSZ)
     const formatToGoogleISO = (date: Date) => formatISO(date).replace(/-|:|\.\d{3}/g, '');
     
     const startTimeUTC = formatToGoogleISO(eventStartDateLocal);
@@ -534,12 +514,14 @@ export default function BookingPage() {
                     selected={selectedDate}
                     onSelect={setSelectedDate}
                     className="rounded-md border"
-                    disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} 
+                    disabled={(date) => date < startOfDay(new Date())} 
                   />
                 </div>
                 <div>
                   <Label htmlFor="time-slot" className="mb-2 block"><Clock className="inline mr-2 h-4 w-4" />Time Slot</Label>
-                  {selectedDate && timeSlots.length > 0 ? (
+                  {isSlotsLoading ? (
+                      <div className="flex items-center justify-center h-10 border rounded-md"><LoadingSpinner size={20}/></div>
+                  ) : selectedDate && timeSlots.length > 0 ? (
                     <Select onValueChange={(value) => setSelectedSlot(timeSlots.find(s => s.startTime === value))} value={selectedSlot?.startTime}>
                       <SelectTrigger id="time-slot">
                         <SelectValue placeholder="Select a time" />

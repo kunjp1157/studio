@@ -34,8 +34,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, UserProfile, Facility, SiteSettings } from '@/lib/types';
-import { getUserById, getFacilityById, updateBooking, addNotification } from '@/lib/data';
-import { getAllBookingsAction, getSiteSettingsAction } from '@/app/actions';
+import { getUserById, getFacilityById, updateBooking, addNotification, listenToAllBookings, getSiteSettings } from '@/lib/data';
 import { PlusCircle, MoreHorizontal, Eye, Edit, XCircle, DollarSign, Search, FilterX, User, Home, CalendarDays, Clock, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -55,31 +54,49 @@ export default function AdminBookingsPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [users, setUsers] = useState<Record<string, UserProfile>>({});
+  const [facilities, setFacilities] = useState<Record<string, Facility>>({});
 
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchAndSetData = async () => {
-      const [bookingsData, settings] = await Promise.all([
-        getAllBookingsAction(),
-        getSiteSettingsAction(),
-      ]);
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
 
-      setAllBookings(currentBookings => {
-        if (JSON.stringify(currentBookings) !== JSON.stringify(bookingsData)) {
-            return bookingsData;
-        }
-        return currentBookings;
-      });
-      setCurrency(prev => settings.defaultCurrency !== prev ? settings.defaultCurrency : prev);
+    const unsubscribe = listenToAllBookings(
+      (bookingsData) => {
+        setAllBookings(bookingsData);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error("Failed to listen to bookings:", error);
+        toast({ title: "Error", description: "Could not load real-time bookings data.", variant: "destructive" });
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [toast]);
+
+
+  useEffect(() => {
+    const fetchRelatedData = async () => {
+        const userIds = [...new Set(allBookings.map(b => b.userId))];
+        const facilityIds = [...new Set(allBookings.map(b => b.facilityId))];
+
+        const userPromises = userIds.map(id => getUserById(id).then(u => ({id, data: u})));
+        const facilityPromises = facilityIds.map(id => getFacilityById(id).then(f => ({id, data: f})));
+        
+        const usersData = await Promise.all(userPromises);
+        const facilitiesData = await Promise.all(facilityPromises);
+
+        setUsers(usersData.reduce((acc, {id, data}) => { if (data) acc[id] = data; return acc; }, {} as Record<string, UserProfile>));
+        setFacilities(facilitiesData.reduce((acc, {id, data}) => { if (data) acc[id] = data; return acc; }, {} as Record<string, Facility>));
     };
-
-    fetchAndSetData().finally(() => setIsLoading(false));
-
-    const intervalId = setInterval(fetchAndSetData, 3000);
-
-    return () => clearInterval(intervalId);
-  }, []);
+    if (allBookings.length > 0) {
+        fetchRelatedData();
+    }
+  }, [allBookings]);
 
 
   useEffect(() => {
@@ -87,8 +104,8 @@ export default function AdminBookingsPage() {
 
     if (searchTerm) {
       results = results.filter(booking => {
-        const user = getUserById(booking.userId);
-        const facility = getFacilityById(booking.facilityId);
+        const user = users[booking.userId];
+        const facility = facilities[booking.facilityId];
         const lowerSearchTerm = searchTerm.toLowerCase();
         return (
           booking.id.toLowerCase().includes(lowerSearchTerm) ||
@@ -103,38 +120,31 @@ export default function AdminBookingsPage() {
       results = results.filter(booking => booking.status === statusFilter);
     }
     
-    setFilteredBookings(results);
-  }, [searchTerm, statusFilter, allBookings]);
+    setFilteredBookings(results.sort((a,b) => parseISO(b.bookedAt).getTime() - parseISO(a.bookedAt).getTime()));
+  }, [searchTerm, statusFilter, allBookings, users, facilities]);
 
   const handleViewDetails = (booking: Booking) => {
     setSelectedBooking(booking);
     setIsDetailsModalOpen(true);
   };
   
-  const handleAdminCancelBooking = () => {
+  const handleAdminCancelBooking = async () => {
     if (!bookingToCancel) return;
 
-    const updatedBooking = updateBooking(bookingToCancel.id, { status: 'Cancelled' });
-    
-    if (updatedBooking) {
-      toast({
-        title: "Booking Cancelled",
-        description: `Booking for ${bookingToCancel.facilityName} has been cancelled.`
-      });
-      addNotification(bookingToCancel.userId, {
-        type: 'booking_cancelled',
-        title: 'Booking Cancelled by Admin',
-        message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} was cancelled by an administrator.`,
-        link: '/account/bookings',
-      });
-      
-      setAllBookings(prevBookings =>
-        prevBookings.map(b =>
-          b.id === bookingToCancel.id ? { ...b, status: 'Cancelled' } : b
-        )
-      );
-    } else {
-      toast({ title: "Error", description: "Failed to cancel booking.", variant: "destructive" });
+    try {
+        await updateBooking(bookingToCancel.id, { status: 'Cancelled' });
+        toast({
+            title: "Booking Cancelled",
+            description: `Booking for ${bookingToCancel.facilityName} has been cancelled.`
+        });
+        addNotification(bookingToCancel.userId, {
+            type: 'booking_cancelled',
+            title: 'Booking Cancelled by Admin',
+            message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} was cancelled by an administrator.`,
+            link: '/account/bookings',
+        });
+    } catch (error) {
+        toast({ title: "Error", description: "Failed to cancel booking.", variant: "destructive" });
     }
     setBookingToCancel(null);
   };
@@ -233,8 +243,8 @@ export default function AdminBookingsPage() {
                   </TableRow>
                 ) : (
                   filteredBookings.map((booking) => {
-                    const user = getUserById(booking.userId);
-                    const facility = getFacilityById(booking.facilityId);
+                    const user = users[booking.userId];
+                    const facility = facilities[booking.facilityId];
                     return (
                       <TableRow key={booking.id}>
                         <TableCell className="font-mono text-xs">{booking.id.substring(0, 8)}...</TableCell>
@@ -296,7 +306,7 @@ export default function AdminBookingsPage() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will cancel the booking for {getUserById(bookingToCancel.userId)?.name}. This action cannot be undone.
+                        This will cancel the booking for {users[bookingToCancel.userId]?.name}. This action cannot be undone.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -320,14 +330,14 @@ export default function AdminBookingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                         <h4 className="font-semibold mb-1 flex items-center"><User className="mr-2 h-4 w-4 text-muted-foreground"/>User Information</h4>
-                        <p><strong>Name:</strong> {getUserById(selectedBooking.userId)?.name || 'N/A'}</p>
-                        <p><strong>Email:</strong> {getUserById(selectedBooking.userId)?.email || 'N/A'}</p>
+                        <p><strong>Name:</strong> {users[selectedBooking.userId]?.name || 'N/A'}</p>
+                        <p><strong>Email:</strong> {users[selectedBooking.userId]?.email || 'N/A'}</p>
                         <p><strong>User ID:</strong> {selectedBooking.userId}</p>
                     </div>
                     <div>
                         <h4 className="font-semibold mb-1 flex items-center"><Home className="mr-2 h-4 w-4 text-muted-foreground"/>Facility Information</h4>
-                        <p><strong>Name:</strong> {getFacilityById(selectedBooking.facilityId)?.name || selectedBooking.facilityName}</p>
-                        <p><strong>Type:</strong> {getFacilityById(selectedBooking.facilityId)?.type || 'N/A'}</p>
+                        <p><strong>Name:</strong> {facilities[selectedBooking.facilityId]?.name || selectedBooking.facilityName}</p>
+                        <p><strong>Type:</strong> {facilities[selectedBooking.facilityId]?.type || 'N/A'}</p>
                         <p><strong>Facility ID:</strong> {selectedBooking.facilityId}</p>
                     </div>
                 </div>
