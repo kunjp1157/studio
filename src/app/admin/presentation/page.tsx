@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, AlertCircle, LayoutTemplate, List, Presentation as PresentationIcon } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -135,4 +134,3 @@ export default function PresentationPage() {
     </div>
   );
 }
-
