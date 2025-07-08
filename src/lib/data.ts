@@ -1,9 +1,10 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, setDoc, deleteDoc, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, setDoc, deleteDoc, query, where, onSnapshot, arrayUnion, arrayRemove, updateDoc } from 'firebase/firestore';
 
 
 // --- MOCK DATA (for non-facility types, to be migrated later) ---
@@ -163,6 +164,47 @@ export const deleteFacility = async (facilityId: string): Promise<void> => {
     } catch (error) {
         console.error("Error deleting facility: ", error);
         throw new Error("Could not delete facility from the database.");
+    }
+};
+
+export const blockTimeSlot = async (facilityId: string, ownerId: string, slot: BlockedSlot): Promise<boolean> => {
+    const facilityRef = doc(db, 'facilities', facilityId);
+    try {
+        const facilityDoc = await getDoc(facilityRef);
+        if (!facilityDoc.exists() || facilityDoc.data().ownerId !== ownerId) {
+            console.error("Permission denied or facility not found for blocking slot.");
+            return false;
+        }
+        await updateDoc(facilityRef, {
+            blockedSlots: arrayUnion(slot)
+        });
+        return true;
+    } catch (error) {
+        console.error("Error blocking time slot:", error);
+        return false;
+    }
+};
+
+export const unblockTimeSlot = async (facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> => {
+    const facilityRef = doc(db, 'facilities', facilityId);
+    try {
+        const facilityDoc = await getDoc(facilityRef);
+        if (!facilityDoc.exists() || facilityDoc.data().ownerId !== ownerId) {
+            console.error("Permission denied or facility not found for unblocking slot.");
+            return false;
+        }
+        const facilityData = facilityDoc.data() as Facility;
+        const slotToRemove = facilityData.blockedSlots?.find(s => s.date === date && s.startTime === startTime);
+        if (slotToRemove) {
+            await updateDoc(facilityRef, {
+                blockedSlots: arrayRemove(slotToRemove)
+            });
+            return true;
+        }
+        return false; // Slot not found
+    } catch (error) {
+        console.error("Error unblocking time slot:", error);
+        return false;
     }
 };
 
@@ -433,20 +475,13 @@ export const leaveTeam = (teamId: string, userId: string): boolean => {
   if (user && user.teamIds) user.teamIds = user.teamIds.filter(id => id !== teamId);
   return true;
 };
-export const blockTimeSlot = (facilityId: string, ownerId: string, slot: BlockedSlot): boolean => {
-    // This function would need to be reimplemented for Firestore
-    return true; 
-};
-export const unblockTimeSlot = (facilityId: string, ownerId: string, date: string, startTime: string): boolean => {
-    // This function would need to be reimplemented for Firestore
-    return true; 
-};
+
 export const markNotificationAsRead = (userId: string, notificationId: string): void => { const notification = mockAppNotifications.find(n => n.id === notificationId && n.userId === userId); if (notification) notification.isRead = true; };
 export const markAllNotificationsAsRead = (userId: string): void => { mockAppNotifications.forEach(n => { if (n.userId === userId) n.isRead = true; }); };
 export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
 export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Review => {
   const currentUser = getUserById(reviewData.userId);
-  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
+  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isPublicProfile || false, createdAt: new Date().toISOString() };
   mockReviews.push(newReview);
   return newReview;
 };

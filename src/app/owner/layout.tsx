@@ -24,7 +24,10 @@ import { mockUser } from '@/lib/data'; // Assuming owner uses a similar mock use
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  const isActive = (path: string) => pathname === path || (path !== '/owner' && pathname.startsWith(path));
+  const isActive = (path: string) => {
+      if (path === '/owner') return pathname === path || pathname === '/owner/dashboard';
+      return pathname.startsWith(path);
+  }
 
   return (
     <SidebarProvider defaultOpen>
@@ -38,7 +41,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         <SidebarContent className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <Link href="/owner">
+              <Link href="/owner/dashboard">
                 <SidebarMenuButton isActive={isActive('/owner')} tooltip="Dashboard">
                   <LayoutDashboard />
                   <span>Dashboard</span>

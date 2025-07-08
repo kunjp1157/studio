@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings, Sport, Booking } from '@/lib/types';
+import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings, Sport, Booking, BlockedSlot } from '@/lib/types';
 import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist, addBooking, getBookingsForFacilityOnDate, getSiteSettings } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const generateTimeSlots = (
-  bookedSlots: string[]
+  bookedSlots: string[],
+  blockedSlots: BlockedSlot[]
 ): TimeSlot[] => {
   const slots: TimeSlot[] = [];
   const startHour = 8;
@@ -33,7 +34,18 @@ const generateTimeSlots = (
   for (let i = startHour; i < endHour; i++) {
     const startTime = `${String(i).padStart(2, '0')}:00`;
     const endTime = `${String(i + 1).padStart(2, '0')}:00`;
-    const isAvailable = !bookedSlots.includes(startTime);
+    
+    let isAvailable = !bookedSlots.includes(startTime);
+
+    if(isAvailable) {
+        for (const blocked of blockedSlots) {
+            // Check if the current 1-hour slot (startTime to endTime) overlaps with a blocked slot
+            if (startTime < blocked.endTime && endTime > blocked.startTime) {
+                isAvailable = false;
+                break; 
+            }
+        }
+    }
 
     slots.push({ startTime, endTime, isAvailable });
   }
@@ -90,7 +102,7 @@ export default function BookingPage() {
   useEffect(() => {
     if (facilityId) {
       getFacilityById(facilityId).then(foundFacility => {
-          setTimeout(() => setFacility(foundFacility || null), 300); // Simulate fetch
+          setFacility(foundFacility || null);
       });
     }
     const settings = getSiteSettings();
@@ -98,23 +110,25 @@ export default function BookingPage() {
   }, [facilityId]);
 
   const fetchAndUpdateSlots = useCallback(async (date: Date) => {
-    if (!facilityId) return;
+    if (!facilityId || !facility) return;
     setIsSlotsLoading(true);
     try {
         const formattedDate = format(date, 'yyyy-MM-dd');
         const bookings = await getBookingsForFacilityOnDate(facilityId, formattedDate);
         const bookedStartTimes = bookings.map(b => b.startTime);
-        const slots = generateTimeSlots(bookedStartTimes);
+        
+        const dateSpecificBlockedSlots = facility.blockedSlots?.filter(s => s.date === formattedDate) || [];
+        const slots = generateTimeSlots(bookedStartTimes, dateSpecificBlockedSlots);
         setTimeSlots(slots);
     } catch (error) {
         console.error("Error fetching bookings for slots:", error);
         toast({ title: "Error", description: "Could not fetch available slots.", variant: "destructive" });
-        setTimeSlots(generateTimeSlots([])); // Show all as available on error
+        setTimeSlots(generateTimeSlots([], [])); // Show all as available on error
     } finally {
         setIsSlotsLoading(false);
         setSelectedSlot(undefined);
     }
-  }, [facilityId, toast]);
+  }, [facilityId, facility, toast]);
 
   useEffect(() => {
     if (selectedDate) {

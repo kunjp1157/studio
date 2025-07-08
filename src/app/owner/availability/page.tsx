@@ -18,6 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { Facility, BlockedSlot } from '@/lib/types';
 import { mockUser, getFacilitiesByOwnerId, getFacilityById, blockTimeSlot, unblockTimeSlot } from '@/lib/data';
 import { format, parse, isValid } from 'date-fns';
+import { onSnapshot, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function OwnerAvailabilityPage() {
   const [ownerFacilities, setOwnerFacilities] = useState<Facility[]>([]);
@@ -35,20 +37,28 @@ export default function OwnerAvailabilityPage() {
 
   useEffect(() => {
     setIsLoadingFacilities(true);
-    setTimeout(() => {
-      const facilities = getFacilitiesByOwnerId(mockUser.id);
-      setOwnerFacilities(facilities);
-      if (facilities.length > 0) {
-        // setSelectedFacilityId(facilities[0].id); // Auto-select first facility
-      }
-      setIsLoadingFacilities(false);
-    }, 300);
+    const fetchFacilities = async () => {
+        const facilities = await getFacilitiesByOwnerId(mockUser.id);
+        setOwnerFacilities(facilities);
+        if (facilities.length > 0 && !selectedFacilityId) {
+            // Optionally auto-select the first facility
+            // setSelectedFacilityId(facilities[0].id);
+        }
+        setIsLoadingFacilities(false);
+    }
+    fetchFacilities();
   }, []);
 
   useEffect(() => {
     if (selectedFacilityId) {
-      const facility = getFacilityById(selectedFacilityId);
-      setSelectedFacility(facility || null);
+      const unsub = onSnapshot(doc(db, "facilities", selectedFacilityId), (doc) => {
+          if (doc.exists()) {
+              setSelectedFacility({ id: doc.id, ...doc.data() } as Facility);
+          } else {
+              setSelectedFacility(null);
+          }
+      });
+      return () => unsub();
     } else {
       setSelectedFacility(null);
     }
@@ -74,14 +84,10 @@ export default function OwnerAvailabilityPage() {
       reason: reason.trim() || undefined,
     };
 
-    const success = blockTimeSlot(selectedFacilityId, mockUser.id, newBlock);
+    const success = await blockTimeSlot(selectedFacilityId, mockUser.id, newBlock);
     
-    setTimeout(() => { // Simulate API delay
       if (success) {
         toast({ title: "Slot Blocked", description: `Time slot on ${newBlock.date} from ${startTime} to ${endTime} has been blocked.` });
-        const updatedFacility = getFacilityById(selectedFacilityId); // Re-fetch to update list
-        setSelectedFacility(updatedFacility || null);
-        // Reset form
         setStartTime('');
         setEndTime('');
         setReason('');
@@ -89,20 +95,15 @@ export default function OwnerAvailabilityPage() {
         toast({ title: "Error Blocking Slot", description: "Could not block the slot. It might already be blocked or an error occurred.", variant: "destructive" });
       }
       setIsSubmittingBlock(false);
-    }, 700);
   };
 
   const handleRemoveBlockedSlot = async (date: string, slotStartTime: string) => {
     if (!selectedFacilityId) return;
     
-    const success = unblockTimeSlot(selectedFacilityId, mockUser.id, date, slotStartTime);
+    const success = await unblockTimeSlot(selectedFacilityId, mockUser.id, date, slotStartTime);
     
-    // Simulate API delay and toast
-    await new Promise(resolve => setTimeout(resolve, 500));
     if (success) {
       toast({ title: "Slot Unblocked", description: `The blocked slot on ${date} at ${slotStartTime} is now available.` });
-      const updatedFacility = getFacilityById(selectedFacilityId);
-      setSelectedFacility(updatedFacility || null);
     } else {
       toast({ title: "Error Unblocking Slot", description: "Could not unblock the slot.", variant: "destructive" });
     }

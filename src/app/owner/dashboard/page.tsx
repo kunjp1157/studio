@@ -4,8 +4,8 @@
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, Building, Ticket, DollarSign, Users, Construction } from 'lucide-react';
-import type { SiteSettings, Booking } from '@/lib/types';
-import { getSiteSettings, listenToOwnerBookings, mockUser } from '@/lib/data';
+import type { SiteSettings, Booking, Facility } from '@/lib/types';
+import { getSiteSettings, listenToOwnerBookings, mockUser, getFacilitiesByOwnerId } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +14,7 @@ import { getMonth, getYear, parseISO } from 'date-fns';
 export default function OwnerDashboardPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const ownerId = mockUser.id; // In a real app, get this from auth state
@@ -22,27 +23,33 @@ export default function OwnerDashboardPage() {
     const settings = getSiteSettings();
     setCurrency(settings.defaultCurrency);
     
-    let unsubscribe = () => {};
+    let unsubscribeBookings = () => {};
+    let unsubscribeFacilities = () => {};
 
     if (ownerId) {
-      const setupListener = async () => {
-        unsubscribe = await listenToOwnerBookings(
+      const setupListeners = async () => {
+        const ownerFacilities = await getFacilitiesByOwnerId(ownerId);
+        setFacilities(ownerFacilities);
+
+        unsubscribeBookings = await listenToOwnerBookings(
           ownerId,
           (ownerBookings) => {
             setBookings(ownerBookings);
-            setIsLoading(false);
+            if(isLoading) setIsLoading(false);
           },
           (error) => {
             console.error("Error listening to owner bookings:", error);
-            setIsLoading(false);
+            if(isLoading) setIsLoading(false);
           }
         );
       }
-      setupListener();
+      setupListeners();
     }
     
-    return () => unsubscribe();
-  }, [ownerId]);
+    return () => {
+        unsubscribeBookings();
+    };
+  }, [ownerId, isLoading]);
 
 
   const ownerStats = bookings.reduce((acc, booking) => {
@@ -56,7 +63,7 @@ export default function OwnerDashboardPage() {
             acc.monthlyRevenue += booking.totalPrice;
         }
       }
-      if (booking.status === 'Confirmed' && parseISO(booking.date) > now) {
+      if (booking.status === 'Confirmed' && isAfter(parseISO(booking.date), now)) {
           acc.upcomingBookings += 1;
       }
       return acc;
@@ -74,12 +81,12 @@ export default function OwnerDashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Bookings</CardTitle>
+            <CardTitle className="text-sm font-medium">Your Facilities</CardTitle>
             <Building className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : ownerStats.upcomingBookings}</div>
-            <p className="text-xs text-muted-foreground">Confirmed future bookings</p>
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : facilities.length}</div>
+            <p className="text-xs text-muted-foreground">Total facilities managed</p>
           </CardContent>
         </Card>
         <Card className="shadow-md">

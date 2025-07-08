@@ -81,9 +81,9 @@ export interface FacilityOperatingHours {
 }
 
 export interface BlockedSlot {
-  date: string; 
-  startTime: string; 
-  endTime: string; 
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
   reason?: string;
 }
 
@@ -228,6 +228,7 @@ export interface SportEvent {
   id: string;
   name: string;
   facilityId: string;
+  facilityName?: string;
   sport: Sport; 
   startDate: string; 
   endDate: string; 

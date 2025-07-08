@@ -26,21 +26,22 @@ export default function EditOwnerFacilityPage() {
   useEffect(() => {
     if (facilityId) {
       setIsLoading(true);
-      setTimeout(() => { // Simulate fetch delay
-        const foundFacility = getFacilityById(facilityId);
-        if (foundFacility) {
-          if (foundFacility.ownerId === currentOwnerId) {
-            setFacility(foundFacility);
+      const fetchFacility = async () => {
+          const foundFacility = await getFacilityById(facilityId);
+          if (foundFacility) {
+            if (foundFacility.ownerId === currentOwnerId) {
+              setFacility(foundFacility);
+            } else {
+              setError("You do not have permission to edit this facility.");
+              setFacility(null);
+            }
           } else {
-            setError("You do not have permission to edit this facility.");
+            setError("Facility not found.");
             setFacility(null);
           }
-        } else {
-          setError("Facility not found.");
-          setFacility(null);
-        }
-        setIsLoading(false);
-      }, 300);
+          setIsLoading(false);
+      }
+      fetchFacility();
     }
   }, [facilityId, currentOwnerId]);
 

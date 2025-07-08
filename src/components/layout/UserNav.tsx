@@ -14,34 +14,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart, Group } from 'lucide-react';
+import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart, Group, HandCoins } from 'lucide-react';
 import { mockUser } from '@/lib/data'; // For mock data
+import type { UserProfile } from '@/lib/types';
 
 export function UserNav() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userName, setUserName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
-  const [userAvatar, setUserAvatar] = useState('');
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
-  // This effect runs only on the client-side after hydration, preventing mismatches.
   useEffect(() => {
-    // In a real app, this would be an API call or a check to localStorage/cookies.
-    // For this demo, we'll consistently set the user as logged in to showcase features.
     setIsAuthenticated(true);
-    setUserName(mockUser.name);
-    setUserEmail(mockUser.email);
-    setUserAvatar(mockUser.profilePictureUrl || '');
+    setCurrentUser(mockUser);
   }, []);
 
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    // Add actual logout logic here
+    setCurrentUser(null);
   };
 
-  // If the component renders before the client-side effect runs,
-  // it will show the login/signup buttons, avoiding a server/client mismatch.
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !currentUser) {
     return (
       <div className="flex items-center space-x-2">
         <Link href="/account/login">
@@ -65,10 +57,10 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={userAvatar} alt={userName} />
+            <AvatarImage src={currentUser.profilePictureUrl} alt={currentUser.name} />
             <AvatarFallback>
-              {userName
-                ? userName
+              {currentUser.name
+                ? currentUser.name
                     .split(' ')
                     .map((n) => n[0])
                     .join('')
@@ -80,9 +72,9 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{userName}</p>
+            <p className="text-sm font-medium leading-none">{currentUser.name}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {userEmail}
+              {currentUser.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -120,12 +112,22 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/admin">
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            <span>Admin Dashboard</span>
-          </Link>
-        </DropdownMenuItem>
+        {currentUser.role === 'Admin' && (
+             <DropdownMenuItem asChild>
+                <Link href="/admin">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Admin Dashboard</span>
+                </Link>
+             </DropdownMenuItem>
+        )}
+         {currentUser.role === 'FacilityOwner' && (
+             <DropdownMenuItem asChild>
+                <Link href="/owner">
+                    <HandCoins className="mr-2 h-4 w-4" />
+                    <span>Owner Portal</span>
+                </Link>
+             </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
