@@ -4,10 +4,7 @@
   "private": true,
   "description": "Sports Arena: Your go-to platform for discovering and booking sports facilities in your city. Find courts, fields, and more with ease.",
   "scripts": {
-    "dev": "next dev",
-    "dev:local": "npm-run-all -p dev genkit:watch",
-    "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
-    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
+    "dev": "npm-run-all -p \"next dev\" \"genkit start -- tsx --watch src/ai/dev.ts\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
