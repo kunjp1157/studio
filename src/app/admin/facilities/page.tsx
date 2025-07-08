@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -33,8 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { Facility, SiteSettings } from '@/lib/types';
-import { deleteFacility } from '@/lib/data';
-import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
+import { deleteFacility, getSiteSettings, listenToFacilities } from '@/lib/data';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -50,31 +48,28 @@ export default function AdminFacilitiesPage() {
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
-  const fetchAndSetData = async () => {
-    try {
-        const [freshFacilities, currentSettings] = await Promise.all([
-            getFacilitiesAction(),
-            getSiteSettingsAction()
-        ]);
-        setFacilities(freshFacilities);
-        setCurrency(currentSettings.defaultCurrency);
-    } catch (error) {
-        console.error("Failed to fetch facilities:", error);
-        toast({
-            title: "Error",
-            description: "Could not load facilities data.",
-            variant: "destructive",
-        });
-    }
-  };
-
   useEffect(() => {
-    fetchAndSetData().finally(() => setIsLoading(false));
-    // The polling interval can be removed if you prefer to rely on manual refreshes
-    // or more advanced real-time listeners (which can be implemented later).
-    const intervalId = setInterval(fetchAndSetData, 5000);
-    return () => clearInterval(intervalId);
-  }, []);
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
+    
+    const unsubscribe = listenToFacilities(
+      (facilitiesData) => {
+        setFacilities(facilitiesData);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error("Failed to listen to facilities:", error);
+        toast({
+          title: "Error",
+          description: "Could not load facilities data in real-time.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [toast]);
 
   const handleDeleteFacility = async () => {
     if (!facilityToDelete) return;
@@ -85,8 +80,6 @@ export default function AdminFacilitiesPage() {
         title: "Facility Deleted",
         description: `"${facilityToDelete.name}" and all its associated bookings, events, and reviews have been removed.`,
       });
-      // Re-fetch all data to ensure consistency
-      await fetchAndSetData();
     } catch (error) {
        toast({
         title: "Error Deleting Facility",
@@ -101,7 +94,7 @@ export default function AdminFacilitiesPage() {
 
   const getPriceRange = (facility: Facility) => {
     if (!currency) return <Skeleton className="h-5 w-24" />;
-    if (facility.sportPrices.length === 0) return 'N/A';
+    if (!facility.sportPrices || facility.sportPrices.length === 0) return 'N/A';
     
     const prices = facility.sportPrices.map(p => p.pricePerHour);
     const minPrice = Math.min(...prices);

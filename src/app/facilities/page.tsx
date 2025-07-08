@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -6,11 +5,12 @@ import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
 import type { Facility, SearchFilters, SiteSettings } from '@/lib/types';
-import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
+import { getSiteSettings, listenToFacilities } from '@/lib/data';
 import { AlertCircle, SortAsc } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 const CardSkeleton = () => (
     <div className="bg-card p-4 rounded-lg shadow-md">
@@ -31,6 +31,7 @@ export default function FacilitiesPage() {
   const [sortOption, setSortOption] = useState<SortOption>('default');
   const [currentFilters, setCurrentFilters] = useState<SearchFilters | null>(null);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const { toast } = useToast();
 
   const cities = useMemo(() => {
       if (allFacilities.length === 0) return [];
@@ -43,26 +44,27 @@ export default function FacilitiesPage() {
   }, [allFacilities]);
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      setIsLoading(true);
-      const [freshFacilities, settings] = await Promise.all([
-        getFacilitiesAction(),
-        getSiteSettingsAction()
-      ]);
-      setAllFacilities(freshFacilities);
-      setCurrency(settings.defaultCurrency);
-      setIsLoading(false);
-    };
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
+    
+    const unsubscribe = listenToFacilities(
+      (facilitiesData) => {
+        setAllFacilities(facilitiesData);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error("Failed to listen to facilities:", error);
+        toast({
+          title: "Error",
+          description: "Could not load up-to-date facilities data.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    );
 
-    fetchInitialData();
-
-    const intervalId = setInterval(async () => {
-        const freshFacilities = await getFacilitiesAction();
-        setAllFacilities(freshFacilities);
-    }, 3000); 
-
-    return () => clearInterval(intervalId);
-  }, []);
+    return () => unsubscribe();
+  }, [toast]);
 
   useEffect(() => {
     let facilitiesToProcess = [...allFacilities];
@@ -124,10 +126,10 @@ export default function FacilitiesPage() {
     let sorted = [...facilities];
     switch (option) {
       case 'price-asc':
-        sorted.sort((a, b) => Math.min(...a.sportPrices.map(p => p.pricePerHour)) - Math.min(...b.sportPrices.map(p => p.pricePerHour)));
+        sorted.sort((a, b) => Math.min(...(a.sportPrices?.map(p => p.pricePerHour) || [Infinity])) - Math.min(...(b.sportPrices?.map(p => p.pricePerHour) || [Infinity])));
         break;
       case 'price-desc':
-        sorted.sort((a, b) => Math.min(...b.sportPrices.map(p => p.pricePerHour)) - Math.min(...a.sportPrices.map(p => p.pricePerHour)));
+        sorted.sort((a, b) => Math.min(...(b.sportPrices?.map(p => p.pricePerHour) || [Infinity])) - Math.min(...(a.sportPrices?.map(p => p.pricePerHour) || [Infinity])));
         break;
       case 'rating-desc':
         sorted.sort((a, b) => b.rating - a.rating);

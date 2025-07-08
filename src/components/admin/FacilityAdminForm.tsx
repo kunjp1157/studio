@@ -6,7 +6,7 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice } from '@/lib/types';
-import { mockSports, mockAmenities, addFacility as addMockFacility, updateFacility as updateMockFacility, getSiteSettings, getSportById } from '@/lib/data';
+import { mockSports, mockAmenities, addFacility, updateFacility, getSiteSettings, getSportById } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -97,15 +97,8 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
   const [imageGenPrompt, setImageGenPrompt] = useState('');
 
   useEffect(() => {
-    const settingsInterval = setInterval(() => {
-      const currentSettings = getSiteSettings();
-      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
-
-    const currentSettings = getSiteSettings();
-    setCurrency(currentSettings.defaultCurrency);
-    
-    return () => clearInterval(settingsInterval);
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
   }, []);
 
   const form = useForm<FacilityFormValues>({
@@ -204,30 +197,30 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
 
   const onSubmit = async (data: FacilityFormValues) => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const facilityPayload = {
       ...data,
-      id: initialData?.id || `facility-${Date.now()}`, // Keep ID if editing, generate if new
+      sports: data.sports.map(id => getSportById(id)).filter(Boolean) as Sport[],
+      amenities: data.amenities.map(id => getAmenityById(id)).filter(Boolean) as Amenity[],
     };
 
     try {
         if (initialData) {
-            updateMockFacility(facilityPayload as any); 
+            await updateFacility({ ...facilityPayload, id: initialData.id } as Facility);
         } else {
-            addMockFacility(facilityPayload as any); 
+            // @ts-ignore
+            await addFacility(facilityPayload);
         }
 
         toast({
             title: initialData ? "Facility Updated" : "Facility Created",
-            description: `${data.name} has been successfully ${initialData ? 'updated' : 'created'}.`,
+            description: `${data.name} has been successfully saved.`,
         });
         
         if (onSubmitSuccess) {
             onSubmitSuccess();
         } else {
             router.push('/admin/facilities');
-            router.refresh(); 
         }
     } catch (error) {
         console.error("Error saving facility:", error);

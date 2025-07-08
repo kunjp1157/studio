@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,8 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import type { Facility, SiteSettings } from '@/lib/types';
-import { mockUser } from '@/lib/data'; 
-import { getFacilitiesByOwnerIdAction, getSiteSettingsAction } from '@/app/actions';
+import { mockUser, getSiteSettings, listenToFacilities } from '@/lib/data'; 
 import { PlusCircle, MoreHorizontal, Edit, Eye, Building2, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +29,8 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function OwnerFacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
@@ -41,40 +41,46 @@ export default function OwnerFacilitiesPage() {
   const ownerId = mockUser.id; 
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!ownerId) {
+    if (!ownerId) {
+      toast({
+          title: "Authentication Error",
+          description: "Could not determine the current user. Please log in again.",
+          variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
+
+    const q = query(collection(db, "facilities"), where("ownerId", "==", ownerId));
+    const unsubscribe = onSnapshot(q, 
+      (querySnapshot) => {
+        const ownerFacilities: Facility[] = [];
+        querySnapshot.forEach((doc) => {
+          ownerFacilities.push({ id: doc.id, ...doc.data() } as Facility);
+        });
+        setFacilities(ownerFacilities);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error("Error listening to owner facilities:", error);
         toast({
-            title: "Authentication Error",
-            description: "Could not determine the current user. Please log in again.",
+            title: "Error",
+            description: "Could not load your facilities in real-time.",
             variant: "destructive",
         });
-        setFacilities([]);
-        return;
+        setIsLoading(false);
       }
-      const [ownerFacilities, settings] = await Promise.all([
-          getFacilitiesByOwnerIdAction(ownerId),
-          getSiteSettingsAction()
-      ]);
-
-      setFacilities(currentFacilities => {
-        if (JSON.stringify(currentFacilities) !== JSON.stringify(ownerFacilities)) {
-            return ownerFacilities;
-        }
-        return currentFacilities;
-      });
-      setCurrency(settings.defaultCurrency);
-    };
-
-    fetchData().finally(() => setIsLoading(false));
+    );
     
-    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
-
-    return () => clearInterval(interval);
+    return () => unsubscribe();
   }, [ownerId, toast]);
 
   const getPriceRange = (facility: Facility) => {
     if (!currency) return <Skeleton className="h-5 w-24" />;
-    if (facility.sportPrices.length === 0) return 'N/A';
+    if (!facility.sportPrices || facility.sportPrices.length === 0) return 'N/A';
     
     const prices = facility.sportPrices.map(p => p.pricePerHour);
     const minPrice = Math.min(...prices);
