@@ -22,20 +22,26 @@ export default function OwnerDashboardPage() {
     const settings = getSiteSettings();
     setCurrency(settings.defaultCurrency);
     
+    let unsubscribe = () => {};
+
     if (ownerId) {
-      const unsubscribe = listenToOwnerBookings(
-        ownerId,
-        (ownerBookings) => {
-          setBookings(ownerBookings);
-          setIsLoading(false);
-        },
-        (error) => {
-          console.error("Error listening to owner bookings:", error);
-          setIsLoading(false);
-        }
-      );
-      return () => unsubscribe();
+      const setupListener = async () => {
+        unsubscribe = await listenToOwnerBookings(
+          ownerId,
+          (ownerBookings) => {
+            setBookings(ownerBookings);
+            setIsLoading(false);
+          },
+          (error) => {
+            console.error("Error listening to owner bookings:", error);
+            setIsLoading(false);
+          }
+        );
+      }
+      setupListener();
     }
+    
+    return () => unsubscribe();
   }, [ownerId]);
 
 

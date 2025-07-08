@@ -61,7 +61,6 @@ export const mockUser = {
     isProfilePublic: true,
   };
 export let mockTeams: Team[] = [];
-export let mockBookings: Booking[] = [];
 let mockAppNotifications: AppNotification[] = [];
 export const mockBlogPosts: BlogPost[] = [];
 export let mockMembershipPlans: MembershipPlan[] = [];
@@ -84,12 +83,6 @@ let mockRentalEquipment: RentalEquipment[] = [];
 
 // --- FIREBASE-ENABLED FACILITY FUNCTIONS ---
 
-/**
- * Sets up a real-time listener for the facilities collection in Firestore.
- * @param callback - Function to call with the new list of facilities whenever data changes.
- * @param onError - Function to call when an error occurs.
- * @returns An unsubscribe function to detach the listener.
- */
 export function listenToFacilities(
   callback: (facilities: Facility[]) => void, 
   onError: (error: Error) => void
@@ -102,8 +95,6 @@ export function listenToFacilities(
       const data = doc.data() as Omit<Facility, 'id'>;
       facilitiesData.push({ ...data, id: doc.id });
     });
-    // Ratings need to be calculated separately if reviews are in a different collection.
-    // For now, we assume rating is stored on the facility doc.
     callback(facilitiesData);
   }, (error) => {
     console.error("Firestore listener error: ", error);
@@ -113,10 +104,6 @@ export function listenToFacilities(
   return unsubscribe;
 }
 
-/**
- * Fetches all facilities from Firestore once.
- * This is useful for server-side rendering or initial page loads.
- */
 export const getAllFacilities = async (): Promise<Facility[]> => {
     try {
         const querySnapshot = await getDocs(collection(db, 'facilities'));
@@ -131,10 +118,6 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
     }
 };
 
-
-/**
- * Fetches a single facility by its ID from Firestore.
- */
 export const getFacilityById = async (id: string): Promise<Facility | undefined> => {
     try {
         const docRef = doc(db, 'facilities', id);
@@ -152,9 +135,6 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
     }
 };
 
-/**
- * Adds a new facility to the Firestore 'facilities' collection.
- */
 export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<Facility> => {
   try {
     const docRef = await addDoc(collection(db, 'facilities'), facilityData);
@@ -165,13 +145,9 @@ export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<F
   }
 };
 
-/**
- * Updates an existing facility in the Firestore 'facilities' collection.
- */
 export const updateFacility = async (updatedFacilityData: Facility): Promise<Facility> => {
   try {
     const facilityRef = doc(db, 'facilities', updatedFacilityData.id);
-    // The `setDoc` with merge option or `updateDoc` can be used. `setDoc` is safer for ensuring the object shape.
     await setDoc(facilityRef, updatedFacilityData, { merge: true });
     return updatedFacilityData;
   } catch (error) {
@@ -180,9 +156,6 @@ export const updateFacility = async (updatedFacilityData: Facility): Promise<Fac
   }
 };
 
-/**
- * Deletes a facility from the Firestore 'facilities' collection.
- */
 export const deleteFacility = async (facilityId: string): Promise<void> => {
     try {
         await deleteDoc(doc(db, 'facilities', facilityId));
@@ -192,13 +165,185 @@ export const deleteFacility = async (facilityId: string): Promise<void> => {
     }
 };
 
+// --- BOOKING FUNCTIONS (FIRESTORE) ---
+
+export function listenToUserBookings(
+  userId: string,
+  callback: (bookings: Booking[]) => void,
+  onError: (error: Error) => void
+) {
+  const q = query(collection(db, "bookings"), where("userId", "==", userId));
+
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const bookingsData: Booking[] = [];
+    querySnapshot.forEach((doc) => {
+      bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
+    });
+    callback(bookingsData);
+  }, (error) => {
+    console.error("Firestore listener error for user bookings:", error);
+    onError(error);
+  });
+
+  return unsubscribe;
+}
+
+export function listenToAllBookings(
+  callback: (bookings: Booking[]) => void,
+  onError: (error: Error) => void
+) {
+  const q = query(collection(db, "bookings"));
+
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const bookingsData: Booking[] = [];
+    querySnapshot.forEach((doc) => {
+      bookingsData.push({ id: doc.id, ...doc.data() } as Booking);
+    });
+    callback(bookingsData);
+  }, (error) => {
+    console.error("Firestore listener error for all bookings:", error);
+    onError(error);
+  });
+
+  return unsubscribe;
+}
+
+export async function listenToOwnerBookings(
+  ownerId: string,
+  callback: (bookings: Booking[]) => void,
+  onError: (error: Error) => void
+): Promise<() => void> {
+  const ownerFacilities = await getFacilitiesByOwnerId(ownerId);
+  const facilityIds = ownerFacilities.map(f => f.id);
+
+  if (facilityIds.length === 0) {
+    callback([]);
+    return () => {}; // Return a no-op unsubscribe function
+  }
+
+  const CHUNK_SIZE = 30;
+  const facilityIdChunks: string[][] = [];
+  for (let i = 0; i < facilityIds.length; i += CHUNK_SIZE) {
+    facilityIdChunks.push(facilityIds.slice(i, i + CHUNK_SIZE));
+  }
+
+  const allBookings: { [key: string]: Booking } = {};
+  const unsubscribes: (() => void)[] = [];
+
+  facilityIdChunks.forEach(chunk => {
+    const q = query(collection(db, "bookings"), where("facilityId", "in", chunk));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      querySnapshot.docChanges().forEach((change) => {
+        const booking = { id: change.doc.id, ...change.doc.data() } as Booking;
+        if (change.type === "removed") {
+          delete allBookings[booking.id];
+        } else {
+          allBookings[booking.id] = booking;
+        }
+      });
+      callback(Object.values(allBookings));
+    }, (error) => {
+      console.error("Firestore listener error for owner bookings chunk:", error);
+      onError(error);
+    });
+    unsubscribes.push(unsubscribe);
+  });
+
+  return () => unsubscribes.forEach(unsub => unsub());
+}
+
+export const getBookingById = async (id: string): Promise<Booking | undefined> => {
+    try {
+        const docRef = doc(db, 'bookings', id);
+        const docSnap = await getDoc(docRef);
+        return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as Booking : undefined;
+    } catch (error) {
+        console.error("Error fetching booking by ID:", error);
+        return undefined;
+    }
+};
+
+export const addBooking = async (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> => {
+  const newBookingData = {
+    ...bookingData,
+    bookedAt: new Date().toISOString(),
+  };
+  try {
+    const docRef = await addDoc(collection(db, 'bookings'), newBookingData);
+    return { id: docRef.id, ...newBookingData } as Booking;
+  } catch (error) {
+    console.error("Error adding booking:", error);
+    throw new Error("Could not add booking to the database.");
+  }
+};
+
+export const updateBooking = async (bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> => {
+    try {
+        const bookingRef = doc(db, 'bookings', bookingId);
+        await setDoc(bookingRef, updates, { merge: true });
+        const updatedDoc = await getDoc(bookingRef);
+        return updatedDoc.exists() ? { id: updatedDoc.id, ...updatedDoc.data() } as Booking : undefined;
+    } catch (error) {
+        console.error("Error updating booking:", error);
+        return undefined;
+    }
+};
+
+export const getBookingsForFacilityOnDate = async (facilityId: string, date: string): Promise<Booking[]> => {
+    const bookings: Booking[] = [];
+    try {
+        const q = query(
+            collection(db, "bookings"),
+            where("facilityId", "==", facilityId),
+            where("date", "==", date),
+            where("status", "in", ["Confirmed", "Pending"])
+        );
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            bookings.push({ id: doc.id, ...doc.data() } as Booking);
+        });
+    } catch (error) {
+        console.error("Error fetching bookings for facility on date:", error);
+    }
+    return bookings;
+};
+
+export const getBookingsByUserId = async (userId: string): Promise<Booking[]> => {
+     try {
+        const q = query(collection(db, "bookings"), where("userId", "==", userId));
+        const querySnapshot = await getDocs(q);
+        const bookings: Booking[] = [];
+        querySnapshot.forEach((doc) => {
+            bookings.push({ id: doc.id, ...doc.data() } as Booking);
+        });
+        return bookings;
+    } catch (error) {
+        console.error("Error fetching user bookings: ", error);
+        return [];
+    }
+};
+
+export const getAllBookings = async (): Promise<Booking[]> => {
+    try {
+        const querySnapshot = await getDocs(collection(db, 'bookings'));
+        const bookings: Booking[] = [];
+        querySnapshot.forEach((doc) => {
+            bookings.push({ id: doc.id, ...doc.data() } as Booking);
+        });
+        return bookings.sort((a,b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
+    } catch (error) {
+        console.error("Error fetching all bookings: ", error);
+        return [];
+    }
+};
+
+
 // --- MOCK GETTERS (for other data types) ---
 export const getSportById = (id: string): Sport | undefined => mockSports.find(s => s.id === id);
 export const getAmenityById = (id: string): Amenity | undefined => mockAmenities.find(a => a.id === a.id);
 export const getAllSports = (): Sport[] => mockSports;
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {
-    // This will now also fetch from Firestore but with a filter
      try {
         const q = query(collection(db, "facilities"), where("ownerId", "==", ownerId));
         const querySnapshot = await getDocs(q);
@@ -213,10 +358,6 @@ export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[
     }
 };
 
-// All other functions from the original file remain as they were, using mock data.
-// This is a strategic choice to focus the change on facilities as requested.
-// A full migration would involve creating collections for users, bookings, etc.
-
 export const calculateAverageRating = (reviews: Review[] | undefined): number => {
   if (!reviews || reviews.length === 0) {
     return 0;
@@ -225,14 +366,10 @@ export const calculateAverageRating = (reviews: Review[] | undefined): number =>
   return parseFloat((totalRating / reviews.length).toFixed(1));
 };
 
-// ... (Keep all other mock-based functions like getUserById, addBooking, etc. for now)
 export const getUserById = (userId: string): UserProfile | undefined => mockUsers.find(user => user.id === userId);
 export const getReviewsByFacilityId = (facilityId: string): Review[] => mockReviews.filter(review => review.facilityId === facilityId);
 export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === teamId);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
-export const getBookingById = (id: string): Booking | undefined => mockBookings.find(booking => booking.id === id);
-export const getBookingsByUserId = (userId: string): Booking[] => mockBookings.filter(booking => booking.userId === userId);
-export const getAllBookings = (): Booking[] => [...mockBookings].sort((a,b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
 export const getAllUsers = (): UserProfile[] => [...mockUsers];
 export const getRentalEquipmentById = (id: string): RentalEquipment | undefined => mockRentalEquipment.find(eq => eq.id === eq.id);
 export const getNotificationsForUser = (userId: string): AppNotification[] => mockAppNotifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -255,11 +392,7 @@ export const getAllPromotionRules = (): PromotionRule[] => [...mockPromotionRule
 export const getPromotionRuleById = (id: string): PromotionRule | undefined => mockPromotionRules.find(r => r.id === id);
 export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => mockWaitlist.some(entry => entry.userId === userId && entry.facilityId === facilityId && entry.date === date && entry.startTime === startTime);
 export const getOpenLfgRequests = (): LfgRequest[] => mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-export const addBooking = (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Booking => {
-  const newBooking: Booking = { ...bookingData, id: `booking-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, bookedAt: new Date().toISOString(), };
-  mockBookings.push(newBooking);
-  return newBooking;
-};
+
 export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
   let iconName = 'Info';
   switch (notificationData.type) { case 'booking_confirmed': iconName = 'CheckCircle'; break; case 'booking_cancelled': iconName = 'XCircle'; break; case 'review_submitted': iconName = 'MessageSquareText'; break; case 'reminder': iconName = 'CalendarDays'; break; case 'promotion': iconName = 'Gift'; break; case 'waitlist_opening': iconName = 'BellRing'; break; case 'user_status_changed': iconName = 'Edit3'; break; case 'matchmaking_interest': iconName = 'Swords'; break; }
@@ -267,12 +400,7 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
   mockAppNotifications.unshift(newNotification);
   return newNotification;
 };
-export const updateBooking = (bookingId: string, updates: Partial<Booking>): Booking | undefined => {
-    const bookingIndex = mockBookings.findIndex(b => b.id === bookingId);
-    if (bookingIndex === -1) return undefined;
-    mockBookings[bookingIndex] = { ...mockBookings[bookingIndex], ...updates };
-    return mockBookings[bookingIndex];
-};
+
 export const updateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
     const userIndex = mockUsers.findIndex(user => user.id === userId);
     if (userIndex === -1) return undefined;
@@ -317,8 +445,27 @@ export const markAllNotificationsAsRead = (userId: string): void => { mockAppNot
 export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
 export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Review => {
   const currentUser = getUserById(reviewData.userId);
-  const newReview: Review = { ...reviewData, id: `review-${mockReviews.length + 1}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
+  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
   mockReviews.push(newReview);
   return newReview;
 };
-// ... other mock functions
+
+// Functions below are still using mock data and would need to be migrated
+// --- MOCK DATA POPULATION (Example data) ---
+export const addMembershipPlan = (plan: Omit<MembershipPlan, 'id'>): MembershipPlan => { const newPlan = { ...plan, id: `mem-${Date.now()}`}; mockMembershipPlans.push(newPlan); return newPlan; };
+export const updateMembershipPlan = (plan: MembershipPlan): void => { const index = mockMembershipPlans.findIndex(p => p.id === plan.id); if (index !== -1) mockMembershipPlans[index] = plan; };
+export const deleteMembershipPlan = (id: string): void => { mockMembershipPlans = mockMembershipPlans.filter(p => p.id !== id); };
+export const addEvent = (event: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): void => { const sport = getSportById(event.sportId); if(sport) mockEvents.push({ ...event, id: `evt-${Date.now()}`, sport, registeredParticipants: 0, facilityName: getFacilityById(event.facilityId)?.name || 'Unknown Facility' }); };
+export const updateEvent = (event: SportEvent): void => { const index = mockEvents.findIndex(e => e.id === event.id); if (index !== -1) mockEvents[index] = event; };
+export const deleteEvent = (id: string): void => { mockEvents = mockEvents.filter(e => e.id !== id); };
+export const registerForEvent = (eventId: string): boolean => { const event = mockEvents.find(e => e.id === eventId); if (event && (!event.maxParticipants || event.registeredParticipants < event.maxParticipants)) { event.registeredParticipants++; return true; } return false; };
+export const addPricingRule = (rule: Omit<PricingRule, 'id'>): void => { mockPricingRules.push({ ...rule, id: `pr-${Date.now()}` }); };
+export const updatePricingRule = (rule: PricingRule): void => { const index = mockPricingRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPricingRules[index] = rule; };
+export const deletePricingRule = (id: string): void => { mockPricingRules = mockPricingRules.filter(r => r.id !== id); };
+export const addPromotionRule = (rule: Omit<PromotionRule, 'id'>): void => { mockPromotionRules.push({ ...rule, id: `promo-${Date.now()}` }); };
+export const updatePromotionRule = (rule: PromotionRule): void => { const index = mockPromotionRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPromotionRules[index] = rule; };
+export const deletePromotionRule = (id: string): void => { mockPromotionRules = mockPromotionRules.filter(r => r.id !== id); };
+export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
+export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
+export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds'>): LfgRequest => { const newRequest: LfgRequest = { ...requestData, id: `lfg-${Date.now()}`, createdAt: new Date().toISOString(), status: 'open', interestedUserIds: [] }; mockLfgRequests.push(newRequest); return newRequest; };
+export const expressInterestInLfg = (lfgId: string, userId: string): void => { const request = mockLfgRequests.find(r => r.id === lfgId); if (request && !request.interestedUserIds.includes(userId)) request.interestedUserIds.push(userId); };

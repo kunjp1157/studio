@@ -30,17 +30,21 @@ export default function OwnerBookingsPage() {
       return;
     }
 
-    const unsubscribe = listenToOwnerBookings(
-      ownerId,
-      (ownerBookings) => {
-        setBookings(ownerBookings.sort((a, b) => parseISO(b.bookedAt).getTime() - parseISO(a.bookedAt).getTime()));
-        setIsLoading(false);
-      },
-      (error) => {
-        console.error("Error listening to owner bookings:", error);
-        setIsLoading(false);
-      }
-    );
+    let unsubscribe = () => {};
+    const setupListener = async () => {
+        unsubscribe = await listenToOwnerBookings(
+            ownerId,
+            (ownerBookings) => {
+                setBookings(ownerBookings.sort((a, b) => parseISO(b.bookedAt).getTime() - parseISO(a.bookedAt).getTime()));
+                setIsLoading(false);
+            },
+            (error) => {
+                console.error("Error listening to owner bookings:", error);
+                setIsLoading(false);
+            }
+        );
+    }
+    setupListener();
     
     return () => unsubscribe();
   }, [ownerId]);
