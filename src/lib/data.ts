@@ -197,7 +197,7 @@ export const getSportById = (id: string): Sport | undefined => mockSports.find(s
 export const getAmenityById = (id: string): Amenity | undefined => mockAmenities.find(a => a.id === a.id);
 export const getAllSports = (): Sport[] => mockSports;
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
-export const getFacilitiesByOwnerIdAction = async (ownerId: string): Promise<Facility[]> => {
+export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {
     // This will now also fetch from Firestore but with a filter
      try {
         const q = query(collection(db, "facilities"), where("ownerId", "==", ownerId));
