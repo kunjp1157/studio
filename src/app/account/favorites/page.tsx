@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import type { Facility } from '@/lib/types';
-import { mockUser, getFacilityById } from '@/lib/data';
+import { mockUser, getFacilitiesByIds } from '@/lib/data';
 import { Heart } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
@@ -27,13 +27,20 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     const fetchFavorites = async () => {
-      if (mockUser.favoriteFacilities) {
-        const facilityPromises = mockUser.favoriteFacilities.map(favId => getFacilityById(favId));
-        const resolvedFacilities = await Promise.all(facilityPromises);
-        const favs = resolvedFacilities.filter(Boolean) as Facility[];
-        setFavoriteFacilities(favs);
+      setIsLoading(true);
+      try {
+        if (mockUser.favoriteFacilities && mockUser.favoriteFacilities.length > 0) {
+          const favs = await getFacilitiesByIds(mockUser.favoriteFacilities);
+          setFavoriteFacilities(favs);
+        } else {
+          setFavoriteFacilities([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch favorite facilities:", error);
+        setFavoriteFacilities([]);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchFavorites();

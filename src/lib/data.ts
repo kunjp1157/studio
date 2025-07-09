@@ -137,6 +137,26 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
     }
 };
 
+export const getFacilitiesByIds = async (ids: string[]): Promise<Facility[]> => {
+    if (ids.length === 0) {
+        return [];
+    }
+    try {
+        // Firestore 'in' query is limited to 30 items, but for favorites this is usually fine.
+        // For larger arrays, you would need to chunk the requests.
+        const q = query(collection(db, 'facilities'), where('__name__', 'in', ids));
+        const querySnapshot = await getDocs(q);
+        const facilities: Facility[] = [];
+        querySnapshot.forEach((doc) => {
+            facilities.push({ id: doc.id, ...doc.data() } as Facility);
+        });
+        return facilities;
+    } catch (error) {
+        console.error("Error fetching facilities by IDs: ", error);
+        return [];
+    }
+};
+
 export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<Facility> => {
   try {
     const docRef = await addDoc(collection(db, 'facilities'), facilityData);
