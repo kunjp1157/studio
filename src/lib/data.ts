@@ -489,10 +489,15 @@ export const leaveTeam = (teamId: string, userId: string): boolean => {
   const team = mockTeams[teamIndex];
   if (!team.memberIds.includes(userId)) return false; 
   if (team.captainId === userId && team.memberIds.length > 1) return false; 
-  if (team.captainId === userId && team.memberIds.length === 1) mockTeams.splice(teamIndex, 1);
-  else team.memberIds = team.memberIds.filter(id => id !== userId);
+  if (team.captainId === userId && team.memberIds.length === 1) {
+      mockTeams.splice(teamIndex, 1);
+  } else {
+      team.memberIds = team.memberIds.filter(id => id !== userId);
+  }
   const user = getUserById(userId);
-  if (user && user.teamIds) user.teamIds = user.teamIds.filter(id => id !== teamId);
+  if (user && user.teamIds) {
+      user.teamIds = user.teamIds.filter(id => id !== teamId);
+  }
   return true;
 };
 
@@ -501,7 +506,7 @@ export const markAllNotificationsAsRead = (userId: string): void => { mockAppNot
 export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
 export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Review => {
   const currentUser = getUserById(reviewData.userId);
-  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isPublicProfile || false, createdAt: new Date().toISOString() };
+  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
   mockReviews.push(newReview);
   return newReview;
 };
