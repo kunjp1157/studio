@@ -322,3 +322,16 @@ export interface LfgRequest {
   playersNeeded?: number;
   preferredTime?: string;
 }
+
+export interface Challenge {
+  id: string;
+  challengerId: string;
+  challenger: UserProfile;
+  opponentId?: string;
+  opponent?: UserProfile;
+  sport: Sport;
+  proposedDate: string; // ISO string
+  notes: string;
+  status: 'open' | 'accepted' | 'completed' | 'cancelled';
+  createdAt: string; // ISO string
+}

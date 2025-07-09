@@ -1,6 +1,6 @@
 
 
-import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate } from './types';
+import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { db } from './firebase';
@@ -81,6 +81,7 @@ let mockSiteSettings: SiteSettings = { siteName: 'Sports Arena', defaultCurrency
 let mockWaitlist: WaitlistEntry[] = [];
 let mockLfgRequests: LfgRequest[] = [];
 let mockRentalEquipment: RentalEquipment[] = [];
+export let mockChallenges: Challenge[] = [];
 
 
 // --- FIREBASE-ENABLED FACILITY FUNCTIONS ---
@@ -511,6 +512,69 @@ export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userNam
   return newReview;
 };
 
+export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds'>): LfgRequest[] => {
+    const newRequest: LfgRequest = { ...requestData, id: `lfg-${Date.now()}`, createdAt: new Date().toISOString(), status: 'open', interestedUserIds: [] };
+    mockLfgRequests.unshift(newRequest);
+    return getOpenLfgRequests();
+};
+
+export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[] => {
+    const request = mockLfgRequests.find(r => r.id === lfgId);
+    if (request && !request.interestedUserIds.includes(userId)) {
+        request.interestedUserIds.push(userId);
+    }
+    return getOpenLfgRequests();
+};
+
+export const getOpenChallenges = (): Challenge[] => {
+    return mockChallenges.filter(c => c.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
+export const createChallenge = (data: { challengerId: string; sportId: string; proposedDate: string; notes: string }): Challenge[] => {
+    const challenger = getUserById(data.challengerId);
+    const sport = getSportById(data.sportId);
+
+    if (!challenger || !sport) {
+        throw new Error("Invalid challenger or sport ID");
+    }
+
+    const newChallenge: Challenge = {
+        id: `challenge-${Date.now()}`,
+        challengerId: data.challengerId,
+        challenger,
+        sport,
+        proposedDate: new Date(data.proposedDate).toISOString(),
+        notes: data.notes,
+        status: 'open',
+        createdAt: new Date().toISOString(),
+    };
+    mockChallenges.unshift(newChallenge);
+    return getOpenChallenges();
+};
+
+export const acceptChallenge = (challengeId: string, opponentId: string): Challenge[] => {
+    const challenge = mockChallenges.find(c => c.id === challengeId);
+    const opponent = getUserById(opponentId);
+
+    if (challenge && opponent && challenge.status === 'open' && challenge.challengerId !== opponentId) {
+        challenge.status = 'accepted';
+        challenge.opponentId = opponentId;
+        challenge.opponent = opponent;
+        
+        addNotification(challenge.challengerId, {
+            type: 'general',
+            title: 'Challenge Accepted!',
+            message: `${opponent.name} has accepted your ${challenge.sport.name} challenge.`,
+            link: '/challenges',
+            iconName: 'Swords'
+        });
+    } else {
+        throw new Error("Failed to accept challenge. It might already be taken or you cannot accept your own challenge.");
+    }
+    return getOpenChallenges();
+};
+
+
 // Functions below are still using mock data and would need to be migrated
 // --- MOCK DATA POPULATION (Example data) ---
 export const addMembershipPlan = (plan: Omit<MembershipPlan, 'id'>): MembershipPlan => { const newPlan = { ...plan, id: `mem-${Date.now()}`}; mockMembershipPlans.push(newPlan); return newPlan; };
@@ -537,17 +601,3 @@ export const updatePromotionRule = (rule: PromotionRule): void => { const index 
 export const deletePromotionRule = (id: string): void => { mockPromotionRules = mockPromotionRules.filter(r => r.id !== id); };
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
-
-export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds'>): LfgRequest[] => {
-    const newRequest: LfgRequest = { ...requestData, id: `lfg-${Date.now()}`, createdAt: new Date().toISOString(), status: 'open', interestedUserIds: [] };
-    mockLfgRequests.unshift(newRequest);
-    return getOpenLfgRequests();
-};
-
-export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[] => {
-    const request = mockLfgRequests.find(r => r.id === lfgId);
-    if (request && !request.interestedUserIds.includes(userId)) {
-        request.interestedUserIds.push(userId);
-    }
-    return getOpenLfgRequests();
-};

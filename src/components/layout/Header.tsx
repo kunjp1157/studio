@@ -39,9 +39,10 @@ export function Header() {
           <Link href="/sports"><Button variant="ghost" className="text-sm font-medium">Sports</Button></Link>
           <Link href="/events"><Button variant="ghost" className="text-sm font-medium">Events</Button></Link>
           <Link href="/memberships"><Button variant="ghost" className="text-sm font-medium">Memberships</Button></Link>
-          <Link href="/blog"><Button variant="ghost" className="text-sm font-medium">Blog</Button></Link>
-          <Link href="/leaderboard"><Button variant="ghost" className="text-sm font-medium">Leaderboard</Button></Link>
+          <Link href="/challenges"><Button variant="ghost" className="text-sm font-medium">Challenges</Button></Link>
           <Link href="/matchmaking"><Button variant="ghost" className="text-sm font-medium">Matchmaking</Button></Link>
+          <Link href="/leaderboard"><Button variant="ghost" className="text-sm font-medium">Leaderboard</Button></Link>
+          <Link href="/blog"><Button variant="ghost" className="text-sm font-medium">Blog</Button></Link>
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
