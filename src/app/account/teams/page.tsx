@@ -51,17 +51,19 @@ export default function MyTeamsPage() {
   const handleLeaveTeam = (teamId: string, teamName: string) => {
     setIsActionLoading(true);
     setTimeout(() => {
-        const success = mockLeaveTeam(teamId, mockUser.id);
-        if (success) {
-            toast({
-                title: "You have left the team",
-                description: `You are no longer a member of ${teamName}.`
-            });
-            fetchTeams(); // Refresh the list
-        } else {
+        try {
+            const success = mockLeaveTeam(teamId, mockUser.id);
+            if (success) {
+                toast({
+                    title: "You have left the team",
+                    description: `You are no longer a member of ${teamName}.`
+                });
+                fetchTeams(); // Refresh the list
+            } 
+        } catch (error) {
              toast({
                 title: "Error Leaving Team",
-                description: "You cannot leave the team if you are the captain and other members remain. Please transfer captaincy first.",
+                description: error instanceof Error ? error.message : "An unexpected error occurred.",
                 variant: "destructive"
             });
         }
@@ -106,7 +108,7 @@ export default function MyTeamsPage() {
                 <h4 className="font-semibold text-sm mb-2">Members ({members.length})</h4>
                 <div className="flex flex-wrap gap-2">
                     <TooltipProvider>
-                    {members.map(member => (
+                    {members.slice(0, 10).map(member => (
                        member.isProfilePublic ? (
                             <Link key={member.id} href={`/users/${member.id}`} passHref>
                                 <MemberAvatar member={member} teamCaptainId={team.captainId} />
@@ -115,13 +117,18 @@ export default function MyTeamsPage() {
                             <MemberAvatar key={member.id} member={member} teamCaptainId={team.captainId} />
                         )
                     ))}
+                    {members.length > 10 && <div className="flex items-center justify-center h-9 w-9 border-2 border-background rounded-full bg-muted text-muted-foreground text-xs font-bold">+{members.length - 10}</div>}
                     </TooltipProvider>
                 </div>
             </CardContent>
             <CardFooter className="space-x-2">
-                 <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming Soon!", description: "Team management features are on the way."})}>
-                    <Settings className="mr-1 h-4 w-4" /> Manage
-                </Button>
+                {isCaptain && (
+                    <Link href={`/account/teams/${team.id}/manage`} passHref>
+                        <Button variant="outline" size="sm">
+                            <Settings className="mr-1 h-4 w-4" /> Manage Team
+                        </Button>
+                    </Link>
+                )}
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" disabled={isActionLoading}><LogOut className="mr-1 h-4 w-4" /> Leave</Button>

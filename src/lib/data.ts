@@ -486,10 +486,13 @@ export const createTeam = (teamData: { name: string; sportId: string; captainId:
 };
 export const leaveTeam = (teamId: string, userId: string): boolean => {
   const teamIndex = mockTeams.findIndex(t => t.id === teamId);
-  if (teamIndex === -1) return false;
+  if (teamIndex === -1) throw new Error("Team not found.");
   const team = mockTeams[teamIndex];
-  if (!team.memberIds.includes(userId)) return false; 
-  if (team.captainId === userId && team.memberIds.length > 1) return false; 
+  if (!team.memberIds.includes(userId)) throw new Error("User is not a member of this team.");
+  if (team.captainId === userId && team.memberIds.length > 1) {
+    throw new Error("Captain cannot leave a team with other members. Please transfer captaincy first.");
+  }
+  
   if (team.captainId === userId && team.memberIds.length === 1) {
       mockTeams.splice(teamIndex, 1);
   } else {
@@ -501,6 +504,48 @@ export const leaveTeam = (teamId: string, userId: string): boolean => {
   }
   return true;
 };
+
+export const removeUserFromTeam = (teamId: string, memberIdToRemove: string, captainId: string): void => {
+    const team = getTeamById(teamId);
+    if (!team) throw new Error("Team not found.");
+    if (team.captainId !== captainId) throw new Error("Only the team captain can remove members.");
+    if (memberIdToRemove === captainId) throw new Error("Captain cannot remove themselves.");
+    
+    team.memberIds = team.memberIds.filter(id => id !== memberIdToRemove);
+    
+    const member = getUserById(memberIdToRemove);
+    if (member && member.teamIds) {
+        member.teamIds = member.teamIds.filter(id => id !== teamId);
+    }
+};
+
+export const transferCaptaincy = (teamId: string, newCaptainId: string, oldCaptainId: string): void => {
+    const team = getTeamById(teamId);
+    if (!team) throw new Error("Team not found.");
+    if (team.captainId !== oldCaptainId) throw new Error("Only the current captain can transfer captaincy.");
+    if (!team.memberIds.includes(newCaptainId)) throw new Error("The new captain must be a member of the team.");
+    
+    team.captainId = newCaptainId;
+};
+
+export const deleteTeam = (teamId: string, captainId: string): void => {
+    const teamIndex = mockTeams.findIndex(t => t.id === teamId);
+    if (teamIndex === -1) throw new Error("Team not found.");
+    const team = mockTeams[teamIndex];
+    if (team.captainId !== captainId) throw new Error("Only the team captain can disband the team.");
+    
+    // Remove team from all members' profiles
+    team.memberIds.forEach(memberId => {
+        const member = getUserById(memberId);
+        if (member && member.teamIds) {
+            member.teamIds = member.teamIds.filter(id => id !== teamId);
+        }
+    });
+
+    // Remove the team itself
+    mockTeams.splice(teamIndex, 1);
+};
+
 
 export const markNotificationAsRead = (userId: string, notificationId: string): void => { const notification = mockAppNotifications.find(n => n.id === notificationId && n.userId === userId); if (notification) notification.isRead = true; };
 export const markAllNotificationsAsRead = (userId: string): void => { mockAppNotifications.forEach(n => { if (n.userId === userId) n.isRead = true; }); };
