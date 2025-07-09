@@ -31,8 +31,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { MembershipPlan, SiteSettings } from '@/lib/types';
-import { deleteMembershipPlan } from '@/lib/data';
-import { getSiteSettingsAction, getAllMembershipPlansAction } from '@/app/actions';
+import { deleteMembershipPlan, listenToAllMembershipPlans, getSiteSettings } from '@/lib/data';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Award, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -48,29 +47,28 @@ export default function AdminMembershipsPage() {
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
-  const fetchAndSetData = async () => {
-    try {
-        const [freshPlans, settings] = await Promise.all([
-            getAllMembershipPlansAction(),
-            getSiteSettingsAction(),
-        ]);
+  useEffect(() => {
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
+    
+    const unsubscribe = listenToAllMembershipPlans(
+      (freshPlans) => {
         setPlans(freshPlans);
-        setCurrency(settings.defaultCurrency);
-    } catch (error) {
+        if (isLoading) setIsLoading(false);
+      },
+      (error) => {
         console.error("Failed to fetch membership plans:", error);
         toast({
             title: "Error",
             description: "Could not load membership plans.",
             variant: "destructive",
         });
-    }
-  };
-
-  useEffect(() => {
-    fetchAndSetData().finally(() => setIsLoading(false));
-    const intervalId = setInterval(fetchAndSetData, 5000);
-    return () => clearInterval(intervalId);
-  }, []);
+        if (isLoading) setIsLoading(false);
+      }
+    );
+    
+    return () => unsubscribe();
+  }, [isLoading, toast]);
 
   const handleDeletePlan = async () => {
     if (!planToDelete) return;
@@ -81,7 +79,6 @@ export default function AdminMembershipsPage() {
         title: "Membership Plan Deleted",
         description: `"${planToDelete.name}" has been successfully deleted.`,
       });
-      await fetchAndSetData();
     } catch (error) {
        toast({
         title: "Error",

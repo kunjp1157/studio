@@ -77,27 +77,30 @@ export function PromotionRuleAdminForm({ initialData }: PromotionRuleAdminFormPr
   const onSubmit = async (data: PromotionRuleFormValues) => {
     setIsLoading(true);
 
-    const payload: Omit<PromotionRule, 'id'> = {
-      ...data,
+    const payload = {
+      name: data.name,
+      description: data.description,
+      isActive: data.isActive,
+      discountType: data.discountType,
+      discountValue: data.discountValue,
+      code: data.code || undefined, // Ensure empty string becomes undefined
       startDate: data.startDate ? data.startDate.toISOString().split('T')[0] : undefined,
       endDate: data.endDate ? data.endDate.toISOString().split('T')[0] : undefined,
-      code: data.code || undefined, // Ensure empty string becomes undefined
       usageLimit: data.usageLimit === 0 ? undefined : data.usageLimit, // 0 means unlimited
       usageLimitPerUser: data.usageLimitPerUser === 0 ? undefined : data.usageLimitPerUser, // 0 means unlimited
     };
 
     try {
       if (initialData) {
-        updatePromotionRule({ ...payload, id: initialData.id });
+        await updatePromotionRule({ ...payload, id: initialData.id });
       } else {
-        addPromotionRule(payload);
+        await addPromotionRule(payload);
       }
       toast({
         title: initialData ? "Promotion Updated" : "Promotion Created",
         description: `Promotion "${payload.name}" has been successfully saved.`,
       });
       router.push('/admin/promotions');
-      router.refresh();
     } catch (error) {
       toast({
         title: "Error",

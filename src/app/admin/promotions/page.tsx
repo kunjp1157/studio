@@ -32,8 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { PromotionRule, SiteSettings } from '@/lib/types';
-import { deletePromotionRule } from '@/lib/data';
-import { getSiteSettingsAction, getAllPromotionRulesAction } from '@/app/actions';
+import { deletePromotionRule, getSiteSettings, listenToAllPromotionRules } from '@/lib/data';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Tag, CheckCircle, XCircle, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -50,29 +49,28 @@ export default function AdminPromotionsPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const { toast } = useToast();
 
-  const fetchAndSetData = async () => {
-    try {
-        const [freshPromos, settings] = await Promise.all([
-            getAllPromotionRulesAction(),
-            getSiteSettingsAction(),
-        ]);
-        setPromotions(freshPromos);
-        setCurrency(settings.defaultCurrency);
-    } catch (error) {
-        console.error("Failed to fetch promotions:", error);
-        toast({
-            title: "Error",
-            description: "Could not load promotions data.",
-            variant: "destructive",
-        });
-    }
-  };
-
   useEffect(() => {
-    fetchAndSetData().finally(() => setIsLoading(false));
-    const intervalId = setInterval(fetchAndSetData, 5000);
-    return () => clearInterval(intervalId);
-  }, []);
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
+    
+    const unsubscribe = listenToAllPromotionRules(
+        (freshPromos) => {
+            setPromotions(freshPromos);
+            if (isLoading) setIsLoading(false);
+        },
+        (error) => {
+            console.error("Failed to fetch promotions:", error);
+            toast({
+                title: "Error",
+                description: "Could not load promotions data.",
+                variant: "destructive",
+            });
+            if (isLoading) setIsLoading(false);
+        }
+    );
+
+    return () => unsubscribe();
+  }, [isLoading, toast]);
 
   const handleDeletePromotion = async () => {
     if (!promotionToDelete) return;
@@ -83,7 +81,6 @@ export default function AdminPromotionsPage() {
         title: "Promotion Deleted",
         description: `Promotion "${promotionToDelete.name}" has been successfully deleted.`,
       });
-      await fetchAndSetData();
     } catch (error) {
        toast({
         title: "Error",

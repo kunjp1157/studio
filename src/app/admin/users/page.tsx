@@ -45,8 +45,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { UserProfile, UserRole, UserStatus } from '@/lib/types';
-import { updateUser as updateMockUser, addNotification } from '@/lib/data';
-import { getUsersAction } from '@/app/actions';
+import { updateUser as updateMockUser, addNotification, listenToAllUsers } from '@/lib/data';
 import { MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -81,23 +80,22 @@ export default function AdminUsersPage() {
     resolver: zodResolver(userFormSchema),
   });
 
-  const fetchUsers = async () => {
-    const usersData = await getUsersAction();
-    setAllUsers(currentUsers => {
-        if (JSON.stringify(currentUsers) !== JSON.stringify(usersData)) {
-            return usersData;
-        }
-        return currentUsers;
-    });
-  };
-
   useEffect(() => {
-    fetchUsers().finally(() => setIsLoading(false));
-    
-    const intervalId = setInterval(fetchUsers, 3000);
+    const unsubscribe = listenToAllUsers(
+      (usersData) => {
+        setAllUsers(usersData);
+        if(isLoading) setIsLoading(false);
+      },
+      (error) => {
+        console.error("Failed to listen to users:", error);
+        toast({ title: "Error", description: "Could not load real-time user data.", variant: "destructive" });
+        if(isLoading) setIsLoading(false);
+      }
+    );
 
-    return () => clearInterval(intervalId);
-  }, []);
+    return () => unsubscribe();
+  }, [isLoading, toast]);
+
 
   useEffect(() => {
     let results = allUsers;
@@ -128,57 +126,55 @@ export default function AdminUsersPage() {
     setIsEditModalOpen(true);
   };
   
-  const handleToggleStatus = (user: UserProfile) => {
+  const handleToggleStatus = async (user: UserProfile) => {
     const newStatus: UserStatus = user.status === 'Active' ? 'Suspended' : 'Active';
-    const updatedUser = updateMockUser(user.id, { status: newStatus });
-    if (updatedUser) {
-      toast({
-        title: `User ${newStatus === 'Active' ? 'Activated' : 'Suspended'}`,
-        description: `${user.name}'s status has been changed to ${newStatus}.`,
-      });
-      addNotification(user.id, {
-        type: 'user_status_changed',
-        title: `Account Status Changed`,
-        message: `Your account status has been updated to ${newStatus} by an administrator.`,
-        link: '/account/profile',
-      });
-      fetchUsers(); // Re-fetch to update the list
-    } else {
-      toast({ title: "Error", description: "Failed to update user status.", variant: "destructive" });
+    
+    try {
+        await updateMockUser(user.id, { status: newStatus });
+        toast({
+            title: `User ${newStatus === 'Active' ? 'Activated' : 'Suspended'}`,
+            description: `${user.name}'s status has been changed to ${newStatus}.`,
+        });
+        addNotification(user.id, {
+            type: 'user_status_changed',
+            title: `Account Status Changed`,
+            message: `Your account status has been updated to ${newStatus} by an administrator.`,
+            link: '/account/profile',
+        });
+    } catch (error) {
+        toast({ title: "Error", description: "Failed to update user status.", variant: "destructive" });
     }
   };
 
-  const onEditSubmit = (data: UserFormValues) => {
+  const onEditSubmit = async (data: UserFormValues) => {
     if (!selectedUser) return;
     setIsLoading(true);
     
-    const updatedUser = updateMockUser(selectedUser.id, {
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        status: data.status,
-        membershipLevel: data.membershipLevel,
-    });
+    try {
+        await updateMockUser(selectedUser.id, {
+            name: data.name,
+            email: data.email,
+            role: data.role,
+            status: data.status,
+            membershipLevel: data.membershipLevel,
+        });
 
-    setTimeout(() => { // Simulate API delay
+        toast({
+            title: "User Updated",
+            description: `${data.name}'s profile has been successfully updated.`,
+        });
+        addNotification(selectedUser.id, {
+            type: 'general',
+            title: 'Profile Updated by Admin',
+            message: 'An administrator has updated your profile information.',
+            link: '/account/profile',
+        });
+        setIsEditModalOpen(false);
+    } catch (error) {
+         toast({ title: "Error", description: "Failed to update user.", variant: "destructive"});
+    } finally {
         setIsLoading(false);
-        if (updatedUser) {
-            toast({
-                title: "User Updated",
-                description: `${data.name}'s profile has been successfully updated.`,
-            });
-            addNotification(selectedUser.id, {
-                type: 'general',
-                title: 'Profile Updated by Admin',
-                message: 'An administrator has updated your profile information.',
-                link: '/account/profile',
-            });
-            setIsEditModalOpen(false);
-            fetchUsers();
-        } else {
-            toast({ title: "Error", description: "Failed to update user.", variant: "destructive"});
-        }
-    }, 1000);
+    }
   };
 
 
@@ -196,7 +192,7 @@ export default function AdminUsersPage() {
   };
 
 
-  if (isLoading && allUsers.length === 0) {
+  if (isLoading) {
     return (
       <div className="space-y-8">
         <PageTitle title="User Management" description="Oversee and manage user accounts on the platform." />

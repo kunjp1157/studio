@@ -51,18 +51,17 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    // Simulate fetching facilities and sports for select dropdowns
-    setFacilities(getAllFacilities());
-    setSports(getAllSports());
-    
-    const settingsInterval = setInterval(() => {
-      const currentSettings = getSiteSettings();
-      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    }, 3000);
-    const currentSettings = getSiteSettings();
-    setCurrency(currentSettings.defaultCurrency);
-    
-    return () => clearInterval(settingsInterval);
+    const loadData = async () => {
+        const [facilitiesData, sportsData, settingsData] = await Promise.all([
+            getAllFacilities(),
+            getAllSports(),
+            getSiteSettings()
+        ]);
+        setFacilities(facilitiesData);
+        setSports(sportsData);
+        setCurrency(settingsData.defaultCurrency);
+    };
+    loadData();
   }, []);
 
   const form = useForm<EventFormValues>({
@@ -83,37 +82,31 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
 
   const onSubmit = async (data: EventFormValues) => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Form Data Submitted:", data);
 
-    // Prepare data for mock functions (add/updateEvent)
-    const eventPayload = {
-      ...data,
-      startDate: new Date(data.startDate).toISOString(),
-      endDate: new Date(data.endDate).toISOString(),
-    };
-    
-    if (initialData) {
-      // Update existing event
-      // The updateEvent function in data.ts will handle fetching sport by sportId
-      // @ts-ignore // registeredParticipants is not in form but part of SportEvent
-      updateEvent({ ...initialData, ...eventPayload }); 
-    } else {
-      // Create new event
-      addEvent(eventPayload as Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string });
-    }
-
-    setIsLoading(false);
-    toast({
-      title: initialData ? "Event Updated" : "Event Created",
-      description: `${data.name} has been successfully ${initialData ? 'updated' : 'created'}.`,
-    });
-    
-    if (onSubmitSuccess) {
-      onSubmitSuccess();
-    } else {
-      router.push('/admin/events');
+    try {
+        if (initialData) {
+            await updateEvent({ ...initialData, ...data });
+        } else {
+            await addEvent(data);
+        }
+        toast({
+            title: initialData ? "Event Updated" : "Event Created",
+            description: `${data.name} has been successfully ${initialData ? 'updated' : 'created'}.`,
+        });
+        
+        if (onSubmitSuccess) {
+            onSubmitSuccess();
+        } else {
+            router.push('/admin/events');
+        }
+    } catch (error) {
+        toast({
+            title: "Error Saving Event",
+            description: error instanceof Error ? error.message : "An unknown error occurred.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
     }
   };
 

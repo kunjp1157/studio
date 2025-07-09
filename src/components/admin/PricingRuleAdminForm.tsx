@@ -98,7 +98,7 @@ export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps)
   const onSubmit = async (data: PricingRuleFormValues) => {
     setIsLoading(true);
 
-    const payload: Omit<PricingRule, 'id'> = {
+    const payload = {
       name: data.name,
       description: data.description,
       isActive: data.isActive,
@@ -112,16 +112,15 @@ export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps)
 
     try {
       if (initialData) {
-        updatePricingRule({ ...payload, id: initialData.id });
+        await updatePricingRule({ ...payload, id: initialData.id });
       } else {
-        addPricingRule(payload);
+        await addPricingRule(payload);
       }
       toast({
         title: initialData ? "Pricing Rule Updated" : "Pricing Rule Created",
         description: `Rule "${payload.name}" has been successfully saved.`,
       });
       router.push('/admin/pricing');
-      router.refresh();
     } catch (error) {
       toast({
         title: "Error",

@@ -32,8 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { PricingRule, SiteSettings } from '@/lib/types';
-import { deletePricingRule } from '@/lib/data';
-import { getSiteSettingsAction, getAllPricingRulesAction } from '@/app/actions';
+import { deletePricingRule, getSiteSettings, listenToAllPricingRules } from '@/lib/data';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -50,29 +49,27 @@ export default function AdminPricingPage() {
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
-  const fetchAndSetData = async () => {
-    try {
-        const [freshRules, settings] = await Promise.all([
-            getAllPricingRulesAction(),
-            getSiteSettingsAction(),
-        ]);
+  useEffect(() => {
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
+
+    const unsubscribe = listenToAllPricingRules(
+      (freshRules) => {
         setRules(freshRules);
-        setCurrency(settings.defaultCurrency);
-    } catch (error) {
+        if (isLoading) setIsLoading(false);
+      },
+      (error) => {
         console.error("Failed to fetch pricing rules:", error);
         toast({
             title: "Error",
             description: "Could not load pricing rules data.",
             variant: "destructive",
         });
-    }
-  };
-
-  useEffect(() => {
-    fetchAndSetData().finally(() => setIsLoading(false));
-    const intervalId = setInterval(fetchAndSetData, 5000);
-    return () => clearInterval(intervalId);
-  }, []);
+        if (isLoading) setIsLoading(false);
+      }
+    );
+    return () => unsubscribe();
+  }, [isLoading, toast]);
 
   const handleDeleteRule = async () => {
     if (!ruleToDelete) return;
@@ -83,7 +80,6 @@ export default function AdminPricingPage() {
             title: "Pricing Rule Deleted",
             description: `"${ruleToDelete.name}" has been successfully deleted.`,
         });
-        await fetchAndSetData();
     } catch (error) {
         toast({
             title: "Error",

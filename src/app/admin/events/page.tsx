@@ -33,8 +33,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { SportEvent } from '@/lib/types';
-import { deleteEvent, getFacilityById } from '@/lib/data';
-import { getAllEventsAction } from '@/app/actions';
+import { deleteEvent, listenToAllEvents } from '@/lib/data';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, CalendarDays as EventIcon, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -47,27 +46,25 @@ export default function AdminEventsPage() {
   const [eventToDelete, setEventToDelete] = useState<SportEvent | null>(null);
   const { toast } = useToast();
 
-  const fetchAndSetData = async () => {
-    try {
-      const freshEvents = await getAllEventsAction();
-      setEvents(freshEvents);
-    } catch (error) {
-      console.error("Failed to fetch events:", error);
-      toast({
-        title: "Error",
-        description: "Could not load events data.",
-        variant: "destructive",
-      });
-    }
-  };
-
   useEffect(() => {
-    fetchAndSetData().finally(() => setIsLoading(false));
-    // The polling interval can be removed if you prefer to rely on manual refreshes
-    // or more advanced real-time listeners (which can be implemented later).
-    const intervalId = setInterval(fetchAndSetData, 5000); 
-    return () => clearInterval(intervalId);
-  }, []);
+    const unsubscribe = listenToAllEvents(
+      (freshEvents) => {
+        setEvents(freshEvents);
+        if (isLoading) setIsLoading(false);
+      },
+      (error) => {
+        console.error("Failed to fetch events:", error);
+        toast({
+          title: "Error",
+          description: "Could not load events data.",
+          variant: "destructive",
+        });
+        if (isLoading) setIsLoading(false);
+      }
+    );
+    
+    return () => unsubscribe();
+  }, [isLoading, toast]);
 
   const handleDeleteEvent = async () => {
     if (!eventToDelete) return;
@@ -78,8 +75,6 @@ export default function AdminEventsPage() {
         title: "Event Deleted",
         description: `"${eventToDelete.name}" has been successfully deleted.`,
       });
-      // Re-fetch all data to ensure consistency
-      await fetchAndSetData();
     } catch (error) {
       toast({
         title: "Error",

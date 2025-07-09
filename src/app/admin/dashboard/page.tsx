@@ -10,8 +10,12 @@ import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import {
   getUserById,
   getFacilityById,
+  listenToAllBookings,
+  listenToAllUsers,
+  listenToFacilities,
+  getSiteSettings
 } from '@/lib/data';
-import { getFacilitiesAction, getUsersAction, getAllBookingsAction, getSiteSettingsAction } from '@/app/actions';
+import { getSiteSettingsAction } from '@/app/actions';
 import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus } from 'lucide-react';
 import type { ChartConfig } from '@/components/ui/chart';
 import { parseISO, getMonth, getYear, format, subMonths, formatDistanceToNow } from 'date-fns';
@@ -96,107 +100,124 @@ const ActivityItem = ({ item, currency }: { item: ActivityFeedItemType, currency
 };
 
 export default function AdminDashboardPage() {
-  const [totalFacilities, setTotalFacilities] = useState(0);
-  const [activeUsers, setActiveUsers] = useState(0);
-  const [totalBookingsThisMonth, setTotalBookingsThisMonth] = useState(0);
-  const [totalRevenueThisMonth, setTotalRevenueThisMonth] = useState(0);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
-
-  const [monthlyBookingsData, setMonthlyBookingsData] = useState<Array<{ month: string; bookings: number }>>([]);
-  const [monthlyRevenueData, setMonthlyRevenueData] = useState<Array<{ month: string; revenue: number }>>([]);
-  const [facilityUsageData, setFacilityUsageData] = useState<Array<{ facilityName: string; bookings: number }>>([]);
-  const [activityFeed, setActivityFeed] = useState<ActivityFeedItemType[]>([]);
   
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    const fetchAndSetData = async () => {
-      const [currentSettings, facilities, users, bookings] = await Promise.all([
-        getSiteSettingsAction(),
-        getFacilitiesAction(),
-        getUsersAction(),
-        getAllBookingsAction(),
-      ]);
-
-      setCurrency(currentSettings.defaultCurrency);
-      
-      setTotalFacilities(facilities.length);
-      setActiveUsers(users.filter(u => u.status === 'Active').length);
-
-      const now = new Date();
-      const currentMonth = getMonth(now);
-      const currentYr = getYear(now);
-
-      const bookingsThisMonth = bookings.filter(b => {
-        const bookingDate = parseISO(b.bookedAt);
-        return getMonth(bookingDate) === currentMonth && getYear(bookingDate) === currentYr && b.status === 'Confirmed';
-      });
-      setTotalBookingsThisMonth(bookingsThisMonth.length);
-      setTotalRevenueThisMonth(bookingsThisMonth.reduce((sum, b) => sum + b.totalPrice, 0));
-
-      const last6Months: { month: string; year: number; monthKey: string }[] = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = subMonths(now, i);
-        last6Months.push({ month: format(d, 'MMM'), year: getYear(d), monthKey: format(d, 'yyyy-MM') });
-      }
-
-      const aggregatedBookings: Record<string, number> = {};
-      const aggregatedRevenue: Record<string, number> = {};
-
-      bookings.forEach(booking => {
-        if (booking.status === 'Confirmed') {
-          const bookingDate = parseISO(booking.bookedAt);
-          const monthKey = format(bookingDate, 'yyyy-MM');
-          if (last6Months.some(m => m.monthKey === monthKey)) {
-            aggregatedBookings[monthKey] = (aggregatedBookings[monthKey] || 0) + 1;
-            aggregatedRevenue[monthKey] = (aggregatedRevenue[monthKey] || 0) + booking.totalPrice;
-          }
-        }
-      });
-
-      setMonthlyBookingsData(last6Months.map(m => ({
-        month: m.month,
-        bookings: aggregatedBookings[m.monthKey] || 0,
-      })));
-      setMonthlyRevenueData(last6Months.map(m => ({
-        month: m.month,
-        revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
-      })));
-
-      const facilityUsageMap = new Map<string, number>();
-      bookings.forEach(booking => {
-        if (booking.status === 'Confirmed') {
-            const facilityName = booking.facilityName || getFacilityById(booking.facilityId)?.name || 'Unknown';
-            facilityUsageMap.set(facilityName, (facilityUsageMap.get(facilityName) || 0) + 1);
-        }
-      });
-      const calculatedFacilityUsageData = Array.from(facilityUsageMap.entries()).map(([name, count]) => ({
-          facilityName: name,
-          bookings: count,
-      }));
-      setFacilityUsageData(calculatedFacilityUsageData);
-      
-      const bookingActivities: ActivityFeedItemType[] = bookings.map(b => ({
-        type: 'booking',
-        timestamp: b.bookedAt,
-        user: getUserById(b.userId),
-        facility: getFacilityById(b.facilityId),
-        bookingData: b,
-      }));
-
-      const newUserActivities: ActivityFeedItemType[] = users.map(u => ({
-        type: 'newUser',
-        timestamp: u.joinedAt,
-        user: u,
-      }));
-
-      const combinedFeed = [...bookingActivities, ...newUserActivities];
-      combinedFeed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setActivityFeed(combinedFeed.slice(0, 7)); // Show latest 7 activities
-    };
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
     
-    fetchAndSetData();
-    const intervalId = setInterval(fetchAndSetData, 3000);
-    return () => clearInterval(intervalId);
+    const unsubs: (()=>void)[] = [];
+    
+    unsubs.push(listenToFacilities(setFacilities, (err) => console.error(err)));
+    unsubs.push(listenToAllUsers(setUsers, (err) => console.error(err)));
+    unsubs.push(listenToAllBookings(setBookings, (err) => console.error(err)));
+
+    if(facilities.length > 0 || users.length > 0 || bookings.length > 0) {
+      setIsLoading(false);
+    }
+    
+    return () => unsubs.forEach(unsub => unsub());
   }, []);
+
+  const { totalFacilities, activeUsers, totalBookingsThisMonth, totalRevenueThisMonth, monthlyBookingsData, monthlyRevenueData, facilityUsageData, activityFeed } =
+    (() => {
+        const now = new Date();
+        const currentMonth = getMonth(now);
+        const currentYr = getYear(now);
+
+        const totalFacilities = facilities.length;
+        const activeUsers = users.filter(u => u.status === 'Active').length;
+
+        const bookingsThisMonth = bookings.filter(b => {
+            const bookingDate = parseISO(b.bookedAt);
+            return getMonth(bookingDate) === currentMonth && getYear(bookingDate) === currentYr && b.status === 'Confirmed';
+        });
+
+        const totalBookingsThisMonth = bookingsThisMonth.length;
+        const totalRevenueThisMonth = bookingsThisMonth.reduce((sum, b) => sum + b.totalPrice, 0);
+
+        const last6Months: { month: string; year: number; monthKey: string }[] = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = subMonths(now, i);
+            last6Months.push({ month: format(d, 'MMM'), year: getYear(d), monthKey: format(d, 'yyyy-MM') });
+        }
+
+        const aggregatedBookings: Record<string, number> = {};
+        const aggregatedRevenue: Record<string, number> = {};
+
+        bookings.forEach(booking => {
+            if (booking.status === 'Confirmed') {
+                const bookingDate = parseISO(booking.bookedAt);
+                const monthKey = format(bookingDate, 'yyyy-MM');
+                if (last6Months.some(m => m.monthKey === monthKey)) {
+                    aggregatedBookings[monthKey] = (aggregatedBookings[monthKey] || 0) + 1;
+                    aggregatedRevenue[monthKey] = (aggregatedRevenue[monthKey] || 0) + booking.totalPrice;
+                }
+            }
+        });
+
+        const monthlyBookingsData = last6Months.map(m => ({
+            month: m.month,
+            bookings: aggregatedBookings[m.monthKey] || 0,
+        }));
+        const monthlyRevenueData = last6Months.map(m => ({
+            month: m.month,
+            revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
+        }));
+
+        const facilityUsageMap = new Map<string, number>();
+        bookings.forEach(booking => {
+            if (booking.status === 'Confirmed') {
+                const facilityName = booking.facilityName || facilities.find(f => f.id === booking.facilityId)?.name || 'Unknown';
+                facilityUsageMap.set(facilityName, (facilityUsageMap.get(facilityName) || 0) + 1);
+            }
+        });
+        const facilityUsageData = Array.from(facilityUsageMap.entries()).map(([name, count]) => ({
+            facilityName: name,
+            bookings: count,
+        }));
+
+        const bookingActivities: ActivityFeedItemType[] = bookings.map(b => ({
+            type: 'booking',
+            timestamp: b.bookedAt,
+            user: users.find(u => u.id === b.userId),
+            facility: facilities.find(f => f.id === b.facilityId),
+            bookingData: b,
+        }));
+
+        const newUserActivities: ActivityFeedItemType[] = users.map(u => ({
+            type: 'newUser',
+            timestamp: u.joinedAt,
+            user: u,
+        }));
+
+        const combinedFeed = [...bookingActivities, ...newUserActivities]
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .slice(0, 7);
+
+        return { totalFacilities, activeUsers, totalBookingsThisMonth, totalRevenueThisMonth, monthlyBookingsData, monthlyRevenueData, facilityUsageData, activityFeed };
+    })();
+
+  if (isLoading && facilities.length === 0 && users.length === 0 && bookings.length === 0) {
+    return (
+        <div className="space-y-8">
+            <PageTitle title="Admin Dashboard" description="Overview of Sports Arena activities and performance." />
+             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Revenue (This Month)</CardTitle><DollarSign className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-28" /><Skeleton className="h-4 w-24 mt-1" /></CardContent></Card>
+                <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Bookings (This Month)</CardTitle><Ticket className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /><Skeleton className="h-4 w-20 mt-1" /></CardContent></Card>
+                <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Active Users</CardTitle><Users className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /><Skeleton className="h-4 w-16 mt-1" /></CardContent></Card>
+                <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Listed Facilities</CardTitle><Building2 className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /><Skeleton className="h-4 w-20 mt-1" /></CardContent></Card>
+             </div>
+             <Skeleton className="h-[400px] w-full" />
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -221,7 +242,7 @@ export default function AdminDashboardPage() {
             <Ticket className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalBookingsThisMonth ? totalBookingsThisMonth.toLocaleString() : <Skeleton className="h-8 w-16" />}</div>
+            <div className="text-2xl font-bold">{totalBookingsThisMonth.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">+8.1% from last month (mock)</p>
           </CardContent>
         </Card>
@@ -231,7 +252,7 @@ export default function AdminDashboardPage() {
             <Users className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeUsers ? activeUsers : <Skeleton className="h-8 w-16" />}</div>
+            <div className="text-2xl font-bold">{activeUsers}</div>
             <p className="text-xs text-muted-foreground">Platform-wide</p>
           </CardContent>
         </Card>
@@ -241,7 +262,7 @@ export default function AdminDashboardPage() {
             <Building2 className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalFacilities ? totalFacilities : <Skeleton className="h-8 w-16" />}</div>
+            <div className="text-2xl font-bold">{totalFacilities}</div>
             <p className="text-xs text-muted-foreground">Managed & active</p>
           </CardContent>
         </Card>

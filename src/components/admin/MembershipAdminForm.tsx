@@ -43,9 +43,6 @@ export function MembershipAdminForm({ initialData, onSubmitSuccess }: Membership
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     };
     fetchSettings();
-    const settingsInterval = setInterval(fetchSettings, 5000);
-
-    return () => clearInterval(settingsInterval);
   }, []);
 
   const form = useForm<MembershipPlanFormValues>({
@@ -63,12 +60,11 @@ export function MembershipAdminForm({ initialData, onSubmitSuccess }: Membership
 
   const onSubmit = async (data: MembershipPlanFormValues) => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
 
     const benefitsArray = data.benefitsString.split('\n').map(b => b.trim()).filter(b => b.length > 0);
 
     const planPayload = {
-      id: initialData?.id || `mem-${Date.now()}`, // Keep ID if editing, generate if new
+      id: initialData?.id, // ID is handled by add/update functions
       name: data.name,
       pricePerMonth: data.pricePerMonth,
       benefits: benefitsArray,
@@ -76,9 +72,9 @@ export function MembershipAdminForm({ initialData, onSubmitSuccess }: Membership
 
     try {
       if (initialData) {
-        updateMembershipPlan(planPayload as MembershipPlan);
+        await updateMembershipPlan({ ...planPayload, id: initialData.id });
       } else {
-        addMembershipPlan(planPayload as Omit<MembershipPlan, 'id'>);
+        await addMembershipPlan(planPayload);
       }
 
       toast({
@@ -90,7 +86,6 @@ export function MembershipAdminForm({ initialData, onSubmitSuccess }: Membership
         onSubmitSuccess();
       } else {
         router.push('/admin/memberships');
-        router.refresh();
       }
     } catch (error) {
       console.error("Error saving membership plan:", error);
