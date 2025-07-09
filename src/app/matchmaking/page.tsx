@@ -234,7 +234,7 @@ export default function MatchmakingPage() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Players Needed</FormLabel>
-                                        <FormControl><Input type="number" min="1" placeholder="e.g., 3" {...field} /></FormControl>
+                                        <FormControl><Input type="number" min="1" placeholder="e.g., 3" {...field} value={field.value ?? ''} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
