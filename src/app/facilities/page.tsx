@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -158,7 +159,13 @@ export default function FacilitiesPage() {
       />
 
       <div className="mb-8">
-        <FacilitySearchForm onSearch={handleSearch} currency={currency} cities={cities} locations={locations} />
+        <FacilitySearchForm 
+          onSearch={handleSearch} 
+          currency={currency} 
+          facilities={allFacilities}
+          cities={cities} 
+          locations={locations} 
+        />
       </div>
 
       <div className="flex justify-end items-center mb-6 gap-4">

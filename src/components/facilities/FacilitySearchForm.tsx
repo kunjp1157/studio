@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import type { SearchFilters, Amenity as AmenityType, SiteSettings } from '@/lib/types';
+import type { SearchFilters, Amenity as AmenityType, SiteSettings, Facility } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,7 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks, Clock, Building } from 'lucide-react';
-import { mockSports, mockAmenities, mockFacilities } from '@/lib/data'; 
+import { mockSports, mockAmenities } from '@/lib/data'; 
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { formatCurrency } from '@/lib/utils';
@@ -22,13 +22,14 @@ import { getIconComponent } from '@/components/shared/Icon';
 interface FacilitySearchFormProps {
   onSearch: (filters: SearchFilters) => void;
   currency: SiteSettings['defaultCurrency'] | null;
+  facilities: Facility[];
   cities: string[];
   locations: string[];
 }
 
 const ANY_SPORT_VALUE = "all-sports-filter-value";
 
-export function FacilitySearchForm({ onSearch, currency, cities = [], locations = [] }: FacilitySearchFormProps) {
+export function FacilitySearchForm({ onSearch, currency, facilities, cities = [], locations = [] }: FacilitySearchFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSport, setSelectedSport] = useState(ANY_SPORT_VALUE);
   const [selectedCity, setSelectedCity] = useState('all');
@@ -37,11 +38,11 @@ export function FacilitySearchForm({ onSearch, currency, cities = [], locations 
   const [time, setTime] = useState('');
   
   const [minPrice, maxPrice] = useMemo(() => {
-    if (mockFacilities.length === 0) return [0, 100];
-    const prices = mockFacilities.flatMap(f => f.sportPrices.map(p => p.pricePerHour));
+    if (facilities.length === 0) return [0, 100];
+    const prices = facilities.flatMap(f => f.sportPrices.map(p => p.pricePerHour));
     if (prices.length === 0) return [0, 100];
     return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
-  }, []);
+  }, [facilities]);
 
   const [priceRange, setPriceRange] = useState<[number, number]>([minPrice, maxPrice]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
