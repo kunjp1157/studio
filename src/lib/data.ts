@@ -403,7 +403,7 @@ export const getAllBookings = async (): Promise<Booking[]> => {
 
 // --- MOCK GETTERS (for other data types) ---
 export const getSportById = (id: string): Sport | undefined => mockSports.find(s => s.id === id);
-export const getAmenityById = (id: string): Amenity | undefined => mockAmenities.find(a => a.id === a.id);
+export const getAmenityById = (id: string): Amenity | undefined => mockAmenities.find(a => a.id === id);
 export const getAllSports = (): Sport[] => mockSports;
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {

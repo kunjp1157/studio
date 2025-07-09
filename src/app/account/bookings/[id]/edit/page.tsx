@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Booking, Facility, TimeSlot, SiteSettings } from '@/lib/types';
-import { getBookingById, getFacilityById, calculateDynamicPrice, updateBooking, addNotification, mockUser } from '@/lib/data';
+import type { Booking, Facility, TimeSlot, SiteSettings, BlockedSlot } from '@/lib/types';
+import { getBookingById, getFacilityById, calculateDynamicPrice, updateBooking, addNotification, mockUser, getBookingsForFacilityOnDate } from '@/lib/data';
 import { getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -16,42 +16,38 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, ArrowLeft, CalendarDays, Clock, DollarSign, Edit3, ArrowRight, Save } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { format, parseISO, differenceInHours, parse } from 'date-fns';
+import { format, parseISO, differenceInHours, parse, startOfDay } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const getMockTimeSlots = (
-  date: Date,
-  temporarilyBooked: Array<{ date: string; startTime: string }>
+const generateTimeSlots = (
+  bookedSlots: string[],
+  blockedSlots: BlockedSlot[]
 ): TimeSlot[] => {
   const slots: TimeSlot[] = [];
   const startHour = 8;
   const endHour = 22;
-  const dayOfWeek = date.getDay(); 
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-  const formattedDate = format(date, 'yyyy-MM-dd');
 
   for (let i = startHour; i < endHour; i++) {
     const startTime = `${String(i).padStart(2, '0')}:00`;
     const endTime = `${String(i + 1).padStart(2, '0')}:00`;
-    const isPeakHour = i >= 18 && i <= 20;
-
-    const isTemporarilyBooked = temporarilyBooked.some(
-      (bookedSlot) => bookedSlot.date === formattedDate && bookedSlot.startTime === startTime
-    );
-
-    let availabilityScore = 1.0; 
-    if (isWeekend) availabilityScore -= 0.25;
-    if (isPeakHour) availabilityScore -= 0.35;
-    if (isWeekend && isPeakHour) availabilityScore -= 0.15;
     
-    const randomThreshold = Math.max(0.1, Math.min(0.9, availabilityScore));
-    const isAvailable = !isTemporarilyBooked && Math.random() < randomThreshold;
+    let isAvailable = !bookedSlots.includes(startTime);
+
+    if(isAvailable) {
+        for (const blocked of blockedSlots) {
+            if (startTime < blocked.endTime && endTime > blocked.startTime) {
+                isAvailable = false;
+                break; 
+            }
+        }
+    }
 
     slots.push({ startTime, endTime, isAvailable });
   }
   return slots;
 };
+
 
 export default function EditBookingPage() {
   const params = useParams();
@@ -65,6 +61,7 @@ export default function EditBookingPage() {
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [isSlotsLoading, setIsSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | undefined>(undefined);
   
   const [newTotalPrice, setNewTotalPrice] = useState<number | null>(null);
@@ -75,6 +72,7 @@ export default function EditBookingPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       if (bookingId) {
+        setIsLoading(true);
         const settings = await getSiteSettingsAction();
         const foundBooking = await getBookingById(bookingId);
         
@@ -94,14 +92,34 @@ export default function EditBookingPage() {
     fetchInitialData();
   }, [bookingId]);
 
+  const fetchAndUpdateSlots = useCallback(async (date: Date) => {
+    if (!facility) return;
+    setIsSlotsLoading(true);
+    try {
+        const formattedDate = format(date, 'yyyy-MM-dd');
+        const bookingsOnDate = await getBookingsForFacilityOnDate(facility.id, formattedDate);
+        const bookedStartTimes = bookingsOnDate
+          .filter(b => b.id !== bookingId) // Exclude the current booking from being "booked"
+          .map(b => b.startTime);
+        
+        const dateSpecificBlockedSlots = facility.blockedSlots?.filter(s => s.date === formattedDate) || [];
+        const slots = generateTimeSlots(bookedStartTimes, dateSpecificBlockedSlots);
+        setTimeSlots(slots);
+    } catch (error) {
+        console.error("Error fetching bookings for slots:", error);
+        toast({ title: "Error", description: "Could not fetch available slots.", variant: "destructive" });
+        setTimeSlots(generateTimeSlots([], []));
+    } finally {
+        setIsSlotsLoading(false);
+        setSelectedSlot(undefined);
+    }
+  }, [facility, bookingId, toast]);
+
   useEffect(() => {
     if (selectedDate && facility) {
-      // In a real implementation, you'd fetch real bookings for this date
-      const temporarilyBooked: {date: string, startTime: string}[] = [];
-      setTimeSlots(getMockTimeSlots(selectedDate, temporarilyBooked));
-      setSelectedSlot(undefined);
+      fetchAndUpdateSlots(selectedDate);
     }
-  }, [selectedDate, facility]);
+  }, [selectedDate, facility, fetchAndUpdateSlots]);
   
   const bookingDurationHours = useMemo(() => {
     if (selectedSlot && selectedDate) {
@@ -217,23 +235,27 @@ export default function EditBookingPage() {
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   className="rounded-md border mt-1"
-                  disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} 
+                  disabled={(date) => date < startOfDay(new Date())} 
                 />
               </div>
               <div className="space-y-4">
                 <Label>Time Slot</Label>
-                <Select onValueChange={(value) => setSelectedSlot(timeSlots.find(s => s.startTime === value))} value={selectedSlot?.startTime}>
-                  <SelectTrigger><SelectValue placeholder="Select a new time" /></SelectTrigger>
-                  <SelectContent>
-                    {timeSlots.map(slot => (
-                      <SelectItem key={slot.startTime} value={slot.startTime} disabled={!slot.isAvailable || (selectedDate && format(selectedDate, 'yyyy-MM-dd') === booking.date && slot.startTime === booking.startTime)}>
-                        {slot.startTime} - {slot.endTime}
-                        {!slot.isAvailable && " (Booked)"}
-                        {(selectedDate && format(selectedDate, 'yyyy-MM-dd') === booking.date && slot.startTime === booking.startTime) && " (Current)"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                 {isSlotsLoading ? (
+                    <div className="flex items-center justify-center h-10 border rounded-md"><LoadingSpinner size={20}/></div>
+                 ) : (
+                    <Select onValueChange={(value) => setSelectedSlot(timeSlots.find(s => s.startTime === value))} value={selectedSlot?.startTime}>
+                    <SelectTrigger><SelectValue placeholder="Select a new time" /></SelectTrigger>
+                    <SelectContent>
+                        {timeSlots.map(slot => (
+                        <SelectItem key={slot.startTime} value={slot.startTime} disabled={!slot.isAvailable || (selectedDate && format(selectedDate, 'yyyy-MM-dd') === booking.date && slot.startTime === booking.startTime)}>
+                            {slot.startTime} - {slot.endTime}
+                            {!slot.isAvailable && " (Booked)"}
+                            {(selectedDate && format(selectedDate, 'yyyy-MM-dd') === booking.date && slot.startTime === booking.startTime) && " (Current)"}
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                 )}
                 { !selectedSlot && <p className="text-muted-foreground text-sm">Please select a new date and time to see the price difference.</p> }
               </div>
             </CardContent>

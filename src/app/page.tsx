@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { PageTitle } from '@/components/shared/PageTitle';
-import type { Facility } from '@/lib/types';
-import { getFacilitiesAction } from '@/app/actions';
+import type { Facility, SiteSettings } from '@/lib/types';
+import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
@@ -22,16 +23,22 @@ const CardSkeleton = () => (
 export default function HomePage() {
   const [popularFacilities, setPopularFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
     const fetchInitialData = async () => {
       setIsLoading(true);
-      const allFacilities = await getFacilitiesAction();
-      // Filter for popular facilities and sort them
+      const [allFacilities, settings] = await Promise.all([
+        getFacilitiesAction(),
+        getSiteSettingsAction()
+      ]);
+      
+      setCurrency(settings.defaultCurrency);
+      
       const popular = allFacilities
         .filter(f => f.isPopular)
         .sort((a, b) => b.rating - a.rating)
-        .slice(0, 4); // Show top 4 popular facilities
+        .slice(0, 4); 
       setPopularFacilities(popular);
       setIsLoading(false);
     };
@@ -68,7 +75,7 @@ export default function HomePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {popularFacilities.map((facility) => (
-                <FacilityCard key={facility.id} facility={facility} />
+                <FacilityCard key={facility.id} facility={facility} currency={currency} />
               ))}
             </div>
           )}

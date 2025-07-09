@@ -12,31 +12,17 @@ import { Star, MapPin, DollarSign, Zap, Heart, MessageSquare, CalendarCheck2 } f
 import { useToast } from '@/hooks/use-toast';
 import { StarDisplay } from '@/components/shared/StarDisplay';
 import { cn } from '@/lib/utils';
-import { getSiteSettingsAction } from '@/app/actions';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getIconComponent } from '@/components/shared/Icon';
 
 interface FacilityCardProps {
   facility: Facility;
+  currency: SiteSettings['defaultCurrency'] | null;
 }
 
-export function FacilityCard({ facility }: FacilityCardProps) {
+export function FacilityCard({ facility, currency }: FacilityCardProps) {
   const { toast } = useToast();
-  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-        const currentSettings = await getSiteSettingsAction();
-        setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
-    };
-
-    fetchSettings();
-    const settingsInterval = setInterval(fetchSettings, 5000);
-
-
-    return () => clearInterval(settingsInterval);
-  }, []);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation if the button is inside a Link

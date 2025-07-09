@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
-import type { Facility } from '@/lib/types';
-import { mockUser, getFacilitiesByIds } from '@/lib/data';
+import type { Facility, SiteSettings } from '@/lib/types';
+import { mockUser, getFacilitiesByIds, getSiteSettings } from '@/lib/data';
 import { Heart } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
@@ -14,20 +14,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const CardSkeleton = () => (
   <div className="bg-card p-4 rounded-lg shadow-md">
-    <div className="h-48 bg-muted rounded mb-4"></div>
-    <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
-    <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
-    <div className="h-4 bg-muted rounded w-1/3"></div>
+    <Skeleton className="h-48 w-full rounded mb-4" />
+    <Skeleton className="h-6 w-3/4 mb-2" />
+    <Skeleton className="h-4 w-1/2 mb-2" />
+    <Skeleton className="h-4 w-1/3" />
   </div>
 );
 
 export default function FavoritesPage() {
   const [favoriteFacilities, setFavoriteFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
     const fetchFavorites = async () => {
       setIsLoading(true);
+      const settings = getSiteSettings();
+      setCurrency(settings.defaultCurrency);
+
       try {
         if (mockUser.favoriteFacilities && mockUser.favoriteFacilities.length > 0) {
           const favs = await getFacilitiesByIds(mockUser.favoriteFacilities);
@@ -77,7 +81,7 @@ export default function FavoritesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
           {favoriteFacilities.map((facility) => (
-            <FacilityCard key={facility.id} facility={facility} />
+            <FacilityCard key={facility.id} facility={facility} currency={currency}/>
           ))}
         </div>
       )}

@@ -9,7 +9,7 @@ import { getSiteSettings, listenToOwnerBookings, mockUser, getFacilitiesByOwnerI
 import { formatCurrency } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getMonth, getYear, parseISO } from 'date-fns';
+import { getMonth, getYear, parseISO, isAfter } from 'date-fns';
 
 export default function OwnerDashboardPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
