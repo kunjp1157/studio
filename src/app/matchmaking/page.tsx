@@ -142,14 +142,10 @@ export default function MatchmakingPage() {
     defaultValues: { sportId: '', skillLevel: 'Any', playersNeeded: undefined, preferredTime: '', notes: '' },
   });
 
-  const fetchRequests = () => {
-    setRequests(getOpenLfgRequests());
-  };
-
   useEffect(() => {
     setIsLoading(true);
     setTimeout(() => {
-      fetchRequests();
+      setRequests(getOpenLfgRequests());
       setIsLoading(false);
     }, 300);
   }, []);
@@ -157,23 +153,23 @@ export default function MatchmakingPage() {
   const onSubmit = async (data: LfgFormValues) => {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 700));
-    createLfgRequest({ ...data, userId: mockUser.id });
+    const updatedRequests = createLfgRequest({ ...data, userId: mockUser.id });
+    setRequests(updatedRequests);
     toast({
         title: "Post Created!",
         description: "Your 'Looking for Game' post is now live.",
     });
-    fetchRequests();
     form.reset();
     setIsSubmitting(false);
   };
 
-  const handleInterest = async (lfgId: string) => {
-    expressInterestInLfg(lfgId, mockUser.id);
+  const handleInterest = (lfgId: string) => {
+    const updatedRequests = expressInterestInLfg(lfgId, mockUser.id);
+    setRequests(updatedRequests);
     toast({
         title: "Interest Expressed!",
         description: "The post creator has been notified.",
     });
-    fetchRequests();
   };
 
   const filteredRequests = useMemo(() => {

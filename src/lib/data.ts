@@ -532,5 +532,17 @@ export const updatePromotionRule = (rule: PromotionRule): void => { const index 
 export const deletePromotionRule = (id: string): void => { mockPromotionRules = mockPromotionRules.filter(r => r.id !== id); };
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
-export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds'>): LfgRequest => { const newRequest: LfgRequest = { ...requestData, id: `lfg-${Date.now()}`, createdAt: new Date().toISOString(), status: 'open', interestedUserIds: [] }; mockLfgRequests.push(newRequest); return newRequest; };
-export const expressInterestInLfg = (lfgId: string, userId: string): void => { const request = mockLfgRequests.find(r => r.id === lfgId); if (request && !request.interestedUserIds.includes(userId)) request.interestedUserIds.push(userId); };
+
+export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds'>): LfgRequest[] => {
+    const newRequest: LfgRequest = { ...requestData, id: `lfg-${Date.now()}`, createdAt: new Date().toISOString(), status: 'open', interestedUserIds: [] };
+    mockLfgRequests.unshift(newRequest);
+    return getOpenLfgRequests();
+};
+
+export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[] => {
+    const request = mockLfgRequests.find(r => r.id === lfgId);
+    if (request && !request.interestedUserIds.includes(userId)) {
+        request.interestedUserIds.push(userId);
+    }
+    return getOpenLfgRequests();
+};
