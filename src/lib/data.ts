@@ -430,7 +430,12 @@ export const calculateAverageRating = (reviews: Review[] | undefined): number =>
   return parseFloat((totalRating / reviews.length).toFixed(1));
 };
 
-export const getUserById = (userId: string): UserProfile | undefined => mockUsers.find(user => user.id === userId);
+export const getUserById = (userId: string): UserProfile | undefined => {
+    if (userId === mockUser.id) {
+        return mockUser;
+    }
+    return mockUsers.find(user => user.id === userId);
+};
 export const getReviewsByFacilityId = (facilityId: string): Review[] => mockReviews.filter(review => review.facilityId === facilityId);
 export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === teamId);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
@@ -646,3 +651,5 @@ export const updatePromotionRule = (rule: PromotionRule): void => { const index 
 export const deletePromotionRule = (id: string): void => { mockPromotionRules = mockPromotionRules.filter(r => r.id !== id); };
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
+
+    
