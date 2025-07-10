@@ -35,26 +35,36 @@ export default function LoginPage() {
     setIsLoading(false);
 
     // In a real app, this would be a proper authentication call
-    const allUsers = [...getAllUsers(), mockUser]; // Combine regular users and the primary admin user
+    const allUsers = getAllUsers();
     const foundUser = allUsers.find(user => user.email === email);
 
-    // For this mock app, we'll just check if the user exists and assume the password is 'password'
+    // Hardcoded password check for specific admin users
+    if (foundUser?.role === 'Admin') {
+        if (
+            (email === 'kunjp1157@gmail.com' && password === 'Kunj@2810') ||
+            (email === 'jinesh2806@gmail.com' && password === 'jinesh2806')
+        ) {
+            toast({ title: 'Login Successful', description: `Welcome back, ${foundUser.name}!` });
+            router.push('/admin');
+            router.refresh();
+            return;
+        }
+    }
+
+    // Standard user login check (mock)
     if (foundUser && password === 'password') {
       toast({
         title: 'Login Successful',
         description: `Welcome back, ${foundUser.name}!`,
       });
       
-      // Role-based redirection
-      if (foundUser.role === 'Admin') {
-        router.push('/admin');
-      } else if (foundUser.role === 'FacilityOwner') {
+      if (foundUser.role === 'FacilityOwner') {
         router.push('/owner');
       } else {
         router.push('/');
       }
       
-      router.refresh(); // Force a refresh to update UserNav state if needed
+      router.refresh();
     } else {
       toast({
         title: 'Login Failed',
