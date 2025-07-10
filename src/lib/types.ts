@@ -244,7 +244,7 @@ export interface SearchFilters {
   searchTerm: string;
   sport: string;
   city?: string;
-  location: string;
+  location?: string;
   date?: Date;
   time?: string;
   priceRange?: [number, number];
