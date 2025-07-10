@@ -61,7 +61,7 @@ export default function LoginPage() {
       if (foundUser.role === 'FacilityOwner') {
         router.push('/owner');
       } else {
-        router.push('/');
+        router.push('/facilities');
       }
       
       router.refresh();
