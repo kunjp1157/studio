@@ -1,5 +1,6 @@
 
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -689,4 +690,128 @@ export const deletePromotionRule = (id: string): void => { mockPromotionRules = 
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
 
+// --- DATA SEEDING ---
+async function seedFacilities() {
+  const facilitiesCollection = collection(db, 'facilities');
+  const snapshot = await getDocs(facilitiesCollection);
+  if (snapshot.empty) {
+    console.log("No facilities found, seeding database...");
+    const facilitiesToSeed: Omit<Facility, 'id'>[] = [
+      {
+        name: 'Grand City Arena',
+        type: 'Complex',
+        address: '100 Central Plaza, Metropolis',
+        city: 'Metropolis',
+        location: 'Downtown',
+        description: 'A state-of-the-art sports complex in the heart of the city, offering a wide range of facilities for all sports enthusiasts.',
+        images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x300.png', 'https://placehold.co/400x300.png'],
+        sports: [getSportById('sport-1')!, getSportById('sport-2')!],
+        sportPrices: [
+          { sportId: 'sport-1', pricePerHour: 1200 },
+          { sportId: 'sport-2', pricePerHour: 1000 },
+        ],
+        amenities: [getAmenityById('amenity-1')!, getAmenityById('amenity-2')!, getAmenityById('amenity-3')!, getAmenityById('amenity-4')!],
+        operatingHours: [ { day: 'Mon', open: '06:00', close: '23:00' }, { day: 'Tue', open: '06:00', close: '23:00' }, { day: 'Wed', open: '06:00', close: '23:00' }, { day: 'Thu', open: '06:00', close: '23:00' }, { day: 'Fri', open: '06:00', close: '23:00' }, { day: 'Sat', open: '07:00', close: '22:00' }, { day: 'Sun', open: '07:00', close: '21:00' } ],
+        rating: 4.8,
+        capacity: 200,
+        isPopular: true,
+        isIndoor: true,
+        dataAiHint: 'sports arena soccer',
+        ownerId: 'user-owner'
+      },
+      {
+        name: 'Riverside Tennis Club',
+        type: 'Court',
+        address: '25 River Road, Metropolis',
+        city: 'Metropolis',
+        location: 'Riverside',
+        description: 'Picturesque tennis courts with a serene view of the river. Perfect for a friendly match or competitive play.',
+        images: ['https://placehold.co/800x450.png', 'https://placehold.co/400x300.png'],
+        sports: [getSportById('sport-3')!],
+        sportPrices: [{ sportId: 'sport-3', pricePerHour: 800 }],
+        amenities: [getAmenityById('amenity-1')!, getAmenityById('amenity-3')!],
+        operatingHours: [ { day: 'Mon', open: '07:00', close: '21:00' }, { day: 'Tue', open: '07:00', close: '21:00' }, { day: 'Wed', open: '07:00', close: '21:00' }, { day: 'Thu', open: '07:00', close: '21:00' }, { day: 'Fri', open: '07:00', close: '22:00' }, { day: 'Sat', open: '08:00', close: '22:00' }, { day: 'Sun', open: '08:00', close: '20:00' } ],
+        rating: 4.5,
+        isPopular: true,
+        isIndoor: false,
+        dataAiHint: 'tennis court',
+        ownerId: 'user-owner'
+      },
+      {
+        name: 'Uptown Box Cricket',
+        type: 'Box Cricket',
+        address: '50 Uptown Ave, Metropolis',
+        city: 'Metropolis',
+        location: 'Uptown',
+        description: 'A dedicated box cricket arena perfect for fast-paced, high-energy matches with friends and colleagues.',
+        images: ['https://placehold.co/800x450.png'],
+        sports: [getSportById('sport-13')!],
+        sportPrices: [{ sportId: 'sport-13', pricePerHour: 1500 }],
+        amenities: [getAmenityById('amenity-1')!, getAmenityById('amenity-5')!],
+        operatingHours: [ { day: 'Mon', open: '10:00', close: '23:59' }, { day: 'Tue', open: '10:00', close: '23:59' }, { day: 'Wed', open: '10:00', close: '23:59' }, { day: 'Thu', open: '10:00', close: '23:59' }, { day: 'Fri', open: '10:00', close: '23:59' }, { day: 'Sat', open: '09:00', close: '23:59' }, { day: 'Sun', open: '09:00', close: '23:59' } ],
+        rating: 4.7,
+        capacity: 16,
+        isIndoor: true,
+        dataAiHint: 'box cricket',
+      },
+      {
+        name: 'The Swim Center',
+        type: 'Pool',
+        address: '12 Aqua Lane, Suburbia',
+        city: 'Metropolis',
+        location: 'Suburbia',
+        description: 'Olympic-sized swimming pool for both professional training and recreational swimming. Clean, well-maintained, and family-friendly.',
+        images: ['https://placehold.co/800x450.png'],
+        sports: [getSportById('sport-5')!],
+        sportPrices: [{ sportId: 'sport-5', pricePerHour: 500 }],
+        amenities: [getAmenityById('amenity-3')!, getAmenityById('amenity-4')!],
+        operatingHours: [ { day: 'Mon', open: '05:00', close: '21:00' }, { day: 'Tue', open: '05:00', close: '21:00' }, { day: 'Wed', open: '05:00', close: '21:00' }, { day: 'Thu', open: '05:00', close: '21:00' }, { day: 'Fri', open: '05:00', close: '21:00' }, { day: 'Sat', open: '06:00', close: '19:00' }, { day: 'Sun', open: '06:00', close: '19:00' } ],
+        rating: 4.6,
+        isIndoor: true,
+        dataAiHint: 'swimming pool',
+      },
+      {
+        name: 'Southside Badminton Hall',
+        type: 'Court',
+        address: '77 Shuttlecock Dr, Southside',
+        city: 'Metropolis',
+        location: 'Southside',
+        description: 'Multiple well-lit badminton courts with professional-grade flooring. Ideal for players of all skill levels.',
+        images: ['https://placehold.co/800x450.png'],
+        sports: [getSportById('sport-4')!],
+        sportPrices: [{ sportId: 'sport-4', pricePerHour: 600 }],
+        amenities: [getAmenityById('amenity-1')!],
+        operatingHours: [ { day: 'Mon', open: '09:00', close: '22:00' }, { day: 'Tue', open: '09:00', close: '22:00' }, { day: 'Wed', open: '09:00', close: '22:00' }, { day: 'Thu', open: '09:00', close: '22:00' }, { day: 'Fri', open: '09:00', close: '22:00' }, { day: 'Sat', open: '09:00', close: '22:00' }, { day: 'Sun', open: '09:00', close: '22:00' } ],
+        rating: 4.4,
+        isIndoor: true,
+        dataAiHint: 'badminton court',
+      },
+       {
+        name: 'Zen Yoga Studio',
+        type: 'Studio',
+        address: '33 Serenity Way, Downtown',
+        city: 'Metropolis',
+        location: 'Downtown',
+        description: 'A peaceful and modern yoga studio. Escape the city bustle and find your inner peace.',
+        images: ['https://placehold.co/800x450.png'],
+        sports: [getSportById('sport-6')!],
+        sportPrices: [{ sportId: 'sport-6', pricePerHour: 400 }],
+        amenities: [getAmenityById('amenity-2')!, getAmenityById('amenity-3')!, getAmenityById('amenity-4')!],
+        operatingHours: [ { day: 'Mon', open: '06:00', close: '20:00' }, { day: 'Tue', open: '06:00', close: '20:00' }, { day: 'Wed', open: '06:00', close: '20:00' }, { day: 'Thu', open: '06:00', close: '20:00' }, { day: 'Fri', open: '06:00', close: '20:00' }, { day: 'Sat', open: '08:00', close: '18:00' }, { day: 'Sun', open: '08:00', close: '18:00' } ],
+        rating: 4.9,
+        isIndoor: true,
+        dataAiHint: 'yoga studio',
+      },
+    ];
+    for (const facility of facilitiesToSeed) {
+      await addDoc(facilitiesCollection, facility);
+    }
+    console.log("Database seeded successfully.");
+  } else {
+    console.log("Facilities found, skipping seeding.");
+  }
+}
+
+// Call seeding function
+seedFacilities().catch(console.error);
     
