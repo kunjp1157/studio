@@ -37,28 +37,49 @@ export default function LoginPage() {
     // In a real app, this would be a proper authentication call
     const allUsers = getAllUsers();
     const foundUser = allUsers.find(user => user.email === email);
+    
+    // Step 1: Check if user exists
+    if (!foundUser) {
+        toast({
+            title: 'Login Failed',
+            description: 'No account found with this email address.',
+            variant: 'destructive',
+        });
+        return;
+    }
 
-    // Hardcoded password check for specific admin users
-    if (foundUser?.role === 'Admin') {
+    // Step 2: Check password based on role
+    let isPasswordCorrect = false;
+
+    if (foundUser.role === 'Admin') {
         if (
             (email === 'kunjp1157@gmail.com' && password === 'Kunj@2810') ||
             (email === 'jinesh2806@gmail.com' && password === 'jinesh2806')
         ) {
-            toast({ title: 'Login Successful', description: `Welcome back, ${foundUser.name}!` });
-            router.push('/admin');
-            router.refresh();
-            return;
+            isPasswordCorrect = true;
+        }
+    } else if (foundUser.role === 'FacilityOwner') {
+        // Mock password for facility owner
+        if (password === 'password123') {
+            isPasswordCorrect = true;
+        }
+    } else { // Regular 'User'
+        // Mock password for regular user
+        if (password === 'password123') {
+            isPasswordCorrect = true;
         }
     }
-
-    // Standard user login check (mock)
-    if (foundUser && password === 'password') {
-      toast({
+    
+    // Step 3: Handle success or failure
+    if (isPasswordCorrect) {
+       toast({
         title: 'Login Successful',
         description: `Welcome back, ${foundUser.name}!`,
       });
       
-      if (foundUser.role === 'FacilityOwner') {
+      if (foundUser.role === 'Admin') {
+          router.push('/admin');
+      } else if (foundUser.role === 'FacilityOwner') {
         router.push('/owner');
       } else {
         router.push('/facilities');
