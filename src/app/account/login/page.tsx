@@ -12,6 +12,8 @@ import { LogIn, Mail, KeyRound, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { mockUser, getAllUsers } from '@/lib/data';
+import type { UserProfile } from '@/lib/types';
 
 // Placeholder for social icons if not using a library
 const GoogleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.19,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.19,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.19,22C17.6,22 21.5,18.33 21.5,12.33C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"/></svg>;
@@ -32,16 +34,27 @@ export default function LoginPage() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsLoading(false);
 
-    // Mock login logic
-    if (email === 'user@example.com' && password === 'password') {
+    // In a real app, this would be a proper authentication call
+    const allUsers = [...getAllUsers(), mockUser]; // Combine regular users and the primary admin user
+    const foundUser = allUsers.find(user => user.email === email);
+
+    // For this mock app, we'll just check if the user exists and assume the password is 'password'
+    if (foundUser && password === 'password') {
       toast({
         title: 'Login Successful',
-        description: 'Welcome back!',
+        description: `Welcome back, ${foundUser.name}!`,
       });
-      // In a real app, you'd set auth tokens and redirect
-      // For now, redirect to homepage, the UserNav will update based on its internal logic
-      router.push('/'); 
-      router.refresh(); // Force a refresh to update UserNav state
+      
+      // Role-based redirection
+      if (foundUser.role === 'Admin') {
+        router.push('/admin');
+      } else if (foundUser.role === 'FacilityOwner') {
+        router.push('/owner');
+      } else {
+        router.push('/');
+      }
+      
+      router.refresh(); // Force a refresh to update UserNav state if needed
     } else {
       toast({
         title: 'Login Failed',

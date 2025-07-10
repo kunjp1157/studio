@@ -37,11 +37,30 @@ export const mockAmenities: Amenity[] = [
 // Most data is now fetched from Firebase. Mocks for related/unmigrated data are kept for now.
 export let mockReviews: Review[] = [];
 export const mockAchievements: Achievement[] = [];
-export let mockUsers: UserProfile[] = [];
+export let mockUsers: UserProfile[] = [
+    {
+        id: 'user-regular',
+        name: 'Charlie Davis',
+        email: 'user@example.com',
+        role: 'User' as UserRole,
+        status: 'Active' as UserStatus,
+        profilePictureUrl: 'https://placehold.co/100x100.png?text=CD',
+        joinedAt: new Date().toISOString(),
+    },
+    {
+        id: 'user-owner',
+        name: 'Dana White',
+        email: 'owner@example.com',
+        role: 'FacilityOwner' as UserRole,
+        status: 'Active' as UserStatus,
+        profilePictureUrl: 'https://placehold.co/100x100.png?text=DW',
+        joinedAt: new Date().toISOString(),
+    }
+];
 export const mockUser = {
     id: 'user-admin',
     name: 'Alex Johnson',
-    email: 'alex.johnson@example.com',
+    email: 'admin@example.com',
     phone: '555-123-4567',
     profilePictureUrl: 'https://placehold.co/100x100.png?text=AJ',
     dataAiHint: "user avatar",
