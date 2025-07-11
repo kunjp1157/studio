@@ -1,6 +1,6 @@
 
-import { config } from 'dotenv';
-config();
+
+// Note: This file is used for local development of Genkit flows.
 
 import '@/ai/flows/facility-recommendation.ts';
 import '@/ai/flows/weekend-planner.ts';
