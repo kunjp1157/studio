@@ -137,8 +137,9 @@ export default function BookingPage() {
   }, [selectedDate, fetchAndUpdateSlots]);
 
   useEffect(() => {
-    if (selectedSlot && selectedDate && facility) {
-      isUserOnWaitlist(mockUser.id, facility.id, format(selectedDate, 'yyyy-MM-dd'), selectedSlot.startTime).then(setIsOnWaitlist);
+    if (selectedSlot && selectedDate && facility && mockUser) {
+        const onWaitlist = isUserOnWaitlist(mockUser.id, facility.id, format(selectedDate, 'yyyy-MM-dd'), selectedSlot.startTime);
+        setIsOnWaitlist(onWaitlist);
     }
   }, [selectedSlot, selectedDate, facility]);
   
