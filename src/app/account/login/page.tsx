@@ -19,7 +19,7 @@ const InfoPanel = () => (
         <div>
             <div className="flex items-center gap-3">
                 <MountainSnow className="h-10 w-10" />
-                <h1 className="text-3xl font-bold font-headline">City Sports Hub</h1>
+                <h1 className="text-3xl font-bold font-headline">Sports Arena</h1>
             </div>
             <p className="mt-4 text-lg">Your ultimate destination for booking sports facilities.</p>
         </div>
@@ -33,7 +33,7 @@ const InfoPanel = () => (
             </ul>
         </div>
         <div className="text-xs opacity-70">
-            &copy; {new Date().getFullYear()} City Sports Hub. All Rights Reserved.
+            &copy; {new Date().getFullYear()} Sports Arena. All Rights Reserved.
         </div>
     </div>
 );

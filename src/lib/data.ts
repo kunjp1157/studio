@@ -461,7 +461,7 @@ export const getNotificationsForUser = (userId: string): AppNotification[] => mo
 export const getAllBlogPosts = (): BlogPost[] => mockBlogPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 export const getBlogPostBySlug = (slug: string): BlogPost | undefined => mockBlogPosts.find(post => post.slug === slug);
 export const getAllMembershipPlans = (): MembershipPlan[] => [...mockMembershipPlans];
-export const getMembershipPlanById = (id: string): MembershipPlan | undefined => mockMembershipPlans.find(plan => plan.id === id);
+export const getMembershipPlanById = (id: string): MembershipPlan | undefined => mockMembershipPlans.find(plan => plan.id === plan.id);
 export const getAllEvents = (): SportEvent[] => [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
 export const getEventById = (id: string): SportEvent | undefined => {
   const event = mockEvents.find(event => event.id === id);
@@ -474,7 +474,7 @@ export const getEventById = (id: string): SportEvent | undefined => {
 export const getAllPricingRules = (): PricingRule[] => [...mockPricingRules];
 export const getPricingRuleById = (id: string): PricingRule | undefined => mockPricingRules.find(rule => rule.id === id);
 export const getAllPromotionRules = (): PromotionRule[] => [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
-export const getPromotionRuleById = (id: string): PromotionRule | undefined => mockPromotionRules.find(r => r.id === id);
+export const getPromotionRuleById = (id: string): PromotionRule | undefined => mockPromotionRules.find(r => r.id === r.id);
 export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => {
     if(!mockUser) return false;
     return mockWaitlist.some(entry => entry.userId === userId && entry.facilityId === facilityId && entry.date === date && entry.startTime === startTime);
@@ -824,4 +824,3 @@ if (typeof window !== 'undefined') {
     seedData().catch(console.error);
 }
     
-

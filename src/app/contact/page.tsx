@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -98,7 +99,7 @@ export default function ContactPage() {
               <Mail className="h-8 w-8 text-primary mr-4 mt-1 shrink-0" />
               <div>
                 <h4 className="font-semibold">Email</h4>
-                <p className="text-muted-foreground">support@citysportshub.com</p>
+                <p className="text-muted-foreground">support@sportsarena.com</p>
               </div>
             </div>
              <div className="mt-6 pt-6 border-t">

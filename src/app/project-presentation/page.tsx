@@ -47,7 +47,7 @@ export default function ProjectPresentationPage() {
         <div className="container mx-auto py-12 px-4 md:px-6 max-w-4xl">
             <header className="text-center mb-12">
                 <MountainSnow className="mx-auto h-16 w-16 text-primary mb-4" />
-                <h1 className="text-5xl font-bold font-headline">City Sports Hub</h1>
+                <h1 className="text-5xl font-bold font-headline">Sports Arena</h1>
                 <p className="text-xl text-muted-foreground mt-2">A Modern Platform for Booking Sports Facilities</p>
                 <Separator className="my-6" />
                 <p className="text-lg text-muted-foreground">
@@ -66,7 +66,7 @@ export default function ProjectPresentationPage() {
                     <li>Time-consuming phone calls to check for slot availability.</li>
                     <li>Lack of transparent pricing and secure online payment options.</li>
                 </ul>
-                <p><strong>City Sports Hub</strong> aims to solve this by providing a single, reliable, and user-friendly application for discovering, booking, and managing sports facility reservations.</p>
+                <p><strong>Sports Arena</strong> aims to solve this by providing a single, reliable, and user-friendly application for discovering, booking, and managing sports facility reservations.</p>
             </Slide>
 
             <Slide title="Project Objectives" icon={ThumbsUp}>
