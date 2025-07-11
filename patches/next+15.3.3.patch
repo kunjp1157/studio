@@ -1,0 +1,34 @@
+diff --git a/node_modules/next/dist/server/lib/start-server.js b/node_modules/next/dist/server/lib/start-server.js
+index 45290a88703e3a4792a54bda343b67e7c53e8784..4a93c9d7249fd4232759e9a4f61f7ac984d7286a 100644
+--- a/node_modules/next/dist/server/lib/start-server.js
++++ b/node_modules/next/dist/server/lib/start-server.js
+@@ -10,6 +10,12 @@ Object.defineProperty(exports, "__esModule", {
+ });
+ const _log = require("../../build/output/log");
+ const _utils = require("../utils");
++
++// IDX.DIGEST:A214808544B9E3A52A7E64BFF75A4E8159E3D824838F24685A9B484F4957D71C
++require('dotenv').config({
++    path: require('path').resolve(process.cwd(), '.env'),
++});
++
+ async function startServer(options) {
+     const { dev, dir, isTurbopack, hostname, port, allowRetry, keepAliveTimeout, useWorkers, experimental, selfSignedCertificate, } = options;
+     const isSelfSigned = !!selfSignedCertificate;
+diff --git a/node_modules/next/dist/server/next-server.js b/node_modules/next/dist/server/next-server.js
+index 72e81116c141187493fa5c93c45dbd4e0e5ccbb9..5184b2c45ab1a3a69584282729a6e13886574f1b 100644
+--- a/node_modules/next/dist/server/next-server.js
++++ b/node_modules/next/dist/server/next-server.js
+@@ -19,6 +19,12 @@ const _utils = require("./utils");
+ const _routemoduleloader = require("./route-module-loader");
+ const _constants = require("../shared/lib/constants");
+ const _tracer = require("./lib/trace/tracer");
++
++// IDX.DIGEST:A214808544B9E3A52A7E64BFF75A4E8159E3D824838F24685A9B484F4957D71C
++require('dotenv').config({
++    path: require('path').resolve(process.cwd(), '.env'),
++});
++
+ class NextServer {
+     constructor(options){
+         var _this_nextConfig_i18n, _this_nextConfig_i18n1;

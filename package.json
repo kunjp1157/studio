@@ -4,12 +4,13 @@
   "private": true,
   "description": "Sports Arena: Your go-to platform for discovering and booking sports facilities in your city. Find courts, fields, and more with ease.",
   "scripts": {
-    "dev": "next dev",
+    "dev": "patch-package && next dev",
     "dev:genkit": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "next build",
-    "start": "next start",
+    "build": "patch-package && next build",
+    "start": "patch-package && next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
@@ -38,6 +39,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5",
     "firebase": "^11.9.1",
     "genkit": "^1.8.0",
     "lucide-react": "^0.475.0",
