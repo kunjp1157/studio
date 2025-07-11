@@ -1,6 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-// Removed: import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,10 +10,21 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-// Removed: const auth = getAuth(app);
+// Validate that all required Firebase config keys are present
+const missingKeys = Object.entries(firebaseConfig)
+  .filter(([key, value]) => !value)
+  .map(([key]) => key);
 
-// Note: `auth` is no longer exported.
+let app;
+if (missingKeys.length > 0) {
+  console.error(`Firebase initialization failed: Missing environment variables: ${missingKeys.join(', ')}`);
+  // Handle the error appropriately in your app, e.g., show an error message
+  // For now, we'll avoid initializing Firebase to prevent further errors.
+} else {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+}
+
+
+const db = getFirestore(app);
+
 export { db };
