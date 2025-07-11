@@ -33,23 +33,20 @@ export default function LoginPage() {
     setIsLoading(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-
-    // In a real app, this would be a proper authentication call
+    
     const allUsers = getAllUsers();
     const foundUser = allUsers.find(user => user.email === email);
     
-    // Step 1: Check if user exists
     if (!foundUser) {
         toast({
             title: 'Login Failed',
-            description: 'No account found with this email address.',
+            description: 'No account found with this email address. Please sign up.',
             variant: 'destructive',
         });
+        setIsLoading(false);
         return;
     }
 
-    // Step 2: Check password based on role
     let isPasswordCorrect = false;
 
     if (foundUser.role === 'Admin') {
@@ -59,21 +56,15 @@ export default function LoginPage() {
         ) {
             isPasswordCorrect = true;
         }
-    } else if (foundUser.role === 'FacilityOwner') {
-        // Mock password for facility owner
-        if (password === 'password123') {
-            isPasswordCorrect = true;
-        }
-    } else { // Regular 'User'
-        // Mock password for regular user
-        if (password === 'password123') {
+    } else {
+        if (password === 'password123') { // Mock password for all non-admin users
             isPasswordCorrect = true;
         }
     }
     
-    // Step 3: Handle success or failure
+    setIsLoading(false);
     if (isPasswordCorrect) {
-       setLoggedInUser(foundUser); // Update the global mock user
+       setLoggedInUser(foundUser); 
        toast({
         title: 'Login Successful',
         description: `Welcome back, ${foundUser.name}!`,
@@ -87,7 +78,6 @@ export default function LoginPage() {
         router.push('/facilities');
       }
       
-      router.refresh();
     } else {
       toast({
         title: 'Login Failed',

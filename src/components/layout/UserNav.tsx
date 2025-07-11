@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,22 +16,33 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart, Group, HandCoins } from 'lucide-react';
-import { mockUser } from '@/lib/data'; // For mock data
+import { getLoggedInUser, setLoggedInUser } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 
 export function UserNav() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    setIsAuthenticated(true);
-    setCurrentUser(mockUser);
+    const checkUser = async () => {
+        const user = getLoggedInUser();
+        setCurrentUser(user);
+        setIsAuthenticated(!!user);
+    };
+    
+    checkUser();
+    // A simple interval to keep the nav in sync with the mock auth state
+    const intervalId = setInterval(checkUser, 1000);
+    return () => clearInterval(intervalId);
   }, []);
 
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
+    setLoggedInUser(null);
     setCurrentUser(null);
+    setIsAuthenticated(false);
+    router.push('/account/login');
   };
 
   if (!isAuthenticated || !currentUser) {

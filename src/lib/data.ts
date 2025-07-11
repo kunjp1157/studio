@@ -4,6 +4,7 @@
 
 
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -79,30 +80,7 @@ export let mockUsers: UserProfile[] = [
         joinedAt: new Date().toISOString(),
     }
 ];
-export let mockUser: UserProfile = {
-    id: 'user-admin-kunj',
-    name: 'Kunj Patel',
-    email: 'kunjp1157@gmail.com',
-    phone: '555-123-4567',
-    profilePictureUrl: 'https://placehold.co/100x100.png?text=KP',
-    dataAiHint: "user avatar",
-    preferredSports: [mockSports[0], mockSports[2]],
-    favoriteFacilities: ['facility-1', 'facility-2'],
-    membershipLevel: 'Premium' as 'Premium',
-    loyaltyPoints: 1250,
-    achievements: [],
-    bio: 'Passionate about sports and outdoor activities. Always looking for a good game!',
-    preferredPlayingTimes: 'Weekday evenings, Weekend mornings',
-    skillLevels: [
-      { sportId: 'sport-1', sportName: 'Soccer', level: 'Intermediate' as SkillLevel },
-      { sportId: 'sport-3', sportName: 'Tennis', level: 'Beginner' as SkillLevel },
-    ],
-    role: 'Admin' as UserRole,
-    status: 'Active' as UserStatus,
-    joinedAt: subDays(new Date(), 30).toISOString(),
-    teamIds: ['team-1', 'team-2'],
-    isProfilePublic: true,
-  };
+export let mockUser: UserProfile | null = null;
 export let mockTeams: Team[] = [];
 let mockAppNotifications: AppNotification[] = [];
 export const mockBlogPosts: BlogPost[] = [];
@@ -129,10 +107,13 @@ export let mockChallenges: Challenge[] = [];
  * This simulates a login action for the entire application.
  * @param user The user profile to set as the logged-in user.
  */
-export const setLoggedInUser = (user: UserProfile) => {
-    console.log("Setting logged in user:", user.name);
+export const setLoggedInUser = (user: UserProfile | null) => {
     mockUser = user;
 };
+
+export const getLoggedInUser = (): UserProfile | null => {
+    return mockUser;
+}
 
 
 // --- FIREBASE-ENABLED FACILITY FUNCTIONS ---
@@ -513,7 +494,10 @@ export const getAllPricingRules = (): PricingRule[] => [...mockPricingRules];
 export const getPricingRuleById = (id: string): PricingRule | undefined => mockPricingRules.find(rule => rule.id === id);
 export const getAllPromotionRules = (): PromotionRule[] => [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
 export const getPromotionRuleById = (id: string): PromotionRule | undefined => mockPromotionRules.find(r => r.id === id);
-export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => mockWaitlist.some(entry => entry.userId === userId && entry.facilityId === facilityId && entry.date === date && entry.startTime === startTime);
+export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => {
+    if(!mockUser) return false;
+    return mockWaitlist.some(entry => entry.userId === userId && entry.facilityId === facilityId && entry.date === date && entry.startTime === startTime);
+}
 export const getOpenLfgRequests = (): LfgRequest[] => mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
 export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
@@ -528,6 +512,12 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
     const userIndex = mockUsers.findIndex(user => user.id === userId);
     if (userIndex === -1) return undefined;
     mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates };
+    
+    // If the updated user is the currently logged-in user, update that too
+    if (mockUser && mockUser.id === userId) {
+        setLoggedInUser({ ...mockUser, ...updates });
+    }
+    
     return mockUsers[userIndex];
 };
 export const updateSiteSettings = (updates: Partial<SiteSettings>): SiteSettings => {
@@ -831,3 +821,4 @@ async function seedFacilities() {
 // Call seeding function
 seedFacilities().catch(console.error);
     
+

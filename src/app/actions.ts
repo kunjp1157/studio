@@ -15,7 +15,8 @@ import {
     getAllEvents,
     getAllMembershipPlans,
     getAllPricingRules,
-    getAllPromotionRules
+    getAllPromotionRules,
+    getLoggedInUser as getMockLoggedInUser,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule } from '@/lib/types';
 
@@ -60,4 +61,8 @@ export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
 
 export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
     return getAllPromotionRules();
+}
+
+export async function getLoggedInUser(): Promise<UserProfile | null> {
+    return getMockLoggedInUser();
 }
