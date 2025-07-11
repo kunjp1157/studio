@@ -2,6 +2,7 @@
 
 
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -77,7 +78,7 @@ export let mockUsers: UserProfile[] = [
         joinedAt: new Date().toISOString(),
     }
 ];
-export const mockUser = {
+export let mockUser: UserProfile = {
     id: 'user-admin-kunj',
     name: 'Kunj Patel',
     email: 'kunjp1157@gmail.com',
@@ -121,6 +122,16 @@ let mockWaitlist: WaitlistEntry[] = [];
 let mockLfgRequests: LfgRequest[] = [];
 let mockRentalEquipment: RentalEquipment[] = [];
 export let mockChallenges: Challenge[] = [];
+
+/**
+ * Sets the globally available `mockUser` to the provided user profile.
+ * This simulates a login action for the entire application.
+ * @param user The user profile to set as the logged-in user.
+ */
+export const setLoggedInUser = (user: UserProfile) => {
+    console.log("Setting logged in user:", user.name);
+    mockUser = user;
+};
 
 
 // --- FIREBASE-ENABLED FACILITY FUNCTIONS ---

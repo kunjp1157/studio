@@ -12,7 +12,7 @@ import { LogIn, Mail, KeyRound, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { mockUser, getAllUsers } from '@/lib/data';
+import { getAllUsers, setLoggedInUser } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 
 // Placeholder for social icons if not using a library
@@ -73,6 +73,7 @@ export default function LoginPage() {
     
     // Step 3: Handle success or failure
     if (isPasswordCorrect) {
+       setLoggedInUser(foundUser); // Update the global mock user
        toast({
         title: 'Login Successful',
         description: `Welcome back, ${foundUser.name}!`,
