@@ -27,6 +27,7 @@ export function NotificationBell() {
 
   // Function to fetch notifications and update state
   const fetchNotifications = () => {
+    if (!mockUser) return; // Guard clause to prevent error
     const userNotifications = getNotificationsForUser(mockUser.id);
     const newUnreadCount = userNotifications.filter(n => !n.isRead).length;
 
@@ -54,19 +55,19 @@ export function NotificationBell() {
     setIsOpen(open);
     if (open) {
       // Also refresh when opening the dropdown for immediate feedback
-      const userNotifications = getNotificationsForUser(mockUser.id);
-      setNotifications(userNotifications);
-      setUnreadCount(userNotifications.filter(n => !n.isRead).length);
+      fetchNotifications();
     }
   };
 
   const handleMarkAsRead = (notificationId: string) => {
+    if (!mockUser) return;
     markNotificationAsRead(mockUser.id, notificationId);
     // Immediately refetch to update UI
     fetchNotifications();
   };
 
   const handleMarkAllRead = () => {
+    if (!mockUser) return;
     markAllNotificationsAsRead(mockUser.id);
     // Immediately refetch to update UI
     fetchNotifications();
