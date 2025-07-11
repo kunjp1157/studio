@@ -12,8 +12,10 @@ import { UserPlus, Mail, KeyRound, User, ArrowRight, Eye, EyeOff } from 'lucide-
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { getAllUsers, addUser } from '@/lib/data';
+import { addUser, getUserByEmail } from '@/lib/data';
 import { UserRole, UserStatus } from '@/lib/types';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 // Placeholder for social icons if not using a library
 const GoogleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.19,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.19,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.19,22C17.6,22 21.5,18.33 21.5,12.33C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"/></svg>;
@@ -43,10 +45,10 @@ export default function SignupPage() {
     }
     setIsLoading(true);
 
-    const allUsers = getAllUsers();
-    const userExists = allUsers.some(user => user.email === email);
-
-    if (userExists) {
+    try {
+      // Step 1: Check if user already exists in our Firestore user profiles
+      const userExists = await getUserByEmail(email);
+      if (userExists) {
         toast({
             title: 'Account Already Exists',
             description: 'An account with this email already exists. Please log in instead.',
@@ -54,35 +56,50 @@ export default function SignupPage() {
         });
         setIsLoading(false);
         return;
-    }
+      }
 
-    // Simulate API call for creating user
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      // Step 2: Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
 
-    // Add user to the mock data store
-    addUser({
-        id: `user-${Date.now()}`,
+      // Step 3: Add user profile to our Firestore collection
+      await addUser({
+        id: firebaseUser.uid, // Use Firebase UID as the document ID
         name,
         email,
         role: 'User' as UserRole,
         status: 'Active' as UserStatus,
         joinedAt: new Date().toISOString(),
-        // Add default empty values for optional fields
         achievements: [],
         favoriteFacilities: [],
         isProfilePublic: true,
         loyaltyPoints: 0,
         teamIds: [],
         skillLevels: [],
-    });
+      });
 
-    setIsLoading(false);
+      toast({
+        title: 'Signup Successful',
+        description: 'Your account has been created. Please log in.',
+      });
+      router.push('/account/login');
 
-    toast({
-      title: 'Signup Successful',
-      description: 'Your account has been created. Please log in.',
-    });
-    router.push('/account/login');
+    } catch (error: any) {
+      console.error("Signup Error:", error);
+      let description = 'An unexpected error occurred. Please try again.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'This email address is already in use. Please log in or use a different email.';
+      } else if (error.code === 'auth/weak-password') {
+        description = 'The password is too weak. Please choose a stronger password.';
+      }
+      toast({
+        title: 'Signup Failed',
+        description,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

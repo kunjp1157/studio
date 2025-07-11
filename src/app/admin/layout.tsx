@@ -18,13 +18,39 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { mockUser } from '@/lib/data';
+import { usePathname, useRouter } from 'next/navigation';
+import { getLoggedInUser } from '@/lib/data';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useEffect, useState } from 'react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const profile = getLoggedInUser();
+            if (profile?.role === 'Admin') {
+                setCurrentUser(profile);
+            } else {
+                router.push('/facilities'); // Not an admin, redirect
+            }
+        } else {
+            router.push('/account/login'); // Not logged in, redirect
+        }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const isActive = (path: string) => pathname === path || (path !== '/admin' && pathname.startsWith(path));
+
+  if (!currentUser) {
+    // You can return a loading spinner here
+    return <div className="flex h-screen w-full items-center justify-center">Loading Admin Portal...</div>;
+  }
 
   return (
     <SidebarProvider defaultOpen>
@@ -38,8 +64,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <SidebarContent className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <Link href="/admin">
-                <SidebarMenuButton isActive={isActive('/admin')} tooltip="Dashboard">
+              <Link href="/admin/dashboard">
+                <SidebarMenuButton isActive={isActive('/admin/dashboard')} tooltip="Dashboard">
                   <LayoutDashboard />
                   <span>Dashboard</span>
                 </SidebarMenuButton>
@@ -131,15 +157,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <SidebarFooter className="p-4 border-t group-data-[collapsible=icon]:p-2">
            <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
             <Avatar className="h-9 w-9 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10">
-                <AvatarImage src={mockUser.profilePictureUrl || undefined} alt="Admin User" />
+                <AvatarImage src={currentUser.profilePictureUrl || undefined} alt="Admin User" />
                 <AvatarFallback>AU</AvatarFallback>
             </Avatar>
             <div className="group-data-[collapsible=icon]:hidden">
-                <p className="text-sm font-medium">{mockUser.name}</p>
+                <p className="text-sm font-medium">{currentUser.name}</p>
                 <p className="text-xs text-muted-foreground">Administrator</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="mt-2 w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:aspect-square">
+          <Button variant="ghost" size="icon" className="mt-2 w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:aspect-square" onClick={() => signOut(auth)}>
             <LogOut className="group-data-[collapsible=icon]:m-auto"/>
             <span className="ml-2 group-data-[collapsible=icon]:hidden">Logout</span>
           </Button>

@@ -8,40 +8,48 @@ import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
 import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy, Calendar as CalendarIcon, Swords } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { getSiteSettingsAction, getLoggedInUser } from '@/app/actions';
+import { getSiteSettingsAction } from '@/app/actions';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { getLoggedInUser } from '@/lib/data';
 
-const publicPaths = ['/account/login', '/account/signup', '/account/forgot-password'];
+const publicPaths = ['/account/login', '/account/signup', '/account/forgot-password', '/project-presentation'];
 
 export function Header() {
   const [siteName, setSiteName] = useState('Sports Arena');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getLoggedInUser();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       const authenticated = !!user;
       setIsAuthenticated(authenticated);
+      setIsLoading(false);
 
       if (!authenticated && !publicPaths.includes(pathname)) {
         router.push('/account/login');
       }
-    };
+    });
 
-    checkAuth();
-    
     const settingsInterval = setInterval(async () => {
       const currentSettings = await getSiteSettingsAction();
       if (currentSettings.siteName !== siteName) {
         setSiteName(currentSettings.siteName);
       }
-    }, 3000);
+    }, 5000);
 
     return () => {
+      unsubscribe();
       clearInterval(settingsInterval);
     };
   }, [pathname, router, siteName]);
+
+  if(isLoading) {
+    // Render a minimal header or a skeleton during the initial auth check
+    return <header className="sticky top-0 z-50 w-full border-b h-16 bg-background/95"></header>;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

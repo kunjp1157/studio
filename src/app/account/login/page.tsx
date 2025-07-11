@@ -12,8 +12,10 @@ import { LogIn, Mail, KeyRound, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { getAllUsers, setLoggedInUser } from '@/lib/data';
+import { getAllUsers, setLoggedInUser, getUserByEmail } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 // Placeholder for social icons if not using a library
 const GoogleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.19,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.19,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.19,22C17.6,22 21.5,18.33 21.5,12.33C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"/></svg>;
@@ -31,60 +33,52 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const allUsers = getAllUsers();
-    const foundUser = allUsers.find(user => user.email === email);
-    
-    if (!foundUser) {
-        toast({
-            title: 'Login Failed',
-            description: 'No account found with this email address. Please sign up.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-    }
 
-    let isPasswordCorrect = false;
+    try {
+      // Step 1: Sign in with Firebase Auth
+      await signInWithEmailAndPassword(auth, email, password);
 
-    if (foundUser.role === 'Admin') {
-        if (
-            (email === 'kunjp1157@gmail.com' && password === 'Kunj@2810') ||
-            (email === 'jinesh2806@gmail.com' && password === 'jinesh2806') ||
-            (email === 'shahkirtan007@gmail.com' && password === 'suru@810')
-        ) {
-            isPasswordCorrect = true;
-        }
-    } else {
-        if (password === 'password123') { // Mock password for all non-admin users
-            isPasswordCorrect = true;
-        }
-    }
-    
-    setIsLoading(false);
-    if (isPasswordCorrect) {
-       setLoggedInUser(foundUser); 
-       toast({
+      // Step 2: Get user profile from our data store
+      const foundUser = await getUserByEmail(email);
+
+      if (!foundUser) {
+        // This case is unlikely if auth succeeded, but good for safety
+        throw new Error("User profile not found after authentication.");
+      }
+
+      // Step 3: Set the user in our mock state management (for immediate UI updates if needed)
+      // and for parts of the app that still use it.
+      setLoggedInUser(foundUser);
+
+      toast({
         title: 'Login Successful',
         description: `Welcome back, ${foundUser.name}!`,
       });
-      
+
+      // Step 4: Redirect based on role
       if (foundUser.role === 'Admin') {
-          router.push('/admin');
+        router.push('/admin');
       } else if (foundUser.role === 'FacilityOwner') {
         router.push('/owner');
       } else {
         router.push('/facilities');
       }
-      
-    } else {
+
+    } catch (error: any) {
+      console.error("Login Error:", error);
+      let description = 'Invalid email or password. Please try again.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        description = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message.includes("User profile not found")) {
+        description = "Authentication succeeded, but we couldn't find your user profile. Please contact support.";
+      }
       toast({
         title: 'Login Failed',
-        description: 'Invalid email or password. Please try again.',
+        description,
         variant: 'destructive',
       });
+    } finally {
+        setIsLoading(false);
     }
   };
 

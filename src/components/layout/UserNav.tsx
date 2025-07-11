@@ -16,36 +16,48 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart, Group, HandCoins } from 'lucide-react';
-import { getLoggedInUser, setLoggedInUser } from '@/lib/data';
+import { getLoggedInUser, setLoggedInUser, getUserById, getUserByEmail } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
+import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { Skeleton } from '../ui/skeleton';
 
 export function UserNav() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const checkUser = async () => {
-        const user = getLoggedInUser();
-        setCurrentUser(user);
-        setIsAuthenticated(!!user);
-    };
-    
-    checkUser();
-    // A simple interval to keep the nav in sync with the mock auth state
-    const intervalId = setInterval(checkUser, 1000);
-    return () => clearInterval(intervalId);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // User is signed in. Fetch our profile from Firestore.
+        const userProfile = await getUserByEmail(firebaseUser.email!);
+        setCurrentUser(userProfile || null);
+        setLoggedInUser(userProfile || null); // Keep mock state in sync for other components
+      } else {
+        // User is signed out.
+        setCurrentUser(null);
+        setLoggedInUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut(auth);
     setLoggedInUser(null);
     setCurrentUser(null);
-    setIsAuthenticated(false);
     router.push('/account/login');
   };
 
-  if (!isAuthenticated || !currentUser) {
+  if (isLoading) {
+    return <Skeleton className="h-10 w-28" />;
+  }
+
+  if (!currentUser) {
     return (
       <div className="flex items-center space-x-2">
         <Link href="/account/login">
