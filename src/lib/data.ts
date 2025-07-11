@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -77,6 +71,15 @@ export let mockUsers: UserProfile[] = [
         role: 'Admin' as UserRole,
         status: 'Active' as UserStatus,
         profilePictureUrl: 'https://placehold.co/100x100.png?text=JP',
+        joinedAt: new Date().toISOString(),
+    },
+    {
+        id: 'user-admin-kirat',
+        name: 'Kirat Shah',
+        email: 'shahkiratn007@gmail.com',
+        role: 'Admin' as UserRole,
+        status: 'Active' as UserStatus,
+        profilePictureUrl: 'https://placehold.co/100x100.png?text=KS',
         joinedAt: new Date().toISOString(),
     }
 ];
@@ -821,4 +824,3 @@ async function seedFacilities() {
 // Call seeding function
 seedFacilities().catch(console.error);
     
-
