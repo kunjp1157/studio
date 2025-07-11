@@ -3,24 +3,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogIn, Mail, KeyRound, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Mail, KeyRound, ArrowRight, Eye, EyeOff, MountainSnow } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { getAllUsers, setLoggedInUser, getUserByEmail } from '@/lib/data';
-import type { UserProfile } from '@/lib/types';
+import { setLoggedInUser, getUserByEmail } from '@/lib/data';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-
-// Placeholder for social icons if not using a library
-const GoogleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.19,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.19,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.19,22C17.6,22 21.5,18.33 21.5,12.33C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z"/></svg>;
-const FacebookIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.81C10.44 7.31 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>;
-
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -35,34 +27,21 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Step 1: Sign in with Firebase Auth
-      await signInWithEmailAndPassword(auth, email, password);
-
-      // Step 2: Get user profile from our data store
-      const foundUser = await getUserByEmail(email);
-
-      if (!foundUser) {
-        // This case is unlikely if auth succeeded, but good for safety
-        throw new Error("User profile not found after authentication.");
-      }
-
-      // Step 3: Set the user in our mock state management (for immediate UI updates if needed)
-      // and for parts of the app that still use it.
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const foundUser = await getUserByEmail(userCredential.user.email!);
+      
+      if (!foundUser) throw new Error("User profile not found after authentication.");
+      
       setLoggedInUser(foundUser);
-
+      
       toast({
         title: 'Login Successful',
         description: `Welcome back, ${foundUser.name}!`,
       });
-
-      // Step 4: Redirect based on role
-      if (foundUser.role === 'Admin') {
-        router.push('/admin');
-      } else if (foundUser.role === 'FacilityOwner') {
-        router.push('/owner');
-      } else {
-        router.push('/facilities');
-      }
+      
+      if (foundUser.role === 'Admin') router.push('/admin');
+      else if (foundUser.role === 'FacilityOwner') router.push('/owner');
+      else router.push('/facilities');
 
     } catch (error: any) {
       console.error("Login Error:", error);
@@ -83,90 +62,63 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="container mx-auto py-12 px-4 md:px-6 flex flex-col items-center justify-center min-h-[calc(100vh-12rem)]">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
-          <LogIn className="mx-auto h-12 w-12 text-primary mb-4" />
-          <CardTitle className="text-3xl font-headline">Welcome Back!</CardTitle>
-          <CardDescription>Log in to access your Sports Arena account.</CardDescription>
+    <div className="flex items-center justify-center min-h-screen p-4 auth-background">
+      <Card className="w-full max-w-md shadow-2xl overflow-hidden animate-fadeInUp">
+        <CardHeader className="text-center p-8 bg-pink-500/10 backdrop-blur-sm">
+          <MountainSnow className="mx-auto h-12 w-12 text-primary" />
+          <CardTitle className="text-3xl font-headline text-primary-foreground/90">Welcome Back!</CardTitle>
+          <CardDescription className="text-primary-foreground/70">Log in to access Sports Arena.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="px-8 py-6 bg-white">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email"><Mail className="inline mr-2 h-4 w-4 text-muted-foreground" />Email Address</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1"
+                className="pl-10 h-12 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary"
               />
             </div>
-            <div>
-              <Label htmlFor="password"><KeyRound className="inline mr-2 h-4 w-4 text-muted-foreground" />Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="mt-1 pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff /> : <Eye />}
-                  <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
-                </Button>
-              </div>
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="pl-10 h-12 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary pr-12"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 text-gray-400 hover:bg-gray-200"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff /> : <Eye />}
+                <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
+              </Button>
             </div>
-            <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                    {/* <Checkbox id="remember-me" />
-                    <Label htmlFor="remember-me" className="font-normal">Remember me</Label> */}
-                </div>
-                <Link href="/account/forgot-password" className="font-medium text-primary hover:underline">
+             <div className="flex items-center justify-end text-sm">
+                <Link href="/account/forgot-password" className="font-medium text-purple-600 hover:text-purple-800">
                   Forgot password?
                 </Link>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <LogIn className="mr-2 h-5 w-5" />}
-              {isLoading ? 'Logging in...' : 'Log In'}
+            <Button type="submit" className="w-full h-12 rounded-full bg-purple-600 hover:bg-purple-700 text-base font-bold" disabled={isLoading}>
+              {isLoading ? <LoadingSpinner size={20} /> : 'Login'}
             </Button>
           </form>
-          
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" disabled={isLoading}>
-              <GoogleIcon /> <span className="ml-2">Google</span>
-            </Button>
-            <Button variant="outline" disabled={isLoading}>
-              <FacebookIcon /> <span className="ml-2">Facebook</span>
-            </Button>
-          </div>
         </CardContent>
-        <CardFooter className="justify-center text-sm">
+        <CardFooter className="bg-white p-6 justify-center text-sm border-t">
           <p className="text-muted-foreground">
             Don't have an account?{' '}
-            <Link href="/account/signup" className="font-medium text-primary hover:underline">
+            <Link href="/account/signup" className="font-bold text-purple-600 hover:underline">
               Sign up <ArrowRight className="inline h-4 w-4" />
             </Link>
           </p>

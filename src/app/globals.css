@@ -125,3 +125,21 @@ body {
 .animate-fadeInUp {
   animation: fadeInUp 0.5s ease-out forwards;
 }
+
+.auth-background {
+    background: linear-gradient(160deg, #f87171, #fb923c, #60a5fa, #818cf8);
+    background-size: 400% 400%;
+    animation: gradient-animation 15s ease infinite;
+}
+
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}

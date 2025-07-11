@@ -3,12 +3,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Send, ArrowLeft, KeyRound } from 'lucide-react';
+import { Mail, Send, ArrowLeft, MountainSnow } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -34,35 +32,35 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="container mx-auto py-12 px-4 md:px-6 flex flex-col items-center justify-center min-h-[calc(100vh-12rem)]">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
-          <KeyRound className="mx-auto h-12 w-12 text-primary mb-4" />
-          <CardTitle className="text-3xl font-headline">Forgot Your Password?</CardTitle>
-          <CardDescription>No worries! Enter your email address below and we'll send you instructions to reset your password.</CardDescription>
+    <div className="flex items-center justify-center min-h-screen p-4 auth-background">
+      <Card className="w-full max-w-md shadow-2xl overflow-hidden animate-fadeInUp">
+        <CardHeader className="text-center p-8 bg-pink-500/10 backdrop-blur-sm">
+          <MountainSnow className="mx-auto h-12 w-12 text-primary" />
+          <CardTitle className="text-3xl font-headline text-primary-foreground/90">Forgot Password?</CardTitle>
+          <CardDescription className="text-primary-foreground/70">We'll send you a link to reset it.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="px-8 py-6 bg-white">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email"><Mail className="inline mr-2 h-4 w-4 text-muted-foreground" />Email Address</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1"
+                className="pl-10 h-12 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Send className="mr-2 h-5 w-5" />}
-              {isLoading ? 'Sending...' : 'Send Reset Instructions'}
+            <Button type="submit" className="w-full h-12 rounded-full bg-purple-600 hover:bg-purple-700 text-base font-bold" disabled={isLoading}>
+              {isLoading ? <LoadingSpinner size={20} /> : <Send className="mr-2"/>}
+              {isLoading ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="justify-center text-sm">
-          <Link href="/account/login" className="font-medium text-primary hover:underline flex items-center">
+        <CardFooter className="bg-white p-6 justify-center text-sm border-t">
+          <Link href="/account/login" className="font-bold text-purple-600 hover:underline flex items-center">
             <ArrowLeft className="inline h-4 w-4 mr-1" /> Back to Log in
           </Link>
         </CardFooter>
