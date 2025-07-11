@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,42 +14,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart, Group, HandCoins } from 'lucide-react';
-import { mockUser, setLoggedInUser, getLoggedInUser } from '@/lib/data';
+import { User, LogOut, LayoutDashboard, CalendarDays, CreditCard, Heart, Group, HandCoins } from 'lucide-react';
+import { mockUser } from '@/lib/data'; // Directly use the mockUser
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 
 export function UserNav() {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    // Since there's no real login, we fetch the "logged-in" user state.
-    const user = getLoggedInUser();
-    if (user) {
-      setCurrentUser(user);
-    } else {
-      // If no user is set after a short delay (allowing data seeding), default to the mockUser.
-      // This is a fallback for the initial load.
-      setTimeout(() => {
-          const fallbackUser = getLoggedInUser();
-          if (fallbackUser) {
-              setCurrentUser(fallbackUser);
-          } else {
-              // This case should be rare, but ensures something is always set.
-              setLoggedInUser(mockUser);
-              setCurrentUser(mockUser);
-          }
-      }, 500);
-    }
-  }, []);
+  const currentUser = mockUser; // The user is now constant
 
   const handleLogout = () => {
-    // Since there's no auth, "logout" just navigates to a public page.
+    // "Logout" is now just a navigation action
     router.push('/facilities');
   };
 
   if (!currentUser) {
+    // This skeleton is a fallback, but should rarely be seen now.
     return <Skeleton className="h-10 w-10 rounded-full" />;
   }
 

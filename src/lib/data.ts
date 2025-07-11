@@ -61,19 +61,6 @@ let mockRentalEquipment: RentalEquipment[] = [];
 export let mockChallenges: Challenge[] = [];
 export let mockBookings: Booking[] = [];
 
-/**
- * Sets the globally available `mockUser` to the provided user profile.
- * This simulates a login action for the entire application.
- * @param user The user profile to set as the logged-in user.
- */
-export const setLoggedInUser = (user: UserProfile | null) => {
-    mockUser = user;
-};
-
-export const getLoggedInUser = (): UserProfile | null => {
-    return mockUser;
-}
-
 export const getUserByEmail = async (email: string): Promise<UserProfile | undefined> => {
     try {
         const q = query(collection(db, 'users'), where('email', '==', email));
@@ -506,7 +493,7 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
     
     // If the updated user is the currently logged-in user, update that too
     if (mockUser && mockUser.id === userId) {
-        setLoggedInUser({ ...mockUser, ...updates });
+        mockUser = { ...mockUser, ...updates };
     }
     
     return mockUsers[userIndex];
@@ -705,7 +692,7 @@ async function seedData() {
          // Set the default mock user after seeding
         const adminUser = usersToSeed.find(u => u.role === 'Admin');
         if (adminUser) {
-            setLoggedInUser(adminUser);
+            mockUser = adminUser;
         }
 
     } else {
@@ -717,7 +704,7 @@ async function seedData() {
          // Set the default mock user from existing data
         const adminUser = mockUsers.find(u => u.role === 'Admin');
         if (adminUser) {
-            setLoggedInUser(adminUser);
+            mockUser = adminUser;
         }
     }
 
