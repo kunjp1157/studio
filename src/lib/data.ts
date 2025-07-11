@@ -22,6 +22,7 @@ export const mockSports: Sport[] = [
   { id: 'sport-13', name: 'Cricket', iconName: 'Dices', imageUrl: 'https://images.unsplash.com/photo-1599551154316-276537b02c89', imageDataAiHint: 'cricket bat ball' },
   { id: 'sport-14', name: 'Pool', iconName: 'Target', imageUrl: 'https://images.unsplash.com/photo-1601758124235-7c98c199e4df', imageDataAiHint: 'billiards table' },
   { id: 'sport-15', name: 'PC Game/PS5', iconName: 'Gamepad2', imageUrl: 'https://images.unsplash.com/photo-1598550489913-af3c28a2cc73', imageDataAiHint: 'gaming setup' },
+  { id: 'sport-16', name: 'Gym', iconName: 'Dumbbell', imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48', imageDataAiHint: 'modern gym' },
 ];
 
 export const mockAmenities: Amenity[] = [
@@ -430,7 +431,7 @@ export const getUserById = (userId: string): UserProfile | undefined => {
     return mockUsers.find(user => user.id === userId);
 };
 export const getReviewsByFacilityId = (facilityId: string): Review[] => mockReviews.filter(review => review.facilityId === facilityId);
-export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === teamId);
+export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === team.id);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
 export const getAllUsers = (): UserProfile[] => [...mockUsers];
 export const addUser = async (user: Omit<UserProfile, 'id'> & {id: string}): Promise<UserProfile> => {
@@ -826,6 +827,73 @@ async function seedData() {
             isIndoor: true,
             dataAiHint: 'yoga studio',
           },
+          {
+            name: 'The LAN Lord\'s Lair',
+            type: 'Complex',
+            address: '404 Internet Way, Southside',
+            city: 'Metropolis',
+            location: 'Southside',
+            description: 'A premium esports and gaming arena with high-end PCs, consoles, and a vibrant gaming community.',
+            images: ['https://placehold.co/800x450.png'],
+            sports: [getSportById('sport-15')!],
+            sportPrices: [{ sportId: 'sport-15', pricePerHour: 300 }],
+            amenities: [getAmenityById('amenity-2')!, getAmenityById('amenity-4')!, getAmenityById('amenity-6')!],
+            operatingHours: [ { day: 'Mon', open: '12:00', close: '23:59' }, { day: 'Tue', open: '12:00', close: '23:59' }, { day: 'Wed', open: '12:00', close: '23:59' }, { day: 'Thu', open: '12:00', close: '23:59' }, { day: 'Fri', open: '12:00', close: '02:00' }, { day: 'Sat', open: '10:00', close: '02:00' }, { day: 'Sun', open: '10:00', close: '23:59' } ],
+            rating: 4.8,
+            capacity: 50,
+            isIndoor: true,
+            dataAiHint: 'esports gaming arena',
+          },
+          {
+            name: 'Green Valley Campsite',
+            type: 'Field',
+            address: '99 Nature Trail, Suburbia',
+            city: 'Metropolis',
+            location: 'Suburbia',
+            description: 'A serene campsite on the outskirts of the city. Rent a spot and enjoy a night under the stars.',
+            images: ['https://placehold.co/800x450.png'],
+            sports: [getSportById('sport-9')!],
+            sportPrices: [{ sportId: 'sport-9', pricePerHour: 2000 }], // Price per night, but model uses per hour
+            amenities: [getAmenityById('amenity-1')!, getAmenityById('amenity-3')!],
+            operatingHours: [ { day: 'Mon', open: '00:00', close: '23:59' }, { day: 'Tue', open: '00:00', close: '23:59' }, { day: 'Wed', open: '00:00', close: '23:59' }, { day: 'Thu', open: '00:00', close: '23:59' }, { day: 'Fri', open: '00:00', close: '23:59' }, { day: 'Sat', open: '00:00', close: '23:59' }, { day: 'Sun', open: '00:00', close: '23:59' } ],
+            rating: 4.6,
+            isIndoor: false,
+            dataAiHint: 'campsite night forest',
+          },
+          {
+            name: 'Iron Temple Gym',
+            type: 'Studio',
+            address: '88 Fitness Row, Downtown',
+            city: 'Metropolis',
+            location: 'Downtown',
+            description: 'A hardcore gym with a vast selection of free weights and machines for serious strength training.',
+            images: ['https://placehold.co/800x450.png'],
+            sports: [getSportById('sport-16')!],
+            sportPrices: [{ sportId: 'sport-16', pricePerHour: 250 }],
+            amenities: [getAmenityById('amenity-2')!, getAmenityById('amenity-3')!, getAmenityById('amenity-4')!],
+            operatingHours: [ { day: 'Mon', open: '05:00', close: '23:00' }, { day: 'Tue', open: '05:00', close: '23:00' }, { day: 'Wed', open: '05:00', close: '23:00' }, { day: 'Thu', open: '05:00', close: '23:00' }, { day: 'Fri', open: '05:00', close: '23:00' }, { day: 'Sat', open: '07:00', close: '21:00' }, { day: 'Sun', open: '08:00', close: '20:00' } ],
+            rating: 4.7,
+            capacity: 75,
+            isIndoor: true,
+            dataAiHint: 'weightlifting gym',
+          },
+          {
+            name: 'The Cue Ball',
+            type: 'Studio',
+            address: '147 Break Shot Blvd, Uptown',
+            city: 'Metropolis',
+            location: 'Uptown',
+            description: 'A classic and stylish billiards hall with top-quality pool tables and a relaxed atmosphere.',
+            images: ['https://placehold.co/800x450.png'],
+            sports: [getSportById('sport-14')!],
+            sportPrices: [{ sportId: 'sport-14', pricePerHour: 700 }],
+            amenities: [getAmenityById('amenity-2')!, getAmenityById('amenity-6')!],
+            operatingHours: [ { day: 'Mon', open: '16:00', close: '01:00' }, { day: 'Tue', open: '16:00', close: '01:00' }, { day: 'Wed', open: '16:00', close: '01:00' }, { day: 'Thu', open: '16:00', close: '01:00' }, { day: 'Fri', open: '16:00', close: '03:00' }, { day: 'Sat', open: '14:00', close: '03:00' }, { day: 'Sun', open: '14:00', close: '01:00' } ],
+            rating: 4.5,
+            capacity: 40,
+            isIndoor: true,
+            dataAiHint: 'billiards hall',
+          }
         ];
         for (const facility of facilitiesToSeed) {
           await addDoc(facilitiesCollection, facility);
