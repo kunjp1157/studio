@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
@@ -10,21 +11,32 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Validate that all required Firebase config keys are present
+// Validate that all required Firebase config keys are present and are valid strings
 const missingKeys = Object.entries(firebaseConfig)
-  .filter(([key, value]) => !value)
+  .filter(([key, value]) => typeof value !== 'string' || value.trim() === '')
   .map(([key]) => key);
 
 let app;
+let db;
+
 if (missingKeys.length > 0) {
-  console.error(`Firebase initialization failed: Missing environment variables: ${missingKeys.join(', ')}`);
-  // Handle the error appropriately in your app, e.g., show an error message
-  // For now, we'll avoid initializing Firebase to prevent further errors.
+  const errorMsg = `Firebase initialization failed. The following environment variables are missing or invalid in your .env file: ${missingKeys.join(', ')}. Please make sure they are all set correctly.`;
+  console.error(errorMsg);
+  // Throw an error during server-side rendering or build to fail fast
+  if (typeof window === 'undefined') {
+    throw new Error(errorMsg);
+  }
 } else {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  // All keys are present, proceed with initialization
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    db = getFirestore(app);
+  } catch (e) {
+    console.error("An error occurred during Firebase initialization:", e);
+    // You might want to handle this case, e.g., by setting db to null
+    // or showing a global error message to the user.
+    db = null as any; // Prevent further errors from using an uninitialized db
+  }
 }
-
-
-const db = getFirestore(app);
 
 export { db };
