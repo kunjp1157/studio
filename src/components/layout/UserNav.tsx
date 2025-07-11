@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,21 +15,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, LogOut, LayoutDashboard, CalendarDays, CreditCard, Heart, Group, HandCoins } from 'lucide-react';
-import { getLoggedInUser } from '@/lib/data';
+import { mockUser } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 
 export function UserNav() {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const user = await getLoggedInUser();
-      setCurrentUser(user);
-    };
-    fetchUser();
-  }, []);
+  const currentUser = mockUser; // Directly use the static mockUser
 
   const handleLogout = () => {
     // "Logout" is now just a navigation action
@@ -38,6 +29,7 @@ export function UserNav() {
   };
 
   if (!currentUser) {
+    // This should theoretically never happen now, but it's a good fallback.
     return <Skeleton className="h-10 w-10 rounded-full" />;
   }
 

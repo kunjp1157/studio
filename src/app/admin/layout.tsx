@@ -19,23 +19,14 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { getLoggedInUser } from '@/lib/data';
-import { useEffect, useState } from 'react';
+import { mockUser } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const user = await getLoggedInUser();
-      setCurrentUser(user);
-    };
-    fetchUser();
-  }, []);
+  const currentUser = mockUser;
 
   const isActive = (path: string) => pathname === path || (path !== '/admin' && pathname.startsWith(path));
 

@@ -39,7 +39,20 @@ export const mockAmenities: Amenity[] = [
 export let mockReviews: Review[] = [];
 export const mockAchievements: Achievement[] = [];
 export let mockUsers: UserProfile[] = [];
-export let mockUser: UserProfile | null = null;
+
+// Static mockUser, always available.
+export let mockUser: UserProfile = { 
+    id: 'user-admin-kirtan', 
+    name: 'Kirtan Shah', 
+    email: 'shahkirtan007@gmail.com', 
+    role: 'Admin', 
+    status: 'Active', 
+    joinedAt: new Date().toISOString(), 
+    loyaltyPoints: 1250, 
+    profilePictureUrl: 'https://placehold.co/100x100.png', 
+    dataAiHint: 'man smiling' 
+};
+
 export let mockTeams: Team[] = [];
 let mockAppNotifications: AppNotification[] = [];
 export const mockBlogPosts: BlogPost[] = [];
@@ -61,17 +74,6 @@ let mockLfgRequests: LfgRequest[] = [];
 let mockRentalEquipment: RentalEquipment[] = [];
 export let mockChallenges: Challenge[] = [];
 export let mockBookings: Booking[] = [];
-
-export const getLoggedInUser = async (): Promise<UserProfile | null> => {
-    // In a real app, this would involve a server call or checking a session.
-    // For now, it consistently returns the mockUser.
-    if (!mockUser) {
-        // Fallback in case mockUser hasn't been set yet during initial load.
-        const users = await getAllUsers();
-        mockUser = users.find(u => u.role === 'Admin') || null;
-    }
-    return Promise.resolve(mockUser);
-};
 
 export const getUserByEmail = async (email: string): Promise<UserProfile | undefined> => {
     try {
@@ -688,7 +690,6 @@ export const updatePricingRule = (rule: PricingRule): void => { const index = mo
 export const deletePricingRule = (id: string): void => { mockPricingRules = mockPricingRules.filter(r => r.id !== id); };
 export const addPromotionRule = (rule: Omit<PromotionRule, 'id'>): void => { mockPromotionRules.push({ ...rule, id: `promo-${Date.now()}` }); };
 export const updatePromotionRule = (rule: PromotionRule): void => { const index = mockPromotionRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPromotionRules[index] = rule; };
-export const deletePromotionRule = (id: string): void => { mockPromotionRules = mockPromotionRules.filter(r => r.id !== id); };
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
 
