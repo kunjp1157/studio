@@ -652,15 +652,21 @@ export const acceptChallenge = (challengeId: string, opponentId: string): Challe
 export const addMembershipPlan = (plan: Omit<MembershipPlan, 'id'>): MembershipPlan => { const newPlan = { ...plan, id: `mem-${Date.now()}`}; mockMembershipPlans.push(newPlan); return newPlan; };
 export const updateMembershipPlan = (plan: MembershipPlan): void => { const index = mockMembershipPlans.findIndex(p => p.id === plan.id); if (index !== -1) mockMembershipPlans[index] = plan; };
 export const deleteMembershipPlan = (id: string): void => { mockMembershipPlans = mockMembershipPlans.filter(p => p.id !== id); };
-export const addEvent = (event: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): void => { 
-  const sport = getSportById(event.sportId); 
-  const fetchFacilityName = async () => {
+export const addEvent = async (event: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): Promise<void> => { 
+    const sport = getSportById(event.sportId); 
     const facility = await getFacilityById(event.facilityId);
-    if(sport) {
-      mockEvents.push({ ...event, id: `evt-${Date.now()}`, sport, registeredParticipants: 0, facilityName: facility?.name || 'Unknown Facility' });
+    if(sport && facility) {
+        const newEvent: SportEvent = { 
+            ...event, 
+            id: `evt-${Date.now()}`, 
+            sport, 
+            registeredParticipants: 0, 
+            facilityName: facility.name 
+        };
+        mockEvents.push(newEvent);
+    } else {
+        console.error("Could not create event: Sport or Facility not found.");
     }
-  };
-  fetchFacilityName();
 };
 export const updateEvent = (event: SportEvent): void => { const index = mockEvents.findIndex(e => e.id === event.id); if (index !== -1) mockEvents[index] = event; };
 export const deleteEvent = (id: string): void => { mockEvents = mockEvents.filter(e => e.id !== id); };
