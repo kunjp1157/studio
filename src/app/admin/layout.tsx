@@ -19,36 +19,40 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { getLoggedInUser } from '@/lib/data';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { getUserByEmail } from '@/lib/data';
+import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useEffect, useState } from 'react';
+import type { UserProfile } from '@/lib/types';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const profile = getLoggedInUser();
+        if (user && user.email) {
+            const profile = await getUserByEmail(user.email);
             if (profile?.role === 'Admin') {
                 setCurrentUser(profile);
             } else {
-                router.push('/facilities'); // Not an admin, redirect
+                // User is logged in but not an admin
+                router.push('/facilities'); 
             }
         } else {
-            router.push('/account/login'); // Not logged in, redirect
+            // User is not logged in
+            router.push('/account/login'); 
         }
+        setIsLoading(false);
     });
     return () => unsubscribe();
   }, [router]);
 
   const isActive = (path: string) => pathname === path || (path !== '/admin' && pathname.startsWith(path));
 
-  if (!currentUser) {
-    // You can return a loading spinner here
+  if (isLoading || !currentUser) {
     return <div className="flex h-screen w-full items-center justify-center">Loading Admin Portal...</div>;
   }
 
