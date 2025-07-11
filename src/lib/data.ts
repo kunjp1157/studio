@@ -62,6 +62,17 @@ let mockRentalEquipment: RentalEquipment[] = [];
 export let mockChallenges: Challenge[] = [];
 export let mockBookings: Booking[] = [];
 
+export const getLoggedInUser = async (): Promise<UserProfile | null> => {
+    // In a real app, this would involve a server call or checking a session.
+    // For now, it consistently returns the mockUser.
+    if (!mockUser) {
+        // Fallback in case mockUser hasn't been set yet during initial load.
+        const users = await getAllUsers();
+        mockUser = users.find(u => u.role === 'Admin') || null;
+    }
+    return Promise.resolve(mockUser);
+};
+
 export const getUserByEmail = async (email: string): Promise<UserProfile | undefined> => {
     try {
         const q = query(collection(db, 'users'), where('email', '==', email));
@@ -871,7 +882,7 @@ async function seedData() {
             sports: [getSportById('sport-16')!],
             sportPrices: [{ sportId: 'sport-16', pricePerHour: 250 }],
             amenities: [getAmenityById('amenity-2')!, getAmenityById('amenity-3')!, getAmenityById('amenity-4')!],
-            operatingHours: [ { day: 'Mon', open: '05:00', close: '23:00' }, { day: 'Tue', open: '05:00', close: '23:00' }, { day: 'Wed', open: '05:00', close: '23:00' }, { day: 'Thu', open: '05:00', close: '23:00' }, { day: 'Fri', open: '05:00', close: '23:00' }, { day: 'Sat', open: '07:00', close: '21:00' }, { day: 'Sun', open: '08:00', close: '20:00' } ],
+            operatingHours: [ { day: 'Mon', open: '05:00', close: '23:00' }, { day: 'Tue', open: '05:00', close: '23:00' }, { day: 'Wed', open: '05:00', close: '23:00' }, { day: 'Thu', open: '05:00', close: '23:00' }, { day: 'Fri', open: '05:00', close: '23:00' }, { day: 'Sat', open: '07:00', close: '21:00' }, { day: 'Sun', 'open': '08:00', 'close': '20:00' } ],
             rating: 4.7,
             capacity: 75,
             isIndoor: true,

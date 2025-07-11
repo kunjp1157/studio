@@ -19,21 +19,38 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { mockUser } from '@/lib/data';
+import { getLoggedInUser } from '@/lib/data';
 import { useEffect, useState } from 'react';
 import type { UserProfile } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(mockUser);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getLoggedInUser();
+      setCurrentUser(user);
+    };
+    fetchUser();
+  }, []);
 
   const isActive = (path: string) => pathname === path || (path !== '/admin' && pathname.startsWith(path));
 
   if (!currentUser) {
-    // In a real app with auth, you'd show a loader here.
-    // Since auth is removed, we just show a placeholder if mockUser fails to load.
-    return <div className="flex h-screen w-full items-center justify-center">Loading Admin Portal...</div>;
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="flex items-center space-x-4">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
