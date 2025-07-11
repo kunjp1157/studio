@@ -16,21 +16,34 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart, Group, HandCoins } from 'lucide-react';
-import { mockUser, setLoggedInUser } from '@/lib/data';
+import { mockUser, setLoggedInUser, getLoggedInUser } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 
 export function UserNav() {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(mockUser);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const router = useRouter();
 
-  // Set the default user on component mount, since there is no login flow
   useEffect(() => {
-    if (!currentUser) {
-        setLoggedInUser(mockUser);
-        setCurrentUser(mockUser);
+    // Since there's no real login, we fetch the "logged-in" user state.
+    const user = getLoggedInUser();
+    if (user) {
+      setCurrentUser(user);
+    } else {
+      // If no user is set after a short delay (allowing data seeding), default to the mockUser.
+      // This is a fallback for the initial load.
+      setTimeout(() => {
+          const fallbackUser = getLoggedInUser();
+          if (fallbackUser) {
+              setCurrentUser(fallbackUser);
+          } else {
+              // This case should be rare, but ensures something is always set.
+              setLoggedInUser(mockUser);
+              setCurrentUser(mockUser);
+          }
+      }, 500);
     }
-  }, [currentUser]);
+  }, []);
 
   const handleLogout = () => {
     // Since there's no auth, "logout" just navigates to a public page.
@@ -38,7 +51,7 @@ export function UserNav() {
   };
 
   if (!currentUser) {
-    return <Skeleton className="h-10 w-28" />;
+    return <Skeleton className="h-10 w-10 rounded-full" />;
   }
 
   return (
