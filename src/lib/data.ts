@@ -59,6 +59,7 @@ let mockWaitlist: WaitlistEntry[] = [];
 let mockLfgRequests: LfgRequest[] = [];
 let mockRentalEquipment: RentalEquipment[] = [];
 export let mockChallenges: Challenge[] = [];
+export let mockBookings: Booking[] = [];
 
 /**
  * Sets the globally available `mockUser` to the provided user profile.
@@ -445,11 +446,20 @@ export const getReviewsByFacilityId = (facilityId: string): Review[] => mockRevi
 export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === teamId);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
 export const getAllUsers = (): UserProfile[] => [...mockUsers];
-export const addUser = async (user: Omit<UserProfile, 'id'>): Promise<UserProfile> => {
+export const addUser = async (user: Omit<UserProfile, 'id'> & {id: string}): Promise<UserProfile> => {
     try {
-        const docRef = doc(db, 'users', user.id); // Use the provided UID as the document ID
-        await setDoc(docRef, user);
-        return { id: user.id, ...user };
+        const userRef = doc(db, 'users', user.id);
+        await setDoc(userRef, user);
+        
+        // Also update the local mock array for immediate consistency in client components
+        const existingIndex = mockUsers.findIndex(u => u.id === user.id);
+        if (existingIndex > -1) {
+            mockUsers[existingIndex] = user;
+        } else {
+            mockUsers.push(user);
+        }
+
+        return user;
     } catch (error) {
         console.error("Error adding user to Firestore:", error);
         throw new Error("Could not add user to the database.");
@@ -684,7 +694,7 @@ async function seedData() {
     const usersSnapshot = await getDocs(usersCollection);
     if (usersSnapshot.empty) {
         console.log("No users found, seeding users...");
-        const usersToSeed = [
+        const usersToSeed: (Omit<UserProfile, 'id'> & {id: string})[] = [
             { id: 'user-regular', name: 'Charlie Davis', email: 'user@example.com', role: 'User', status: 'Active', joinedAt: new Date().toISOString() },
             { id: 'user-owner', name: 'Dana White', email: 'owner@example.com', role: 'FacilityOwner', status: 'Active', joinedAt: new Date().toISOString() },
             { id: 'user-admin-kunj', name: 'Kunj Patel', email: 'kunjp1157@gmail.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString() },
@@ -692,10 +702,15 @@ async function seedData() {
             { id: 'user-admin-kirtan', name: 'Kirtan Shah', email: 'shahkirtan007@gmail.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString() },
         ];
         for (const user of usersToSeed) {
-            await setDoc(doc(db, 'users', user.id), user);
+            await addUser(user);
         }
     } else {
-        mockUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+        usersSnapshot.forEach(doc => {
+            const user = { id: doc.id, ...doc.data() } as UserProfile;
+            if (!mockUsers.some(u => u.id === user.id)) {
+                mockUsers.push(user);
+            }
+        });
     }
 
 
@@ -814,13 +829,16 @@ async function seedData() {
         for (const facility of facilitiesToSeed) {
           await addDoc(facilitiesCollection, facility);
         }
-        console.log("Database seeded successfully.");
+        console.log("Database facilities seeded successfully.");
     }
 }
 
 
 // Call seeding function on startup
 if (typeof window !== 'undefined') {
-    seedData().catch(console.error);
+    // We run this in a setTimeout to allow the main thread to unblock
+    // and prevent any potential race conditions with other initializations.
+    setTimeout(() => {
+        seedData().catch(console.error);
+    }, 0);
 }
-    
