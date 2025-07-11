@@ -74,9 +74,9 @@ export let mockUsers: UserProfile[] = [
         joinedAt: new Date().toISOString(),
     },
     {
-        id: 'user-admin-kirat',
-        name: 'Kirat Shah',
-        email: 'shahkiratn007@gmail.com',
+        id: 'user-admin-kirtan',
+        name: 'Kirtan Shah',
+        email: 'shahkirtan007@gmail.com',
         role: 'Admin' as UserRole,
         status: 'Active' as UserStatus,
         profilePictureUrl: 'https://placehold.co/100x100.png?text=KS',

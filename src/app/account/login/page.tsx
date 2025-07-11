@@ -53,7 +53,7 @@ export default function LoginPage() {
         if (
             (email === 'kunjp1157@gmail.com' && password === 'Kunj@2810') ||
             (email === 'jinesh2806@gmail.com' && password === 'jinesh2806') ||
-            (email === 'shahkiratn007@gmail.com' && password === 'suru@810')
+            (email === 'shahkirtan007@gmail.com' && password === 'suru@810')
         ) {
             isPasswordCorrect = true;
         }
