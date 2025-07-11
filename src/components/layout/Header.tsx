@@ -9,30 +9,11 @@ import { UserNav } from './UserNav';
 import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy, Calendar as CalendarIcon, Swords } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettingsAction } from '@/app/actions';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { getLoggedInUser } from '@/lib/data';
-
-const publicPaths = ['/account/login', '/account/signup', '/account/forgot-password', '/project-presentation'];
 
 export function Header() {
   const [siteName, setSiteName] = useState('Sports Arena');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      const authenticated = !!user;
-      setIsAuthenticated(authenticated);
-      setIsLoading(false);
-
-      if (!authenticated && !publicPaths.includes(pathname)) {
-        router.push('/account/login');
-      }
-    });
-
     const settingsInterval = setInterval(async () => {
       const currentSettings = await getSiteSettingsAction();
       if (currentSettings.siteName !== siteName) {
@@ -41,28 +22,21 @@ export function Header() {
     }, 5000);
 
     return () => {
-      unsubscribe();
       clearInterval(settingsInterval);
     };
-  }, [pathname, router, siteName]);
-
-  if(isLoading) {
-    // Render a minimal header or a skeleton during the initial auth check
-    return <header className="sticky top-0 z-50 w-full border-b h-16 bg-background/95"></header>;
-  }
+  }, [siteName]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href={isAuthenticated ? "/facilities" : "/"} className="mr-4 flex items-center space-x-2">
+        <Link href="/facilities" className="mr-4 flex items-center space-x-2">
           <MountainSnow className="h-6 w-6 text-primary" />
           <span className="font-bold sm:inline-block text-lg font-headline">
             {siteName}
           </span>
         </Link>
         
-        {isAuthenticated && (
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
+        <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
             <Link href="/facilities"><Button variant="ghost" className="text-sm font-medium">Facilities</Button></Link>
             <Link href="/sports"><Button variant="ghost" className="text-sm font-medium">Sports</Button></Link>
             <Link href="/events"><Button variant="ghost" className="text-sm font-medium">Events</Button></Link>
@@ -71,11 +45,9 @@ export function Header() {
             <Link href="/matchmaking"><Button variant="ghost" className="text-sm font-medium">Matchmaking</Button></Link>
             <Link href="/leaderboard"><Button variant="ghost" className="text-sm font-medium">Leaderboard</Button></Link>
             <Link href="/blog"><Button variant="ghost" className="text-sm font-medium">Blog</Button></Link>
-          </nav>
-        )}
+        </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
-          {isAuthenticated && (
             <>
               <Link href="/recommendation" className="hidden lg:inline-flex">
                 <Button variant="ghost">
@@ -91,7 +63,6 @@ export function Header() {
               </Link>
               <NotificationBell />
             </>
-          )}
           <UserNav />
         </div>
       </div>

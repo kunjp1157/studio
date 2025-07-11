@@ -16,64 +16,29 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, LogIn, UserPlus, LayoutDashboard, CalendarDays, LogOut, CreditCard, Heart, Group, HandCoins } from 'lucide-react';
-import { getLoggedInUser, setLoggedInUser, getUserById, getUserByEmail } from '@/lib/data';
+import { mockUser, setLoggedInUser } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
-import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { Skeleton } from '../ui/skeleton';
 
 export function UserNav() {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(mockUser);
   const router = useRouter();
 
+  // Set the default user on component mount, since there is no login flow
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        // User is signed in. Fetch our profile from Firestore.
-        const userProfile = await getUserByEmail(firebaseUser.email!);
-        setCurrentUser(userProfile || null);
-        setLoggedInUser(userProfile || null); // Keep mock state in sync for other components
-      } else {
-        // User is signed out.
-        setCurrentUser(null);
-        setLoggedInUser(null);
-      }
-      setIsLoading(false);
-    });
+    if (!currentUser) {
+        setLoggedInUser(mockUser);
+        setCurrentUser(mockUser);
+    }
+  }, [currentUser]);
 
-    return () => unsubscribe();
-  }, []);
-
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    setLoggedInUser(null);
-    setCurrentUser(null);
-    router.push('/account/login');
+  const handleLogout = () => {
+    // Since there's no auth, "logout" just navigates to a public page.
+    router.push('/facilities');
   };
 
-  if (isLoading) {
-    return <Skeleton className="h-10 w-28" />;
-  }
-
   if (!currentUser) {
-    return (
-      <div className="flex items-center space-x-2">
-        <Link href="/account/login">
-            <Button variant="outline">
-                <LogIn className="mr-2 h-4 w-4" />
-                Login
-            </Button>
-        </Link>
-        <Link href="/account/signup">
-          <Button>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Sign Up
-          </Button>
-        </Link>
-      </div>
-    );
+    return <Skeleton className="h-10 w-28" />;
   }
 
   return (
@@ -155,7 +120,7 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+          <span>Exit</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

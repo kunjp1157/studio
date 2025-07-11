@@ -19,40 +19,20 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { getUserByEmail } from '@/lib/data';
-import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { mockUser } from '@/lib/data';
 import { useEffect, useState } from 'react';
 import type { UserProfile } from '@/lib/types';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user && user.email) {
-            const profile = await getUserByEmail(user.email);
-            if (profile?.role === 'Admin') {
-                setCurrentUser(profile);
-            } else {
-                // User is logged in but not an admin
-                router.push('/facilities'); 
-            }
-        } else {
-            // User is not logged in
-            router.push('/account/login'); 
-        }
-        setIsLoading(false);
-    });
-    return () => unsubscribe();
-  }, [router]);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(mockUser);
 
   const isActive = (path: string) => pathname === path || (path !== '/admin' && pathname.startsWith(path));
 
-  if (isLoading || !currentUser) {
+  if (!currentUser) {
+    // In a real app with auth, you'd show a loader here.
+    // Since auth is removed, we just show a placeholder if mockUser fails to load.
     return <div className="flex h-screen w-full items-center justify-center">Loading Admin Portal...</div>;
   }
 
@@ -169,9 +149,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <p className="text-xs text-muted-foreground">Administrator</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="mt-2 w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:aspect-square" onClick={() => signOut(auth)}>
+          <Button variant="ghost" size="icon" className="mt-2 w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:aspect-square" onClick={() => router.push('/facilities')}>
             <LogOut className="group-data-[collapsible=icon]:m-auto"/>
-            <span className="ml-2 group-data-[collapsible=icon]:hidden">Logout</span>
+            <span className="ml-2 group-data-[collapsible=icon]:hidden">Exit Admin</span>
           </Button>
         </SidebarFooter>
       </Sidebar>

@@ -695,22 +695,30 @@ async function seedData() {
     if (usersSnapshot.empty) {
         console.log("No users found, seeding users...");
         const usersToSeed: (Omit<UserProfile, 'id'> & {id: string})[] = [
-            { id: 'user-regular', name: 'Charlie Davis', email: 'user@example.com', role: 'User', status: 'Active', joinedAt: new Date().toISOString() },
-            { id: 'user-owner', name: 'Dana White', email: 'owner@example.com', role: 'FacilityOwner', status: 'Active', joinedAt: new Date().toISOString() },
-            { id: 'user-admin-kunj', name: 'Kunj Patel', email: 'kunjp1157@gmail.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString() },
-            { id: 'user-admin-jinesh', name: 'Jinesh Patel', email: 'jinesh2806@gmail.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString() },
-            { id: 'user-admin-kirtan', name: 'Kirtan Shah', email: 'shahkirtan007@gmail.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString() },
+             { id: 'user-admin-kirtan', name: 'Kirtan Shah', email: 'shahkirtan007@gmail.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString(), loyaltyPoints: 1250, profilePictureUrl: 'https://placehold.co/100x100.png', dataAiHint: 'man smiling' },
+             { id: 'user-regular', name: 'Charlie Davis', email: 'user@example.com', role: 'User', status: 'Active', joinedAt: new Date().toISOString(), loyaltyPoints: 800, profilePictureUrl: 'https://placehold.co/100x100.png', dataAiHint: 'woman portrait' },
+             { id: 'user-owner', name: 'Dana White', email: 'owner@example.com', role: 'FacilityOwner', status: 'Active', joinedAt: new Date().toISOString(), loyaltyPoints: 450, profilePictureUrl: 'https://placehold.co/100x100.png', dataAiHint: 'man glasses' },
         ];
         for (const user of usersToSeed) {
             await addUser(user);
         }
+         // Set the default mock user after seeding
+        const adminUser = usersToSeed.find(u => u.role === 'Admin');
+        if (adminUser) {
+            setLoggedInUser(adminUser);
+        }
+
     } else {
+        const tempUsers: UserProfile[] = [];
         usersSnapshot.forEach(doc => {
-            const user = { id: doc.id, ...doc.data() } as UserProfile;
-            if (!mockUsers.some(u => u.id === user.id)) {
-                mockUsers.push(user);
-            }
+            tempUsers.push({ id: doc.id, ...doc.data() } as UserProfile);
         });
+        mockUsers = tempUsers;
+         // Set the default mock user from existing data
+        const adminUser = mockUsers.find(u => u.role === 'Admin');
+        if (adminUser) {
+            setLoggedInUser(adminUser);
+        }
     }
 
 
