@@ -43,7 +43,7 @@ Your task is to generate a professional, insightful business presentation about 
 
 The presentation topic is: "{{topic}}".
 
-Use the available tools to fetch real-time data about the application.
+You must use the provided tools to gather data for your analysis.
 Analyze the data you retrieve to create insightful slides.
 The presentation should include:
 1.  An "Overview" slide with key app statistics.
