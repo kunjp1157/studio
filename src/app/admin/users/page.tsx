@@ -30,7 +30,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -148,7 +147,6 @@ export default function AdminUsersPage() {
 
   const onEditSubmit = async (data: UserFormValues) => {
     if (!selectedUser) return;
-    setIsLoading(true);
     
     try {
         await updateMockUser(selectedUser.id, {
@@ -172,8 +170,6 @@ export default function AdminUsersPage() {
         setIsEditModalOpen(false);
     } catch (error) {
          toast({ title: "Error", description: "Failed to update user.", variant: "destructive"});
-    } finally {
-        setIsLoading(false);
     }
   };
 
@@ -393,8 +389,8 @@ export default function AdminUsersPage() {
                     <DialogClose asChild>
                          <Button type="button" variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading ? <LoadingSpinner size={16} /> : 'Save Changes'}
+                    <Button type="submit">
+                       'Save Changes'
                     </Button>
                 </form>
             </DialogContent>

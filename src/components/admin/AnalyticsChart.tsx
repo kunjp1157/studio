@@ -90,10 +90,12 @@ export function AnalyticsChart<TData extends object>({
     const ey = my;
     const textAnchor = cos >= 0 ? 'start' : 'end';
 
+    const categoryValue = payload?.[categoryKey as string] ?? 'Category';
+
     return (
       <g>
         <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="font-semibold text-lg">
-          {payload[categoryKey as string]}
+          {categoryValue}
         </text>
         <Sector
           cx={cx}

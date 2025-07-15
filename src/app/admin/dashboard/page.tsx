@@ -1,21 +1,18 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import {
-  getUserById,
-  getFacilityById,
   listenToAllBookings,
   listenToAllUsers,
   listenToFacilities,
   getSiteSettings
 } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
 import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus } from 'lucide-react';
 import type { ChartConfig } from '@/components/ui/chart';
 import { parseISO, getMonth, getYear, format, subMonths, formatDistanceToNow } from 'date-fns';
@@ -112,99 +109,105 @@ export default function AdminDashboardPage() {
     const settings = getSiteSettings();
     setCurrency(settings.defaultCurrency);
     
-    const unsubs: (()=>void)[] = [];
+    let unsubs: (()=>void)[] = [];
     
     unsubs.push(listenToFacilities(setFacilities, (err) => console.error(err)));
     unsubs.push(listenToAllUsers(setUsers, (err) => console.error(err)));
     unsubs.push(listenToAllBookings(setBookings, (err) => console.error(err)));
 
-    if(facilities.length > 0 || users.length > 0 || bookings.length > 0) {
-      setIsLoading(false);
-    }
+    // Initial loading state management
+    const checkInitialLoad = () => {
+        if (facilities.length > 0 || users.length > 0 || bookings.length > 0) {
+            setIsLoading(false);
+        }
+    };
+    
+    const timeout = setTimeout(checkInitialLoad, 500); // Give listeners a moment to populate
+    unsubs.push(() => clearTimeout(timeout));
     
     return () => unsubs.forEach(unsub => unsub());
   }, []);
 
-  const { totalFacilities, activeUsers, totalBookingsThisMonth, totalRevenueThisMonth, monthlyBookingsData, monthlyRevenueData, facilityUsageData, activityFeed } =
-    (() => {
-        const now = new Date();
-        const currentMonth = getMonth(now);
-        const currentYr = getYear(now);
+  const { totalFacilities, activeUsers, totalBookingsThisMonth, totalRevenueThisMonth, monthlyBookingsData, monthlyRevenueData, facilityUsageData, activityFeed } = useMemo(() => {
+    const now = new Date();
+    const currentMonth = getMonth(now);
+    const currentYr = getYear(now);
 
-        const totalFacilities = facilities.length;
-        const activeUsers = users.filter(u => u.status === 'Active').length;
+    const totalFacilities = facilities.length;
+    const activeUsers = users.filter(u => u.status === 'Active').length;
 
-        const bookingsThisMonth = bookings.filter(b => {
-            const bookingDate = parseISO(b.bookedAt);
-            return getMonth(bookingDate) === currentMonth && getYear(bookingDate) === currentYr && b.status === 'Confirmed';
-        });
+    const bookingsThisMonth = bookings.filter(b => {
+        const bookingDate = parseISO(b.bookedAt);
+        return getMonth(bookingDate) === currentMonth && getYear(bookingDate) === currentYr && b.status === 'Confirmed';
+    });
 
-        const totalBookingsThisMonth = bookingsThisMonth.length;
-        const totalRevenueThisMonth = bookingsThisMonth.reduce((sum, b) => sum + b.totalPrice, 0);
+    const totalBookingsThisMonth = bookingsThisMonth.length;
+    const totalRevenueThisMonth = bookingsThisMonth.reduce((sum, b) => sum + b.totalPrice, 0);
 
-        const last6Months: { month: string; year: number; monthKey: string }[] = [];
-        for (let i = 5; i >= 0; i--) {
-            const d = subMonths(now, i);
-            last6Months.push({ month: format(d, 'MMM'), year: getYear(d), monthKey: format(d, 'yyyy-MM') });
+    const last6Months: { month: string; year: number; monthKey: string }[] = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = subMonths(now, i);
+        last6Months.push({ month: format(d, 'MMM'), year: getYear(d), monthKey: format(d, 'yyyy-MM') });
+    }
+
+    const aggregatedBookings: Record<string, number> = {};
+    const aggregatedRevenue: Record<string, number> = {};
+
+    bookings.forEach(booking => {
+        if (booking.status === 'Confirmed') {
+            const bookingDate = parseISO(booking.bookedAt);
+            const monthKey = format(bookingDate, 'yyyy-MM');
+            if (last6Months.some(m => m.monthKey === monthKey)) {
+                aggregatedBookings[monthKey] = (aggregatedBookings[monthKey] || 0) + 1;
+                aggregatedRevenue[monthKey] = (aggregatedRevenue[monthKey] || 0) + booking.totalPrice;
+            }
         }
+    });
 
-        const aggregatedBookings: Record<string, number> = {};
-        const aggregatedRevenue: Record<string, number> = {};
+    const monthlyBookingsData = last6Months.map(m => ({
+        month: m.month,
+        bookings: aggregatedBookings[m.monthKey] || 0,
+    }));
+    const monthlyRevenueData = last6Months.map(m => ({
+        month: m.month,
+        revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
+    }));
 
-        bookings.forEach(booking => {
-            if (booking.status === 'Confirmed') {
-                const bookingDate = parseISO(booking.bookedAt);
-                const monthKey = format(bookingDate, 'yyyy-MM');
-                if (last6Months.some(m => m.monthKey === monthKey)) {
-                    aggregatedBookings[monthKey] = (aggregatedBookings[monthKey] || 0) + 1;
-                    aggregatedRevenue[monthKey] = (aggregatedRevenue[monthKey] || 0) + booking.totalPrice;
-                }
-            }
-        });
+    const facilityUsageMap = new Map<string, number>();
+    bookings.forEach(booking => {
+        if (booking.status === 'Confirmed') {
+            const facilityName = booking.facilityName || facilities.find(f => f.id === booking.facilityId)?.name || 'Unknown';
+            facilityUsageMap.set(facilityName, (facilityUsageMap.get(facilityName) || 0) + 1);
+        }
+    });
+    const facilityUsageData = Array.from(facilityUsageMap.entries()).map(([name, count]) => ({
+        facilityName: name,
+        bookings: count,
+    }));
 
-        const monthlyBookingsData = last6Months.map(m => ({
-            month: m.month,
-            bookings: aggregatedBookings[m.monthKey] || 0,
-        }));
-        const monthlyRevenueData = last6Months.map(m => ({
-            month: m.month,
-            revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
-        }));
+    const bookingActivities: ActivityFeedItemType[] = bookings.map(b => ({
+        type: 'booking',
+        timestamp: b.bookedAt,
+        user: users.find(u => u.id === b.userId),
+        facility: facilities.find(f => f.id === b.facilityId),
+        bookingData: b,
+    }));
 
-        const facilityUsageMap = new Map<string, number>();
-        bookings.forEach(booking => {
-            if (booking.status === 'Confirmed') {
-                const facilityName = booking.facilityName || facilities.find(f => f.id === booking.facilityId)?.name || 'Unknown';
-                facilityUsageMap.set(facilityName, (facilityUsageMap.get(facilityName) || 0) + 1);
-            }
-        });
-        const facilityUsageData = Array.from(facilityUsageMap.entries()).map(([name, count]) => ({
-            facilityName: name,
-            bookings: count,
-        }));
+    const newUserActivities: ActivityFeedItemType[] = users.map(u => ({
+        type: 'newUser',
+        timestamp: u.joinedAt,
+        user: u,
+    }));
 
-        const bookingActivities: ActivityFeedItemType[] = bookings.map(b => ({
-            type: 'booking',
-            timestamp: b.bookedAt,
-            user: users.find(u => u.id === b.userId),
-            facility: facilities.find(f => f.id === b.facilityId),
-            bookingData: b,
-        }));
+    const combinedFeed = [...bookingActivities, ...newUserActivities]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 7);
 
-        const newUserActivities: ActivityFeedItemType[] = users.map(u => ({
-            type: 'newUser',
-            timestamp: u.joinedAt,
-            user: u,
-        }));
+    return { totalFacilities, activeUsers, totalBookingsThisMonth, totalRevenueThisMonth, monthlyBookingsData, monthlyRevenueData, facilityUsageData, activityFeed };
+  }, [facilities, users, bookings]);
 
-        const combinedFeed = [...bookingActivities, ...newUserActivities]
-            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-            .slice(0, 7);
 
-        return { totalFacilities, activeUsers, totalBookingsThisMonth, totalRevenueThisMonth, monthlyBookingsData, monthlyRevenueData, facilityUsageData, activityFeed };
-    })();
-
-  if (isLoading && facilities.length === 0 && users.length === 0 && bookings.length === 0) {
+  if (isLoading) {
     return (
         <div className="space-y-8">
             <PageTitle title="Admin Dashboard" description="Overview of Sports Arena activities and performance." />

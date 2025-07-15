@@ -18,18 +18,21 @@ import { User, LogOut, LayoutDashboard, CalendarDays, CreditCard, Heart, Group, 
 import { mockUser } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
+import { useState, useEffect } from 'react';
+
 
 export function UserNav() {
   const router = useRouter();
-  const currentUser = mockUser; // Directly use the static mockUser
+  // We use the static mockUser as the default/logged-in user.
+  const currentUser = mockUser;
 
   const handleLogout = () => {
-    // "Logout" is now just a navigation action
+    // "Logout" is now just a navigation action as there's no auth session.
     router.push('/facilities');
   };
 
+  // This check is a safeguard, but with the new static mockUser, it should always be available.
   if (!currentUser) {
-    // This should theoretically never happen now, but it's a good fallback.
     return <Skeleton className="h-10 w-10 rounded-full" />;
   }
 
