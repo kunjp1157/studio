@@ -373,7 +373,7 @@ async function seedData() {
             city: 'Metropolis',
             location: 'Uptown',
             description: 'A dedicated box cricket arena perfect for fast-paced, high-energy matches with friends and colleagues.',
-            images: ['https://5.imimg.com/data5/ANDROID/Default/2021/4/PM/FL/JN/126938992/product-jpeg-500x500.jpg'],
+            images: ['https://images.unsplash.com/photo-1593341646782-e0b495cffc25'],
             sports: [getSportById('sport-13')!],
             sportPrices: [{ sportId: 'sport-13', pricePerHour: 1500 }],
             amenities: [getAmenityById('amenity-1')!, getAmenityById('amenity-5')!],
@@ -498,7 +498,6 @@ async function seedData() {
             isIndoor: true,
             dataAiHint: 'billiards hall night',
           },
-          // NEW FACILITIES START HERE
           {
             name: 'VeloDome Cyclery',
             type: 'Studio',
@@ -745,7 +744,7 @@ export const markAllNotificationsAsRead = (userId: string): void => { mockAppNot
 export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
 export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Promise<Review> => {
   const currentUser = await getUserById(reviewData.userId);
-  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
+  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isPublicProfile || false, createdAt: new Date().toISOString() };
   mockReviews.push(newReview);
   return newReview;
 };
@@ -864,3 +863,42 @@ export async function listenToOwnerBookings(ownerId: string, callback: (bookings
 
     return unsubscribe;
 }
+export const blockTimeSlot = async (facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> => {
+    try {
+        const facilityRef = doc(db, 'facilities', facilityId);
+        const facilitySnap = await getDoc(facilityRef);
+
+        if (facilitySnap.exists() && facilitySnap.data().ownerId === ownerId) {
+            await updateDoc(facilityRef, {
+                blockedSlots: arrayUnion(newBlock)
+            });
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error("Error blocking time slot: ", error);
+        return false;
+    }
+};
+
+export const unblockTimeSlot = async (facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> => {
+    try {
+        const facilityRef = doc(db, 'facilities', facilityId);
+        const facilitySnap = await getDoc(facilityRef);
+
+        if (facilitySnap.exists() && facilitySnap.data().ownerId === ownerId) {
+            const facilityData = facilitySnap.data() as Facility;
+            const slotToRemove = facilityData.blockedSlots?.find(s => s.date === date && s.startTime === startTime);
+            if (slotToRemove) {
+                await updateDoc(facilityRef, {
+                    blockedSlots: arrayRemove(slotToRemove)
+                });
+                return true;
+            }
+        }
+        return false;
+    } catch (error) {
+        console.error("Error unblocking time slot: ", error);
+        return false;
+    }
+};
