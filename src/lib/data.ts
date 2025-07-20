@@ -770,4 +770,3 @@ export const unblockTimeSlot = async (facilityId: string, ownerId: string, date:
         return false;
     }
 };
-
