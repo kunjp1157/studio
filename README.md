@@ -10,11 +10,13 @@ Sports Arena is a modern, full-stack web application designed to be the go-to pl
 - **Real-Time Booking:** View live availability and book slots instantly.
 - **Secure Payments:** Mock integration for various payment methods including card, UPI, and QR code.
 - **User Accounts:** Manage profiles, booking history, and favorite venues.
-- **AI-Powered Tools:**
-    - **Recommender:** Get personalized facility suggestions based on your preferences.
-    - **Weekend Planner:** Describe your ideal sporty weekend and get a custom itinerary.
 - **Event & Matchmaking:** Discover and register for sports events, or find players for a game.
 - **Notifications:** Receive timely updates on bookings, reminders, and cancellations.
+
+### AI-Powered User Tools:
+- **Facility Recommender:** Analyzes your stated preferences (favorite sports, amenities) and past booking history to provide intelligent, personalized facility suggestions.
+- **Weekend Planner:** Describe your ideal sporty weekend in natural language (e.g., "A fun weekend for two, we like badminton and swimming"), and the AI will generate a custom itinerary complete with facility suggestions, timings, and estimated costs.
+- **Review Summarizer:** Instead of reading through dozens of reviews, the AI analyzes all user feedback for a facility and presents a concise list of pros and cons, helping you make faster, more informed decisions.
 
 ### For Admins & Owners:
 - **Comprehensive Dashboards:** Separate dashboards for site administrators and facility owners.
@@ -22,8 +24,11 @@ Sports Arena is a modern, full-stack web application designed to be the go-to pl
 - **Booking Management:** Admins can view and manage all bookings on the platform.
 - **User Management:** Admins can oversee user accounts, roles, and statuses.
 - **Dynamic Pricing & Promotions:** Create rules to dynamically adjust prices or offer discounts.
-- **AI Presentation Generator:** An admin tool that analyzes live app data and generates a business summary presentation.
 - **Real-Time Updates:** Data management is powered by real-time Firestore listeners, ensuring instant UI updates.
+
+### AI-Powered Admin Tools:
+- **AI Presentation Generator:** An admin tool that analyzes live app data (users, bookings, revenue) and generates a professional business summary presentation with insightful talking points and strategic recommendations.
+- **AI Image Generation:** When creating or editing a facility, admins can simply describe an image (e.g., "a modern indoor basketball court at night") and the AI will generate a high-quality, relevant photo, eliminating the need for stock imagery.
 
 ## Technology Stack
 
