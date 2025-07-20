@@ -6,8 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Facility, Amenity, Sport, Review, RentalEquipment, SiteSettings } from '@/lib/types';
-import { getFacilityById, getSportById } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
+import { getFacilityById, getSportById, getSiteSettings } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -72,7 +71,7 @@ export default function FacilityDetailPage() {
         if (facilityId) {
             const [foundFacility, settings] = await Promise.all([
                 Promise.resolve(getFacilityById(facilityId)), // This is sync, but wrap in promise for consistency
-                getSiteSettingsAction()
+                Promise.resolve(getSiteSettings())
             ]);
             setTimeout(() => { // Simulate fetch delay
                 setFacility(foundFacility || null);

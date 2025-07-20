@@ -16,8 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription, FormMessage } from '@/components/ui/form';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { updateSiteSettings } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
+import { updateSiteSettings, getSiteSettings } from '@/lib/data';
 import type { SiteSettings, NotificationTemplate, NotificationType } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,15 +52,12 @@ export default function AdminSettingsPage() {
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
-    defaultValues: async () => getSiteSettingsAction(),
+    defaultValues: getSiteSettings(),
   });
   
   const notificationForm = useForm<NotificationsFormValues>({
       resolver: zodResolver(notificationsFormSchema),
-      defaultValues: async () => {
-          const settings = await getSiteSettingsAction();
-          return { templates: settings.notificationTemplates || [] };
-      }
+      defaultValues: { templates: getSiteSettings().notificationTemplates || [] },
   });
 
   const { fields } = useFieldArray({
@@ -71,7 +67,7 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     const intervalId = setInterval(async () => {
-      const currentSettings = await getSiteSettingsAction();
+      const currentSettings = getSiteSettings();
       const formValues = form.getValues();
       
       // Simple check to avoid deep comparison issues

@@ -7,8 +7,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import type { MembershipPlan, SiteSettings, UserProfile } from '@/lib/types';
-import { mockMembershipPlans, mockUser, updateUser } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
+import { mockMembershipPlans, mockUser, updateUser, getSiteSettings } from '@/lib/data';
 import { Award, CheckCircle, Star, CreditCard, HandCoins, QrCode, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
@@ -59,11 +58,8 @@ export default function MembershipsPage() {
       setIsLoading(false);
     }, 500);
 
-    const fetchSettings = async () => {
-      const settings = await getSiteSettingsAction();
-      setCurrency(settings.defaultCurrency);
-    }
-    fetchSettings();
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
   }, []);
 
   useEffect(() => {
