@@ -1,3 +1,4 @@
+
 # Sports Arena: A Next.js Facility Booking Application
 
 Sports Arena is a modern, full-stack web application designed to be the go-to platform for discovering and booking sports facilities. Built with Next.js, Firebase, and featuring AI-powered tools via Genkit, this project serves as a comprehensive example of a real-world booking system.

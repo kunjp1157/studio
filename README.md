@@ -1,3 +1,4 @@
+
 # Sports Arena: A Next.js Facility Booking Application
 
 Sports Arena is a modern, full-stack web application designed to be the go-to platform for discovering and booking sports facilities. Built with Next.js, Firebase, and featuring AI-powered tools via Genkit, this project serves as a comprehensive example of a real-world booking system.
@@ -58,7 +59,7 @@ To get a local copy up and running, follow these simple steps.
     ```
 
 3.  **Set up Environment Variables:**
-    Create a `.env` file in the root of the project and add your Firebase project configuration keys:
+    Create a `.env` file in the root of the project and add your Firebase project configuration keys. See the section below on how to find these keys.
     ```env
     NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
@@ -73,6 +74,18 @@ To get a local copy up and running, follow these simple steps.
     npm run dev
     ```
     The application will be available at `http://localhost:3000`.
+
+## How to Find Your Firebase Keys
+
+To connect this application to your Firebase project, you need to provide your project's specific configuration keys in the `.env` file.
+
+1.  **Go to the Firebase Console**: Open your web browser and navigate to `console.firebase.google.com`.
+2.  **Select Your Project**: Click on the project you are using for this application.
+3.  **Go to Project Settings**: In the project dashboard, click the gear icon **(⚙️)** next to "Project Overview" in the sidebar, then select **Project settings**.
+4.  **Find Your Web App**: In the **General** tab, scroll down to the "Your apps" section.
+5.  **View Config**: Click on the web app you have registered for this project. If you haven't created one, click the web icon (`</>`) to add a new web app.
+6.  **Copy the Keys**: In the "SDK setup and configuration" section, select the "Config" option. You will see a `firebaseConfig` object containing all the keys you need (`apiKey`, `authDomain`, etc.).
+7.  **Update `.env` File**: Copy the corresponding values from the `firebaseConfig` object and paste them into your `.env` file.
 
 ## Available Scripts
 
