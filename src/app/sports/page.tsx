@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { SportCard } from '@/components/sports/SportCard';
 import { PageTitle } from '@/components/shared/PageTitle';
 import type { Sport } from '@/lib/types';
-import { mockSports } from '@/lib/data';
+import { mockSports } from '@/lib/mock-data';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 export default function SportsPage() {
