@@ -173,18 +173,26 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
         const facilityRes = await db.query('SELECT * FROM facilities WHERE id = $1', [id]);
         if (facilityRes.rows.length === 0) return undefined;
 
-        const facility = facilityRes.rows[0];
+        let facility = facilityRes.rows[0];
 
-        // Enrich sports and amenities
+        // Enrich sports
         const sportsRes = await db.query('SELECT s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sport_id WHERE fs.facility_id = $1', [id]);
         facility.sports = sportsRes.rows;
 
+        // Enrich amenities
         const amenitiesRes = await db.query('SELECT a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id WHERE fa.facility_id = $1', [id]);
         facility.amenities = amenitiesRes.rows;
-        
-        // Assume sport_prices, operating_hours, etc are stored as JSONB in the facilities table for simplicity in this migration
-        // In a fully relational model, these would be separate tables to join.
 
+        // In a real app with a full relational model, you would also join:
+        // - reviews (from a reviews table)
+        // - rental_equipment (from a rental_equipment table)
+        // - pricing_rules (from a pricing_rules table)
+        // - blocked_slots (from a blocked_slots table)
+        // For this example, we'll assume these are still mocked or will be handled separately.
+        
+        // This is a placeholder for review enrichment
+        facility.reviews = []; 
+        
         return facility;
     } catch (error) {
         console.error("Error fetching facility by ID: ", error);
@@ -538,7 +546,6 @@ export const updatePricingRule = (rule: PricingRule): void => { const index = mo
 export const deletePricingRule = (id: string): void => { mockPricingRules = mockPricingRules.filter(r => r.id !== id); };
 export const addPromotionRule = (rule: Omit<PromotionRule, 'id'>): void => { mockPromotionRules.push({ ...rule, id: `promo-${Date.now()}` }); };
 export const updatePromotionRule = (rule: PromotionRule): void => { const index = mockPromotionRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPromotionRules[index] = rule; };
-export const deletePromotionRule = (id: string): void => { mockPromotionRules = mockPromotionRules.filter(r => r.id !== id); };
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
 export async function listenToOwnerBookings(ownerId: string, callback: (bookings: Booking[]) => void, onError: (error: Error) => void): Promise<() => void> {

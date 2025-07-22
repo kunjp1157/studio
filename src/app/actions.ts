@@ -30,13 +30,11 @@ import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, Me
 
 export async function getFacilitiesAction(): Promise<Facility[]> {
   const facilities = await dbGetAllFacilities();
-  // Enrich facilities with full sport and amenity objects here, on the server
-  const enrichedFacilities = facilities.map(f => ({
-      ...f,
-      sports: Array.isArray(f.sports) ? f.sports.map(s => typeof s === 'string' ? getSportById(s) : s).filter(Boolean) as Sport[] : [],
-      amenities: Array.isArray(f.amenities) ? f.amenities.map(a => typeof a === 'string' ? getAmenityById(a) : a).filter(Boolean) as any : [],
-  }));
-  return enrichedFacilities;
+  // Enrich each facility with its full details
+  const enrichedFacilities = await Promise.all(
+    facilities.map(f => getFacilityById(f.id))
+  );
+  return enrichedFacilities.filter(Boolean) as Facility[];
 }
 
 export async function getUsersAction(): Promise<UserProfile[]> {
