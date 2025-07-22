@@ -6,8 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import type { SportEvent, Facility, SiteSettings } from '@/lib/types';
-import { getEventById, getFacilityById, registerForEvent as mockRegisterForEvent, addNotification, mockUser } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
+import { getEventById, getFacilityById, registerForEvent as mockRegisterForEvent, addNotification, mockUser, getSiteSettings } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,15 +44,12 @@ export default function EventDetailPage() {
   }, [eventId]);
   
   useEffect(() => {
-    const fetchSettings = async () => {
-      const currentSettings = await getSiteSettingsAction();
+    const fetchSettings = () => {
+      const currentSettings = getSiteSettings();
       setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
     };
 
     fetchSettings();
-    const settingsInterval = setInterval(fetchSettings, 5000);
-
-    return () => clearInterval(settingsInterval);
   }, []);
 
   const handleRegisterClick = async () => {

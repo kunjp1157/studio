@@ -14,7 +14,7 @@ import { planWeekend, type PlanWeekendOutput } from '@/ai/flows/weekend-planner'
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import type { SiteSettings } from '@/lib/types';
-import { getSiteSettingsAction } from '@/app/actions';
+import { getSiteSettings } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -30,11 +30,8 @@ export default function WeekendPlannerPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-        const settings = await getSiteSettingsAction();
-        setCurrency(settings.defaultCurrency);
-    };
-    fetchSettings();
+    const settings = getSiteSettings();
+    setCurrency(settings.defaultCurrency);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

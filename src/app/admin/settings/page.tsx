@@ -66,7 +66,7 @@ export default function AdminSettingsPage() {
   });
 
   useEffect(() => {
-    const intervalId = setInterval(async () => {
+    const intervalId = setInterval(() => {
       const currentSettings = getSiteSettings();
       const formValues = form.getValues();
       

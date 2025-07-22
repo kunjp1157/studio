@@ -4,8 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Booking, Facility, TimeSlot, SiteSettings, BlockedSlot } from '@/lib/types';
-import { getBookingById, getFacilityById, calculateDynamicPrice, updateBooking, addNotification, mockUser, getBookingsForFacilityOnDate } from '@/lib/data';
-import { getSiteSettingsAction } from '@/app/actions';
+import { getBookingById, getFacilityById, calculateDynamicPrice, updateBooking, addNotification, mockUser, getBookingsForFacilityOnDate, getSiteSettings } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,7 +72,7 @@ export default function EditBookingPage() {
     const fetchInitialData = async () => {
       if (bookingId) {
         setIsLoading(true);
-        const settings = await getSiteSettingsAction();
+        const settings = getSiteSettings();
         const foundBooking = await getBookingById(bookingId);
         
         if (foundBooking) {
