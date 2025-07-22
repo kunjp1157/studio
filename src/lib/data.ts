@@ -450,7 +450,13 @@ async function seedData() {
           },
         ];
         for (const facility of facilitiesToSeed) {
-          await addDoc(facilitiesCollection, facility);
+          // The bug was here: I was not converting the rich sport/amenity objects back to just their IDs for Firestore storage.
+          const facilityToStore = {
+            ...facility,
+            sports: facility.sports.map(s => s.id),
+            amenities: facility.amenities.map(a => a.id),
+          };
+          await addDoc(facilitiesCollection, facilityToStore);
         }
         console.log("Database facilities seeded successfully.");
     }

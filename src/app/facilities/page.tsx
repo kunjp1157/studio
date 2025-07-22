@@ -6,7 +6,7 @@ import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
 import type { Facility, SearchFilters, SiteSettings } from '@/lib/types';
-import { getSiteSettings, listenToFacilities } from '@/lib/data';
+import { getSiteSettings, listenToFacilities, getSportById, getAmenityById, getAllFacilities } from '@/lib/data';
 import { AlertCircle, SortAsc } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,10 +48,27 @@ export default function FacilitiesPage() {
     const settings = getSiteSettings();
     setCurrency(settings.defaultCurrency);
     
+    // Use a direct fetch for initial load to avoid UI flicker
+    getAllFacilities().then(facilitiesData => {
+        const enrichedFacilities = facilitiesData.map(f => ({
+            ...f,
+            sports: (f.sports as unknown as string[]).map(id => getSportById(id)).filter(Boolean) as any,
+            amenities: (f.amenities as unknown as string[]).map(id => getAmenityById(id)).filter(Boolean) as any,
+        }));
+        setAllFacilities(enrichedFacilities);
+        setIsLoading(false);
+    });
+
+    // Then, set up the real-time listener for updates
     const unsubscribe = listenToFacilities(
       (facilitiesData) => {
-        setAllFacilities(facilitiesData);
-        setIsLoading(false);
+        // Enrich data with full sport/amenity objects
+        const enrichedFacilities = facilitiesData.map(f => ({
+            ...f,
+            sports: (f.sports as unknown as string[]).map(id => getSportById(id)).filter(Boolean) as any,
+            amenities: (f.amenities as unknown as string[]).map(id => getAmenityById(id)).filter(Boolean) as any,
+        }));
+        setAllFacilities(enrichedFacilities);
       },
       (error) => {
         console.error("Failed to listen to facilities:", error);

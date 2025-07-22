@@ -18,25 +18,25 @@ const missingKeys = Object.entries(firebaseConfig)
 
 let app;
 let db;
+let firebaseInitializationError: Error | null = null;
 
 if (missingKeys.length > 0) {
   const errorMsg = `Firebase initialization failed. The following environment variables are missing or invalid in your .env file: ${missingKeys.join(', ')}. Please make sure they are all set correctly.`;
-  console.error(errorMsg);
-  // Throw an error during server-side rendering or build to fail fast
-  if (typeof window === 'undefined') {
-    throw new Error(errorMsg);
-  }
+  firebaseInitializationError = new Error(errorMsg);
 } else {
   // All keys are present, proceed with initialization
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     db = getFirestore(app);
   } catch (e) {
-    console.error("An error occurred during Firebase initialization:", e);
-    // You might want to handle this case, e.g., by setting db to null
-    // or showing a global error message to the user.
-    db = null as any; // Prevent further errors from using an uninitialized db
+    firebaseInitializationError = e instanceof Error ? e : new Error("An unknown error occurred during Firebase initialization.");
   }
 }
 
-export { db };
+if (firebaseInitializationError && typeof window !== 'undefined') {
+  console.error(firebaseInitializationError.message);
+} else if (firebaseInitializationError) {
+  throw firebaseInitializationError;
+}
+
+export { db, firebaseInitializationError };
