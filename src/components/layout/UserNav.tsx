@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, LogOut, LayoutDashboard, CalendarDays, CreditCard, Heart, Group, HandCoins } from 'lucide-react';
-import { mockUser } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useState, useEffect } from 'react';
@@ -23,16 +22,38 @@ import { useState, useEffect } from 'react';
 
 export function UserNav() {
   const router = useRouter();
-  // We use the static mockUser as the default/logged-in user.
-  const currentUser = mockUser;
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // On the client, read the user from sessionStorage.
+    const storedUser = sessionStorage.getItem('activeUser');
+    if (storedUser) {
+      setCurrentUser(JSON.parse(storedUser));
+    }
+    setIsLoading(false);
+
+    // Listen for changes from the UserSwitcher component
+    const handleUserChange = () => {
+        const updatedUser = sessionStorage.getItem('activeUser');
+        if(updatedUser) {
+            setCurrentUser(JSON.parse(updatedUser));
+        }
+    };
+    window.addEventListener('userChanged', handleUserChange);
+
+    return () => {
+        window.removeEventListener('userChanged', handleUserChange);
+    };
+
+  }, []);
 
   const handleLogout = () => {
     // "Logout" is now just a navigation action as there's no auth session.
     router.push('/facilities');
   };
 
-  // This check is a safeguard, but with the new static mockUser, it should always be available.
-  if (!currentUser) {
+  if (isLoading || !currentUser) {
     return <Skeleton className="h-10 w-10 rounded-full" />;
   }
 

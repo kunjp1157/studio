@@ -1,5 +1,6 @@
 
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -35,7 +36,7 @@ export const mockAmenities: Amenity[] = [
 ];
 
 // Define a set of mock users with different roles
-const allMockUsers = {
+export const allMockUsers: Record<'admin' | 'owner' | 'user', UserProfile> = {
   admin: { 
     id: 'user-admin-kirtan', 
     name: 'Kirtan Shah', 
@@ -281,6 +282,14 @@ export const getBookingsForFacilityOnDate = async (facilityId: string, date: str
     return res.rows;
 };
 
+export const getBookingsByUserId = async (userId: string): Promise<Booking[]> => {
+    const res = await db.query(
+        `SELECT * FROM bookings WHERE user_id = $1`,
+        [userId]
+    );
+    return res.rows;
+};
+
 // ... other functions ...
 
 // --- STATIC/MOCK GETTERS (for data not in DB for this migration) ---
@@ -415,7 +424,7 @@ export const markAllNotificationsAsRead = (userId: string): void => { mockAppNot
 export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
 export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Promise<Review> => {
   const currentUser = await getUserById(reviewData.userId);
-  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
+  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isPublicProfile || false, createdAt: new Date().toISOString() };
   mockReviews.push(newReview);
   return newReview;
 };
@@ -542,4 +551,5 @@ export const unblockTimeSlot = async (facilityId: string, ownerId: string, date:
     console.log("Unblocking slot for", facilityId, date, startTime);
     return true;
 };
+
 

@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review, SiteSettings } from '@/lib/types';
-import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking, listenToUserBookings, getSiteSettings } from '@/lib/data';
+import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking, getSiteSettings } from '@/lib/data';
+import { getBookingsByUserIdAction } from '@/app/actions';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -73,10 +74,11 @@ export default function BookingsPage() {
   useEffect(() => {
       const settings = getSiteSettings();
       setCurrency(settings.defaultCurrency);
-
-      const unsubscribe = listenToUserBookings(
-          mockUser.id, 
-          (userBookings) => {
+      
+      const fetchBookings = async () => {
+          setIsLoading(true);
+          try {
+              const userBookings = await getBookingsByUserIdAction(mockUser.id);
               userBookings.sort((a, b) => {
                 const aDate = parseISO(a.date + 'T' + a.startTime);
                 const bDate = parseISO(b.date + 'T' + b.startTime);
@@ -93,16 +95,15 @@ export default function BookingsPage() {
                 }
               });
               setBookings(userBookings);
-              setIsLoading(false);
-          },
-          (error) => {
-              console.error("Failed to listen to user bookings:", error);
-              toast({ title: "Error", description: "Could not load real-time bookings.", variant: "destructive" });
+          } catch (error) {
+              console.error("Failed to fetch user bookings:", error);
+              toast({ title: "Error", description: "Could not load bookings.", variant: "destructive" });
+          } finally {
               setIsLoading(false);
           }
-      );
+      };
 
-      return () => unsubscribe();
+      fetchBookings();
   }, [toast]);
 
   useEffect(() => {

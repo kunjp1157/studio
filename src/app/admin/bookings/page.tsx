@@ -34,7 +34,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, UserProfile, Facility, SiteSettings } from '@/lib/types';
-import { getUserById, getFacilityById, updateBooking, addNotification, getAllBookings, getSiteSettings } from '@/lib/data';
+import { getUserById, getFacilityById, updateBooking, addNotification, getSiteSettings } from '@/lib/data';
+import { getAllBookingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Eye, Edit, XCircle, DollarSign, Search, FilterX, User, Home, CalendarDays, Clock, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -66,7 +67,7 @@ export default function AdminBookingsPage() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const bookingsData = await getAllBookings();
+            const bookingsData = await getAllBookingsAction();
             setAllBookings(bookingsData);
         } catch (error) {
              toast({ title: "Error", description: "Could not load bookings data.", variant: "destructive" });

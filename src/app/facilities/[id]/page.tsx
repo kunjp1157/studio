@@ -69,10 +69,8 @@ export default function FacilityDetailPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
         if (facilityId) {
-            const [foundFacility, settings] = await Promise.all([
-                Promise.resolve(getFacilityById(facilityId)), // This is sync, but wrap in promise for consistency
-                Promise.resolve(getSiteSettings())
-            ]);
+            const foundFacility = await getFacilityById(facilityId);
+            const settings = getSiteSettings();
             setTimeout(() => { // Simulate fetch delay
                 setFacility(foundFacility || null);
                 setCurrency(settings.defaultCurrency);

@@ -44,7 +44,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { UserProfile, UserRole, UserStatus } from '@/lib/types';
-import { updateUser as updateMockUser, addNotification, getAllUsers } from '@/lib/data';
+import { updateUser as updateMockUser, addNotification } from '@/lib/data';
+import { getUsersAction } from '@/app/actions';
 import { MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -83,7 +84,7 @@ export default function AdminUsersPage() {
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
-            const usersData = await getAllUsers();
+            const usersData = await getUsersAction();
             setAllUsers(usersData);
         } catch (error) {
              toast({ title: "Error", description: "Could not load user data.", variant: "destructive" });

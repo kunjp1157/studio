@@ -8,23 +8,21 @@ import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
 import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy, Calendar as CalendarIcon, Swords } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { getSiteSettings } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { UserSwitcher } from '../shared/UserSwitcher';
 
 export function Header() {
   const [siteName, setSiteName] = useState('Sports Arena');
 
   useEffect(() => {
-    // Fetch initial settings
-    const fetchSettings = () => {
-        const currentSettings = getSiteSettings();
+    const fetchSettings = async () => {
+        const currentSettings = await getSiteSettingsAction();
         if (currentSettings.siteName !== siteName) {
             setSiteName(currentSettings.siteName);
         }
     }
-    fetchSettings(); // Initial fetch
+    fetchSettings(); 
 
-    // Poll for changes
     const settingsInterval = setInterval(fetchSettings, 5000);
 
     return () => {

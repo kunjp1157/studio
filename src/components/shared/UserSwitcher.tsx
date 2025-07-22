@@ -8,26 +8,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { setActiveMockUser, mockUser } from "@/lib/data";
+import { allMockUsers, setActiveMockUser } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { UserCog } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function UserSwitcher() {
   const router = useRouter();
-  // Initialize state from the current mockUser to ensure consistency
-  const [currentUserRole, setCurrentUserRole] = useState(mockUser.role.toLowerCase());
+  const [currentUserRole, setCurrentUserRole] = useState('admin');
 
   useEffect(() => {
-    // This effect ensures that if the mockUser changes from another source,
-    // the dropdown reflects that change.
-    setCurrentUserRole(mockUser.role.toLowerCase());
-  }, [mockUser]);
+    // On initial load, set the active user in session storage if not already set.
+    if (!sessionStorage.getItem('activeUser')) {
+      sessionStorage.setItem('activeUser', JSON.stringify(allMockUsers.admin));
+    }
+    const activeUser = JSON.parse(sessionStorage.getItem('activeUser') || '{}');
+    setCurrentUserRole(activeUser.role?.toLowerCase() || 'admin');
+
+  }, []);
 
   const handleValueChange = (value: 'admin' | 'owner' | 'user') => {
-    setActiveMockUser(value);
+    const newActiveUser = allMockUsers[value];
+    setActiveMockUser(value); // This still updates the server-side mock for any server components.
+    
+    // Store the new user in session storage for client components to access.
+    sessionStorage.setItem('activeUser', JSON.stringify(newActiveUser));
+    
+    // Dispatch a custom event to notify other components (like UserNav) immediately.
+    window.dispatchEvent(new Event('userChanged'));
+
     setCurrentUserRole(value);
-    // Refresh the page to make all components aware of the new user role
     router.refresh(); 
   }
 

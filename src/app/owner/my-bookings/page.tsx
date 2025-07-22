@@ -35,7 +35,7 @@ export default function OwnerBookingsPage() {
         unsubscribe = await listenToOwnerBookings(
             ownerId,
             (ownerBookings) => {
-                setBookings(ownerBookings.sort((a, b) => parseISO(b.bookedAt).getTime() - parseISO(a.bookedAt).getTime()));
+                setBookings(ownerBookings.sort((a, b) => parseISO(b.bookedAt).getTime() - parseISO(a.createdAt).getTime()));
                 setIsLoading(false);
             },
             (error) => {

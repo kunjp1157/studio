@@ -8,11 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import {
-  getAllBookings,
-  getAllUsers,
-  getAllFacilities,
   getSiteSettings
 } from '@/lib/data';
+import { getAllBookingsAction, getUsersAction, getFacilitiesAction } from '@/app/actions';
 import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus } from 'lucide-react';
 import type { ChartConfig } from '@/components/ui/chart';
 import { parseISO, getMonth, getYear, format, subMonths, formatDistanceToNow } from 'date-fns';
@@ -112,9 +110,9 @@ export default function AdminDashboardPage() {
     const fetchData = async () => {
         setIsLoading(true);
         const [facilitiesData, usersData, bookingsData] = await Promise.all([
-            getAllFacilities(),
-            getAllUsers(),
-            getAllBookings()
+            getFacilitiesAction(),
+            getUsersAction(),
+            getAllBookingsAction()
         ]);
         setFacilities(facilitiesData);
         setUsers(usersData);

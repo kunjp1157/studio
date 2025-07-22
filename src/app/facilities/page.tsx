@@ -6,7 +6,8 @@ import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
 import type { Facility, SearchFilters, SiteSettings } from '@/lib/types';
-import { getSiteSettings, getSportById, getAmenityById, getAllFacilities } from '@/lib/data';
+import { getSiteSettings, getSportById, getAmenityById } from '@/lib/data';
+import { getFacilitiesAction } from '@/app/actions';
 import { AlertCircle, SortAsc } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -51,7 +52,7 @@ export default function FacilitiesPage() {
     // Use a direct fetch for initial load to avoid UI flicker
     const fetchInitialData = async () => {
         try {
-            const facilitiesData = await getAllFacilities();
+            const facilitiesData = await getFacilitiesAction();
             const enrichedFacilities = facilitiesData.map(f => ({
                 ...f,
                 sports: Array.isArray(f.sports) ? f.sports.map(s => typeof s === 'string' ? getSportById(s) : s).filter(Boolean) as any : [],
