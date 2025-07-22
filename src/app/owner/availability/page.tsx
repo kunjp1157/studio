@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,14 +15,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { CalendarClock, AlertCircle, PlusCircle, Trash2, Building2 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import type { Facility, BlockedSlot } from '@/lib/types';
-import { mockUser, getFacilitiesByOwnerId, getFacilityById, blockTimeSlot, unblockTimeSlot } from '@/lib/data';
+import type { Facility, BlockedSlot, UserProfile } from '@/lib/types';
+import { getFacilitiesByOwnerIdAction, getFacilityByIdAction, blockTimeSlot, unblockTimeSlot } from '@/app/actions';
 import { format, parse, isValid } from 'date-fns';
 
 export default function OwnerAvailabilityPage() {
   const [ownerFacilities, setOwnerFacilities] = useState<Facility[]>([]);
   const [selectedFacilityId, setSelectedFacilityId] = useState<string | undefined>(undefined);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   
   const [blockedDate, setBlockedDate] = useState<Date | undefined>(new Date());
   const [startTime, setStartTime] = useState('');
@@ -34,36 +35,59 @@ export default function OwnerAvailabilityPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setIsLoadingFacilities(true);
-    const fetchFacilities = async () => {
-        const facilities = await getFacilitiesByOwnerId(mockUser.id);
-        setOwnerFacilities(facilities);
-        if (facilities.length > 0 && !selectedFacilityId) {
-            // Optionally auto-select the first facility
-            // setSelectedFacilityId(facilities[0].id);
-        }
-        setIsLoadingFacilities(false);
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+        setCurrentUser(JSON.parse(activeUser));
     }
-    fetchFacilities();
   }, []);
 
-  useEffect(() => {
-    if (selectedFacilityId) {
-        getFacilityById(selectedFacilityId).then(facility => {
-            setSelectedFacility(facility || null);
-        });
-    } else {
-      setSelectedFacility(null);
+  const fetchFacilities = useCallback(async () => {
+    if (!currentUser) return;
+    setIsLoadingFacilities(true);
+    try {
+      const facilities = await getFacilitiesByOwnerIdAction(currentUser.id);
+      setOwnerFacilities(facilities);
+      if (facilities.length > 0 && !selectedFacilityId) {
+          // You can uncomment this to auto-select the first facility
+          // setSelectedFacilityId(facilities[0].id);
+      }
+    } catch (error) {
+        toast({title: "Error", description: "Could not fetch your facilities.", variant: "destructive"});
+    } finally {
+        setIsLoadingFacilities(false);
     }
-  }, [selectedFacilityId]);
+  }, [currentUser, toast, selectedFacilityId]);
+
+  useEffect(() => {
+    fetchFacilities();
+  }, [currentUser, fetchFacilities]);
+
+  const fetchSelectedFacility = useCallback(async () => {
+      if (selectedFacilityId) {
+        // Optimistically update from the list we already have
+        const existing = ownerFacilities.find(f => f.id === selectedFacilityId);
+        if (existing) setSelectedFacility(existing);
+        
+        // Then fetch the latest version in the background
+        const facility = await getFacilityByIdAction(selectedFacilityId);
+        setSelectedFacility(facility || null);
+      } else {
+        setSelectedFacility(null);
+      }
+  }, [selectedFacilityId, ownerFacilities]);
+
+
+  useEffect(() => {
+    fetchSelectedFacility();
+  }, [selectedFacilityId, fetchSelectedFacility]);
+
 
   const handleAddBlockedSlot = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFacilityId || !blockedDate || !startTime || !endTime) {
+    if (!selectedFacilityId || !blockedDate || !startTime || !endTime || !currentUser) {
       toast({ title: "Missing Information", description: "Please select a facility, date, start time, and end time.", variant: "destructive" });
       return;
     }
-    // Basic time validation
     if (endTime <= startTime) {
         toast({ title: "Invalid Time Range", description: "End time must be after start time.", variant: "destructive" });
         return;
@@ -76,27 +100,30 @@ export default function OwnerAvailabilityPage() {
       endTime,
       reason: reason.trim() || undefined,
     };
-
-    const success = await blockTimeSlot(selectedFacilityId, mockUser.id, newBlock);
     
-      if (success) {
-        toast({ title: "Slot Blocked", description: `Time slot on ${newBlock.date} from ${startTime} to ${endTime} has been blocked.` });
-        setStartTime('');
-        setEndTime('');
-        setReason('');
-      } else {
-        toast({ title: "Error Blocking Slot", description: "Could not block the slot. It might already be blocked or an error occurred.", variant: "destructive" });
-      }
-      setIsSubmittingBlock(false);
+    // Server action for blocking
+    const success = await blockTimeSlot(selectedFacilityId, currentUser.id, newBlock);
+    
+    if (success) {
+      toast({ title: "Slot Blocked", description: `Time slot on ${newBlock.date} from ${startTime} to ${endTime} has been blocked.` });
+      await fetchSelectedFacility(); // Refresh data
+      setStartTime('');
+      setEndTime('');
+      setReason('');
+    } else {
+      toast({ title: "Error Blocking Slot", description: "Could not block the slot. It might already be blocked or an error occurred.", variant: "destructive" });
+    }
+    setIsSubmittingBlock(false);
   };
 
   const handleRemoveBlockedSlot = async (date: string, slotStartTime: string) => {
-    if (!selectedFacilityId) return;
+    if (!selectedFacilityId || !currentUser) return;
     
-    const success = await unblockTimeSlot(selectedFacilityId, mockUser.id, date, slotStartTime);
+    const success = await unblockTimeSlot(selectedFacilityId, currentUser.id, date, slotStartTime);
     
     if (success) {
       toast({ title: "Slot Unblocked", description: `The blocked slot on ${date} at ${slotStartTime} is now available.` });
+      await fetchSelectedFacility(); // Refresh data
     } else {
       toast({ title: "Error Unblocking Slot", description: "Could not unblock the slot.", variant: "destructive" });
     }

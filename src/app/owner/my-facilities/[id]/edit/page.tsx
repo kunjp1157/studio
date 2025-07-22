@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { FacilityAdminForm } from '@/components/admin/FacilityAdminForm';
-import type { Facility } from '@/lib/types';
-import { getFacilityById, mockUser } from '@/lib/data';
+import type { Facility, UserProfile } from '@/lib/types';
+import { getFacilityByIdAction } from '@/app/actions';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, ArrowLeft } from "lucide-react";
@@ -19,17 +19,22 @@ export default function EditOwnerFacilityPage() {
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Assuming mockUser.id is the ID of the currently logged-in owner
-  const currentOwnerId = mockUser.id;
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    if (facilityId) {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+        setCurrentUser(JSON.parse(activeUser));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (facilityId && currentUser) {
       setIsLoading(true);
       const fetchFacility = async () => {
-          const foundFacility = await getFacilityById(facilityId);
+          const foundFacility = await getFacilityByIdAction(facilityId);
           if (foundFacility) {
-            if (foundFacility.ownerId === currentOwnerId) {
+            if (foundFacility.ownerId === currentUser.id) {
               setFacility(foundFacility);
             } else {
               setError("You do not have permission to edit this facility.");
@@ -43,7 +48,7 @@ export default function EditOwnerFacilityPage() {
       }
       fetchFacility();
     }
-  }, [facilityId, currentOwnerId]);
+  }, [facilityId, currentUser]);
 
   if (isLoading) {
     return (
@@ -71,7 +76,6 @@ export default function EditOwnerFacilityPage() {
   }
   
   if (!facility) {
-     // This case should ideally be caught by the error state if facility is not found
      return (
       <div className="space-y-8 container mx-auto py-8 px-4 md:px-6">
         <PageTitle title="Edit Facility" />

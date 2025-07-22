@@ -18,15 +18,55 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, LayoutDashboard, Ticket, CalendarClock, BarChart2, Settings, LogOut, HandCoins } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { mockUser } from '@/lib/data'; // Assuming owner uses a similar mock user for now
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import type { UserProfile } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+      setCurrentUser(JSON.parse(activeUser));
+    }
+    setIsLoading(false);
+
+    const handleUserChange = () => {
+        const updatedUser = sessionStorage.getItem('activeUser');
+        if(updatedUser) {
+            setCurrentUser(JSON.parse(updatedUser));
+        }
+    };
+    window.addEventListener('userChanged', handleUserChange);
+
+    return () => {
+        window.removeEventListener('userChanged', handleUserChange);
+    };
+  }, []);
+
 
   const isActive = (path: string) => {
       if (path === '/owner') return pathname === path || pathname === '/owner/dashboard';
       return pathname.startsWith(path);
+  }
+
+  if (isLoading || !currentUser) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <div className="flex items-center space-x-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+            </div>
+            </div>
+        </div>
+    );
   }
 
   return (
@@ -105,17 +145,21 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         <SidebarFooter className="p-4 border-t border-sidebar-border group-data-[collapsible=icon]:p-2">
            <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
             <Avatar className="h-9 w-9 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10">
-                <AvatarImage src={mockUser.profilePictureUrl || undefined} alt="Facility Owner" />
-                <AvatarFallback>FO</AvatarFallback>
+                <AvatarImage src={currentUser.profilePictureUrl || undefined} alt="Facility Owner" />
+                <AvatarFallback>
+                    {currentUser.name
+                        ? currentUser.name.split(' ').map((n) => n[0]).join('')
+                        : 'U'}
+                </AvatarFallback>
             </Avatar>
             <div className="group-data-[collapsible=icon]:hidden">
-                <p className="text-sm font-medium">{mockUser.name}</p>
+                <p className="text-sm font-medium">{currentUser.name}</p>
                 <p className="text-xs text-muted-foreground/80">Facility Owner</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="mt-2 w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:aspect-square hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+          <Button variant="ghost" size="icon" className="mt-2 w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:aspect-square hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={() => router.push('/facilities')}>
             <LogOut className="group-data-[collapsible=icon]:m-auto"/>
-            <span className="ml-2 group-data-[collapsible=icon]:hidden">Logout</span>
+            <span className="ml-2 group-data-[collapsible=icon]:hidden">Exit Portal</span>
           </Button>
         </SidebarFooter>
       </Sidebar>

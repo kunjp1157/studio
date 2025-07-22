@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Ticket } from 'lucide-react';
-import { listenToOwnerBookings, mockUser } from '@/lib/data';
-import type { Booking } from '@/lib/types';
+import { getAllBookingsAction, getFacilitiesByOwnerIdAction } from '@/app/actions';
+import type { Booking, Facility, UserProfile } from '@/lib/types';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import {
   Table,
@@ -18,36 +18,57 @@ import {
 } from '@/components/ui/table';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 export default function OwnerBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const ownerId = mockUser.id;
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const { toast } = useToast();
+
+   useEffect(() => {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+        setCurrentUser(JSON.parse(activeUser));
+    }
+     const handleUserChange = () => {
+        const updatedUser = sessionStorage.getItem('activeUser');
+        if(updatedUser) {
+            setCurrentUser(JSON.parse(updatedUser));
+        }
+    };
+    window.addEventListener('userChanged', handleUserChange);
+    return () => window.removeEventListener('userChanged', handleUserChange);
+  }, []);
 
   useEffect(() => {
-    if (!ownerId) {
-      setIsLoading(false);
-      return;
-    }
+    const fetchBookings = async () => {
+        if (!currentUser) return;
+        setIsLoading(true);
+        try {
+            const [ownerFacilities, allBookings] = await Promise.all([
+                getFacilitiesByOwnerIdAction(currentUser.id),
+                getAllBookingsAction()
+            ]);
+            const facilityIds = ownerFacilities.map(f => f.id);
+            const ownerBookings = allBookings
+                .filter(b => facilityIds.includes(b.facilityId))
+                .sort((a,b) => parseISO(b.bookedAt).getTime() - parseISO(a.bookedAt).getTime());
+            
+            setBookings(ownerBookings);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Could not load bookings for your facilities.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchBookings();
+  }, [currentUser, toast]);
 
-    let unsubscribe = () => {};
-    const setupListener = async () => {
-        unsubscribe = await listenToOwnerBookings(
-            ownerId,
-            (ownerBookings) => {
-                setBookings(ownerBookings.sort((a, b) => parseISO(b.bookedAt).getTime() - parseISO(a.createdAt).getTime()));
-                setIsLoading(false);
-            },
-            (error) => {
-                console.error("Error listening to owner bookings:", error);
-                setIsLoading(false);
-            }
-        );
-    }
-    setupListener();
-    
-    return () => unsubscribe();
-  }, [ownerId]);
 
   return (
     <div className="space-y-8">
@@ -60,7 +81,7 @@ export default function OwnerBookingsPage() {
             Live Bookings Overview
           </CardTitle>
           <CardDescription>
-            This table updates instantly as new bookings are made for your facilities.
+            This table shows all bookings made for your facilities.
           </CardDescription>
         </CardHeader>
         <CardContent>

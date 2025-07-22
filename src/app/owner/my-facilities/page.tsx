@@ -21,8 +21,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import type { Facility, SiteSettings } from '@/lib/types';
-import { mockUser, getSiteSettings, getFacilitiesByOwnerId } from '@/lib/data'; 
+import type { Facility, SiteSettings, UserProfile } from '@/lib/types';
+import { getSiteSettingsAction, getFacilitiesByOwnerIdAction } from '@/app/actions'; 
 import { PlusCircle, MoreHorizontal, Edit, Eye, Building2, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,29 +35,35 @@ export default function OwnerFacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
-
-  const ownerId = mockUser.id; 
+  
+   useEffect(() => {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+        setCurrentUser(JSON.parse(activeUser));
+    }
+     const handleUserChange = () => {
+        const updatedUser = sessionStorage.getItem('activeUser');
+        if(updatedUser) {
+            setCurrentUser(JSON.parse(updatedUser));
+        }
+    };
+    window.addEventListener('userChanged', handleUserChange);
+    return () => window.removeEventListener('userChanged', handleUserChange);
+  }, []);
 
   useEffect(() => {
-    if (!ownerId) {
-      toast({
-          title: "Authentication Error",
-          description: "Could not determine the current user. Please log in again.",
-          variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
-
     const fetchFacilities = async () => {
+        if (!currentUser) return;
         setIsLoading(true);
         try {
-            const ownerFacilities = await getFacilitiesByOwnerId(ownerId);
+            const [ownerFacilities, settings] = await Promise.all([
+                getFacilitiesByOwnerIdAction(currentUser.id),
+                getSiteSettingsAction()
+            ]);
             setFacilities(ownerFacilities);
+            setCurrency(settings.defaultCurrency);
         } catch (error) {
              toast({
                 title: "Error",
@@ -68,10 +74,8 @@ export default function OwnerFacilitiesPage() {
             setIsLoading(false);
         }
     };
-    
     fetchFacilities();
-
-  }, [ownerId, toast]);
+  }, [currentUser, toast]);
 
   const getPriceRange = (facility: Facility) => {
     if (!currency) return <Skeleton className="h-5 w-24" />;

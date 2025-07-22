@@ -4,8 +4,8 @@
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, Building, Ticket, DollarSign, Users, Construction } from 'lucide-react';
-import type { SiteSettings, Booking, Facility } from '@/lib/types';
-import { getSiteSettings, listenToOwnerBookings, mockUser, getFacilitiesByOwnerId } from '@/lib/data';
+import type { SiteSettings, Booking, Facility, UserProfile } from '@/lib/types';
+import { getSiteSettingsAction, getFacilitiesByOwnerIdAction, getAllBookingsAction } from '@/app/actions';
 import { formatCurrency } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,40 +16,52 @@ export default function OwnerDashboardPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const ownerId = mockUser.id; // In a real app, get this from auth state
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
-    
-    let unsubscribeBookings = () => {};
-    let unsubscribeFacilities = () => {};
-
-    if (ownerId) {
-      const setupListeners = async () => {
-        const ownerFacilities = await getFacilitiesByOwnerId(ownerId);
-        setFacilities(ownerFacilities);
-
-        unsubscribeBookings = await listenToOwnerBookings(
-          ownerId,
-          (ownerBookings) => {
-            setBookings(ownerBookings);
-            if(isLoading) setIsLoading(false);
-          },
-          (error) => {
-            console.error("Error listening to owner bookings:", error);
-            if(isLoading) setIsLoading(false);
-          }
-        );
-      }
-      setupListeners();
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+        setCurrentUser(JSON.parse(activeUser));
     }
-    
-    return () => {
-        unsubscribeBookings();
+     const handleUserChange = () => {
+        const updatedUser = sessionStorage.getItem('activeUser');
+        if(updatedUser) {
+            setCurrentUser(JSON.parse(updatedUser));
+        }
     };
-  }, [ownerId, isLoading]);
+    window.addEventListener('userChanged', handleUserChange);
+    return () => window.removeEventListener('userChanged', handleUserChange);
+  }, []);
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+        if (!currentUser) return;
+        
+        setIsLoading(true);
+        try {
+            const [settings, ownerFacilities, allBookings] = await Promise.all([
+                getSiteSettingsAction(),
+                getFacilitiesByOwnerIdAction(currentUser.id),
+                getAllBookingsAction()
+            ]);
+            
+            setCurrency(settings.defaultCurrency);
+            setFacilities(ownerFacilities);
+
+            const facilityIds = ownerFacilities.map(f => f.id);
+            const ownerBookings = allBookings.filter(b => facilityIds.includes(b.facilityId));
+            setBookings(ownerBookings);
+
+        } catch (error) {
+            console.error("Error fetching owner dashboard data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchData();
+  }, [currentUser]);
 
 
   const ownerStats = bookings.reduce((acc, booking) => {
