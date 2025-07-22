@@ -48,7 +48,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
     availabilityStatus = { text: "Often Booked", variant: "secondary" };
   }
 
-  const minPrice = facility.sportPrices.length > 0
+  const minPrice = (facility.sportPrices && facility.sportPrices.length > 0)
     ? Math.min(...facility.sportPrices.map(p => p.pricePerHour))
     : 0;
 

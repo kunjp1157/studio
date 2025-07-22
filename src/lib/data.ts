@@ -175,6 +175,14 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
 
         let facility = facilityRes.rows[0];
 
+        // Ensure sport_prices is parsed correctly if it's a JSON string
+        if (typeof facility.sport_prices === 'string') {
+            facility.sportPrices = JSON.parse(facility.sport_prices);
+        } else {
+            facility.sportPrices = facility.sport_prices || [];
+        }
+
+
         // Enrich sports
         const sportsRes = await db.query('SELECT s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sport_id WHERE fs.facility_id = $1', [id]);
         facility.sports = sportsRes.rows;
@@ -182,13 +190,6 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
         // Enrich amenities
         const amenitiesRes = await db.query('SELECT a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id WHERE fa.facility_id = $1', [id]);
         facility.amenities = amenitiesRes.rows;
-
-        // In a real app with a full relational model, you would also join:
-        // - reviews (from a reviews table)
-        // - rental_equipment (from a rental_equipment table)
-        // - pricing_rules (from a pricing_rules table)
-        // - blocked_slots (from a blocked_slots table)
-        // For this example, we'll assume these are still mocked or will be handled separately.
         
         // This is a placeholder for review enrichment
         facility.reviews = []; 

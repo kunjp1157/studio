@@ -39,7 +39,7 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
   
   const [minPrice, maxPrice] = useMemo(() => {
     if (!facilities || facilities.length === 0) return [0, 100];
-    const prices = facilities.flatMap(f => f.sportPrices.map(p => p.pricePerHour));
+    const prices = facilities.flatMap(f => f.sportPrices?.map(p => p.pricePerHour) || []);
     if (prices.length === 0) return [0, 100];
     return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
   }, [facilities]);
