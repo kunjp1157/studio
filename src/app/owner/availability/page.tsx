@@ -18,8 +18,6 @@ import { useToast } from '@/hooks/use-toast';
 import type { Facility, BlockedSlot } from '@/lib/types';
 import { mockUser, getFacilitiesByOwnerId, getFacilityById, blockTimeSlot, unblockTimeSlot } from '@/lib/data';
 import { format, parse, isValid } from 'date-fns';
-import { onSnapshot, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export default function OwnerAvailabilityPage() {
   const [ownerFacilities, setOwnerFacilities] = useState<Facility[]>([]);
@@ -51,14 +49,9 @@ export default function OwnerAvailabilityPage() {
 
   useEffect(() => {
     if (selectedFacilityId) {
-      const unsub = onSnapshot(doc(db, "facilities", selectedFacilityId), (doc) => {
-          if (doc.exists()) {
-              setSelectedFacility({ id: doc.id, ...doc.data() } as Facility);
-          } else {
-              setSelectedFacility(null);
-          }
-      });
-      return () => unsub();
+        getFacilityById(selectedFacilityId).then(facility => {
+            setSelectedFacility(facility || null);
+        });
     } else {
       setSelectedFacility(null);
     }

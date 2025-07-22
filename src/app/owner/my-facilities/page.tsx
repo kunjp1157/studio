@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import type { Facility, SiteSettings } from '@/lib/types';
-import { mockUser, getSiteSettings, listenToFacilities } from '@/lib/data'; 
+import { mockUser, getSiteSettings, getFacilitiesByOwnerId } from '@/lib/data'; 
 import { PlusCircle, MoreHorizontal, Edit, Eye, Building2, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,8 +30,6 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export default function OwnerFacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
@@ -55,28 +53,24 @@ export default function OwnerFacilitiesPage() {
     const settings = getSiteSettings();
     setCurrency(settings.defaultCurrency);
 
-    const q = query(collection(db, "facilities"), where("ownerId", "==", ownerId));
-    const unsubscribe = onSnapshot(q, 
-      (querySnapshot) => {
-        const ownerFacilities: Facility[] = [];
-        querySnapshot.forEach((doc) => {
-          ownerFacilities.push({ id: doc.id, ...doc.data() } as Facility);
-        });
-        setFacilities(ownerFacilities);
-        setIsLoading(false);
-      },
-      (error) => {
-        console.error("Error listening to owner facilities:", error);
-        toast({
-            title: "Error",
-            description: "Could not load your facilities in real-time.",
-            variant: "destructive",
-        });
-        setIsLoading(false);
-      }
-    );
+    const fetchFacilities = async () => {
+        setIsLoading(true);
+        try {
+            const ownerFacilities = await getFacilitiesByOwnerId(ownerId);
+            setFacilities(ownerFacilities);
+        } catch (error) {
+             toast({
+                title: "Error",
+                description: "Could not load your facilities.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
     
-    return () => unsubscribe();
+    fetchFacilities();
+
   }, [ownerId, toast]);
 
   const getPriceRange = (facility: Facility) => {

@@ -8,9 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import {
-  listenToAllBookings,
-  listenToAllUsers,
-  listenToFacilities,
+  getAllBookings,
+  getAllUsers,
+  getAllFacilities,
   getSiteSettings
 } from '@/lib/data';
 import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus } from 'lucide-react';
@@ -109,23 +109,20 @@ export default function AdminDashboardPage() {
     const settings = getSiteSettings();
     setCurrency(settings.defaultCurrency);
     
-    let unsubs: (()=>void)[] = [];
+    const fetchData = async () => {
+        setIsLoading(true);
+        const [facilitiesData, usersData, bookingsData] = await Promise.all([
+            getAllFacilities(),
+            getAllUsers(),
+            getAllBookings()
+        ]);
+        setFacilities(facilitiesData);
+        setUsers(usersData);
+        setBookings(bookingsData);
+        setIsLoading(false);
+    }
     
-    unsubs.push(listenToFacilities(setFacilities, (err) => console.error(err)));
-    unsubs.push(listenToAllUsers(setUsers, (err) => console.error(err)));
-    unsubs.push(listenToAllBookings(setBookings, (err) => console.error(err)));
-
-    // Initial loading state management
-    const checkInitialLoad = () => {
-        if (facilities.length > 0 || users.length > 0 || bookings.length > 0) {
-            setIsLoading(false);
-        }
-    };
-    
-    const timeout = setTimeout(checkInitialLoad, 500); // Give listeners a moment to populate
-    unsubs.push(() => clearTimeout(timeout));
-    
-    return () => unsubs.forEach(unsub => unsub());
+    fetchData();
   }, []);
 
   const { totalFacilities, activeUsers, totalBookingsThisMonth, totalRevenueThisMonth, monthlyBookingsData, monthlyRevenueData, facilityUsageData, activityFeed } = useMemo(() => {

@@ -44,7 +44,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { UserProfile, UserRole, UserStatus } from '@/lib/types';
-import { updateUser as updateMockUser, addNotification, listenToAllUsers } from '@/lib/data';
+import { updateUser as updateMockUser, addNotification, getAllUsers } from '@/lib/data';
 import { MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -80,20 +80,19 @@ export default function AdminUsersPage() {
   });
 
   useEffect(() => {
-    const unsubscribe = listenToAllUsers(
-      (usersData) => {
-        setAllUsers(usersData);
-        if(isLoading) setIsLoading(false);
-      },
-      (error) => {
-        console.error("Failed to listen to users:", error);
-        toast({ title: "Error", description: "Could not load real-time user data.", variant: "destructive" });
-        if(isLoading) setIsLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [isLoading, toast]);
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        try {
+            const usersData = await getAllUsers();
+            setAllUsers(usersData);
+        } catch (error) {
+             toast({ title: "Error", description: "Could not load user data.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchUsers();
+  }, [toast]);
 
 
   useEffect(() => {
