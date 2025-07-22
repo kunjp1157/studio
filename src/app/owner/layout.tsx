@@ -22,24 +22,51 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+
 
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const activeUser = sessionStorage.getItem('activeUser');
-    if (activeUser) {
-      setCurrentUser(JSON.parse(activeUser));
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+        const user: UserProfile = JSON.parse(activeUserStr);
+        setCurrentUser(user);
+        if (user.role === 'FacilityOwner') {
+            setIsAuthorized(true);
+        } else {
+            toast({
+                title: "Access Denied",
+                description: "You must be a facility owner to access this page.",
+                variant: "destructive",
+            });
+            router.replace('/facilities');
+        }
+    } else {
+        toast({
+            title: "Authentication Required",
+            description: "Please log in as a facility owner to continue.",
+            variant: "destructive",
+        });
+        router.replace('/facilities');
     }
     setIsLoading(false);
 
     const handleUserChange = () => {
-        const updatedUser = sessionStorage.getItem('activeUser');
-        if(updatedUser) {
-            setCurrentUser(JSON.parse(updatedUser));
+        const updatedUserStr = sessionStorage.getItem('activeUser');
+        if (updatedUserStr) {
+            const updatedUser = JSON.parse(updatedUserStr);
+            if(updatedUser.role !== 'FacilityOwner') {
+                router.replace('/facilities');
+            }
+            setCurrentUser(updatedUser);
         }
     };
     window.addEventListener('userChanged', handleUserChange);
@@ -47,7 +74,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     return () => {
         window.removeEventListener('userChanged', handleUserChange);
     };
-  }, []);
+  }, [router, toast]);
 
 
   const isActive = (path: string) => {
@@ -55,16 +82,10 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
       return pathname.startsWith(path);
   }
 
-  if (isLoading || !currentUser) {
+  if (isLoading || !isAuthorized) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
-            <div className="flex items-center space-x-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-            </div>
-            </div>
+            <LoadingSpinner size={48} />
         </div>
     );
   }

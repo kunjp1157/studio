@@ -19,27 +19,54 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { mockUser } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const currentUser = mockUser;
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+        const user: UserProfile = JSON.parse(activeUserStr);
+        setCurrentUser(user);
+        if (user.role === 'Admin') {
+            setIsAuthorized(true);
+        } else {
+            toast({
+                title: "Access Denied",
+                description: "You must be an administrator to access this page.",
+                variant: "destructive",
+            });
+            router.replace('/facilities');
+        }
+    } else {
+        // Handle case where no user is logged in
+        toast({
+            title: "Authentication Required",
+            description: "Please log in as an admin to continue.",
+            variant: "destructive",
+        });
+        router.replace('/facilities'); // Or a login page if you had one
+    }
+    setIsLoading(false);
+  }, [router, toast]);
+
 
   const isActive = (path: string) => pathname === path || (path !== '/admin' && pathname.startsWith(path));
 
-  if (!currentUser) {
+  if (isLoading || !isAuthorized) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <div className="flex items-center space-x-4">
-          <Skeleton className="h-12 w-12 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
-        </div>
+        <LoadingSpinner size={48} />
       </div>
     );
   }
