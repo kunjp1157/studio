@@ -16,7 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, getOpenLfgRequests, createLfgRequest, expressInterestInLfg, mockSports, getUserById, getSportById } from '@/lib/data';
+import { mockUser, getOpenLfgRequests, createLfgRequest, expressInterestInLfg, getUserById, getSportById } from '@/lib/data';
+import { mockSports } from '@/lib/mock-data';
 import type { LfgRequest, UserProfile, Sport, SkillLevel } from '@/lib/types';
 import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, BarChart, Clock, Users2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

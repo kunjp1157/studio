@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, mockSports, createTeam } from '@/lib/data';
+import { mockUser, createTeam } from '@/lib/data';
+import { mockSports } from '@/lib/mock-data';
 import type { Sport } from '@/lib/types';
 import { ArrowLeft, Dices, User, Save } from 'lucide-react';
 

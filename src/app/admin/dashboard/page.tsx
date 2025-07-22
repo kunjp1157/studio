@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import {
-  getSiteSettings
-} from '@/lib/data';
+  getSiteSettingsAction
+} from '@/app/actions';
 import { getAllBookingsAction, getUsersAction, getFacilitiesAction } from '@/app/actions';
 import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus } from 'lucide-react';
 import type { ChartConfig } from '@/components/ui/chart';
@@ -104,19 +104,19 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
     
     const fetchData = async () => {
         setIsLoading(true);
-        const [facilitiesData, usersData, bookingsData] = await Promise.all([
+        const [facilitiesData, usersData, bookingsData, settingsData] = await Promise.all([
             getFacilitiesAction(),
             getUsersAction(),
-            getAllBookingsAction()
+            getAllBookingsAction(),
+            getSiteSettingsAction()
         ]);
         setFacilities(facilitiesData);
         setUsers(usersData);
         setBookings(bookingsData);
+        setCurrency(settingsData.defaultCurrency);
         setIsLoading(false);
     }
     

@@ -2,7 +2,7 @@
 'use server';
 
 import { 
-    getAllFacilities, 
+    getAllFacilities as dbGetAllFacilities,
     getAllUsers, 
     getAllBookings, 
     getSiteSettings,
@@ -20,14 +20,23 @@ import {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     getFacilityById,
+    getSportById,
+    getAmenityById,
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification } from '@/lib/types';
+import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, Sport } from '@/lib/types';
 
 // Note: With real-time listeners, many 'getAll' actions might become less necessary on the client,
 // but they are kept for server-side operations or initial data hydration.
 
 export async function getFacilitiesAction(): Promise<Facility[]> {
-  return getAllFacilities();
+  const facilities = await dbGetAllFacilities();
+  // Enrich facilities with full sport and amenity objects here, on the server
+  const enrichedFacilities = facilities.map(f => ({
+      ...f,
+      sports: Array.isArray(f.sports) ? f.sports.map(s => typeof s === 'string' ? getSportById(s) : s).filter(Boolean) as Sport[] : [],
+      amenities: Array.isArray(f.amenities) ? f.amenities.map(a => typeof a === 'string' ? getAmenityById(a) : a).filter(Boolean) as any : [],
+  }));
+  return enrichedFacilities;
 }
 
 export async function getUsersAction(): Promise<UserProfile[]> {

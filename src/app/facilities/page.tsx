@@ -5,9 +5,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
-import type { Facility, SearchFilters, SiteSettings } from '@/lib/types';
-import { getSiteSettings, getSportById, getAmenityById } from '@/lib/data';
-import { getFacilitiesAction } from '@/app/actions';
+import type { Facility, SearchFilters, SiteSettings, Sport } from '@/lib/types';
+import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { AlertCircle, SortAsc } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -46,19 +45,15 @@ export default function FacilitiesPage() {
   }, [allFacilities]);
 
   useEffect(() => {
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
-    
-    // Use a direct fetch for initial load to avoid UI flicker
     const fetchInitialData = async () => {
         try {
-            const facilitiesData = await getFacilitiesAction();
-            const enrichedFacilities = facilitiesData.map(f => ({
-                ...f,
-                sports: Array.isArray(f.sports) ? f.sports.map(s => typeof s === 'string' ? getSportById(s) : s).filter(Boolean) as any : [],
-                amenities: Array.isArray(f.amenities) ? f.amenities.map(a => typeof a === 'string' ? getAmenityById(a) : a).filter(Boolean) as any : [],
-            }));
-            setAllFacilities(enrichedFacilities);
+            const [facilitiesData, settingsData] = await Promise.all([
+                getFacilitiesAction(),
+                getSiteSettingsAction()
+            ]);
+            
+            setCurrency(settingsData.defaultCurrency);
+            setAllFacilities(facilitiesData);
         } catch (error) {
             toast({
               title: "Error",

@@ -7,7 +7,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { SportEvent, Facility, Sport, SiteSettings } from '@/lib/types';
-import { getAllSports, getAllFacilities, getSportById, addEvent, updateEvent, getSiteSettings } from '@/lib/data'; 
+import { getAllSports } from '@/lib/mock-data';
+import { addEvent, updateEvent, getSiteSettings } from '@/lib/data'; 
+import { getAllFacilitiesAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,13 +54,12 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
 
   useEffect(() => {
     const loadData = async () => {
-        const [facilitiesData, sportsData, settingsData] = await Promise.all([
-            getAllFacilities(),
-            getAllSports(),
+        const [facilitiesData, settingsData] = await Promise.all([
+            getAllFacilitiesAction(),
             getSiteSettings()
         ]);
         setFacilities(facilitiesData);
-        setSports(sportsData);
+        setSports(getAllSports());
         setCurrency(settingsData.defaultCurrency);
     };
     loadData();

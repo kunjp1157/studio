@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import type { SportEvent, Sport } from '@/lib/types';
-import { mockEvents, getFacilityById, mockSports } from '@/lib/data';
+import { mockEvents, getFacilityById } from '@/lib/data';
+import { mockSports } from '@/lib/mock-data';
 import { CalendarDays, MapPin, Users, Ticket, AlertCircle, Trophy, Zap, FilterX, ListFilter, Dices, SortAsc } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format, parseISO, isSameDay, isPast } from 'date-fns';

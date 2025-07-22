@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review, SiteSettings } from '@/lib/types';
-import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking, getSiteSettings } from '@/lib/data';
-import { getBookingsByUserIdAction } from '@/app/actions';
+import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
+import { getBookingsByUserIdAction, getSiteSettingsAction } from '@/app/actions';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -72,13 +72,17 @@ export default function BookingsPage() {
   const [facilities, setFacilities] = useState<Record<string, Facility>>({});
 
   useEffect(() => {
-      const settings = getSiteSettings();
-      setCurrency(settings.defaultCurrency);
       
-      const fetchBookings = async () => {
+      const fetchInitialData = async () => {
           setIsLoading(true);
           try {
-              const userBookings = await getBookingsByUserIdAction(mockUser.id);
+              const [userBookings, settings] = await Promise.all([
+                  getBookingsByUserIdAction(mockUser.id),
+                  getSiteSettingsAction()
+              ]);
+              
+              setCurrency(settings.defaultCurrency);
+              
               userBookings.sort((a, b) => {
                 const aDate = parseISO(a.date + 'T' + a.startTime);
                 const bDate = parseISO(b.date + 'T' + b.startTime);
@@ -103,7 +107,7 @@ export default function BookingsPage() {
           }
       };
 
-      fetchBookings();
+      fetchInitialData();
   }, [toast]);
 
   useEffect(() => {
