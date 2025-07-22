@@ -111,6 +111,13 @@ body {
   }
 }
 
+@layer utilities {
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+}
+
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

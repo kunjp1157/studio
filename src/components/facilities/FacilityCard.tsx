@@ -54,9 +54,9 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
 
   return (
     <Card className={cn(
-      "flex flex-col h-full overflow-hidden rounded-lg",
+      "flex flex-col h-full overflow-hidden rounded-lg preserve-3d",
       "shadow-lg hover:shadow-2xl",
-      "transition-all duration-300 ease-in-out hover:scale-[1.03]"
+      "transition-all duration-300 ease-in-out group hover:[transform:rotateY(0deg)_rotateX(0deg)_translateZ(20px)]"
     )}>
       <CardHeader className="p-0 relative">
         <Link href={`/facilities/${facility.id}`}>
@@ -65,7 +65,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
             alt={facility.name}
             width={400}
             height={250}
-            className="w-full h-48 object-cover"
+            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
             data-ai-hint={facility.dataAiHint || 'sports facility'}
           />
         </Link>
