@@ -19,7 +19,8 @@ export const allMockUsers: Record<'admin' | 'owner' | 'user', UserProfile> = {
     joinedAt: new Date().toISOString(), 
     loyaltyPoints: 1250, 
     profilePictureUrl: 'https://randomuser.me/api/portraits/men/75.jpg', 
-    dataAiHint: 'man smiling' 
+    dataAiHint: 'man smiling',
+    isProfilePublic: true,
   },
   owner: { 
     id: 'user-owner-dana', 
@@ -30,7 +31,8 @@ export const allMockUsers: Record<'admin' | 'owner' | 'user', UserProfile> = {
     joinedAt: new Date().toISOString(), 
     loyaltyPoints: 450, 
     profilePictureUrl: 'https://randomuser.me/api/portraits/women/68.jpg', 
-    dataAiHint: 'woman portrait'
+    dataAiHint: 'woman portrait',
+    isProfilePublic: true,
   },
   user: {
     id: 'user-regular-charlie',
@@ -41,7 +43,8 @@ export const allMockUsers: Record<'admin' | 'owner' | 'user', UserProfile> = {
     joinedAt: new Date().toISOString(),
     loyaltyPoints: 800,
     profilePictureUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
-    dataAiHint: 'man glasses'
+    dataAiHint: 'man glasses',
+    isProfilePublic: true,
   }
 };
 
@@ -116,6 +119,26 @@ export function listenToAllUsers(callback: (users: UserProfile[]) => void, onErr
     return () => {};
 }
 
+export function listenToAllMembershipPlans(callback: (plans: MembershipPlan[]) => void, onError: (error: Error) => void) {
+    // This function is now a no-op but kept for compatibility.
+    return () => {};
+}
+
+export function listenToAllEvents(callback: (events: SportEvent[]) => void, onError: (error: Error) => void) {
+    // This function is now a no-op but kept for compatibility.
+    return () => {};
+}
+export function listenToAllPricingRules(callback: (rules: PricingRule[]) => void, onError: (error: Error) => void) {
+    // This function is now a no-op but kept for compatibility.
+    return () => {};
+}
+
+export function listenToAllPromotionRules(callback: (promotions: PromotionRule[]) => void, onError: (error: Error) => void) {
+    // This function is now a no-op but kept for compatibility.
+    return () => {};
+}
+
+
 // --- Direct Fetch Functions (for specific, non-listening needs) ---
 export const getAllFacilities = async (): Promise<Facility[]> => {
     try {
@@ -137,16 +160,13 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
     }
 };
 
-export const getUserById = async (userId: string): Promise<UserProfile | undefined> => {
+export const getUserById = (userId: string): UserProfile | undefined => {
     if (!userId) return undefined;
-    try {
-        const res = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
-        return res.rows[0];
-    } catch (error) {
-        console.error("Error fetching user by ID:", error);
-        return undefined;
-    }
+    // This is now synchronous and relies on the mock data object.
+    const allUsers = [...Object.values(allMockUsers)];
+    return allUsers.find(user => user.id === userId);
 };
+
 
 export const getFacilityById = async (id: string): Promise<Facility | undefined> => {
      try {
@@ -238,14 +258,26 @@ export const updateBooking = async (bookingId: string, updates: Partial<Booking>
     return res.rows[0];
 };
 
-export const updateUser = async (userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> => {
-    const { name, email, role, status, membershipLevel } = updates;
-    const res = await db.query(
-        'UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), role = COALESCE($3, role), status = COALESCE($4, status), membership_level = COALESCE($5, membership_level) WHERE id = $6 RETURNING *',
-        [name, email, role, status, membershipLevel, userId]
-    );
-    return res.rows[0];
+export const updateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
+    const userIndex = Object.values(allMockUsers).flat().findIndex(u => u.id === userId);
+    
+    // This is a simplified update that only works on the mock data.
+    // In a real app this would be an async database call.
+    if (userIndex !== -1) {
+        // This is a bit tricky because we don't know which user type it is
+        for (const key in allMockUsers) {
+            // @ts-ignore
+            if (allMockUsers[key].id === userId) {
+                 // @ts-ignore
+                allMockUsers[key] = { ...allMockUsers[key], ...updates };
+                 // @ts-ignore
+                return allMockUsers[key];
+            }
+        }
+    }
+    return undefined;
 };
+
 
 export const getBookingsForFacilityOnDate = async (facilityId: string, date: string): Promise<Booking[]> => {
     const res = await db.query(
@@ -384,7 +416,10 @@ export const deleteTeam = (teamId: string, captainId: string): void => {
     
     // Remove team from all members' profiles
     team.memberIds.forEach(memberId => {
-        updateUser(memberId, { teamIds: mockUser.teamIds?.filter(id => id !== teamId) });
+        const user = getUserById(memberId);
+        if (user) {
+          updateUser(memberId, { teamIds: user.teamIds?.filter(id => id !== teamId) });
+        }
     });
 
     // Remove the team itself
@@ -396,9 +431,18 @@ export const markNotificationAsRead = (userId: string, notificationId: string): 
 export const markAllNotificationsAsRead = (userId: string): void => { mockAppNotifications.forEach(n => { if (n.userId === userId) n.isRead = true; }); };
 export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
 export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Promise<Review> => {
-  const currentUser = await getUserById(reviewData.userId);
-  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isPublicProfile || false, createdAt: new Date().toISOString() };
+  const currentUser = getUserById(reviewData.userId);
+  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
   mockReviews.push(newReview);
+  
+  // Also update the facility with the new review
+  const facility = await getFacilityById(reviewData.facilityId);
+  if (facility) {
+    const reviews = [...(facility.reviews || []), newReview];
+    const newRating = calculateAverageRating(reviews);
+    await updateFacility({ ...facility, reviews, rating: newRating });
+  }
+
   return newReview;
 };
 
@@ -421,7 +465,7 @@ export const getOpenChallenges = (): Challenge[] => {
 };
 
 export const createChallenge = (data: { challengerId: string; sportId: string; proposedDate: string; notes: string }): Challenge[] => {
-    const challenger = mockUser; // Simplified, assuming mockUser is challenger
+    const challenger = getUserById(data.challengerId);
     const sport = getSportById(data.sportId);
 
     if (!challenger || !sport) {
@@ -444,7 +488,7 @@ export const createChallenge = (data: { challengerId: string; sportId: string; p
 
 export const acceptChallenge = (challengeId: string, opponentId: string): Challenge[] => {
     const challenge = mockChallenges.find(c => c.id === challengeId);
-    const opponent = mockUser; // Simplified
+    const opponent = getUserById(opponentId);
 
     if (challenge && opponent && challenge.status === 'open' && challenge.challengerId !== opponentId) {
         challenge.status = 'accepted';
@@ -494,6 +538,7 @@ export const updatePricingRule = (rule: PricingRule): void => { const index = mo
 export const deletePricingRule = (id: string): void => { mockPricingRules = mockPricingRules.filter(r => r.id !== id); };
 export const addPromotionRule = (rule: Omit<PromotionRule, 'id'>): void => { mockPromotionRules.push({ ...rule, id: `promo-${Date.now()}` }); };
 export const updatePromotionRule = (rule: PromotionRule): void => { const index = mockPromotionRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPromotionRules[index] = rule; };
+export const deletePromotionRule = (id: string): void => { mockPromotionRules = mockPromotionRules.filter(r => r.id !== id); };
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
 export async function listenToOwnerBookings(ownerId: string, callback: (bookings: Booking[]) => void, onError: (error: Error) => void): Promise<() => void> {
