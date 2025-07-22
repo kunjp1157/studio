@@ -6,7 +6,6 @@ import {
     getAllUsers, 
     getAllBookings, 
     getSiteSettings,
-    getBookingsByUserId,
     getFacilitiesByOwnerId,
     getEventById,
     getMembershipPlanById,
@@ -22,8 +21,10 @@ import {
     getFacilityById,
     getSportById,
     getAmenityById,
+    blockTimeSlot as dbBlockTimeSlot,
+    unblockTimeSlot as dbUnblockTimeSlot
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, Sport } from '@/lib/types';
+import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, Sport, BlockedSlot } from '@/lib/types';
 
 // Note: With real-time listeners, many 'getAll' actions might become less necessary on the client,
 // but they are kept for server-side operations or initial data hydration.
@@ -43,10 +44,6 @@ export async function getAllBookingsAction(): Promise<Booking[]> {
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
     return getSiteSettings();
-}
-
-export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
-  return getBookingsByUserId(userId);
 }
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
@@ -83,4 +80,12 @@ export async function markAllNotificationsAsReadAction(userId: string): Promise<
 
 export async function getFacilityByIdAction(id: string): Promise<Facility | undefined> {
     return getFacilityById(id);
+}
+
+export async function blockTimeSlot(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
+    return dbBlockTimeSlot(facilityId, ownerId, newBlock);
+}
+
+export async function unblockTimeSlot(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
+    return dbUnblockTimeSlot(facilityId, ownerId, date, startTime);
 }

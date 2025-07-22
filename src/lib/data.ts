@@ -104,10 +104,40 @@ export function listenToFacilities(callback: (facilities: Facility[]) => void, o
   return () => {};
 }
 
-export function listenToUserBookings(userId: string, callback: (bookings: Booking[]) => void, onError: (error: Error) => void) {
-  // This function is now a no-op but kept for compatibility.
-  return () => {};
+export function listenToUserBookings(
+    userId: string, 
+    callback: (bookings: Booking[]) => void, 
+    onError: (error: Error) => void
+): () => void {
+    let isCancelled = false;
+
+    const fetchAndPoll = async () => {
+        if (isCancelled) return;
+        try {
+            const bookings = await getBookingsByUserId(userId);
+            if (!isCancelled) {
+                callback(bookings);
+            }
+        } catch (err) {
+            if (!isCancelled) {
+                onError(err as Error);
+            }
+        } finally {
+            // Schedule the next poll
+            if (!isCancelled) {
+                setTimeout(fetchAndPoll, 5000); // Poll every 5 seconds
+            }
+        }
+    };
+
+    fetchAndPoll(); // Initial fetch
+
+    // Return an unsubscribe function
+    return () => {
+        isCancelled = true;
+    };
 }
+
 
 export function listenToAllBookings(callback: (bookings: Booking[]) => void, onError: (error: Error) => void) {
   // This function is now a no-op but kept for compatibility.
