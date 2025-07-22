@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:genkit": "genkit start -- tsx --watch src/ai/dev.ts",
+    "dev:local": "npm-run-all --parallel dev dev:genkit",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
