@@ -9,6 +9,7 @@ import { UserNav } from './UserNav';
 import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy, Calendar as CalendarIcon, Swords } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettings } from '@/lib/data';
+import { UserSwitcher } from '../shared/UserSwitcher';
 
 export function Header() {
   const [siteName, setSiteName] = useState('Sports Arena');
@@ -66,6 +67,7 @@ export function Header() {
                   AI Planner
                 </Button>
               </Link>
+              <UserSwitcher />
               <NotificationBell />
             </>
           <UserNav />

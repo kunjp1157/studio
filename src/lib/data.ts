@@ -1,8 +1,9 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { ParkingCircle, Wifi, ShowerHead, Lock, Dumbbell, Zap, Users, Trophy, Award, CalendarDays as LucideCalendarDays, Utensils, Star, LocateFixed, Clock, DollarSign, Goal, Bike, Dices, Swords, Music, Tent, Drama, MapPin, Heart, Dribbble, Activity, Feather, CheckCircle, XCircle, MessageSquareText, Info, Gift, Edit3, PackageSearch, Shirt, Disc, Medal, Gem, Rocket, Gamepad2, MonitorPlay, Target, Drum, Guitar, Brain, Camera, PersonStanding, Building, HandCoins, Palette, Group, BikeIcon, DramaIcon, Film, Gamepad, GuitarIcon, Landmark, Lightbulb, MountainSnow, Pizza, ShoppingBag, VenetianMask, Warehouse, Weight, Wind, WrapText, Speech, HistoryIcon, BarChartIcon, UserCheck, UserX, Building2, BellRing } from 'lucide-react';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
-import { db } from './firebase';
+import { db, firebaseInitializationError } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, setDoc, deleteDoc, query, where, onSnapshot, arrayUnion, arrayRemove, updateDoc } from 'firebase/firestore';
 
 
@@ -34,18 +35,55 @@ export const mockAmenities: Amenity[] = [
   { id: 'amenity-7', name: 'Accessible', iconName: 'Users' },
 ];
 
-// This is the static default user. It's guaranteed to be available on app load.
-export let mockUser: UserProfile = { 
+// Define a set of mock users with different roles
+const allMockUsers = {
+  admin: { 
     id: 'user-admin-kirtan', 
     name: 'Kirtan Shah', 
-    email: 'shahkirtan007@gmail.com', 
-    role: 'Admin', 
-    status: 'Active', 
+    email: 'kirtan.shah@example.com', 
+    role: 'Admin' as UserRole, 
+    status: 'Active' as UserStatus,
     joinedAt: new Date().toISOString(), 
     loyaltyPoints: 1250, 
-    profilePictureUrl: 'https://placehold.co/100x100.png', 
+    profilePictureUrl: 'https://randomuser.me/api/portraits/men/75.jpg', 
     dataAiHint: 'man smiling' 
+  },
+  owner: { 
+    id: 'user-owner-dana', 
+    name: 'Dana White', 
+    email: 'dana.white@example.com', 
+    role: 'FacilityOwner' as UserRole, 
+    status: 'Active' as UserStatus,
+    joinedAt: new Date().toISOString(), 
+    loyaltyPoints: 450, 
+    profilePictureUrl: 'https://randomuser.me/api/portraits/women/68.jpg', 
+    dataAiHint: 'woman portrait'
+  },
+  user: {
+    id: 'user-regular-charlie',
+    name: 'Charlie Davis',
+    email: 'charlie.davis@example.com',
+    role: 'User' as UserRole,
+    status: 'Active' as UserStatus,
+    joinedAt: new Date().toISOString(),
+    loyaltyPoints: 800,
+    profilePictureUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+    dataAiHint: 'man glasses'
+  }
 };
+
+
+// This is the static default user. It's guaranteed to be available on app load.
+export let mockUser: UserProfile = allMockUsers.admin;
+
+// This function allows other components (like the UserSwitcher) to change the active user.
+export const setActiveMockUser = (role: 'admin' | 'owner' | 'user') => {
+  mockUser = allMockUsers[role];
+  // In a real app with state management, you'd dispatch an action here
+  // to notify the whole app of the user change. For now, a page refresh
+  // might be needed for all components to pick up the new user.
+};
+
 
 // These arrays are for non-Firestore managed data or for temporary client-side operations.
 // They no longer hold primary data for users, bookings, etc.
@@ -119,6 +157,7 @@ export function listenToAllUsers(callback: (users: UserProfile[]) => void, onErr
 
 // --- Direct Fetch Functions (for specific, non-listening needs) ---
 export const getAllFacilities = async (): Promise<Facility[]> => {
+    if (firebaseInitializationError) { console.error("Firebase not initialized, cannot fetch facilities."); return []; }
     try {
         const querySnapshot = await getDocs(collection(db, 'facilities'));
         const facilities: Facility[] = [];
@@ -133,6 +172,7 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
 };
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
+    if (firebaseInitializationError) { console.error("Firebase not initialized, cannot fetch users."); return []; }
     try {
         const querySnapshot = await getDocs(collection(db, 'users'));
         const users: UserProfile[] = [];
@@ -147,7 +187,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 };
 
 export const getUserById = async (userId: string): Promise<UserProfile | undefined> => {
-    if (!userId) return undefined;
+    if (!userId || firebaseInitializationError) return undefined;
     try {
         const docRef = doc(db, 'users', userId);
         const docSnap = await getDoc(docRef);
@@ -159,12 +199,18 @@ export const getUserById = async (userId: string): Promise<UserProfile | undefin
 };
 
 export const getFacilityById = async (id: string): Promise<Facility | undefined> => {
+    if (firebaseInitializationError) { console.error("Firebase not initialized, cannot fetch facility."); return undefined; }
     try {
         const docRef = doc(db, 'facilities', id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() } as Facility;
+            const data = docSnap.data();
+            // Enrich sports and amenities from IDs to full objects
+            const sportDetails = (data.sports as string[]).map(getSportById).filter(Boolean) as Sport[];
+            const amenityDetails = (data.amenities as string[]).map(getAmenityById).filter(Boolean) as Amenity[];
+            
+            return { id: docSnap.id, ...data, sports: sportDetails, amenities: amenityDetails } as Facility;
         } else {
             console.log("No such facility document!");
             return undefined;
@@ -176,7 +222,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
 };
 
 export const getFacilitiesByIds = async (ids: string[]): Promise<Facility[]> => {
-    if (!ids || ids.length === 0) return [];
+    if (!ids || ids.length === 0 || firebaseInitializationError) return [];
     try {
         const q = query(collection(db, 'facilities'), where('__name__', 'in', ids));
         const querySnapshot = await getDocs(q);
@@ -193,6 +239,7 @@ export const getFacilitiesByIds = async (ids: string[]): Promise<Facility[]> => 
 
 // ... (keep addFacility, updateFacility, deleteFacility, etc.)
 export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<Facility> => {
+  if (firebaseInitializationError) throw firebaseInitializationError;
   try {
     const docRef = await addDoc(collection(db, 'facilities'), facilityData);
     return { id: docRef.id, ...facilityData };
@@ -203,6 +250,7 @@ export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<F
 };
 
 export const updateFacility = async (updatedFacilityData: Facility): Promise<Facility> => {
+  if (firebaseInitializationError) throw firebaseInitializationError;
   try {
     const facilityRef = doc(db, 'facilities', updatedFacilityData.id);
     await setDoc(facilityRef, updatedFacilityData, { merge: true });
@@ -213,6 +261,7 @@ export const updateFacility = async (updatedFacilityData: Facility): Promise<Fac
   }
 };
 export const deleteFacility = async (facilityId: string): Promise<void> => {
+    if (firebaseInitializationError) throw firebaseInitializationError;
     try {
         await deleteDoc(doc(db, 'facilities', facilityId));
     } catch (error) {
@@ -222,6 +271,7 @@ export const deleteFacility = async (facilityId: string): Promise<void> => {
 };
 
 export const getBookingById = async (id: string): Promise<Booking | undefined> => {
+    if (firebaseInitializationError) return undefined;
     try {
         const docRef = doc(db, 'bookings', id);
         const docSnap = await getDoc(docRef);
@@ -233,6 +283,7 @@ export const getBookingById = async (id: string): Promise<Booking | undefined> =
 };
 
 export const addBooking = async (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> => {
+  if (firebaseInitializationError) throw firebaseInitializationError;
   const newBookingData = {
     ...bookingData,
     bookedAt: new Date().toISOString(),
@@ -247,6 +298,7 @@ export const addBooking = async (bookingData: Omit<Booking, 'id' | 'bookedAt'>):
 };
 
 export const updateBooking = async (bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> => {
+    if (firebaseInitializationError) return undefined;
     try {
         const bookingRef = doc(db, 'bookings', bookingId);
         await setDoc(bookingRef, updates, { merge: true });
@@ -258,6 +310,7 @@ export const updateBooking = async (bookingId: string, updates: Partial<Booking>
     }
 };
 export const updateUser = async (userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> => {
+    if (firebaseInitializationError) return undefined;
     try {
         const userRef = doc(db, 'users', userId);
         await setDoc(userRef, updates, { merge: true });
@@ -275,6 +328,7 @@ export const updateUser = async (userId: string, updates: Partial<UserProfile>):
 };
 
 export const getBookingsForFacilityOnDate = async (facilityId: string, date: string): Promise<Booking[]> => {
+    if (firebaseInitializationError) return [];
     const bookings: Booking[] = [];
     try {
         const q = query(
@@ -304,17 +358,17 @@ export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
 // --- DATA SEEDING ---
 async function seedData() {
+    if (firebaseInitializationError) {
+        console.error("Firebase not initialized, skipping data seeding.");
+        return;
+    }
     // Seed users
     const usersCollection = collection(db, 'users');
     const usersSnapshot = await getDocs(usersCollection);
     if (usersSnapshot.empty) {
         console.log("No users found, seeding users...");
-        const usersToSeed: (Omit<UserProfile, 'id'> & {id: string})[] = [
-             { id: 'user-admin-kirtan', name: 'Kirtan Shah', email: 'shahkirtan007@gmail.com', role: 'Admin', status: 'Active', joinedAt: new Date().toISOString(), loyaltyPoints: 1250, profilePictureUrl: 'https://placehold.co/100x100.png', dataAiHint: 'man smiling' },
-             { id: 'user-regular', name: 'Charlie Davis', email: 'user@example.com', role: 'User', status: 'Active', joinedAt: new Date().toISOString(), loyaltyPoints: 800, profilePictureUrl: 'https://placehold.co/100x100.png', dataAiHint: 'woman portrait' },
-             { id: 'user-owner', name: 'Dana White', email: 'owner@example.com', role: 'FacilityOwner', status: 'Active', joinedAt: new Date().toISOString(), loyaltyPoints: 450, profilePictureUrl: 'https://placehold.co/100x100.png', dataAiHint: 'man glasses' },
-        ];
-        for (const user of usersToSeed) {
+        for (const userKey in allMockUsers) {
+            const user = allMockUsers[userKey as keyof typeof allMockUsers];
             const userRef = doc(db, 'users', user.id);
             await setDoc(userRef, user);
         }
@@ -325,8 +379,8 @@ async function seedData() {
     const facilitiesSnapshot = await getDocs(facilitiesCollection);
     if (facilitiesSnapshot.empty) {
         console.log("No facilities found, seeding facilities...");
-        const facilitiesToSeed: Omit<Facility, 'id'>[] = [
-          {
+        const facilitiesToSeed: Omit<Facility, 'id' | 'sports' | 'amenities'>[] = [
+           {
             name: 'Grand City Arena',
             type: 'Complex',
             address: '100 Central Plaza, Metropolis',
@@ -334,19 +388,17 @@ async function seedData() {
             location: 'Downtown',
             description: 'A state-of-the-art sports complex in the heart of the city, offering a wide range of facilities for all sports enthusiasts.',
             images: ['https://images.unsplash.com/photo-1599386399993-430c6a995392', 'https://images.unsplash.com/photo-1574629810360-14b9d3c98485', 'https://images.unsplash.com/photo-1560089023-a2d9526ed0d5'],
-            sports: [getSportById('sport-1')!, getSportById('sport-2')!],
             sportPrices: [
               { sportId: 'sport-1', pricePerHour: 1200 },
               { sportId: 'sport-2', pricePerHour: 1000 },
             ],
-            amenities: [getAmenityById('amenity-1')!, getAmenityById('amenity-2')!, getAmenityById('amenity-3')!, getAmenityById('amenity-4')!],
             operatingHours: [ { day: 'Mon', open: '06:00', close: '23:00' }, { day: 'Tue', open: '06:00', close: '23:00' }, { day: 'Wed', open: '06:00', close: '23:00' }, { day: 'Thu', open: '06:00', close: '23:00' }, { day: 'Fri', open: '06:00', close: '23:00' }, { day: 'Sat', open: '07:00', close: '22:00' }, { day: 'Sun', open: '07:00', close: '21:00' } ],
             rating: 4.8,
             capacity: 200,
             isPopular: true,
             isIndoor: true,
             dataAiHint: 'modern sports complex',
-            ownerId: 'user-owner'
+            ownerId: 'user-owner-dana'
           },
           {
             name: 'Riverside Tennis Club',
@@ -356,15 +408,13 @@ async function seedData() {
             location: 'Riverside',
             description: 'Picturesque tennis courts with a serene view of the river. Perfect for a friendly match or competitive play.',
             images: ['https://images.unsplash.com/photo-1594470117722-de4b9a02ebed', 'https://images.unsplash.com/photo-1563532292339-bdf35b45a4a2'],
-            sports: [getSportById('sport-3')!],
             sportPrices: [{ sportId: 'sport-3', pricePerHour: 800 }],
-            amenities: [getAmenityById('amenity-1')!, getAmenityById('amenity-3')!],
             operatingHours: [ { day: 'Mon', open: '07:00', close: '21:00' }, { day: 'Tue', open: '07:00', close: '21:00' }, { day: 'Wed', open: '07:00', close: '21:00' }, { day: 'Thu', open: '07:00', close: '21:00' }, { day: 'Fri', open: '07:00', close: '22:00' }, { day: 'Sat', open: '08:00', close: '22:00' }, { day: 'Sun', open: '08:00', close: '20:00' } ],
             rating: 4.5,
             isPopular: true,
             isIndoor: false,
             dataAiHint: 'outdoor tennis court',
-            ownerId: 'user-owner'
+            ownerId: 'user-owner-dana'
           },
           {
             name: 'Uptown Box Cricket',
@@ -374,9 +424,7 @@ async function seedData() {
             location: 'Uptown',
             description: 'A dedicated box cricket arena perfect for fast-paced, high-energy matches with friends and colleagues.',
             images: ['https://images.unsplash.com/photo-1593341646782-e0b495cffc25'],
-            sports: [getSportById('sport-13')!],
             sportPrices: [{ sportId: 'sport-13', pricePerHour: 1500 }],
-            amenities: [getAmenityById('amenity-1')!, getAmenityById('amenity-5')!],
             operatingHours: [ { day: 'Mon', open: '10:00', close: '23:59' }, { day: 'Tue', open: '10:00', close: '23:59' }, { day: 'Wed', open: '10:00', close: '23:59' }, { day: 'Thu', open: '10:00', close: '23:59' }, { day: 'Fri', open: '10:00', close: '23:59' }, { day: 'Sat', open: '09:00', close: '23:59' }, { day: 'Sun', open: '09:00', close: '23:59' } ],
             rating: 4.7,
             capacity: 16,
@@ -391,9 +439,7 @@ async function seedData() {
             location: 'Suburbia',
             description: 'Olympic-sized swimming pool for both professional training and recreational swimming. Clean, well-maintained, and family-friendly.',
             images: ['https://images.unsplash.com/photo-1590650392358-693608513b68'],
-            sports: [getSportById('sport-5')!],
             sportPrices: [{ sportId: 'sport-5', pricePerHour: 500 }],
-            amenities: [getAmenityById('amenity-3')!, getAmenityById('amenity-4')!],
             operatingHours: [ { day: 'Mon', open: '05:00', close: '21:00' }, { day: 'Tue', open: '05:00', close: '21:00' }, { day: 'Wed', open: '05:00', close: '21:00' }, { day: 'Thu', open: '05:00', close: '21:00' }, { day: 'Fri', open: '05:00', close: '21:00' }, { day: 'Sat', open: '06:00', close: '19:00' }, { day: 'Sun', open: '06:00', close: '19:00' } ],
             rating: 4.6,
             isIndoor: true,
@@ -407,9 +453,7 @@ async function seedData() {
             location: 'Southside',
             description: 'Multiple well-lit badminton courts with professional-grade flooring. Ideal for players of all skill levels.',
             images: ['https://images.unsplash.com/photo-1620054383349-fcec19b78a48'],
-            sports: [getSportById('sport-4')!],
             sportPrices: [{ sportId: 'sport-4', pricePerHour: 600 }],
-            amenities: [getAmenityById('amenity-1')!],
             operatingHours: [ { day: 'Mon', open: '09:00', close: '22:00' }, { day: 'Tue', open: '09:00', close: '22:00' }, { day: 'Wed', open: '09:00', close: '22:00' }, { day: 'Thu', open: '09:00', close: '22:00' }, { day: 'Fri', open: '09:00', close: '22:00' }, { day: 'Sat', open: '09:00', close: '22:00' }, { day: 'Sun', open: '09:00', close: '22:00' } ],
             rating: 4.4,
             isIndoor: true,
@@ -423,9 +467,7 @@ async function seedData() {
             location: 'Downtown',
             description: 'A peaceful and modern yoga studio. Escape the city bustle and find your inner peace.',
             images: ['https://images.unsplash.com/photo-1599447462858-a0b8188edf24'],
-            sports: [getSportById('sport-6')!],
             sportPrices: [{ sportId: 'sport-6', pricePerHour: 400 }],
-            amenities: [getAmenityById('amenity-2')!, getAmenityById('amenity-3')!, getAmenityById('amenity-4')!],
             operatingHours: [ { day: 'Mon', open: '06:00', close: '20:00' }, { day: 'Tue', open: '06:00', close: '20:00' }, { day: 'Wed', open: '06:00', close: '20:00' }, { day: 'Thu', open: '06:00', close: '20:00' }, { day: 'Fri', open: '06:00', close: '20:00' }, { day: 'Sat', open: '08:00', close: '18:00' }, { day: 'Sun', open: '08:00', close: '18:00' } ],
             rating: 4.9,
             isIndoor: true,
@@ -439,9 +481,7 @@ async function seedData() {
             location: 'Downtown',
             description: 'A hardcore gym with a vast selection of free weights and machines for serious strength training.',
             images: ['https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e'],
-            sports: [getSportById('sport-16')!],
             sportPrices: [{ sportId: 'sport-16', pricePerHour: 250 }],
-            amenities: [getAmenityById('amenity-2')!, getAmenityById('amenity-3')!, getAmenityById('amenity-4')!],
             operatingHours: [ { day: 'Mon', open: '05:00', close: '23:00' }, { day: 'Tue', open: '05:00', close: '23:00' }, { day: 'Wed', open: '05:00', close: '23:00' }, { day: 'Thu', open: '05:00', close: '23:00' }, { day: 'Fri', open: '05:00', close: '23:00' }, { day: 'Sat', open: '07:00', close: '21:00' }, { day: 'Sun', 'open': '08:00', 'close': '20:00' } ],
             rating: 4.7,
             capacity: 75,
@@ -449,13 +489,20 @@ async function seedData() {
             dataAiHint: 'weightlifting gym',
           },
         ];
+        
+        // This is a temporary setup to assign some sports/amenities. A real app would have a dedicated admin UI for this.
+        const allSportIds = mockSports.map(s => s.id);
+        const allAmenityIds = mockAmenities.map(a => a.id);
+
         for (const facility of facilitiesToSeed) {
-          // The bug was here: I was not converting the rich sport/amenity objects back to just their IDs for Firestore storage.
-          const facilityToStore = {
-            ...facility,
-            sports: facility.sports.map(s => s.id),
-            amenities: facility.amenities.map(a => a.id),
-          };
+            const sportIds = facility.sportPrices.map(p => p.sportId);
+            const amenityIds = allAmenityIds.filter(() => Math.random() > 0.5).slice(0, 4); // Assign some random amenities
+            
+            const facilityToStore = {
+                ...facility,
+                sports: sportIds,
+                amenities: amenityIds,
+            };
           await addDoc(facilitiesCollection, facilityToStore);
         }
         console.log("Database facilities seeded successfully.");
@@ -475,6 +522,7 @@ if (typeof window !== 'undefined') {
 // Keep all other functions like addNotification, updateSiteSettings, etc. as they are.
 // ... (The rest of the file remains unchanged, only mock data arrays at the top and seeding logic are modified)
 export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {
+     if (firebaseInitializationError) { console.error("Firebase not initialized."); return []; }
      try {
         const q = query(collection(db, "facilities"), where("ownerId", "==", ownerId));
         const querySnapshot = await getDocs(q);
@@ -526,6 +574,7 @@ export const isUserOnWaitlist = (userId: string, facilityId: string, date: strin
 }
 export const getOpenLfgRequests = (): LfgRequest[] => mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 export const getAllBookings = async (): Promise<Booking[]> => {
+    if (firebaseInitializationError) { console.error("Firebase not initialized, cannot fetch bookings."); return []; }
     try {
         const querySnapshot = await getDocs(collection(db, 'bookings'));
         const bookings: Booking[] = [];
@@ -718,6 +767,7 @@ export const updatePromotionRule = (rule: PromotionRule): void => { const index 
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
 export async function listenToOwnerBookings(ownerId: string, callback: (bookings: Booking[]) => void, onError: (error: Error) => void): Promise<() => void> {
+    if (firebaseInitializationError) { onError(new Error("Firebase not initialized")); return () => {}; }
     const facilities = await getFacilitiesByOwnerId(ownerId);
     const facilityIds = facilities.map(f => f.id);
 
@@ -738,6 +788,7 @@ export async function listenToOwnerBookings(ownerId: string, callback: (bookings
     return unsubscribe;
 }
 export const blockTimeSlot = async (facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> => {
+    if (firebaseInitializationError) return false;
     try {
         const facilityRef = doc(db, 'facilities', facilityId);
         const facilitySnap = await getDoc(facilityRef);
@@ -756,6 +807,7 @@ export const blockTimeSlot = async (facilityId: string, ownerId: string, newBloc
 };
 
 export const unblockTimeSlot = async (facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> => {
+    if (firebaseInitializationError) return false;
     try {
         const facilityRef = doc(db, 'facilities', facilityId);
         const facilitySnap = await getDoc(facilityRef);
@@ -776,3 +828,16 @@ export const unblockTimeSlot = async (facilityId: string, ownerId: string, date:
         return false;
     }
 };
+
+// Ensure data seeding is attempted only once
+let dataSeeded = false;
+if (typeof window !== 'undefined' && !dataSeeded) {
+  setTimeout(() => {
+    if (!firebaseInitializationError) {
+      seedData().catch(console.error);
+      dataSeeded = true;
+    } else {
+      console.log("Seeding skipped due to Firebase init error.");
+    }
+  }, 1000); // Delay seeding slightly to ensure Firebase is ready.
+}
