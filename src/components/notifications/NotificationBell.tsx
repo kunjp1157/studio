@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,65 +16,72 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import type { AppNotification } from '@/lib/types';
-import { mockUser, getNotificationsForUser, markNotificationAsRead, markAllNotificationsAsRead } from '@/lib/data';
+import type { AppNotification, UserProfile } from '@/lib/types';
 import { NotificationItem } from './NotificationItem';
+import { getNotificationsForUserAction, markNotificationAsReadAction, markAllNotificationsAsReadAction } from '@/app/actions';
+import { getIconComponent } from '@/components/shared/Icon';
 
 export function NotificationBell() {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Function to fetch notifications and update state
-  const fetchNotifications = () => {
-    if (!mockUser) return; // Guard clause to prevent error
-    const userNotifications = getNotificationsForUser(mockUser.id);
+  useEffect(() => {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+        setCurrentUser(JSON.parse(activeUser));
+    }
+     const handleUserChange = () => {
+        const updatedUser = sessionStorage.getItem('activeUser');
+        if(updatedUser) {
+            setCurrentUser(JSON.parse(updatedUser));
+        }
+    };
+    window.addEventListener('userChanged', handleUserChange);
+
+    return () => {
+        window.removeEventListener('userChanged', handleUserChange);
+    };
+  }, []);
+
+  const fetchNotifications = async () => {
+    if (!currentUser) return;
+    const userNotifications = await getNotificationsForUserAction(currentUser.id);
     const newUnreadCount = userNotifications.filter(n => !n.isRead).length;
 
-    // Only update state if there's a change to avoid unnecessary re-renders
-    if (newUnreadCount !== unreadCount || notifications.length !== userNotifications.length) {
-      setNotifications(userNotifications);
-      setUnreadCount(newUnreadCount);
-    }
+    setNotifications(userNotifications);
+    setUnreadCount(newUnreadCount);
   };
 
   useEffect(() => {
-    // Fetch notifications on initial load
-    fetchNotifications();
-
-    // Set up polling every 5 seconds to check for new notifications
-    const intervalId = setInterval(() => {
-      fetchNotifications();
-    }, 5000); // Poll every 5 seconds
-
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(intervalId);
-  }, []); // Note: dependencies removed to avoid resetting interval unnecessarily
+    if (currentUser) {
+        fetchNotifications();
+        const intervalId = setInterval(fetchNotifications, 5000);
+        return () => clearInterval(intervalId);
+    }
+  }, [currentUser]);
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      // Also refresh when opening the dropdown for immediate feedback
       fetchNotifications();
     }
   };
 
-  const handleMarkAsRead = (notificationId: string) => {
-    if (!mockUser) return;
-    markNotificationAsRead(mockUser.id, notificationId);
-    // Immediately refetch to update UI
+  const handleMarkAsRead = async (notificationId: string) => {
+    if (!currentUser) return;
+    await markNotificationAsReadAction(currentUser.id, notificationId);
     fetchNotifications();
   };
 
-  const handleMarkAllRead = () => {
-    if (!mockUser) return;
-    markAllNotificationsAsRead(mockUser.id);
-    // Immediately refetch to update UI
+  const handleMarkAllRead = async () => {
+    if (!currentUser) return;
+    await markAllNotificationsAsReadAction(currentUser.id);
     fetchNotifications();
   };
   
   const recentNotifications = notifications.slice(0, 5);
-
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
@@ -110,13 +117,17 @@ export function NotificationBell() {
           <>
             <ScrollArea className="h-[300px]">
               <DropdownMenuGroup>
-                {recentNotifications.map((notification) => (
-                  <NotificationItem 
-                    key={notification.id} 
-                    notification={notification} 
-                    onMarkAsRead={handleMarkAsRead}
-                  />
-                ))}
+                {recentNotifications.map((notification) => {
+                  const IconComponent = getIconComponent(notification.iconName) || Info;
+                  return (
+                    <NotificationItem 
+                      key={notification.id} 
+                      notification={notification} 
+                      onMarkAsRead={handleMarkAsRead}
+                      IconComponent={IconComponent}
+                    />
+                  );
+                })}
               </DropdownMenuGroup>
             </ScrollArea>
             {notifications.length > 5 && (

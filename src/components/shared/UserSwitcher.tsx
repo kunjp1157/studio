@@ -8,10 +8,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { allMockUsers, setActiveMockUser } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { UserCog } from "lucide-react";
 import { useState, useEffect } from "react";
+import type { UserProfile, UserRole, UserStatus } from "@/lib/types";
+
+// The user data is now self-contained within this client component
+// to avoid importing from `lib/data.ts` which uses the `pg` driver.
+const allMockUsers: Record<'admin' | 'owner' | 'user', UserProfile> = {
+  admin: { 
+    id: 'user-admin-kirtan', 
+    name: 'Kirtan Shah', 
+    email: 'kirtan.shah@example.com', 
+    role: 'Admin' as UserRole, 
+    status: 'Active' as UserStatus,
+    joinedAt: new Date().toISOString(), 
+    loyaltyPoints: 1250, 
+    profilePictureUrl: 'https://randomuser.me/api/portraits/men/75.jpg', 
+    dataAiHint: 'man smiling',
+    isProfilePublic: true,
+  },
+  owner: { 
+    id: 'user-owner-dana', 
+    name: 'Dana White', 
+    email: 'dana.white@example.com', 
+    role: 'FacilityOwner' as UserRole, 
+    status: 'Active' as UserStatus,
+    joinedAt: new Date().toISOString(), 
+    loyaltyPoints: 450, 
+    profilePictureUrl: 'https://randomuser.me/api/portraits/women/68.jpg', 
+    dataAiHint: 'woman portrait',
+    isProfilePublic: true,
+  },
+  user: {
+    id: 'user-regular-charlie',
+    name: 'Charlie Davis',
+    email: 'charlie.davis@example.com',
+    role: 'User' as UserRole,
+    status: 'Active' as UserStatus,
+    joinedAt: new Date().toISOString(),
+    loyaltyPoints: 800,
+    profilePictureUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+    dataAiHint: 'man glasses',
+    isProfilePublic: true,
+  }
+};
 
 export function UserSwitcher() {
   const router = useRouter();
@@ -29,7 +70,6 @@ export function UserSwitcher() {
 
   const handleValueChange = (value: 'admin' | 'owner' | 'user') => {
     const newActiveUser = allMockUsers[value];
-    setActiveMockUser(value); // This still updates the server-side mock for any server components.
     
     // Store the new user in session storage for client components to access.
     sessionStorage.setItem('activeUser', JSON.stringify(newActiveUser));

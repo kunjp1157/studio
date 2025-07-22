@@ -10,15 +10,15 @@ import { Check, Info } from 'lucide-react';
 import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { getIconComponent } from '@/components/shared/Icon';
+import type { ElementType } from 'react';
 
 interface NotificationItemProps {
   notification: AppNotification;
   onMarkAsRead: (notificationId: string) => void;
+  IconComponent: ElementType;
 }
 
-export function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
-  const IconComponent = getIconComponent(notification.iconName) || Info;
+export function NotificationItem({ notification, onMarkAsRead, IconComponent }: NotificationItemProps) {
 
   const content = (
     <div className="flex items-start space-x-3 py-2 px-2 hover:bg-muted/50 rounded-md transition-colors">

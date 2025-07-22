@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Facility, Amenity, Sport, Review, RentalEquipment, SiteSettings } from '@/lib/types';
-import { getFacilityById, getSportById, getSiteSettings } from '@/lib/data';
+import { getFacilityByIdAction, getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -69,8 +69,8 @@ export default function FacilityDetailPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
         if (facilityId) {
-            const foundFacility = await getFacilityById(facilityId);
-            const settings = getSiteSettings();
+            const foundFacility = await getFacilityByIdAction(facilityId);
+            const settings = await getSiteSettingsAction();
             setTimeout(() => { // Simulate fetch delay
                 setFacility(foundFacility || null);
                 setCurrency(settings.defaultCurrency);

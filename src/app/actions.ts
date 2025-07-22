@@ -16,8 +16,12 @@ import {
     getAllMembershipPlans,
     getAllPricingRules,
     getAllPromotionRules,
+    getNotificationsForUser,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    getFacilityById,
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule } from '@/lib/types';
+import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification } from '@/lib/types';
 
 // Note: With real-time listeners, many 'getAll' actions might become less necessary on the client,
 // but they are kept for server-side operations or initial data hydration.
@@ -60,4 +64,20 @@ export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
 
 export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
     return getAllPromotionRules();
+}
+
+export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
+    return getNotificationsForUser(userId);
+}
+
+export async function markNotificationAsReadAction(userId: string, notificationId: string): Promise<void> {
+    return markNotificationAsRead(userId, notificationId);
+}
+
+export async function markAllNotificationsAsReadAction(userId: string): Promise<void> {
+    return markAllNotificationsAsRead(userId);
+}
+
+export async function getFacilityByIdAction(id: string): Promise<Facility | undefined> {
+    return getFacilityById(id);
 }
