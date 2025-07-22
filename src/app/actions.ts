@@ -30,11 +30,7 @@ import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, Me
 
 export async function getFacilitiesAction(): Promise<Facility[]> {
   const facilities = await dbGetAllFacilities();
-  // Enrich each facility with its full details
-  const enrichedFacilities = await Promise.all(
-    facilities.map(f => getFacilityById(f.id))
-  );
-  return enrichedFacilities.filter(Boolean) as Facility[];
+  return facilities;
 }
 
 export async function getUsersAction(): Promise<UserProfile[]> {

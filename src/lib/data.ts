@@ -142,10 +142,44 @@ export function listenToAllPromotionRules(callback: (promotions: PromotionRule[]
 // --- Direct Fetch Functions (for specific, non-listening needs) ---
 export const getAllFacilities = async (): Promise<Facility[]> => {
     try {
-        const res = await db.query('SELECT * FROM facilities');
-        return res.rows;
+        const facilitiesRes = await db.query('SELECT * FROM facilities');
+        const allFacilities = facilitiesRes.rows;
+
+        // Fetch all sports and amenities for all facilities in one go
+        const sportsRes = await db.query('SELECT fs.facility_id, s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sport_id');
+        const amenitiesRes = await db.query('SELECT fa.facility_id, a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id');
+        
+        // Group sports and amenities by facility_id for efficient lookup
+        const sportsByFacility = sportsRes.rows.reduce((acc, row) => {
+            if (!acc[row.facility_id]) {
+                acc[row.facility_id] = [];
+            }
+            acc[row.facility_id].push(row);
+            return acc;
+        }, {} as Record<string, Sport[]>);
+
+        const amenitiesByFacility = amenitiesRes.rows.reduce((acc, row) => {
+            if (!acc[row.facility_id]) {
+                acc[row.facility_id] = [];
+            }
+            acc[row.facility_id].push(row);
+            return acc;
+        }, {} as Record<string, Amenity[]>);
+
+        // Enrich each facility with its sports and amenities
+        const enrichedFacilities = allFacilities.map(facility => {
+            return {
+                ...facility,
+                sportPrices: facility.sport_prices || [], // Use the stored JSON directly
+                sports: sportsByFacility[facility.id] || [],
+                amenities: amenitiesByFacility[facility.id] || [],
+                reviews: [], // Reviews can be fetched separately if needed
+            };
+        });
+        
+        return enrichedFacilities;
     } catch (error) {
-        console.error("Error fetching facilities: ", error);
+        console.error("Error fetching all facilities with relations: ", error);
         return [];
     }
 };
@@ -175,9 +209,14 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
 
         let facility = facilityRes.rows[0];
 
-        // Ensure sport_prices is parsed correctly if it's a JSON string
+        // Ensure sport_prices is parsed correctly if it's a JSON string, otherwise use as is
         if (typeof facility.sport_prices === 'string') {
-            facility.sportPrices = JSON.parse(facility.sport_prices);
+            try {
+                 facility.sportPrices = JSON.parse(facility.sport_prices);
+            } catch (e) {
+                console.error("Error parsing sport_prices JSON for facility " + id, e);
+                facility.sportPrices = [];
+            }
         } else {
             facility.sportPrices = facility.sport_prices || [];
         }
@@ -577,3 +616,4 @@ export const unblockTimeSlot = async (facilityId: string, ownerId: string, date:
     console.log("Unblocking slot for", facilityId, date, startTime);
     return true;
 };
+
