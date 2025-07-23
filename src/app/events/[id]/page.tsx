@@ -6,7 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import type { SportEvent, Facility, SiteSettings } from '@/lib/types';
-import { getEventById, getFacilityById, registerForEvent as mockRegisterForEvent, addNotification, mockUser, getSiteSettings } from '@/lib/data';
+import { addNotification, mockUser, registerForEvent as mockRegisterForEvent } from '@/lib/data';
+import { getSiteSettingsAction, getFacilityByIdAction, getEventByIdAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,24 +32,24 @@ export default function EventDetailPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    if (eventId) {
-      const foundEvent = getEventById(eventId);
-      setTimeout(() => { // Simulate fetch delay
-        setEvent(foundEvent || null);
-        if (foundEvent) {
-          const foundFacility = getFacilityById(foundEvent.facilityId);
-          setFacility(foundFacility || null);
+    const fetchEventData = async () => {
+        if (eventId) {
+            const foundEvent = await getEventByIdAction(eventId);
+            setEvent(foundEvent || null);
+            if (foundEvent) {
+                const foundFacility = await getFacilityByIdAction(foundEvent.facilityId);
+                setFacility(foundFacility || null);
+            }
         }
-      }, 300);
-    }
+    };
+    fetchEventData();
   }, [eventId]);
   
   useEffect(() => {
-    const fetchSettings = () => {
-      const currentSettings = getSiteSettings();
-      setCurrency(prev => currentSettings.defaultCurrency !== prev ? currentSettings.defaultCurrency : prev);
+    const fetchSettings = async () => {
+      const currentSettings = await getSiteSettingsAction();
+      setCurrency(currentSettings.defaultCurrency);
     };
-
     fetchSettings();
   }, []);
 

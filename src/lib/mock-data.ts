@@ -1,7 +1,7 @@
 
 'use client'; // Mark as a client-safe module
 
-import type { Sport, Amenity } from './types';
+import type { Sport, Amenity, MembershipPlan } from './types';
 
 // This file contains static mock data that is safe to be imported into client components.
 // It has no server-side dependencies like the 'pg' database driver.
@@ -31,4 +31,10 @@ export const mockAmenities: Amenity[] = [
   { id: 'amenity-5', name: 'Equipment Rental Signage', iconName: 'PackageSearch' },
   { id: 'amenity-6', name: 'Cafe', iconName: 'Utensils' },
   { id: 'amenity-7', name: 'Accessible', iconName: 'Users' },
+];
+
+export const mockMembershipPlans: MembershipPlan[] = [
+  { id: 'mem_basic_1', name: 'Basic', pricePerMonth: 0, benefits: ['Access to all facilities', 'Standard booking rates', 'Community access'] },
+  { id: 'mem_premium_2', name: 'Premium', pricePerMonth: 999, benefits: ['10% off all bookings', 'Priority booking slots', 'Free equipment rental (2 items/month)', 'Access to exclusive events'] },
+  { id: 'mem_pro_3', name: 'Pro', pricePerMonth: 2499, benefits: ['25% off all bookings', 'Unlimited priority booking', 'Unlimited free equipment rental', 'Free entry to all events', 'Personalized coaching tips (AI-powered)'] },
 ];

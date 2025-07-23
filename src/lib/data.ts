@@ -55,20 +55,15 @@ export let mockUser: UserProfile = allMockUsers.admin;
 // This function allows other components (like the UserSwitcher) to change the active user.
 export const setActiveMockUser = (role: 'admin' | 'owner' | 'user') => {
   mockUser = allMockUsers[role];
-  // In a real app with state management, you'd dispatch an action here
-  // to notify the whole app of the user change. For now, a page refresh
-  // might be needed for all components to pick up the new user.
 };
 
 
 // These arrays are for non-Firestore managed data or for temporary client-side operations.
-// They no longer hold primary data for users, bookings, etc.
 export let mockReviews: Review[] = [];
 export const mockAchievements: Achievement[] = [];
 export let mockTeams: Team[] = [];
 let mockAppNotifications: AppNotification[] = [];
 export const mockBlogPosts: BlogPost[] = [];
-export let mockMembershipPlans: MembershipPlan[] = [];
 export let mockEvents: SportEvent[] = [];
 export let mockPricingRules: PricingRule[] = [];
 export let mockPromotionRules: PromotionRule[] = [];
@@ -174,38 +169,32 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
     try {
         const facilitiesRes = await db.query('SELECT * FROM facilities');
         const allFacilities = facilitiesRes.rows;
-
-        // Fetch all sports and amenities for all facilities in one go
-        const sportsRes = await db.query('SELECT fs.facility_id, s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sport_id');
-        const amenitiesRes = await db.query('SELECT fa.facility_id, a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id');
         
-        // Group sports and amenities by facility_id for efficient lookup
+        const facilityIds = allFacilities.map(f => f.id);
+        if (facilityIds.length === 0) return [];
+
+        const sportsRes = await db.query('SELECT fs.facility_id, s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sport_id WHERE fs.facility_id = ANY($1::text[])', [facilityIds]);
+        const amenitiesRes = await db.query('SELECT fa.facility_id, a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id WHERE fa.facility_id = ANY($1::text[])', [facilityIds]);
+        
         const sportsByFacility = sportsRes.rows.reduce((acc, row) => {
-            if (!acc[row.facility_id]) {
-                acc[row.facility_id] = [];
-            }
+            if (!acc[row.facility_id]) acc[row.facility_id] = [];
             acc[row.facility_id].push(row);
             return acc;
         }, {} as Record<string, Sport[]>);
 
         const amenitiesByFacility = amenitiesRes.rows.reduce((acc, row) => {
-            if (!acc[row.facility_id]) {
-                acc[row.facility_id] = [];
-            }
+            if (!acc[row.facility_id]) acc[row.facility_id] = [];
             acc[row.facility_id].push(row);
             return acc;
         }, {} as Record<string, Amenity[]>);
 
-        // Enrich each facility with its sports and amenities
-        const enrichedFacilities = allFacilities.map(facility => {
-            return {
-                ...facility,
-                sportPrices: facility.sport_prices || [], // Use the stored JSON directly
-                sports: sportsByFacility[facility.id] || [],
-                amenities: amenitiesByFacility[facility.id] || [],
-                reviews: [], // Reviews can be fetched separately if needed
-            };
-        });
+        const enrichedFacilities = allFacilities.map(f => ({
+            ...f,
+            sportPrices: f.sport_prices || [],
+            sports: sportsByFacility[f.id] || [],
+            amenities: amenitiesByFacility[f.id] || [],
+            reviews: [], // Reviews fetched separately
+        }));
         
         return enrichedFacilities;
     } catch (error) {
@@ -226,7 +215,6 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 
 export const getUserById = (userId: string): UserProfile | undefined => {
     if (!userId) return undefined;
-    // This is now synchronous and relies on the mock data object.
     const allUsers = [...Object.values(allMockUsers)];
     return allUsers.find(user => user.id === userId);
 };
@@ -239,7 +227,6 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
 
         let facility = facilityRes.rows[0];
 
-        // Ensure sport_prices is parsed correctly if it's a JSON string, otherwise use as is
         if (typeof facility.sport_prices === 'string') {
             try {
                  facility.sportPrices = JSON.parse(facility.sport_prices);
@@ -251,16 +238,11 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
             facility.sportPrices = facility.sport_prices || [];
         }
 
-
-        // Enrich sports
         const sportsRes = await db.query('SELECT s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sport_id WHERE fs.facility_id = $1', [id]);
-        facility.sports = sportsRes.rows;
-
-        // Enrich amenities
         const amenitiesRes = await db.query('SELECT a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id WHERE fa.facility_id = $1', [id]);
-        facility.amenities = amenitiesRes.rows;
         
-        // This is a placeholder for review enrichment
+        facility.sports = sportsRes.rows;
+        facility.amenities = amenitiesRes.rows;
         facility.reviews = []; 
         
         return facility;
@@ -282,8 +264,6 @@ export const getFacilitiesByIds = async (ids: string[]): Promise<Facility[]> => 
 };
 
 export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<Facility> => {
-    // This is a complex transaction in SQL and is simplified here.
-    // In a real app, you would use a transaction to insert into facilities, facility_sports, and facility_amenities.
     console.warn("addFacility is simplified and does not handle sport/amenity relations.");
     const { name, type, address, city, location, description, images, sportPrices, rating, capacity, isPopular, isIndoor, dataAiHint, ownerId } = facilityData;
     const res = await db.query(
@@ -340,9 +320,7 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
     const userIndex = Object.values(allMockUsers).flat().findIndex(u => u.id === userId);
     
     // This is a simplified update that only works on the mock data.
-    // In a real app this would be an async database call.
     if (userIndex !== -1) {
-        // This is a bit tricky because we don't know which user type it is
         for (const key in allMockUsers) {
             // @ts-ignore
             if (allMockUsers[key].id === userId) {
@@ -373,14 +351,11 @@ export const getBookingsByUserId = async (userId: string): Promise<Booking[]> =>
     return res.rows;
 };
 
-// ... other functions ...
-
 // --- STATIC/MOCK GETTERS (for data not in DB for this migration) ---
 export const getSportById = (id: string): Sport | undefined => mockSports.find(s => s.id === id);
 export const getAmenityById = (id: string): Amenity | undefined => mockAmenities.find(a => a.id === id);
 export const getAllSports = (): Sport[] => mockSports;
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
-// ... all other mock-based functions
 
 export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {
     const res = await db.query('SELECT * FROM facilities WHERE owner_id = $1', [ownerId]);
@@ -402,17 +377,11 @@ export const getRentalEquipmentById = (id: string): RentalEquipment | undefined 
 export const getNotificationsForUser = (userId: string): AppNotification[] => mockAppNotifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 export const getAllBlogPosts = (): BlogPost[] => mockBlogPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 export const getBlogPostBySlug = (slug: string): BlogPost | undefined => mockBlogPosts.find(post => post.slug === slug);
-export const getAllMembershipPlans = (): MembershipPlan[] => [...mockMembershipPlans];
-export const getMembershipPlanById = (id: string): MembershipPlan | undefined => mockMembershipPlans.find(plan => plan.id === plan.id);
 export const getAllEvents = (): SportEvent[] => [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
-export const getEventById = async (id: string): Promise<SportEvent | undefined> => {
-  const event = mockEvents.find(event => event.id === id);
-  if (event) {
-    const sport = getSportById(event.sport.id);
-    const facility = await getFacilityById(event.facilityId);
-    return sport && facility ? { ...event, sport, facilityName: facility.name } : { ...event };
-  }
-  return undefined;
+export const getEventById = (id: string): SportEvent | undefined => {
+    const event = mockEvents.find(event => event.id === id);
+    if (!event) return undefined;
+    return event;
 };
 export const getAllPricingRules = (): PricingRule[] => [...mockPricingRules];
 export const getPricingRuleById = (id: string): PricingRule | undefined => mockPricingRules.find(rule => rule.id === id);
@@ -588,10 +557,15 @@ export const acceptChallenge = (challengeId: string, opponentId: string): Challe
 
 
 // Functions below are still using mock data and would need to be migrated
-// --- MOCK DATA POPULATION (Example data) ---
-export const addMembershipPlan = (plan: Omit<MembershipPlan, 'id'>): MembershipPlan => { const newPlan = { ...plan, id: `mem-${Date.now()}`}; mockMembershipPlans.push(newPlan); return newPlan; };
-export const updateMembershipPlan = (plan: MembershipPlan): void => { const index = mockMembershipPlans.findIndex(p => p.id === plan.id); if (index !== -1) mockMembershipPlans[index] = plan; };
-export const deleteMembershipPlan = (id: string): void => { mockMembershipPlans = mockMembershipPlans.filter(p => p.id !== id); };
+export const addMembershipPlan = (plan: Omit<MembershipPlan, 'id'>): void => {
+    console.log("Adding mock membership plan. This is not persisted.", plan);
+};
+export const updateMembershipPlan = (plan: MembershipPlan): void => {
+    console.log("Updating mock membership plan. This is not persisted.", plan);
+};
+export const deleteMembershipPlan = (id: string): void => {
+    console.log("Deleting mock membership plan. This is not persisted.", id);
+};
 export const addEvent = async (event: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): Promise<void> => { 
     const sport = getSportById(event.sportId); 
     const facility = await getFacilityById(event.facilityId);
@@ -608,7 +582,17 @@ export const addEvent = async (event: Omit<SportEvent, 'id' | 'sport' | 'registe
         console.error("Could not create event: Sport or Facility not found.");
     }
 };
-export const updateEvent = (event: SportEvent): void => { const index = mockEvents.findIndex(e => e.id === event.id); if (index !== -1) mockEvents[index] = event; };
+export const updateEvent = async (eventData: Omit<SportEvent, 'sport'> & { sportId: string }): Promise<void> => {
+    const index = mockEvents.findIndex(e => e.id === eventData.id);
+    if (index !== -1) {
+        const sport = getSportById(eventData.sportId);
+        if (!sport) {
+            console.error(`Could not update event: Sport with id ${eventData.sportId} not found.`);
+            return;
+        }
+        mockEvents[index] = { ...mockEvents[index], ...eventData, sport: sport };
+    }
+};
 export const deleteEvent = (id: string): void => { mockEvents = mockEvents.filter(e => e.id !== id); };
 export const registerForEvent = (eventId: string): boolean => { const event = mockEvents.find(e => e.id === eventId); if (event && (!event.maxParticipants || event.registeredParticipants < event.maxParticipants)) { event.registeredParticipants++; return true; } return false; };
 export const addPricingRule = (rule: Omit<PricingRule, 'id'>): void => { mockPricingRules.push({ ...rule, id: `pr-${Date.now()}` }); };
@@ -635,15 +619,27 @@ export async function listenToOwnerBookings(ownerId: string, callback: (bookings
 }
 export const blockTimeSlot = async (facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> => {
    // This would require adding a record to a `blocked_slots` table or updating a JSONB column.
-   // Simplified for this migration.
    console.log("Blocking slot for", facilityId, newBlock);
    return true;
 };
 
 export const unblockTimeSlot = async (facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> => {
     // This would require removing a record from a `blocked_slots` table or updating a JSONB column.
-    // Simplified for this migration.
     console.log("Unblocking slot for", facilityId, date, startTime);
     return true;
 };
 
+export const getMembershipPlanById = (id: string): MembershipPlan | undefined => {
+    console.log("getMembershipPlanById is a mock and not persisted.", id);
+    return undefined;
+};
+
+export const getAllMembershipPlans = async (): Promise<MembershipPlan[]> => {
+    try {
+        const res = await db.query('SELECT * FROM membership_plans ORDER BY price_per_month ASC');
+        return res.rows;
+    } catch (error) {
+        console.error("Error fetching membership plans:", error);
+        return [];
+    }
+}

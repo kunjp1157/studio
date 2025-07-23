@@ -7,7 +7,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import type { MembershipPlan, SiteSettings, UserProfile } from '@/lib/types';
-import { mockMembershipPlans, mockUser, updateUser, getSiteSettings } from '@/lib/data';
+import { getAllMembershipPlansAction, getSiteSettingsAction, updateUserAction } from '@/app/actions';
 import { Award, CheckCircle, Star, CreditCard, HandCoins, QrCode, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
@@ -40,7 +40,7 @@ export default function MembershipsPage() {
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [currentUser, setCurrentUser] = useState<UserProfile>(mockUser);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
@@ -52,19 +52,37 @@ export default function MembershipsPage() {
 
   useEffect(() => {
     setIsLoading(true);
-    setTimeout(() => {
-      const sortedPlans = [...mockMembershipPlans].sort((a,b) => a.pricePerMonth - b.pricePerMonth);
-      setPlans(sortedPlans);
-      setIsLoading(false);
-    }, 500);
+    const fetchInitialData = async () => {
+        try {
+            const [plansData, settingsData] = await Promise.all([
+                getAllMembershipPlansAction(),
+                getSiteSettingsAction(),
+            ]);
+            
+            setPlans(plansData.sort((a,b) => a.pricePerMonth - b.pricePerMonth));
+            setCurrency(settingsData.defaultCurrency);
 
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
-  }, []);
+            const activeUser = sessionStorage.getItem('activeUser');
+            if (activeUser) {
+                setCurrentUser(JSON.parse(activeUser));
+            }
 
-  useEffect(() => {
-    setCurrentUser(mockUser);
-  }, [mockUser.membershipLevel]);
+        } catch (error) {
+            toast({ title: "Error", description: "Could not load membership data.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchInitialData();
+
+    const handleUserChange = () => {
+        const activeUser = sessionStorage.getItem('activeUser');
+        if (activeUser) setCurrentUser(JSON.parse(activeUser));
+    };
+    window.addEventListener('userChanged', handleUserChange);
+    return () => window.removeEventListener('userChanged', handleUserChange);
+
+  }, [toast]);
 
   const handleChoosePlan = (plan: MembershipPlan) => {
     setSelectedPlanForPayment(plan);
@@ -72,7 +90,7 @@ export default function MembershipsPage() {
   };
   
   useEffect(() => {
-    if (isPaymentDialogOpen && paymentMethod === 'qr' && selectedPlanForPayment && currency) {
+    if (isPaymentDialogOpen && paymentMethod === 'qr' && selectedPlanForPayment && currency && currentUser) {
         const currentPlanPrice = plans.find(p => p.name === currentUser.membershipLevel)?.pricePerMonth ?? 0;
         const priceDifference = selectedPlanForPayment.pricePerMonth - currentPlanPrice;
 
@@ -86,11 +104,11 @@ export default function MembershipsPage() {
             setMembershipQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?${upiData}`);
         }
     }
-  }, [isPaymentDialogOpen, paymentMethod, selectedPlanForPayment, currency, plans, currentUser.membershipLevel]);
+  }, [isPaymentDialogOpen, paymentMethod, selectedPlanForPayment, currency, plans, currentUser]);
   
   const handleConfirmPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPlanForPayment) return;
+    if (!selectedPlanForPayment || !currentUser) return;
 
     if (paymentMethod === 'upi' && !upiId.trim()) {
         toast({ title: 'UPI ID Required', description: 'Please enter your UPI ID.', variant: 'destructive' });
@@ -100,14 +118,21 @@ export default function MembershipsPage() {
     setIsProcessingPayment(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    updateUser(currentUser.id, { membershipLevel: selectedPlanForPayment.name as 'Basic' | 'Premium' | 'Pro' });
-    setCurrentUser(prev => ({...prev, membershipLevel: selectedPlanForPayment.name as 'Basic' | 'Premium' | 'Pro' }));
+    const updatedUser = await updateUserAction(currentUser.id, { membershipLevel: selectedPlanForPayment.name as 'Basic' | 'Premium' | 'Pro' });
     
-    toast({
-        title: "Membership Updated!",
-        description: `You are now on the ${selectedPlanForPayment.name} plan.`,
-        className: 'bg-green-500 text-white'
-    });
+    if (updatedUser) {
+        setCurrentUser(updatedUser);
+        sessionStorage.setItem('activeUser', JSON.stringify(updatedUser)); // Keep session storage in sync
+        window.dispatchEvent(new Event('userChanged')); // Notify other components
+
+        toast({
+            title: "Membership Updated!",
+            description: `You are now on the ${selectedPlanForPayment.name} plan.`,
+            className: 'bg-green-500 text-white'
+        });
+    } else {
+        toast({ title: 'Update failed', description: 'Could not update your membership plan.', variant: 'destructive'});
+    }
     
     setIsProcessingPayment(false);
     setIsPaymentDialogOpen(false);
@@ -119,6 +144,9 @@ export default function MembershipsPage() {
       disabled: boolean; 
       variant: "default" | "secondary" | "outline";
     } => {
+    if (!currentUser) {
+        return { text: "Loading...", disabled: true, variant: 'secondary' };
+    }
     if (isProcessingPayment) {
         return { text: "Processing...", disabled: true, variant: 'secondary' };
     }
@@ -163,10 +191,10 @@ export default function MembershipsPage() {
     </Card>
   );
 
-  const currentPlanPrice = plans.find(p => p.name === currentUser.membershipLevel)?.pricePerMonth ?? 0;
+  const currentPlanPrice = (currentUser && plans) ? plans.find(p => p.name === currentUser.membershipLevel)?.pricePerMonth ?? 0 : 0;
   const priceDifference = selectedPlanForPayment ? selectedPlanForPayment.pricePerMonth - currentPlanPrice : 0;
   
-  if (isLoading) {
+  if (isLoading || !currentUser) {
     return (
       <div className="container mx-auto py-12 px-4 md:px-6">
         <PageTitle title="Membership Plans" description="Unlock exclusive benefits and discounts with our membership tiers." />

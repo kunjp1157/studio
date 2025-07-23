@@ -11,8 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import type { SportEvent, Sport } from '@/lib/types';
-import { mockEvents, getFacilityById } from '@/lib/data';
+import type { SportEvent, Facility } from '@/lib/types';
+import { getAllEventsAction, getFacilityByIdAction } from '@/app/actions';
 import { mockSports } from '@/lib/mock-data';
 import { CalendarDays, MapPin, Users, Ticket, AlertCircle, Trophy, Zap, FilterX, ListFilter, Dices, SortAsc } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -32,12 +32,14 @@ export default function EventsPage() {
   const [sortOption, setSortOption] = useState<SortOption>('date-asc');
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setAllEvents(mockEvents);
-      setFilteredEvents(mockEvents.sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()));
-      setIsLoading(false);
-    }, 500);
+    const fetchEvents = async () => {
+        setIsLoading(true);
+        const eventsData = await getAllEventsAction();
+        setAllEvents(eventsData);
+        setFilteredEvents(eventsData.sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()));
+        setIsLoading(false);
+    };
+    fetchEvents();
   }, []);
 
   useEffect(() => {
@@ -68,11 +70,9 @@ export default function EventsPage() {
   const clearFilters = () => {
     setSportFilter('all');
     setDateFilter(undefined);
-    // Optionally reset sort option or keep it
-    // setSortOption('date-asc'); 
   };
 
-  if (isLoading && allEvents.length === 0) { // Show full page loading only on initial load
+  if (isLoading && allEvents.length === 0) {
     return (
       <div className="container mx-auto py-12 px-4 md:px-6">
         <PageTitle title="Upcoming Sports Events" description="Join exciting tournaments, leagues, and sports activities happening in the city." />
@@ -80,6 +80,82 @@ export default function EventsPage() {
             <LoadingSpinner size={48}/>
          </div>
       </div>
+    );
+  }
+
+  const EventCard = ({ event }: { event: SportEvent }) => {
+    const [facility, setFacility] = useState<Facility | null>(null);
+    const SportIcon = getIconComponent(event.sport.iconName) || Zap;
+    const isEventPast = isPast(parseISO(event.endDate));
+    const isEventFull = event.maxParticipants && event.registeredParticipants >= event.maxParticipants;
+    
+    useEffect(() => {
+        const fetchFacility = async () => {
+            const fac = await getFacilityByIdAction(event.facilityId);
+            setFacility(fac || null);
+        };
+        fetchFacility();
+    }, [event.facilityId]);
+
+    return (
+      <Card key={event.id} className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg">
+        <CardHeader className="p-0 relative">
+            <Link href={`/events/${event.id}`}>
+                <Image
+                    src={event.imageUrl || `https://placehold.co/400x200.png?text=${encodeURIComponent(event.name)}`}
+                    alt={event.name}
+                    width={400}
+                    height={200}
+                    className="w-full h-48 object-cover"
+                    data-ai-hint={event.imageDataAiHint || "sports event"}
+                />
+            </Link>
+             <Badge 
+                variant={isEventPast ? "secondary" : (isEventFull ? "destructive" : "default")}
+                className={`absolute top-2 right-2 ${!isEventPast && !isEventFull ? "bg-green-500 text-white hover:bg-green-600" : ""}`}
+            >
+              {isEventPast ? "Concluded" : (isEventFull ? "Full" : "Open")}
+            </Badge>
+        </CardHeader>
+        <CardContent className="p-4 flex-grow">
+          <div className="flex items-center mb-2">
+            <SportIcon className="h-6 w-6 text-primary mr-2 shrink-0" />
+            <Link href={`/events/${event.id}`}>
+                <CardTitle className="text-xl font-headline truncate hover:text-primary" title={event.name}>{event.name}</CardTitle>
+            </Link>
+          </div>
+          <CardDescription className="mb-3 text-sm">{event.sport.name} Event</CardDescription>
+          
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <div className="flex items-center">
+                <CalendarDays className="w-4 h-4 mr-2 text-primary shrink-0" />
+                <span>{format(parseISO(event.startDate), 'MMM d, yyyy, p')}</span>
+            </div>
+            {facility && (
+                <div className="flex items-center">
+                <MapPin className="w-4 h-4 mr-2 text-primary shrink-0" />
+                <span>{facility.name}, {facility.location}</span>
+                </div>
+            )}
+            <p className="text-foreground line-clamp-2 pt-1">{event.description}</p>
+            <div className="flex items-center pt-1">
+                <Users className="w-4 h-4 mr-2 text-primary shrink-0" />
+                <span>
+                {event.registeredParticipants} Registered
+                {event.maxParticipants && ` / ${event.maxParticipants} Spots`}
+                </span>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="p-4 pt-0 mt-auto">
+          <Link href={`/events/${event.id}`} className="w-full">
+            <Button className="w-full">
+                <Ticket className="mr-2 h-4 w-4" /> 
+                View Details
+            </Button>
+          </Link>
+        </CardFooter>
+      </Card>
     );
   }
 
@@ -138,7 +214,7 @@ export default function EventsPage() {
         </div>
       </Card>
 
-      {isLoading && allEvents.length > 0 ? ( // Show spinner inline if events are already loaded but filters change
+      {isLoading && allEvents.length > 0 ? (
         <div className="flex justify-center items-center min-h-[200px]"><LoadingSpinner size={36}/></div>
       ) : filteredEvents.length === 0 ? (
          <Alert className="mt-8">
@@ -150,72 +226,7 @@ export default function EventsPage() {
         </Alert>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
-          {filteredEvents.map((event) => {
-            const facility = getFacilityById(event.facilityId);
-            const SportIcon = getIconComponent(event.sport.iconName) || Zap;
-            const isEventPast = isPast(parseISO(event.endDate));
-            const isEventFull = event.maxParticipants && event.registeredParticipants >= event.maxParticipants;
-            return (
-              <Card key={event.id} className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg">
-                <CardHeader className="p-0 relative">
-                    <Link href={`/events/${event.id}`}>
-                        <Image
-                            src={event.imageUrl || `https://placehold.co/400x200.png?text=${encodeURIComponent(event.name)}`}
-                            alt={event.name}
-                            width={400}
-                            height={200}
-                            className="w-full h-48 object-cover"
-                            data-ai-hint={event.imageDataAiHint || "sports event"}
-                        />
-                    </Link>
-                     <Badge 
-                        variant={isEventPast ? "secondary" : (isEventFull ? "destructive" : "default")}
-                        className={`absolute top-2 right-2 ${!isEventPast && !isEventFull ? "bg-green-500 text-white hover:bg-green-600" : ""}`}
-                    >
-                      {isEventPast ? "Concluded" : (isEventFull ? "Full" : "Open")}
-                    </Badge>
-                </CardHeader>
-                <CardContent className="p-4 flex-grow">
-                  <div className="flex items-center mb-2">
-                    <SportIcon className="h-6 w-6 text-primary mr-2 shrink-0" />
-                    <Link href={`/events/${event.id}`}>
-                        <CardTitle className="text-xl font-headline truncate hover:text-primary" title={event.name}>{event.name}</CardTitle>
-                    </Link>
-                  </div>
-                  <CardDescription className="mb-3 text-sm">{event.sport.name} Event</CardDescription>
-                  
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <div className="flex items-center">
-                        <CalendarDays className="w-4 h-4 mr-2 text-primary shrink-0" />
-                        <span>{format(parseISO(event.startDate), 'MMM d, yyyy, p')}</span>
-                    </div>
-                    {facility && (
-                        <div className="flex items-center">
-                        <MapPin className="w-4 h-4 mr-2 text-primary shrink-0" />
-                        <span>{facility.name}, {facility.location}</span>
-                        </div>
-                    )}
-                    <p className="text-foreground line-clamp-2 pt-1">{event.description}</p>
-                    <div className="flex items-center pt-1">
-                        <Users className="w-4 h-4 mr-2 text-primary shrink-0" />
-                        <span>
-                        {event.registeredParticipants} Registered
-                        {event.maxParticipants && ` / ${event.maxParticipants} Spots`}
-                        </span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="p-4 pt-0 mt-auto"> {/* mt-auto pushes footer to bottom */}
-                  <Link href={`/events/${event.id}`} className="w-full">
-                    <Button className="w-full">
-                        <Ticket className="mr-2 h-4 w-4" /> 
-                        View Details
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
-            );
-          })}
+          {filteredEvents.map((event) => <EventCard key={event.id} event={event} />)}
         </div>
       )}
     </div>

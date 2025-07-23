@@ -3,67 +3,70 @@
 
 import { 
     getAllFacilities as dbGetAllFacilities,
-    getAllUsers, 
-    getAllBookings, 
-    getSiteSettings,
-    getFacilitiesByOwnerId,
-    getEventById,
-    getMembershipPlanById,
-    getPricingRuleById,
-    getPromotionRuleById,
-    getAllEvents,
-    getAllMembershipPlans,
-    getAllPricingRules,
-    getAllPromotionRules,
+    getFacilityById as dbGetFacilityById,
+    getAllUsers as dbGetAllUsers, 
+    getAllBookings as dbGetAllBookings, 
+    getSiteSettings as dbGetSiteSettings,
+    getFacilitiesByOwnerId as dbGetFacilitiesByOwnerId,
+    getEventById as dbGetEventById,
+    getAllEvents as dbGetAllEvents,
+    getAllMembershipPlans as dbGetAllMembershipPlans,
+    getAllPricingRules as dbGetAllPricingRules,
+    getAllPromotionRules as dbGetAllPromotionRules,
     getNotificationsForUser,
     markNotificationAsRead,
     markAllNotificationsAsRead,
-    getFacilityById,
-    getSportById,
-    getAmenityById,
+    getBookingsByUserId,
     blockTimeSlot as dbBlockTimeSlot,
-    unblockTimeSlot as dbUnblockTimeSlot
+    unblockTimeSlot as dbUnblockTimeSlot,
+    updateUser as dbUpdateUser,
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, Team, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, Sport, BlockedSlot } from '@/lib/types';
-
-// Note: With real-time listeners, many 'getAll' actions might become less necessary on the client,
-// but they are kept for server-side operations or initial data hydration.
+import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot } from '@/lib/types';
 
 export async function getFacilitiesAction(): Promise<Facility[]> {
   const facilities = await dbGetAllFacilities();
   return facilities;
 }
 
+export async function getFacilityByIdAction(id: string): Promise<Facility | undefined> {
+    const facility = await dbGetFacilityById(id);
+    return facility;
+}
+
 export async function getUsersAction(): Promise<UserProfile[]> {
-  return getAllUsers();
+  return dbGetAllUsers();
 }
 
 export async function getAllBookingsAction(): Promise<Booking[]> {
-  return getAllBookings();
+  return dbGetAllBookings();
 }
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
-    return getSiteSettings();
+    return dbGetSiteSettings();
 }
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
-    return getFacilitiesByOwnerId(ownerId);
+    return dbGetFacilitiesByOwnerId(ownerId);
 }
 
 export async function getAllEventsAction(): Promise<SportEvent[]> {
-    return getAllEvents();
+    return dbGetAllEvents();
+}
+
+export async function getEventByIdAction(id: string): Promise<SportEvent | undefined> {
+    return dbGetEventById(id);
 }
 
 export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
-    return getAllMembershipPlans();
+    return dbGetAllMembershipPlans();
 }
 
 export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
-    return getAllPricingRules();
+    return dbGetAllPricingRules();
 }
 
 export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
-    return getAllPromotionRules();
+    return dbGetAllPromotionRules();
 }
 
 export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
@@ -78,8 +81,8 @@ export async function markAllNotificationsAsReadAction(userId: string): Promise<
     return markAllNotificationsAsRead(userId);
 }
 
-export async function getFacilityByIdAction(id: string): Promise<Facility | undefined> {
-    return getFacilityById(id);
+export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
+    return getBookingsByUserId(userId);
 }
 
 export async function blockTimeSlot(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
@@ -88,4 +91,8 @@ export async function blockTimeSlot(facilityId: string, ownerId: string, newBloc
 
 export async function unblockTimeSlot(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
     return dbUnblockTimeSlot(facilityId, ownerId, date, startTime);
+}
+
+export async function updateUserAction(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
+    return dbUpdateUser(userId, updates);
 }
