@@ -60,7 +60,7 @@ export function Header() {
                 </Button>
               </Link>
               <Link href="/weekend-planner" className="hidden sm:inline-flex">
-                <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button>
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   AI Planner
                 </Button>

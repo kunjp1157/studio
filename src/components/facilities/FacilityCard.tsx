@@ -55,8 +55,9 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
   return (
     <Card className={cn(
       "flex flex-col h-full overflow-hidden rounded-lg preserve-3d",
-      "shadow-lg hover:shadow-2xl",
-      "transition-all duration-300 ease-in-out group hover:[transform:rotateY(-5deg)_rotateX(5deg)_translateZ(20px)]"
+      "shadow-lg hover:shadow-2xl hover:shadow-primary/20",
+      "transition-all duration-300 ease-in-out group hover:-translate-y-2 hover:[transform:rotateY(0deg)_rotateX(0deg)_translateZ(20px)]",
+      "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
       <CardHeader className="p-0 relative">
         <Link href={`/facilities/${facility.id}`}>
@@ -70,7 +71,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
           />
         </Link>
         {facility.isPopular && (
-          <Badge variant="default" className="absolute top-2 left-2 bg-accent text-accent-foreground shadow-md">Popular</Badge>
+          <Badge variant="default" className="absolute top-2 left-2 bg-primary text-primary-foreground shadow-md">Popular</Badge>
         )}
         <Button
             variant="ghost"

@@ -33,16 +33,16 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 auth-background">
-      <Card className="w-full max-w-md shadow-2xl overflow-hidden animate-fadeInUp">
-        <CardHeader className="text-center p-8 bg-pink-500/10 backdrop-blur-sm">
+      <Card className="w-full max-w-md shadow-2xl overflow-hidden animate-fadeInUp bg-card/80 backdrop-blur-lg border-primary/20">
+        <CardHeader className="text-center p-8 bg-primary/10">
           <MountainSnow className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="text-3xl font-headline text-primary-foreground/90">Forgot Password?</CardTitle>
-          <CardDescription className="text-primary-foreground/70">We'll send you a link to reset it.</CardDescription>
+          <CardTitle className="text-3xl font-headline text-foreground">Forgot Password?</CardTitle>
+          <CardDescription className="text-muted-foreground">We'll send you a link to reset it.</CardDescription>
         </CardHeader>
-        <CardContent className="px-8 py-6 bg-white">
+        <CardContent className="px-8 py-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
@@ -50,17 +50,17 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="pl-10 h-12 rounded-full bg-gray-100 border-transparent focus:bg-white focus:border-primary"
+                className="pl-10 h-12 rounded-full bg-secondary/50 border-border focus:bg-background focus:border-primary"
               />
             </div>
-            <Button type="submit" className="w-full h-12 rounded-full bg-purple-600 hover:bg-purple-700 text-base font-bold" disabled={isLoading}>
+            <Button type="submit" className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-base font-bold" disabled={isLoading}>
               {isLoading ? <LoadingSpinner size={20} /> : <Send className="mr-2"/>}
               {isLoading ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="bg-white p-6 justify-center text-sm border-t">
-          <Link href="/account/login" className="font-bold text-purple-600 hover:underline flex items-center">
+        <CardFooter className="p-6 justify-center text-sm border-t border-primary/20">
+          <Link href="/account/login" className="font-bold text-primary hover:underline flex items-center">
             <ArrowLeft className="inline h-4 w-4 mr-1" /> Back to Log in
           </Link>
         </CardFooter>
