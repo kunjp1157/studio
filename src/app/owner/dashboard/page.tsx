@@ -132,7 +132,7 @@ export default function OwnerDashboardPage() {
             More Tools Coming Soon!
           </CardTitle>
           <CardDescription>
-            This portal will soon allow you to manage your facility details, photos, real-time slot availability, view detailed booking reports, and much more.
+            This portal will soon allow you to view detailed booking reports and performance analytics.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center min-h-[200px] text-center">

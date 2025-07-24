@@ -240,7 +240,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Button type="button" variant="outline" onClick={() => router.back()} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Facilities List
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
 
         <Card>
@@ -581,7 +581,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
         </Card>
 
         <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={() => router.push('/admin/facilities')} disabled={isLoading}>
+          <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>

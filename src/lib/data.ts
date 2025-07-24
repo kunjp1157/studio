@@ -1,7 +1,7 @@
 
 
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
-import { mockSports, mockAmenities } from './mock-data';
+import { mockSports, mockAmenities, mockMembershipPlans as mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { db } from './db';
 
@@ -386,11 +386,22 @@ export const getRentalEquipmentById = (id: string): RentalEquipment | undefined 
 export const getNotificationsForUser = (userId: string): AppNotification[] => mockAppNotifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 export const getAllBlogPosts = (): BlogPost[] => mockBlogPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 export const getBlogPostBySlug = (slug: string): BlogPost | undefined => mockBlogPosts.find(post => post.slug === slug);
-export const getAllEvents = (): SportEvent[] => [...mockEvents].sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
-export const getEventById = (id: string): SportEvent | undefined => {
-    const event = mockEvents.find(event => event.id === id);
-    if (!event) return undefined;
-    return event;
+export const getAllEvents = async (): Promise<SportEvent[]> => {
+     try {
+        const res = await db.query('SELECT * FROM events ORDER BY start_date ASC');
+        // This is a simplified mapping, it does not fetch sport details
+        return res.rows.map(row => ({...row, sport: {id: row.sport_id, name: 'Unknown'}}));
+    } catch (error) {
+        console.error("Error fetching events:", error);
+        return [];
+    }
+};
+export const getEventById = async (id: string): Promise<SportEvent | undefined> => {
+    const res = await db.query('SELECT * FROM events WHERE id = $1', [id]);
+    if (res.rows.length === 0) return undefined;
+    const eventRow = res.rows[0];
+    const sport = getSportById(eventRow.sport_id) || {id: eventRow.sport_id, name: 'Unknown'};
+    return {...eventRow, sport};
 };
 export const getAllPricingRules = (): PricingRule[] => [...mockPricingRules];
 export const getPricingRuleById = (id: string): PricingRule | undefined => mockPricingRules.find(rule => rule.id === id);
@@ -638,9 +649,9 @@ export const unblockTimeSlot = async (facilityId: string, ownerId: string, date:
     return true;
 };
 
-export const getMembershipPlanById = (id: string): MembershipPlan | undefined => {
-    console.log("getMembershipPlanById is a mock and not persisted.", id);
-    return undefined;
+export const getMembershipPlanById = async (id: string): Promise<MembershipPlan | undefined> => {
+    const res = await db.query('SELECT * FROM membership_plans WHERE id = $1', [id]);
+    return res.rows[0];
 };
 
 export const getAllMembershipPlans = async (): Promise<MembershipPlan[]> => {
@@ -652,4 +663,3 @@ export const getAllMembershipPlans = async (): Promise<MembershipPlan[]> => {
         return [];
     }
 }
-
