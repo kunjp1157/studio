@@ -63,7 +63,12 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         const updatedUserStr = sessionStorage.getItem('activeUser');
         if (updatedUserStr) {
             const updatedUser = JSON.parse(updatedUserStr);
-            if(updatedUser.role !== 'FacilityOwner') {
+             if(updatedUser.role !== 'FacilityOwner') {
+                toast({
+                    title: "Access Denied",
+                    description: "You are no longer logged in as a Facility Owner.",
+                    variant: "destructive",
+                });
                 router.replace('/facilities');
             }
             setCurrentUser(updatedUser);
