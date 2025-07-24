@@ -34,8 +34,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, UserProfile, Facility, SiteSettings } from '@/lib/types';
-import { getUserById, getFacilityById, updateBooking, addNotification, getSiteSettings } from '@/lib/data';
-import { getAllBookingsAction } from '@/app/actions';
+import { getAllBookingsAction, getSiteSettingsAction, getUsersAction, getFacilitiesAction, updateBookingAction, addNotificationAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Eye, Edit, XCircle, DollarSign, Search, FilterX, User, Home, CalendarDays, Clock, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -61,14 +60,21 @@ export default function AdminBookingsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
-
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const bookingsData = await getAllBookingsAction();
+            const [bookingsData, settingsData, usersData, facilitiesData] = await Promise.all([
+                getAllBookingsAction(),
+                getSiteSettingsAction(),
+                getUsersAction(),
+                getFacilitiesAction(),
+            ]);
+
             setAllBookings(bookingsData);
+            setCurrency(settingsData.defaultCurrency);
+            setUsers(usersData.reduce((acc, user) => { acc[user.id] = user; return acc; }, {} as Record<string, UserProfile>));
+            setFacilities(facilitiesData.reduce((acc, facility) => { acc[facility.id] = facility; return acc; }, {} as Record<string, Facility>));
+
         } catch (error) {
              toast({ title: "Error", description: "Could not load bookings data.", variant: "destructive" });
         } finally {
@@ -77,26 +83,6 @@ export default function AdminBookingsPage() {
     }
     fetchData();
   }, [toast]);
-
-
-  useEffect(() => {
-    const fetchRelatedData = async () => {
-        const userIds = [...new Set(allBookings.map(b => b.userId))];
-        const facilityIds = [...new Set(allBookings.map(b => b.facilityId))];
-
-        const userPromises = userIds.map(id => getUserById(id).then(u => ({id, data: u})));
-        const facilityPromises = facilityIds.map(id => getFacilityById(id).then(f => ({id, data: f})));
-        
-        const usersData = await Promise.all(userPromises);
-        const facilitiesData = await Promise.all(facilityPromises);
-
-        setUsers(usersData.reduce((acc, {id, data}) => { if (data) acc[id] = data; return acc; }, {} as Record<string, UserProfile>));
-        setFacilities(facilitiesData.reduce((acc, {id, data}) => { if (data) acc[id] = data; return acc; }, {} as Record<string, Facility>));
-    };
-    if (allBookings.length > 0) {
-        fetchRelatedData();
-    }
-  }, [allBookings]);
 
 
   useEffect(() => {
@@ -132,17 +118,22 @@ export default function AdminBookingsPage() {
     if (!bookingToCancel) return;
 
     try {
-        await updateBooking(bookingToCancel.id, { status: 'Cancelled' });
+        await updateBookingAction(bookingToCancel.id, { status: 'Cancelled' });
         toast({
             title: "Booking Cancelled",
             description: `Booking for ${bookingToCancel.facilityName} has been cancelled.`
         });
-        addNotification(bookingToCancel.userId, {
+        
+        await addNotificationAction(bookingToCancel.userId, {
             type: 'booking_cancelled',
             title: 'Booking Cancelled by Admin',
             message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} was cancelled by an administrator.`,
             link: '/account/bookings',
         });
+        
+        // Refresh local state
+        setAllBookings(prev => prev.map(b => b.id === bookingToCancel.id ? {...b, status: 'Cancelled'} : b));
+
     } catch (error) {
         toast({ title: "Error", description: "Failed to cancel booking.", variant: "destructive" });
     }

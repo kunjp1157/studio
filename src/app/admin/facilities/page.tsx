@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { Facility, SiteSettings } from '@/lib/types';
-import { deleteFacility, getSiteSettings, listenToFacilities } from '@/lib/data';
+import { getFacilitiesAction, getSiteSettingsAction, deleteFacilityAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -49,37 +49,40 @@ export default function AdminFacilitiesPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
-    
-    const unsubscribe = listenToFacilities(
-      (facilitiesData) => {
-        setFacilities(facilitiesData);
-        setIsLoading(false);
-      },
-      (error) => {
-        console.error("Failed to listen to facilities:", error);
-        toast({
-          title: "Error",
-          description: "Could not load facilities data in real-time.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
+    const fetchInitialData = async () => {
+        setIsLoading(true);
+        try {
+            const [facilitiesData, settingsData] = await Promise.all([
+                getFacilitiesAction(),
+                getSiteSettingsAction()
+            ]);
+            setFacilities(facilitiesData);
+            setCurrency(settingsData.defaultCurrency);
+        } catch (error) {
+             toast({
+              title: "Error",
+              description: "Could not load facilities data.",
+              variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchInitialData();
   }, [toast]);
 
   const handleDeleteFacility = async () => {
     if (!facilityToDelete) return;
     setIsDeleting(true);
     try {
-      await deleteFacility(facilityToDelete.id);
+      await deleteFacilityAction(facilityToDelete.id);
       toast({
         title: "Facility Deleted",
         description: `"${facilityToDelete.name}" and all its associated bookings, events, and reviews have been removed.`,
       });
+      // Refresh facilities list after deletion
+      const facilitiesData = await getFacilitiesAction();
+      setFacilities(facilitiesData);
     } catch (error) {
        toast({
         title: "Error Deleting Facility",

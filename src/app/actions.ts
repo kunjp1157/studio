@@ -6,6 +6,7 @@ import {
     getFacilityById as dbGetFacilityById,
     addFacility as dbAddFacility,
     updateFacility as dbUpdateFacility,
+    deleteFacility as dbDeleteFacility,
     getAllUsers as dbGetAllUsers, 
     getAllBookings as dbGetAllBookings, 
     getSiteSettings as dbGetSiteSettings,
@@ -23,6 +24,8 @@ import {
     unblockTimeSlot as dbUnblockTimeSlot,
     updateUser as dbUpdateUser,
     getSportById,
+    updateBooking as dbUpdateBooking,
+    addNotification as dbAddNotification,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -40,9 +43,10 @@ export async function getFacilityByIdAction(id: string): Promise<Facility | unde
 
 // Action to add a facility. It takes form data, processes it, and calls the DB function.
 export async function addFacilityAction(facilityData: any): Promise<Facility> {
+    const sportData = (facilityData.sports || []).map(getSportById).filter(Boolean) as Sport[];
     const payload = {
       ...facilityData,
-      sports: (facilityData.sports || []).map(getSportById).filter(Boolean) as Sport[],
+      sports: sportData,
       amenities: mockAmenities.filter(amenity => (facilityData.amenities || []).includes(amenity.id)),
       reviews: [],
       blockedSlots: [],
@@ -56,10 +60,11 @@ export async function addFacilityAction(facilityData: any): Promise<Facility> {
 // Action to update a facility. It takes form data, processes it, and calls the DB function.
 export async function updateFacilityAction(facilityData: any): Promise<Facility> {
     const existingFacility = await dbGetFacilityById(facilityData.id);
+    const sportData = (facilityData.sports || []).map(getSportById).filter(Boolean) as Sport[];
     const payload = {
       ...existingFacility, // Start with existing data to preserve reviews, etc.
       ...facilityData,
-      sports: (facilityData.sports || []).map(getSportById).filter(Boolean) as Sport[],
+      sports: sportData,
       amenities: mockAmenities.filter(amenity => (facilityData.amenities || []).includes(amenity.id)),
     };
     const updatedFacility = await dbUpdateFacility(payload);
@@ -68,6 +73,12 @@ export async function updateFacilityAction(facilityData: any): Promise<Facility>
     revalidatePath('/admin/facilities');
     revalidatePath('/owner/my-facilities');
     return updatedFacility;
+}
+
+export async function deleteFacilityAction(facilityId: string): Promise<void> {
+  await dbDeleteFacility(facilityId);
+  revalidatePath('/admin/facilities');
+  revalidatePath('/owner/my-facilities');
 }
 
 export async function getUsersAction(): Promise<UserProfile[]> {
@@ -132,4 +143,15 @@ export async function unblockTimeSlot(facilityId: string, ownerId: string, date:
 
 export async function updateUserAction(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
     return dbUpdateUser(userId, updates);
+}
+
+export async function updateBookingAction(bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> {
+    return dbUpdateBooking(bookingId, updates);
+}
+
+export async function addNotificationAction(
+  userId: string,
+  notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>
+): Promise<AppNotification> {
+  return dbAddNotification(userId, notificationData);
 }
