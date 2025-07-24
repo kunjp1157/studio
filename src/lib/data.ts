@@ -30,7 +30,7 @@ export const allMockUsers: Record<'admin' | 'owner' | 'user', UserProfile> = {
     status: 'Active' as UserStatus,
     joinedAt: new Date().toISOString(), 
     loyaltyPoints: 450, 
-    profilePictureUrl: 'https://randomuser.me/api/portraits/women/68.jpg', 
+    profilePictureUrl: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5', 
     dataAiHint: 'woman portrait',
     isProfilePublic: true,
   },
@@ -163,12 +163,36 @@ export function listenToAllPromotionRules(callback: (promotions: PromotionRule[]
     return () => {};
 }
 
+const mapRowToFacility = (row: any): Facility => ({
+  id: row.id,
+  name: row.name,
+  type: row.type,
+  address: row.address,
+  city: row.city,
+  location: row.location,
+  description: row.description,
+  images: row.images || [],
+  sports: [], // Will be enriched later
+  sportPrices: row.sport_prices || [],
+  amenities: [], // Will be enriched later
+  operatingHours: row.operating_hours || [],
+  rating: Number(row.rating) || 0,
+  reviews: [], // Reviews fetched separately
+  capacity: row.capacity || undefined,
+  isPopular: row.is_popular,
+  isIndoor: row.is_indoor,
+  dataAiHint: row.data_ai_hint,
+  availableEquipment: row.available_equipment || [],
+  ownerId: row.owner_id,
+  blockedSlots: row.blocked_slots || [],
+});
+
 
 // --- Direct Fetch Functions (for specific, non-listening needs) ---
 export const getAllFacilities = async (): Promise<Facility[]> => {
     try {
         const facilitiesRes = await db.query('SELECT * FROM facilities');
-        const allFacilities = facilitiesRes.rows;
+        const allFacilities = facilitiesRes.rows.map(mapRowToFacility);
         
         const facilityIds = allFacilities.map(f => f.id);
         if (facilityIds.length === 0) return [];
@@ -188,15 +212,12 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
             return acc;
         }, {} as Record<string, Amenity[]>);
 
-        const enrichedFacilities = allFacilities.map(f => ({
-            ...f,
-            sportPrices: f.sport_prices || [],
-            sports: sportsByFacility[f.id] || [],
-            amenities: amenitiesByFacility[f.id] || [],
-            reviews: [], // Reviews fetched separately
-        }));
+        allFacilities.forEach(facility => {
+            facility.sports = sportsByFacility[facility.id] || [];
+            facility.amenities = amenitiesByFacility[facility.id] || [];
+        });
         
-        return enrichedFacilities;
+        return allFacilities;
     } catch (error) {
         console.error("Error fetching all facilities with relations: ", error);
         return [];
@@ -225,25 +246,13 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
         const facilityRes = await db.query('SELECT * FROM facilities WHERE id = $1', [id]);
         if (facilityRes.rows.length === 0) return undefined;
 
-        let facility = facilityRes.rows[0];
-
-        if (typeof facility.sport_prices === 'string') {
-            try {
-                 facility.sportPrices = JSON.parse(facility.sport_prices);
-            } catch (e) {
-                console.error("Error parsing sport_prices JSON for facility " + id, e);
-                facility.sportPrices = [];
-            }
-        } else {
-            facility.sportPrices = facility.sport_prices || [];
-        }
+        let facility = mapRowToFacility(facilityRes.rows[0]);
 
         const sportsRes = await db.query('SELECT s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sport_id WHERE fs.facility_id = $1', [id]);
         const amenitiesRes = await db.query('SELECT a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id WHERE fa.facility_id = $1', [id]);
         
         facility.sports = sportsRes.rows;
         facility.amenities = amenitiesRes.rows;
-        facility.reviews = []; 
         
         return facility;
     } catch (error) {
@@ -256,7 +265,7 @@ export const getFacilitiesByIds = async (ids: string[]): Promise<Facility[]> => 
     if (!ids || ids.length === 0) return [];
     try {
         const res = await db.query('SELECT * FROM facilities WHERE id = ANY($1::text[])', [ids]);
-        return res.rows;
+        return res.rows.map(mapRowToFacility);
     } catch (error) {
         console.error("Error fetching facilities by IDs: ", error);
         return [];
@@ -359,7 +368,7 @@ export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
 export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {
     const res = await db.query('SELECT * FROM facilities WHERE owner_id = $1', [ownerId]);
-    return res.rows;
+    return res.rows.map(mapRowToFacility);
 };
 
 export const calculateAverageRating = (reviews: Review[] | undefined): number => {
@@ -643,3 +652,4 @@ export const getAllMembershipPlans = async (): Promise<MembershipPlan[]> => {
         return [];
     }
 }
+
