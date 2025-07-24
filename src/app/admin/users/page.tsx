@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,10 +44,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import type { UserProfile, UserRole, UserStatus } from '@/lib/types';
+import type { UserProfile, UserRole, UserStatus, Facility } from '@/lib/types';
 import { updateUser as updateMockUser, addNotification } from '@/lib/data';
-import { getUsersAction } from '@/app/actions';
-import { MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX } from 'lucide-react';
+import { getUsersAction, getFacilitiesByOwnerIdAction } from '@/app/actions';
+import { MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format, parseISO } from 'date-fns';
@@ -74,6 +75,7 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [ownedFacilities, setOwnedFacilities] = useState<Facility[]>([]);
 
   const { toast } = useToast();
   const form = useForm<UserFormValues>({
@@ -108,8 +110,14 @@ export default function AdminUsersPage() {
     setFilteredUsers(results);
   }, [searchTerm, allUsers]);
 
-  const handleViewDetails = (user: UserProfile) => {
+  const handleViewDetails = async (user: UserProfile) => {
     setSelectedUser(user);
+    if (user.role === 'FacilityOwner') {
+        const facilities = await getFacilitiesByOwnerIdAction(user.id);
+        setOwnedFacilities(facilities);
+    } else {
+        setOwnedFacilities([]);
+    }
     setIsViewModalOpen(true);
   };
 
@@ -311,6 +319,28 @@ export default function AdminUsersPage() {
                 <p><strong>Joined:</strong> {format(parseISO(selectedUser.joinedAt), 'MMMM d, yyyy, p')}</p>
                 <p><strong>Loyalty Points:</strong> {selectedUser.loyaltyPoints || 0}</p>
                 <p><strong>Bio:</strong> <span className="italic text-muted-foreground">{selectedUser.bio || 'No bio provided.'}</span></p>
+                 {selectedUser.role === 'FacilityOwner' && (
+                    <>
+                        <hr className="my-2"/>
+                        <div>
+                        <h4 className="font-semibold mb-2 flex items-center"><Building2 className="mr-2 h-4 w-4 text-muted-foreground"/>Owned Facilities ({ownedFacilities.length})</h4>
+                        {ownedFacilities.length > 0 ? (
+                            <ul className="list-disc list-inside space-y-1">
+                                {ownedFacilities.map(facility => (
+                                    <li key={facility.id}>
+                                        <Link href={`/admin/facilities/${facility.id}/edit`} className="text-primary hover:underline">
+                                            {facility.name}
+                                        </Link>
+                                        <span className="text-muted-foreground text-xs"> - {facility.location}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-muted-foreground italic text-xs">This owner has not added any facilities yet.</p>
+                        )}
+                        </div>
+                    </>
+                )}
             </div>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setIsViewModalOpen(false)}>Close</AlertDialogCancel>
