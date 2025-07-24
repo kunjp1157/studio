@@ -1,11 +1,7 @@
 
 # Sports Arena: A Next.js Facility Booking Application
 
-## Project Vision
-
-**Sports Arena** is a modern, full-stack web application designed to be the go-to platform for discovering and booking sports facilities. It addresses the common problem of finding and securing sports venues, which is often a fragmented and frustrating process. By creating a centralized, user-friendly hub, Sports Arena connects sports enthusiasts with facility owners, streamlining the entire booking experience from search to payment.
-
-Built with a professional tech stack including **Next.js**, **PostgreSQL**, and Google's **Genkit** for AI, this project serves as a comprehensive example of a real-world, feature-rich booking system.
+**Sports Arena** is a modern, full-stack web application designed to streamline the process of discovering and booking sports facilities. Addressing the common challenge of finding and securing sports venues, this application provides a centralized, user-friendly hub that connects sports enthusiasts with facility owners. Built with a professional tech stack including Next.js for the frontend, a robust server backend, and integrated with Google's Genkit for AI-powered features, the project serves as a comprehensive, real-world example of a feature-rich booking system. It includes advanced search capabilities, real-time availability calendars, secure (mock) payment processing, and personalized user accounts, alongside an administrative portal for facility and user management. By leveraging modern web technologies and AI, Sports Arena aims to deliver a seamless, efficient, and engaging experience for both players and facility managers.
 
 ## Key Features
 
@@ -124,4 +120,3 @@ The application will be available at `http://localhost:3000`. The first time you
 - `src/hooks/`: Custom React hooks.
 - `public/`: Static assets like images and fonts.
 - `schema.sql`: The complete database schema definition.
-
