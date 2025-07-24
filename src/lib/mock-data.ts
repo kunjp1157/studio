@@ -1,7 +1,8 @@
 
+
 'use client'; // Mark as a client-safe module
 
-import type { Sport, Amenity, MembershipPlan } from './types';
+import type { Sport, Amenity, MembershipPlan, Facility, UserProfile } from './types';
 
 // This file contains static mock data that is safe to be imported into client components.
 // It has no server-side dependencies like the 'pg' database driver.

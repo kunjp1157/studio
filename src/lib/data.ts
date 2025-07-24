@@ -1,10 +1,51 @@
 
 
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
-import { mockSports, mockAmenities, mockMembershipPlans as mockStaticMembershipPlans, mockFacilities as staticFacilities, mockUsers as staticUsers } from './mock-data';
+import { mockSports, mockAmenities, mockMembershipPlans as mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
 // --- IN-MEMORY MOCK DATABASE ---
+
+const staticUsers: UserProfile[] = [
+  { 
+    id: 'user-admin-kirtan', 
+    name: 'Kirtan Shah', 
+    email: 'kirtan.shah@example.com', 
+    role: 'Admin', 
+    status: 'Active',
+    joinedAt: '2023-01-15T10:00:00Z', 
+    loyaltyPoints: 1250, 
+    profilePictureUrl: 'https://randomuser.me/api/portraits/men/75.jpg', 
+    dataAiHint: 'man smiling',
+    isProfilePublic: true,
+  },
+  { 
+    id: 'user-owner-dana', 
+    name: 'Dana White', 
+    email: 'dana.white@example.com', 
+    role: 'FacilityOwner', 
+    status: 'Active',
+    joinedAt: '2023-02-20T11:30:00Z', 
+    loyaltyPoints: 450, 
+    profilePictureUrl: 'https://randomuser.me/api/portraits/women/68.jpg', 
+    dataAiHint: 'woman portrait',
+    isProfilePublic: true,
+  },
+  {
+    id: 'user-regular-charlie',
+    name: 'Charlie Davis',
+    email: 'charlie.davis@example.com',
+    role: 'User',
+    status: 'Active',
+    joinedAt: '2023-03-10T09:00:00Z',
+    loyaltyPoints: 800,
+    profilePictureUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+    dataAiHint: 'man glasses',
+    isProfilePublic: true,
+  }
+];
+
+const staticFacilities: Facility[] = []; 
 
 let mockFacilities: Facility[] = [...staticFacilities];
 let mockUsers: UserProfile[] = [...staticUsers];
