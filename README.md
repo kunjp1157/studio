@@ -1,34 +1,48 @@
 
 # Sports Arena: A Next.js Facility Booking Application
 
-Sports Arena is a modern, full-stack web application designed to be the go-to platform for discovering and booking sports facilities. Built with Next.js and PostgreSQL, and featuring AI-powered tools via Genkit, this project serves as a comprehensive example of a real-world booking system.
+## Project Vision
+
+**Sports Arena** is a modern, full-stack web application designed to be the go-to platform for discovering and booking sports facilities. It addresses the common problem of finding and securing sports venues, which is often a fragmented and frustrating process. By creating a centralized, user-friendly hub, Sports Arena connects sports enthusiasts with facility owners, streamlining the entire booking experience from search to payment.
+
+Built with a professional tech stack including **Next.js**, **PostgreSQL**, and Google's **Genkit** for AI, this project serves as a comprehensive example of a real-world, feature-rich booking system.
 
 ## Key Features
 
-### For Users:
-- **Facility Discovery:** Search, filter, and browse sports facilities by sport, location, price, and more.
-- **Real-Time Booking:** View live availability and book slots instantly.
-- **Secure Payments:** Mock integration for various payment methods including card, UPI, and QR code.
-- **User Accounts:** Manage profiles, booking history, and favorite venues.
-- **Event & Matchmaking:** Discover and register for sports events, or find players for a game.
-- **Notifications:** Receive timely updates on bookings, reminders, and cancellations.
+The application is split into two main user experiences: the public-facing site for players and a robust portal for administrators and facility owners.
 
-### AI-Powered User Tools:
-- **Facility Recommender:** Analyzes your stated preferences (favorite sports, amenities) and past booking history to provide intelligent, personalized facility suggestions.
-- **Weekend Planner:** Describe your ideal sporty weekend in natural language (e.g., "A fun weekend for two, we like badminton and swimming"), and the AI will generate a custom itinerary complete with facility suggestions, timings, and estimated costs.
-- **Review Summarizer:** Instead of reading through dozens of reviews, the AI analyzes all user feedback for a facility and presents a concise list of pros and cons, helping you make faster, more informed decisions.
+### Core Functionality (For Players)
 
-### For Admins & Owners:
-- **Comprehensive Dashboards:** Separate dashboards for site administrators and facility owners.
-- **Facility Management:** Admins can add, edit, and manage all facility listings, including photos, amenities, and pricing.
-- **Booking Management:** Admins can view and manage all bookings on the platform.
-- **User Management:** Admins can oversee user accounts, roles, and statuses.
-- **Dynamic Pricing & Promotions:** Create rules to dynamically adjust prices or offer discounts.
-- **Real-Time Updates:** Data management is powered by real-time Firestore listeners, ensuring instant UI updates.
+*   **Advanced Facility Search**: A powerful search engine to discover facilities. Users can filter by sport type, location, city, price range, and specific amenities like parking or locker rooms.
+*   **Real-Time Booking System**: Users can view live availability calendars for each facility and book their desired time slots instantly.
+*   **Secure (Mock) Payments**: A mock payment gateway is integrated, demonstrating the flow for paying with credit cards, UPI, or QR codes.
+*   **Event Discovery & Registration**: A dedicated section for upcoming tournaments, leagues, and sports events. Users can view event details and register to participate.
+*   **Player Matchmaking**: A "Looking for Game" board where users can post requests to find other players for a specific sport and skill level.
+*   **Team Management**: Users can create their own sports teams, invite friends, and manage their roster.
 
-### AI-Powered Admin Tools:
-- **AI Presentation Generator:** An admin tool that analyzes live app data (users, bookings, revenue) and generates a professional business summary presentation with insightful talking points and strategic recommendations.
-- **AI Image Generation:** When creating or editing a facility, admins can simply describe an image (e.g., "a modern indoor basketball court at night") and the AI will generate a high-quality, relevant photo, eliminating the need for stock imagery.
+### User Account Features
+
+*   **Personalized Profiles**: Users have a detailed profile page where they can manage their information, set preferred sports, and specify their skill levels.
+*   **Booking Management**: A dedicated "My Bookings" page to view upcoming and past reservations, with options to modify or cancel bookings.
+*   **Favorites**: Users can save their favorite facilities for quick access in the future.
+*   **Loyalty & Achievements**: A points-based loyalty system and a series of unlockable achievements to encourage user engagement.
+*   **Public Profiles & Leaderboard**: Users can make their profiles public to showcase their skills and achievements, and compete for a top spot on the loyalty points leaderboard.
+
+### Advanced AI-Powered Tools (User-Facing)
+
+*   **AI Facility Recommender**: Analyzes a user's stated preferences and past booking history to provide intelligent, personalized facility suggestions.
+*   **AI Weekend Planner**: A conversational tool where a user can describe their ideal sporty weekend in natural language (e.g., "A fun weekend for two, we like badminton and swimming"), and the AI generates a custom itinerary complete with facility suggestions, timings, and estimated costs.
+*   **AI Review Summarizer**: Instead of reading through dozens of reviews, the AI analyzes all user feedback for a facility and presents a concise list of pros and cons, helping users make faster, more informed decisions.
+
+### Admin & Owner Portal Features
+
+*   **Comprehensive Dashboards**: Separate dashboards for site administrators and facility owners to view key metrics like revenue, bookings, and user growth.
+*   **Facility Management**: Admins can add, edit, and manage all facility listings, including photos, amenities, pricing, and operating hours. Owners can manage their own specific facilities.
+*   **Booking & User Management**: Admins can view and manage all bookings and user accounts on the platform.
+*   **Availability Control**: Owners can block out time slots for their facilities for maintenance or private events.
+*   **Dynamic Pricing & Promotions**: An admin-level engine to create rules that dynamically adjust prices (e.g., weekend surge pricing) or offer discounts.
+*   **AI Presentation Generator**: An admin tool that analyzes live app data (users, bookings, revenue) and generates a professional business summary presentation with insightful talking points and strategic recommendations.
+*   **AI Image Generation**: When creating or editing a facility, an admin can simply describe an image (e.g., "a modern indoor basketball court at night") and the AI will generate a high-quality, relevant photo, eliminating the need for stock imagery.
 
 ## Technology Stack
 
@@ -110,3 +124,4 @@ The application will be available at `http://localhost:3000`. The first time you
 - `src/hooks/`: Custom React hooks.
 - `public/`: Static assets like images and fonts.
 - `schema.sql`: The complete database schema definition.
+
