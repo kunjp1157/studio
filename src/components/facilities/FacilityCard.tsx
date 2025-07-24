@@ -56,7 +56,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
     <Card className={cn(
       "flex flex-col h-full overflow-hidden rounded-lg preserve-3d",
       "shadow-lg hover:shadow-2xl hover:shadow-primary/20",
-      "transition-all duration-300 ease-in-out group hover:-translate-y-2 hover:[transform:rotateY(0deg)_rotateX(0deg)_translateZ(20px)]",
+      "transition-all duration-300 ease-in-out group hover:-translate-y-2 hover:[transform:rotateY(10deg)_rotateX(5deg)_translateZ(20px)]",
       "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
       <CardHeader className="p-0 relative">
