@@ -273,23 +273,74 @@ export const getFacilitiesByIds = async (ids: string[]): Promise<Facility[]> => 
 };
 
 export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<Facility> => {
-    console.warn("addFacility is simplified and does not handle sport/amenity relations.");
-    const { name, type, address, city, location, description, images, sportPrices, rating, capacity, isPopular, isIndoor, dataAiHint, ownerId } = facilityData;
-    const res = await db.query(
-        'INSERT INTO facilities (name, type, address, city, location, description, images, sport_prices, rating, capacity, is_popular, is_indoor, data_ai_hint, owner_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
-        [name, type, address, city, location, description, images, JSON.stringify(sportPrices), rating, capacity, isPopular, isIndoor, dataAiHint, ownerId]
-    );
-    return res.rows[0];
+    const { name, type, address, city, location, description, images, sports, amenities, operatingHours, sportPrices, rating, capacity, isPopular, isIndoor, dataAiHint, ownerId, availableEquipment } = facilityData;
+    
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+        
+        const facilityRes = await client.query(
+            'INSERT INTO facilities (name, type, address, city, location, description, images, sport_prices, rating, capacity, is_popular, is_indoor, data_ai_hint, owner_id, operating_hours, available_equipment) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *',
+            [name, type, address, city, location, description, images, JSON.stringify(sportPrices), rating, capacity, isPopular, isIndoor, dataAiHint, ownerId, JSON.stringify(operatingHours), JSON.stringify(availableEquipment)]
+        );
+        const newFacility = mapRowToFacility(facilityRes.rows[0]);
+
+        if (sports && sports.length > 0) {
+            for (const sport of sports) {
+                await client.query('INSERT INTO facility_sports (facility_id, sport_id) VALUES ($1, $2)', [newFacility.id, sport.id]);
+            }
+        }
+        if (amenities && amenities.length > 0) {
+            for (const amenity of amenities) {
+                await client.query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [newFacility.id, amenity.id]);
+            }
+        }
+
+        await client.query('COMMIT');
+        return (await getFacilityById(newFacility.id))!;
+    } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
+    }
 };
 
-export const updateFacility = async (updatedFacilityData: Facility): Promise<Facility> => {
-    console.warn("updateFacility is simplified and does not handle sport/amenity relations.");
-    const { id, name, type, address, city, location, description, images, sportPrices, rating, capacity, isPopular, isIndoor, dataAiHint } = updatedFacilityData;
-    const res = await db.query(
-        'UPDATE facilities SET name = $1, type = $2, address = $3, city = $4, location = $5, description = $6, images = $7, sport_prices = $8, rating = $9, capacity = $10, is_popular = $11, is_indoor = $12, data_ai_hint = $13 WHERE id = $14 RETURNING *',
-        [name, type, address, city, location, description, images, JSON.stringify(sportPrices), rating, capacity, isPopular, isIndoor, dataAiHint, id]
-    );
-    return res.rows[0];
+export const updateFacility = async (facilityData: Facility): Promise<Facility> => {
+    const { id, name, type, address, city, location, description, images, sports, amenities, operatingHours, sportPrices, rating, capacity, isPopular, isIndoor, dataAiHint, ownerId, availableEquipment } = facilityData;
+    
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+        
+        const facilityRes = await client.query(
+            'UPDATE facilities SET name = $1, type = $2, address = $3, city = $4, location = $5, description = $6, images = $7, sport_prices = $8, rating = $9, capacity = $10, is_popular = $11, is_indoor = $12, data_ai_hint = $13, owner_id = $14, operating_hours = $15, available_equipment = $16 WHERE id = $17 RETURNING *',
+            [name, type, address, city, location, description, images, JSON.stringify(sportPrices), rating, capacity, isPopular, isIndoor, dataAiHint, ownerId, JSON.stringify(operatingHours), JSON.stringify(availableEquipment), id]
+        );
+        const updatedFacility = mapRowToFacility(facilityRes.rows[0]);
+
+        await client.query('DELETE FROM facility_sports WHERE facility_id = $1', [id]);
+        if (sports && sports.length > 0) {
+            for (const sport of sports) {
+                await client.query('INSERT INTO facility_sports (facility_id, sport_id) VALUES ($1, $2)', [id, sport.id]);
+            }
+        }
+
+        await client.query('DELETE FROM facility_amenities WHERE facility_id = $1', [id]);
+        if (amenities && amenities.length > 0) {
+            for (const amenity of amenities) {
+                await client.query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [id, amenity.id]);
+            }
+        }
+
+        await client.query('COMMIT');
+        return (await getFacilityById(updatedFacility.id))!;
+    } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
+    }
 };
 
 export const deleteFacility = async (facilityId: string): Promise<void> => {
@@ -362,8 +413,6 @@ export const getBookingsByUserId = async (userId: string): Promise<Booking[]> =>
 
 // --- STATIC/MOCK GETTERS (for data not in DB for this migration) ---
 export const getSportById = (id: string): Sport | undefined => mockSports.find(s => s.id === id);
-export const getAmenityById = (id: string): Amenity | undefined => mockAmenities.find(a => a.id === id);
-export const getAllSports = (): Sport[] => mockSports;
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
 export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {

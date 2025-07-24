@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice } from '@/lib/types';
 import { mockSports, mockAmenities } from '@/lib/mock-data';
-import { addFacility, updateFacility, getSiteSettings, getSportById } from '@/lib/data';
+import { getSiteSettingsAction, addFacilityAction, updateFacilityAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -99,8 +99,11 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
   const [imageGenPrompt, setImageGenPrompt] = useState('');
 
   useEffect(() => {
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
+    const fetchSettings = async () => {
+        const settings = await getSiteSettingsAction();
+        setCurrency(settings.defaultCurrency);
+    };
+    fetchSettings();
   }, []);
 
   const form = useForm<FacilityFormValues>({
@@ -200,18 +203,11 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
   const onSubmit = async (data: FacilityFormValues) => {
     setIsLoading(true);
 
-    const facilityPayload = {
-      ...data,
-      sports: data.sports.map(id => getSportById(id)).filter(Boolean) as Sport[],
-      amenities: data.amenities.map(id => getAmenityById(id)).filter(Boolean) as Amenity[],
-    };
-
     try {
         if (initialData) {
-            await updateFacility({ ...facilityPayload, id: initialData.id } as Facility);
+            await updateFacilityAction({ ...data, id: initialData.id });
         } else {
-            // @ts-ignore
-            await addFacility(facilityPayload);
+            await addFacilityAction(data);
         }
 
         toast({
@@ -396,7 +392,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
               </CardHeader>
               <CardContent className="space-y-4">
                   {sportPrices.map((price, index) => {
-                    const sport = getSportById(price.sportId);
+                    const sport = mockSports.find(s => s.id === price.sportId);
                     if (!sport) return null;
                     return(
                       <FormField

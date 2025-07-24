@@ -4,6 +4,8 @@
 import { 
     getAllFacilities as dbGetAllFacilities,
     getFacilityById as dbGetFacilityById,
+    addFacility as dbAddFacility,
+    updateFacility as dbUpdateFacility,
     getAllUsers as dbGetAllUsers, 
     getAllBookings as dbGetAllBookings, 
     getSiteSettings as dbGetSiteSettings,
@@ -13,15 +15,18 @@ import {
     getAllMembershipPlans as dbGetAllMembershipPlans,
     getAllPricingRules as dbGetAllPricingRules,
     getAllPromotionRules as dbGetAllPromotionRules,
-    getNotificationsForUser,
+    getNotificationsForUser as dbGetNotificationsForUser,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     getBookingsByUserId,
     blockTimeSlot as dbBlockTimeSlot,
     unblockTimeSlot as dbUnblockTimeSlot,
     updateUser as dbUpdateUser,
+    getSportById,
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot } from '@/lib/types';
+import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport } from '@/lib/types';
+import { revalidatePath } from 'next/cache';
+import { mockAmenities } from '@/lib/mock-data';
 
 export async function getFacilitiesAction(): Promise<Facility[]> {
   const facilities = await dbGetAllFacilities();
@@ -31,6 +36,38 @@ export async function getFacilitiesAction(): Promise<Facility[]> {
 export async function getFacilityByIdAction(id: string): Promise<Facility | undefined> {
     const facility = await dbGetFacilityById(id);
     return facility;
+}
+
+// Action to add a facility. It takes form data, processes it, and calls the DB function.
+export async function addFacilityAction(facilityData: any): Promise<Facility> {
+    const payload = {
+      ...facilityData,
+      sports: (facilityData.sports || []).map(getSportById).filter(Boolean) as Sport[],
+      amenities: mockAmenities.filter(amenity => (facilityData.amenities || []).includes(amenity.id)),
+      reviews: [],
+      blockedSlots: [],
+    };
+    const newFacility = await dbAddFacility(payload);
+    revalidatePath('/admin/facilities');
+    revalidatePath('/owner/my-facilities');
+    return newFacility;
+}
+
+// Action to update a facility. It takes form data, processes it, and calls the DB function.
+export async function updateFacilityAction(facilityData: any): Promise<Facility> {
+    const existingFacility = await dbGetFacilityById(facilityData.id);
+    const payload = {
+      ...existingFacility, // Start with existing data to preserve reviews, etc.
+      ...facilityData,
+      sports: (facilityData.sports || []).map(getSportById).filter(Boolean) as Sport[],
+      amenities: mockAmenities.filter(amenity => (facilityData.amenities || []).includes(amenity.id)),
+    };
+    const updatedFacility = await dbUpdateFacility(payload);
+    revalidatePath(`/admin/facilities/${facilityData.id}/edit`);
+    revalidatePath(`/owner/my-facilities/${facilityData.id}/edit`);
+    revalidatePath('/admin/facilities');
+    revalidatePath('/owner/my-facilities');
+    return updatedFacility;
 }
 
 export async function getUsersAction(): Promise<UserProfile[]> {
@@ -70,7 +107,7 @@ export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
 }
 
 export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
-    return getNotificationsForUser(userId);
+    return dbGetNotificationsForUser(userId);
 }
 
 export async function markNotificationAsReadAction(userId: string, notificationId: string): Promise<void> {
