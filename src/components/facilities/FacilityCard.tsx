@@ -2,13 +2,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import type { Facility, SiteSettings } from '@/lib/types';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, MapPin, DollarSign, Zap, Heart, MessageSquare, CalendarCheck2 } from 'lucide-react';
+import { Star, MapPin, MessageSquare, CalendarCheck2, Heart, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { StarDisplay } from '@/components/shared/StarDisplay';
 import { cn } from '@/lib/utils';
@@ -62,28 +61,32 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
     <Card className={cn(
       "flex flex-col h-full overflow-hidden rounded-xl",
       "shadow-lg hover:shadow-xl hover:shadow-primary/20",
-      "transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateZ(10deg)_scale(1.1)]",
+      "transition-all duration-300 ease-in-out group preserve-3d",
+      "hover:[transform:rotateY(10deg)_rotateZ(3deg)_scale(1.05)]", // 3D rotation effect
       "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
-       <CardContent className="p-4 flex-grow">
+      <CardContent className="p-4 flex-grow">
         <div className="flex justify-between items-start">
             <CardTitle className="text-xl font-headline mb-1.5 truncate pr-2">{facility.name}</CardTitle>
-            <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={handleFavoriteClick}
-                aria-label="Add to favorites"
-            >
-                <Heart className={cn(
-                    "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
-                    isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
-                )} />
-            </Button>
+             <div className="flex flex-col items-end shrink-0">
+                {facility.isPopular && (
+                    <Badge variant="default" className="mb-1 bg-primary text-primary-foreground shadow-md">Popular</Badge>
+                )}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleFavoriteClick}
+                    aria-label="Add to favorites"
+                >
+                    <Heart className={cn(
+                        "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
+                        isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
+                    )} />
+                </Button>
+            </div>
         </div>
-        {facility.isPopular && (
-          <Badge variant="default" className="mb-2 bg-primary text-primary-foreground shadow-md">Popular</Badge>
-        )}
+       
         <div className="text-sm text-muted-foreground mb-1 flex items-center">
           <SportIcon className="w-4 h-4 mr-1.5 text-primary" />
           {facility.type} - {facility.sports.map(s => s.name).join(', ')}
