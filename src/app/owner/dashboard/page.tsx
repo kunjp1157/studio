@@ -61,6 +61,10 @@ export default function OwnerDashboardPage() {
     };
 
     fetchData();
+    
+    // Listen for data changes from other admin actions
+    window.addEventListener('dataChanged', fetchData);
+    return () => window.removeEventListener('dataChanged', fetchData);
   }, [currentUser]);
 
 

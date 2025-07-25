@@ -23,10 +23,14 @@ export function Header() {
     }
     fetchSettings(); 
 
-    const settingsInterval = setInterval(fetchSettings, 5000);
+    const handleSettingsChange = () => {
+        fetchSettings();
+    };
+
+    window.addEventListener('settingsChanged', handleSettingsChange);
 
     return () => {
-      clearInterval(settingsInterval);
+      window.removeEventListener('settingsChanged', handleSettingsChange);
     };
   }, [siteName]);
 

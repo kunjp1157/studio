@@ -66,22 +66,21 @@ export default function AdminSettingsPage() {
   });
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      const currentSettings = getSiteSettings();
-      const formValues = form.getValues();
-      
-      // Simple check to avoid deep comparison issues
-      if (currentSettings.siteName !== formValues.siteName || currentSettings.maintenanceMode !== formValues.maintenanceMode) {
+    const handleSettingsUpdate = () => {
+        const currentSettings = getSiteSettings();
         form.reset(currentSettings);
         notificationForm.reset({ templates: currentSettings.notificationTemplates });
         toast({
             title: 'Settings Updated Live',
             description: 'Another admin updated the site settings. Your form has been refreshed.',
         });
-      }
-    }, 5000); 
-
-    return () => clearInterval(intervalId);
+    };
+    
+    window.addEventListener('settingsChanged', handleSettingsUpdate);
+    
+    return () => {
+        window.removeEventListener('settingsChanged', handleSettingsUpdate);
+    };
   }, [form, notificationForm, toast]);
 
   const onSubmit = (data: SettingsFormValues) => {
@@ -89,6 +88,7 @@ export default function AdminSettingsPage() {
     setTimeout(() => {
         const currentSettings = getSiteSettings();
         updateSiteSettings({ ...currentSettings, ...data });
+        window.dispatchEvent(new CustomEvent('settingsChanged'));
         setIsLoading(false);
         toast({
             title: 'Settings Saved',
@@ -103,6 +103,7 @@ export default function AdminSettingsPage() {
         const currentSettings = getSiteSettings();
         const templates = data.templates.map(t => ({ ...t, type: t.type as NotificationType }));
         updateSiteSettings({ ...currentSettings, notificationTemplates: templates });
+        window.dispatchEvent(new CustomEvent('settingsChanged'));
         setIsNotificationLoading(false);
         toast({
             title: 'Notification Settings Saved',

@@ -209,6 +209,8 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
         } else {
             await addFacilityAction(data);
         }
+        
+        window.dispatchEvent(new CustomEvent('dataChanged'));
 
         toast({
             title: initialData ? "Facility Updated" : "Facility Created",
