@@ -23,13 +23,19 @@ interface FacilityCardProps {
 
 export function FacilityCard({ facility, currency }: FacilityCardProps) {
   const { toast } = useToast();
+  // In a real app, this would be derived from the user's data
+  const [isFavorited, setIsFavorited] = useState(false);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation if the button is inside a Link
     e.stopPropagation();
+
+    const newFavoritedState = !isFavorited;
+    setIsFavorited(newFavoritedState);
+    
     toast({
-      title: "Added to Favorites (Mock)",
-      description: `${facility.name} has been added to your favorites.`,
+      title: newFavoritedState ? "Added to Favorites" : "Removed from Favorites",
+      description: `${facility.name} has been ${newFavoritedState ? 'added to' : 'removed from'} your favorites.`,
     });
     // In a real app, you'd update the user's favorite list here
   };
@@ -80,7 +86,10 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
             onClick={handleFavoriteClick}
             aria-label="Add to favorites"
         >
-            <Heart className="h-5 w-5 text-destructive hover:fill-destructive/20" />
+            <Heart className={cn(
+                "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
+                isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
+             )} />
         </Button>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
