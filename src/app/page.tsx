@@ -7,6 +7,7 @@ import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { IconComponent } from '@/components/shared/Icon';
+import { ImageSequenceScroller } from '@/components/shared/ImageSequenceScroller';
 
 const HeroSection = () => (
   <section className="text-center py-20 lg:py-28 auth-background rounded-2xl shadow-2xl">
@@ -81,6 +82,13 @@ export default async function HomePage() {
     .sort((a,b) => b.rating - a.rating)
     .slice(0, 4);
 
+  // Generate a list of image URLs for the sequence.
+  // In a real app, these would be your actual image assets.
+  const imageUrls = Array.from(
+    { length: 65 },
+    (_, i) => `https://www.apple.com/105/media/us/airpods-pro/2022/d2deeb8e-83eb-4191-b3c0-4c1294868b44/anim/hero/large/${String(i + 1).padStart(4, '0')}.jpg`
+  );
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <HeroSection />
@@ -100,6 +108,18 @@ export default async function HomePage() {
       )}
       
       <FeaturesSection />
+
+      <section className="py-16 lg:py-24">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold font-headline">Scroll-Driven Animation</h2>
+          <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
+            Scroll inside the frame below to see the image sequence update in real-time.
+          </p>
+        </div>
+        <div className="mt-12">
+          <ImageSequenceScroller imageUrls={imageUrls} frameHeight={50} />
+        </div>
+      </section>
 
     </div>
   );
