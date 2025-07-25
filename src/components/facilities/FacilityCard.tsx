@@ -65,25 +65,25 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
       "hover:[transform:rotateY(10deg)_rotateZ(3deg)_scale(1.05)]", // 3D rotation effect
       "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
-      <CardContent className="p-4 flex-grow">
+      <CardContent className="p-4 flex-grow relative">
+        <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-background/70 p-1 backdrop-blur-sm transition-all duration-300 hover:bg-background/90"
+            onClick={handleFavoriteClick}
+            aria-label="Add to favorites"
+        >
+            <Heart className={cn(
+                "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
+                isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
+            )} />
+        </Button>
         <div className="flex justify-between items-start">
-            <CardTitle className="text-xl font-headline mb-1.5 truncate pr-2">{facility.name}</CardTitle>
+            <CardTitle className="text-xl font-headline mb-1.5 truncate pr-8">{facility.name}</CardTitle>
              <div className="flex flex-col items-end shrink-0">
                 {facility.isPopular && (
                     <Badge variant="default" className="mb-1 bg-primary text-primary-foreground shadow-md">Popular</Badge>
                 )}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={handleFavoriteClick}
-                    aria-label="Add to favorites"
-                >
-                    <Heart className={cn(
-                        "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
-                        isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
-                    )} />
-                </Button>
             </div>
         </div>
        

@@ -23,6 +23,7 @@ import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summar
 import { Skeleton } from '@/components/ui/skeleton';
 import { getIconComponent } from '@/components/shared/Icon';
 import { formatCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 // Mock calendar component for availability preview
 function AvailabilityPreview({ facilityId }: { facilityId: string }) {
@@ -65,6 +66,7 @@ export default function FacilityDetailPage() {
   const { toast } = useToast();
   const [summary, setSummary] = useState<SummarizeReviewsOutput | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -92,7 +94,7 @@ export default function FacilityDetailPage() {
                 }
             } catch (error) {
                 console.error("Failed to fetch review summary:", error);
-                // Don't show a user-facing error for this, just log it. It's a non-critical feature.
+                // Don't show a user-facing error for this, it's a non-critical feature.
             } finally {
                 setIsSummaryLoading(false);
             }
@@ -103,9 +105,11 @@ export default function FacilityDetailPage() {
 
   const handleFavoriteClick = () => {
     if (!facility) return;
+    const newFavoritedState = !isFavorited;
+    setIsFavorited(newFavoritedState);
     toast({
-      title: "Added to Favorites (Mock)",
-      description: `${facility.name} has been added to your favorites.`,
+      title: newFavoritedState ? "Added to Favorites" : "Removed from Favorites",
+      description: `${facility.name} has been ${newFavoritedState ? 'added to' : 'removed from'} your favorites.`,
     });
   };
   
@@ -253,8 +257,12 @@ export default function FacilityDetailPage() {
           
           <div className="flex justify-between items-start mb-2">
             <PageTitle title={facility.name} />
-            <Button variant="outline" onClick={handleFavoriteClick} className="ml-4 mt-1 shrink-0">
-              <Heart className="mr-2 h-4 w-4 text-destructive" /> Add to Favorites
+            <Button variant="outline" onClick={handleFavoriteClick} className="ml-4 mt-1 shrink-0 group">
+              <Heart className={cn(
+                  "mr-2 h-4 w-4 text-destructive transition-all duration-300 ease-in-out group-hover:scale-110",
+                  isFavorited ? "fill-destructive" : "fill-transparent"
+              )} />
+              {isFavorited ? "Favorited" : "Favorite"}
             </Button>
           </div>
           
