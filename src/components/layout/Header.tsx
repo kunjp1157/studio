@@ -11,6 +11,17 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettingsAction } from '@/app/actions';
 import { UserSwitcher } from '../shared/UserSwitcher';
 
+const navItems = [
+  { href: "/facilities", label: "Facilities" },
+  { href: "/sports", label: "Sports" },
+  { href: "/events", label: "Events" },
+  { href: "/memberships", label: "Memberships" },
+  { href: "/challenges", label: "Challenges" },
+  { href: "/matchmaking", label: "Matchmaking" },
+  { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/blog", label: "Blog" },
+];
+
 export function Header() {
   const [siteName, setSiteName] = useState('Sports Arena');
 
@@ -37,33 +48,42 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-4 flex items-center space-x-2">
+        <Link href="/" className="mr-6 flex items-center space-x-2">
           <MountainSnow className="h-6 w-6 text-primary" />
           <span className="font-bold sm:inline-block text-lg font-headline">
             {siteName}
           </span>
         </Link>
         
-        <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-            <Link href="/facilities"><Button variant="ghost" className="text-sm font-medium">Facilities</Button></Link>
-            <Link href="/sports"><Button variant="ghost" className="text-sm font-medium">Sports</Button></Link>
-            <Link href="/events"><Button variant="ghost" className="text-sm font-medium">Events</Button></Link>
-            <Link href="/memberships"><Button variant="ghost" className="text-sm font-medium">Memberships</Button></Link>
-            <Link href="/challenges"><Button variant="ghost" className="text-sm font-medium">Challenges</Button></Link>
-            <Link href="/matchmaking"><Button variant="ghost" className="text-sm font-medium">Matchmaking</Button></Link>
-            <Link href="/leaderboard"><Button variant="ghost" className="text-sm font-medium">Leaderboard</Button></Link>
-            <Link href="/blog"><Button variant="ghost" className="text-sm font-medium">Blog</Button></Link>
-        </nav>
+        <div className="hidden md:flex flex-1 items-center overflow-hidden [perspective:500px]">
+          <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
+            {/* Render the list twice for a seamless loop */}
+            {navItems.map((item, index) => (
+              <Link href={item.href} key={`first-${index}`} legacyBehavior>
+                <a className="mx-3 text-sm font-medium text-muted-foreground transition-all hover:text-primary hover:-translate-y-1 hover:[transform:rotateX(-15deg)] duration-300">
+                  {item.label}
+                </a>
+              </Link>
+            ))}
+            {navItems.map((item, index) => (
+              <Link href={item.href} key={`second-${index}`} legacyBehavior>
+                <a className="mx-3 text-sm font-medium text-muted-foreground transition-all hover:text-primary hover:-translate-y-1 hover:[transform:rotateX(-15deg)] duration-300">
+                  {item.label}
+                </a>
+              </Link>
+            ))}
+          </div>
+        </div>
 
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex items-center justify-end space-x-2 md:ml-6">
             <>
-              <Link href="/recommendation" className="hidden lg:inline-flex">
+              <Link href="/recommendation" className="hidden xl:inline-flex">
                 <Button variant="ghost">
                   <Wand2 className="h-4 w-4 mr-2" />
                   Recommender
                 </Button>
               </Link>
-              <Link href="/weekend-planner" className="hidden sm:inline-flex">
+              <Link href="/weekend-planner" className="hidden lg:inline-flex">
                 <Button>
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   AI Planner
