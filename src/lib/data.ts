@@ -35,7 +35,6 @@ const mockAmenities: Amenity[] = [
   { id: 'amenity-7', name: 'Accessible', iconName: 'Users' },
 ];
 
-
 const staticUsers: UserProfile[] = [
   { 
     id: 'user-admin-kirtan', 
@@ -227,6 +226,78 @@ const staticFacilities: Facility[] = [
     isIndoor: true,
     dataAiHint: 'swimming pool gym',
   },
+  {
+    id: 'facility-5',
+    name: 'Shuttle Up Badminton Arena',
+    type: 'Court',
+    address: '246 Shuttlecock Street, Metropolis, ST 12345',
+    city: 'Metropolis',
+    location: 'Eastside',
+    description: 'Indoor badminton arena with professional-grade courts and excellent lighting.',
+    images: ['https://images.unsplash.com/photo-1620241422329-195c6450a803'],
+    sports: [mockSports.find(s => s.id === 'sport-4')!],
+    sportPrices: [{ sportId: 'sport-4', pricePerHour: 1200 }],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-1')!, mockAmenities.find(a => a.id === 'amenity-3')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.6,
+    isPopular: false,
+    isIndoor: true,
+    dataAiHint: 'badminton court',
+  },
+  {
+    id: 'facility-6',
+    name: 'Zenith Yoga & Dance Studio',
+    type: 'Studio',
+    address: '77 Harmony Plaza, Metropolis, ST 12345',
+    city: 'Metropolis',
+    location: 'Arts District',
+    description: 'A tranquil space for yoga, meditation, and various dance forms. Embrace your inner peace and rhythm.',
+    images: ['https://images.unsplash.com/photo-1599447462464-a393d5a18b87'],
+    sports: [mockSports.find(s => s.id === 'sport-6')!, mockSports.find(s => s.id === 'sport-8')!],
+    sportPrices: [{ sportId: 'sport-6', pricePerHour: 900 }, { sportId: 'sport-8', pricePerHour: 1100 }],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-4')!, mockAmenities.find(a => a.id === 'amenity-3')!, mockAmenities.find(a => a.id === 'amenity-2')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.9,
+    isPopular: true,
+    isIndoor: true,
+    dataAiHint: 'yoga studio',
+  },
+  {
+    id: 'facility-7',
+    name: 'The Box Yard',
+    type: 'Box Cricket',
+    address: '88 Industrial Way, Metropolis, ST 12345',
+    city: 'Metropolis',
+    location: 'Industrial Park',
+    description: 'Fast-paced box cricket and futsal action. Perfect for a quick, high-energy game with friends.',
+    images: ['https://images.unsplash.com/photo-1618293153926-6556b6c31d58'],
+    sports: [mockSports.find(s => s.id === 'sport-13')!, mockSports.find(s => s.id === 'sport-1')!],
+    sportPrices: [{ sportId: 'sport-13', pricePerHour: 2000 }, { sportId: 'sport-1', pricePerHour: 1800 }],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-1')!, mockAmenities.find(a => a.id === 'amenity-5')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.4,
+    isPopular: true,
+    isIndoor: false,
+    dataAiHint: 'box cricket',
+  },
+  {
+    id: 'facility-8',
+    name: 'Nexus Gaming Lounge',
+    type: 'Studio',
+    address: '1 Tech Tower, Metropolis, ST 12345',
+    city: 'Metropolis',
+    location: 'Tech Hub',
+    description: 'High-end PC and console gaming lounge with the latest titles and fastest internet. Fuel your competitive spirit.',
+    images: ['https://images.unsplash.com/photo-1550745165-9bc0b252726a'],
+    sports: [mockSports.find(s => s.id === 'sport-15')!],
+    sportPrices: [{ sportId: 'sport-15', pricePerHour: 400 }],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-2')!, mockAmenities.find(a => a.id === 'amenity-6')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.8,
+    isPopular: true,
+    isIndoor: true,
+    dataAiHint: 'gaming lounge',
+  }
 ];
 
 
@@ -759,3 +830,5 @@ export const listenToAllPromotionRules = (
 
     return () => clearInterval(interval);
 };
+
+    
