@@ -47,3 +47,5 @@ export const mockMembershipPlans: MembershipPlan[] = [
   { id: 'mem_premium_2', name: 'Premium', pricePerMonth: 999, benefits: ['10% off all bookings', 'Priority booking slots', 'Free equipment rental (2 items/month)', 'Access to exclusive events'] },
   { id: 'mem_pro_3', name: 'Pro', pricePerMonth: 2499, benefits: ['25% off all bookings', 'Unlimited priority booking', 'Unlimited free equipment rental', 'Free entry to all events', 'Personalized coaching tips (AI-powered)'] },
 ];
+
+    

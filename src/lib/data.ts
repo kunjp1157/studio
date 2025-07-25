@@ -496,7 +496,7 @@ export const getBlogPostBySlug = (slug: string): BlogPost | undefined => mockBlo
 export const getAllEvents = async (): Promise<SportEvent[]> => Promise.resolve(mockEvents);
 export const getEventById = async (id: string): Promise<SportEvent | undefined> => Promise.resolve(mockEvents.find(e => e.id === id));
 export const getAllPricingRules = (): PricingRule[] => [...mockPricingRules];
-export const getPricingRuleById = (id: string): PricingRule | undefined => mockPricingRules.find(rule => rule.id === id);
+export const getPricingRuleById = (id: string): PricingRule | undefined => mockPricingRules.find(rule => rule.id === rule.id);
 export const getAllPromotionRules = (): PromotionRule[] => [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
 export const getPromotionRuleById = (id: string): PromotionRule | undefined => mockPromotionRules.find(r => r.id === r.id);
 export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => {
@@ -830,5 +830,7 @@ export const listenToAllPromotionRules = (
 
     return () => clearInterval(interval);
 };
+
+    
 
     
