@@ -1,23 +1,105 @@
 
-'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Star, Wand2, Swords, Sparkles, Trophy } from 'lucide-react';
+import { FacilityCard } from '@/components/facilities/FacilityCard';
+import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { IconComponent } from '@/components/shared/Icon';
 
-export default function HomePage() {
-  const router = useRouter();
+const HeroSection = () => (
+  <section className="text-center py-20 lg:py-28 auth-background rounded-lg shadow-2xl">
+    <div className="container mx-auto px-4 md:px-6">
+      <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-white animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
+        Find & Book Your Perfect <span className="text-primary">Sports Arena</span>
+      </h1>
+      <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
+        The ultimate platform to discover and book sports facilities in your city. Stop searching, start playing.
+      </p>
+      <div className="mt-8 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
+        <Link href="/facilities">
+          <Button size="lg" className="text-lg py-7 px-10 rounded-full">
+            Explore Facilities <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </Link>
+      </div>
+    </div>
+  </section>
+);
 
-  useEffect(() => {
-    // This page is now just a router.
-    // The Header component handles auth and redirects to either /login or /facilities.
-    // If a user somehow lands here, we can give a fallback redirect.
-    router.replace('/facilities');
-  }, [router]);
+const FeatureCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => {
+    return (
+        <Card className="text-center p-6 bg-secondary/30">
+            <IconComponent name={icon} className="mx-auto h-10 w-10 text-primary mb-4" />
+            <h3 className="text-xl font-semibold mb-2">{title}</h3>
+            <p className="text-muted-foreground text-sm">{description}</p>
+        </Card>
+    );
+};
+
+const FeaturesSection = () => (
+  <section className="py-16 lg:py-24">
+    <div className="text-center">
+      <h2 className="text-3xl font-bold font-headline">Why Choose Sports Arena?</h2>
+      <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
+        We offer unique tools and a seamless experience to make your sports life easier and more fun.
+      </p>
+    </div>
+    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
+      <FeatureCard 
+        icon="Sparkles" 
+        title="AI Weekend Planner" 
+        description="Describe your ideal weekend and let our AI create a custom sports itinerary for you." 
+      />
+      <FeatureCard 
+        icon="Swords" 
+        title="Player Matchmaking" 
+        description="Find other players for a casual game or to complete your team roster." 
+      />
+      <FeatureCard 
+        icon="Trophy" 
+        title="Events & Tournaments" 
+        description="Discover and join exciting local sports events and compete for glory." 
+      />
+       <FeatureCard 
+        icon="Wand2" 
+        title="Smart Recommendations" 
+        description="Get personalized facility suggestions based on your preferences and booking history." 
+      />
+    </div>
+  </section>
+);
+
+
+export default async function HomePage() {
+  const allFacilities = await getFacilitiesAction();
+  const settings = await getSiteSettingsAction();
+  const featuredFacilities = allFacilities
+    .filter(f => f.isPopular)
+    .sort((a,b) => b.rating - a.rating)
+    .slice(0, 4);
 
   return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <LoadingSpinner size={48} />
+    <div className="container mx-auto py-8 px-4 md:px-6">
+      <HeroSection />
+
+      {featuredFacilities.length > 0 && (
+        <section className="py-16 lg:py-24">
+            <div className="text-center">
+                <h2 className="text-3xl font-bold font-headline">Featured Facilities</h2>
+                <p className="mt-2 text-muted-foreground">Check out some of the most popular venues on our platform.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+                {featuredFacilities.map(facility => (
+                <FacilityCard key={facility.id} facility={facility} currency={settings.defaultCurrency} />
+                ))}
+            </div>
+        </section>
+      )}
+      
+      <FeaturesSection />
+
     </div>
   );
 }
