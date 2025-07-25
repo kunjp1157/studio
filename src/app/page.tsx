@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { IconComponent } from '@/components/shared/Icon';
 
 const HeroSection = () => (
-  <section className="text-center py-20 lg:py-28">
+  <section className="text-center py-20 lg:py-28 auth-background rounded-lg shadow-2xl">
     <div className="container mx-auto px-4 md:px-6">
-      <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-foreground animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
+      <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-white animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
         Find & Book Your Perfect <span className="text-primary">Sports Arena</span>
       </h1>
       <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
@@ -37,6 +37,7 @@ const FeatureCard = ({ icon, title, description }: { icon: string; title: string
         </Card>
     );
 };
+
 
 const FeaturesSection = () => (
   <section className="py-16 lg:py-24">
