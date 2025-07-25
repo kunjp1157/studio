@@ -61,40 +61,30 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
 
   return (
     <Card className={cn(
-      "flex flex-col h-full overflow-hidden rounded-lg",
+      "flex flex-col h-full overflow-hidden rounded-xl",
       "shadow-lg hover:shadow-xl hover:shadow-primary/20",
       "transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateZ(5deg)_scale(1.1)]",
       "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
-      <CardHeader className="p-0 relative">
-        <Link href={`/facilities/${facility.id}`}>
-          <Image
-            src={facility.images[0] || `https://placehold.co/400x250.png?text=${encodeURIComponent(facility.name)}`}
-            alt={facility.name}
-            width={400}
-            height={250}
-            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-            data-ai-hint={facility.dataAiHint || 'sports facility'}
-          />
-        </Link>
-        {facility.isPopular && (
-          <Badge variant="default" className="absolute top-2 left-2 bg-primary text-primary-foreground shadow-md">Popular</Badge>
-        )}
-        <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 h-9 w-9 bg-background/80 hover:bg-background rounded-full shadow-md"
-            onClick={handleFavoriteClick}
-            aria-label="Add to favorites"
-        >
-            <Heart className={cn(
-                "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
-                isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
-             )} />
-        </Button>
-      </CardHeader>
       <CardContent className="p-4 flex-grow">
-        <CardTitle className="text-xl font-headline mb-1.5 truncate">{facility.name}</CardTitle>
+        <div className="flex justify-between items-start">
+            <CardTitle className="text-xl font-headline mb-1.5 truncate pr-2">{facility.name}</CardTitle>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={handleFavoriteClick}
+                aria-label="Add to favorites"
+            >
+                <Heart className={cn(
+                    "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
+                    isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
+                )} />
+            </Button>
+        </div>
+        {facility.isPopular && (
+          <Badge variant="default" className="mb-2 bg-primary text-primary-foreground shadow-md">Popular</Badge>
+        )}
         <div className="text-sm text-muted-foreground mb-1 flex items-center">
           <SportIcon className="w-4 h-4 mr-1.5 text-primary" />
           {facility.type} - {facility.sports.map(s => s.name).join(', ')}
@@ -127,7 +117,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
         </div>
 
       </CardContent>
-      <CardFooter className="p-4 pt-2">
+      <CardFooter className="p-4 pt-2 mt-auto">
         <Link href={`/facilities/${facility.id}`} className="w-full">
           <Button className="w-full" variant="default" aria-label={`View details for ${facility.name}`}>
             View Details & Book
