@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { IconComponent } from '@/components/shared/Icon';
 
 const HeroSection = () => (
-  <section className="text-center py-20 lg:py-28 auth-background rounded-lg shadow-2xl">
+  <section className="text-center py-20 lg:py-28 auth-background rounded-2xl shadow-2xl">
     <div className="container mx-auto px-4 md:px-6">
       <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-white animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
         Find & Book Your Perfect <span className="text-primary">Sports Arena</span>
@@ -30,7 +30,7 @@ const HeroSection = () => (
 
 const FeatureCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => {
     return (
-        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateZ(5deg)_scale(1.1)] hover:shadow-2xl hover:shadow-primary/20">
+        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateZ(-10deg)_scale(1.15)] hover:shadow-2xl hover:shadow-primary/20 rounded-xl">
             <IconComponent name={icon} className="mx-auto h-10 w-10 text-primary mb-4 transition-transform duration-300 group-hover:scale-110" />
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
             <p className="text-muted-foreground text-sm">{description}</p>

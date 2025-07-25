@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -63,10 +62,10 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
     <Card className={cn(
       "flex flex-col h-full overflow-hidden rounded-xl",
       "shadow-lg hover:shadow-xl hover:shadow-primary/20",
-      "transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateZ(5deg)_scale(1.1)]",
+      "transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateZ(10deg)_scale(1.1)]",
       "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
-      <CardContent className="p-4 flex-grow">
+       <CardContent className="p-4 flex-grow">
         <div className="flex justify-between items-start">
             <CardTitle className="text-xl font-headline mb-1.5 truncate pr-2">{facility.name}</CardTitle>
             <Button
