@@ -19,7 +19,7 @@ const HeroSection = () => (
       </p>
       <div className="mt-8 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
         <Link href="/facilities">
-          <Button size="lg" className="text-lg py-7 px-10 rounded-full hover:scale-105 transition-transform duration-300">
+          <Button size="lg" className="text-lg py-7 px-10 rounded-full hover:scale-110 transition-transform duration-300">
             Explore Facilities <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </Link>
@@ -30,7 +30,7 @@ const HeroSection = () => (
 
 const FeatureCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => {
     return (
-        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateY(15deg)_rotateX(15deg)] hover:shadow-2xl hover:shadow-primary/20">
+        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateZ(5deg)_scale(1.1)] hover:shadow-2xl hover:shadow-primary/20">
             <IconComponent name={icon} className="mx-auto h-10 w-10 text-primary mb-4 transition-transform duration-300 group-hover:scale-110" />
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
             <p className="text-muted-foreground text-sm">{description}</p>
