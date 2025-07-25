@@ -24,6 +24,8 @@ export const mockSports: Sport[] = [
   { id: 'sport-16', name: 'Gym', iconName: 'Dumbbell', imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48', imageDataAiHint: 'modern gym' },
 ];
 
+export const getAllSports = (): Sport[] => mockSports;
+
 export const mockAmenities: Amenity[] = [
   { id: 'amenity-1', name: 'Parking', iconName: 'ParkingCircle' },
   { id: 'amenity-2', name: 'WiFi', iconName: 'Wifi' },

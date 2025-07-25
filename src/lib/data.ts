@@ -6,6 +6,8 @@ import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, ge
 
 // --- IN-MEMORY MOCK DATABASE ---
 
+// NOTE: To avoid circular dependencies and build errors, the static mock data
+// used for initializing the in-memory store is defined directly in this file.
 const staticUsers: UserProfile[] = [
   { 
     id: 'user-admin-kirtan', 
@@ -18,6 +20,22 @@ const staticUsers: UserProfile[] = [
     profilePictureUrl: 'https://randomuser.me/api/portraits/men/75.jpg', 
     dataAiHint: 'man smiling',
     isProfilePublic: true,
+    achievements: [
+        { id: 'achieve-1', name: 'First Booking', description: 'Made your first booking.', unlockedAt: '2023-01-20T10:00:00Z', iconName: 'Medal' },
+        { id: 'achieve-2', name: 'Social Sharer', description: 'Shared an event on social media.', unlockedAt: '2023-02-10T10:00:00Z', iconName: 'Gift' },
+        { id: 'achieve-3', name: 'Weekend Warrior', description: 'Booked on a Saturday and Sunday in the same week.', unlockedAt: '2023-03-05T10:00:00Z', iconName: 'Swords' },
+        { id: 'achieve-4', name: 'Reviewer', description: 'Wrote your first review.', unlockedAt: '2023-03-15T10:00:00Z', iconName: 'MessageSquareText' },
+    ],
+    skillLevels: [
+        { sportId: 'sport-1', sportName: 'Soccer', level: 'Intermediate' },
+        { sportId: 'sport-3', sportName: 'Tennis', level: 'Beginner' },
+    ],
+    preferredSports: [
+        mockSports.find(s => s.id === 'sport-1')!,
+        mockSports.find(s => s.id === 'sport-3')!,
+    ],
+    teamIds: ['team-1'],
+    membershipLevel: 'Premium',
   },
   { 
     id: 'user-owner-dana', 
@@ -30,6 +48,10 @@ const staticUsers: UserProfile[] = [
     profilePictureUrl: 'https://randomuser.me/api/portraits/women/68.jpg', 
     dataAiHint: 'woman portrait',
     isProfilePublic: true,
+    achievements: [],
+    skillLevels: [],
+    teamIds: [],
+    membershipLevel: 'Basic',
   },
   {
     id: 'user-regular-charlie',
@@ -42,10 +64,143 @@ const staticUsers: UserProfile[] = [
     profilePictureUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
     dataAiHint: 'man glasses',
     isProfilePublic: true,
+     achievements: [
+        { id: 'achieve-1', name: 'First Booking', description: 'Made your first booking.', unlockedAt: '2023-03-12T10:00:00Z', iconName: 'Medal' },
+    ],
+    skillLevels: [
+        { sportId: 'sport-2', sportName: 'Basketball', level: 'Advanced' },
+        { sportId: 'sport-13', sportName: 'Cricket', level: 'Intermediate' },
+    ],
+    preferredSports: [
+        mockSports.find(s => s.id === 'sport-2')!,
+        mockSports.find(s => s.id === 'sport-13')!,
+    ],
+    teamIds: ['team-1'],
+    membershipLevel: 'Basic',
   }
 ];
 
-const staticFacilities: Facility[] = []; 
+const defaultOperatingHours: FacilityOperatingHours[] = [
+  { day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' },
+  { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' },
+  { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' },
+  { day: 'Sun', open: '09:00', close: '20:00' },
+];
+
+const staticFacilities: Facility[] = [
+  {
+    id: 'facility-1',
+    name: 'Grand City Arena',
+    type: 'Complex',
+    address: '123 Stadium Way, Metropolis, ST 12345',
+    city: 'Metropolis',
+    location: 'Downtown',
+    description: 'A state-of-the-art multi-sport complex in the heart of the city. Perfect for professional training and casual play alike.',
+    images: [
+      'https://images.unsplash.com/photo-1579952363873-27f3bade9f55',
+      'https://images.unsplash.com/photo-1627225793943-3442571a325a',
+      'https://images.unsplash.com/photo-1543351368-361947a7d3cf'
+    ],
+    sports: [mockSports.find(s => s.id === 'sport-1')!, mockSports.find(s => s.id === 'sport-2')!],
+    sportPrices: [
+        { sportId: 'sport-1', pricePerHour: 2500 },
+        { sportId: 'sport-2', pricePerHour: 2200 },
+    ],
+    amenities: [
+      mockAmenities.find(a => a.id === 'amenity-1')!,
+      mockAmenities.find(a => a.id === 'amenity-2')!,
+      mockAmenities.find(a => a.id === 'amenity-3')!,
+      mockAmenities.find(a => a.id === 'amenity-4')!,
+      mockAmenities.find(a => a.id === 'amenity-6')!,
+    ],
+    operatingHours: defaultOperatingHours,
+    rating: 4.8,
+    isPopular: true,
+    isIndoor: true,
+    dataAiHint: 'soccer stadium',
+    ownerId: 'user-owner-dana'
+  },
+  {
+    id: 'facility-2',
+    name: 'Metropolis Tennis Club',
+    type: 'Court',
+    address: '456 Ace Avenue, Metropolis, ST 12345',
+    city: 'Metropolis',
+    location: 'Uptown',
+    description: 'Premier outdoor clay courts with a serene ambiance. Join our community of passionate tennis players.',
+    images: [
+      'https://images.unsplash.com/photo-1554062614-6da4fa674b73',
+      'https://images.unsplash.com/photo-1596704179737-93b9576332a6'
+    ],
+    sports: [mockSports.find(s => s.id === 'sport-3')!],
+    sportPrices: [ { sportId: 'sport-3', pricePerHour: 1800 } ],
+    amenities: [
+      mockAmenities.find(a => a.id === 'amenity-1')!,
+      mockAmenities.find(a => a.id === 'amenity-3')!,
+      mockAmenities.find(a => a.id === 'amenity-4')!,
+    ],
+    operatingHours: defaultOperatingHours,
+    rating: 4.5,
+    isPopular: false,
+    isIndoor: false,
+    dataAiHint: 'tennis court',
+  },
+  {
+    id: 'facility-3',
+    name: 'Riverside Cricket Ground',
+    type: 'Field',
+    address: '789 Boundary Rd, Metropolis, ST 12345',
+    city: 'Metropolis',
+    location: 'Riverside',
+    description: 'A lush, expansive cricket field perfect for corporate matches and weekend games. Well-maintained pitch.',
+    images: [
+      'https://images.unsplash.com/photo-1593341646782-e0b495cffc25'
+    ],
+    sports: [mockSports.find(s => s.id === 'sport-13')!],
+    sportPrices: [ { sportId: 'sport-13', pricePerHour: 3000 } ],
+    amenities: [
+      mockAmenities.find(a => a.id === 'amenity-1')!,
+      mockAmenities.find(a => a.id === 'amenity-6')!,
+    ],
+    operatingHours: defaultOperatingHours,
+    rating: 4.7,
+    isPopular: true,
+    isIndoor: false,
+    dataAiHint: 'cricket stadium',
+    ownerId: 'user-owner-dana'
+  },
+  {
+    id: 'facility-4',
+    name: 'The Swim & Gym Hub',
+    type: 'Complex',
+    address: '101 Fitness Lane, Metropolis, ST 12345',
+    city: 'Metropolis',
+    location: 'Suburbia',
+    description: 'A complete fitness destination with an olympic-sized swimming pool and a fully-equipped modern gymnasium.',
+    images: [
+      'https://images.unsplash.com/photo-1551604313-26835b334a81',
+      'https://images.unsplash.com/photo-1534438327276-14e5300c3a48'
+    ],
+    sports: [mockSports.find(s => s.id === 'sport-5')!, mockSports.find(s => s.id === 'sport-16')!],
+    sportPrices: [
+        { sportId: 'sport-5', pricePerHour: 800 },
+        { sportId: 'sport-16', pricePerHour: 500 },
+    ],
+    amenities: [
+      mockAmenities.find(a => a.id === 'amenity-1')!,
+      mockAmenities.find(a => a.id === 'amenity-2')!,
+      mockAmenities.find(a => a.id === 'amenity-3')!,
+      mockAmenities.find(a => a.id === 'amenity-4')!,
+      mockAmenities.find(a => a.id === 'amenity-6')!,
+    ],
+    operatingHours: defaultOperatingHours,
+    rating: 4.9,
+    isPopular: true,
+    isIndoor: true,
+    dataAiHint: 'swimming pool gym',
+  },
+];
+
 
 let mockFacilities: Facility[] = [...staticFacilities];
 let mockUsers: UserProfile[] = [...staticUsers];
@@ -498,3 +653,81 @@ export const getMembershipPlanById = async (id: string): Promise<MembershipPlan 
 export const getAllMembershipPlans = async (): Promise<MembershipPlan[]> => {
     return Promise.resolve(mockStaticMembershipPlans);
 }
+
+export const listenToAllEvents = (
+  callback: (events: SportEvent[]) => void,
+  onError: (error: Error) => void
+): (() => void) => {
+    const interval = setInterval(() => {
+        try {
+            callback(mockEvents);
+        } catch(e) {
+            onError(e as Error);
+        }
+    }, 5000); // Poll every 5 seconds
+    
+    // initial call
+    callback(mockEvents);
+
+    return () => clearInterval(interval);
+};
+
+
+export const listenToAllMembershipPlans = (
+  callback: (plans: MembershipPlan[]) => void,
+  onError: (error: Error) => void
+): (() => void) => {
+    const interval = setInterval(() => {
+        try {
+            callback(mockStaticMembershipPlans);
+        } catch(e) {
+            onError(e as Error);
+        }
+    }, 5000); // Poll every 5 seconds
+    
+    // initial call
+    callback(mockStaticMembershipPlans);
+
+    return () => clearInterval(interval);
+};
+
+export const listenToAllPricingRules = (
+  callback: (rules: PricingRule[]) => void,
+  onError: (error: Error) => void
+): (() => void) => {
+    const interval = setInterval(() => {
+        try {
+            callback(mockPricingRules);
+        } catch(e) {
+            onError(e as Error);
+        }
+    }, 5000); // Poll every 5 seconds
+    
+    // initial call
+    callback(mockPricingRules);
+
+    return () => clearInterval(interval);
+};
+
+export const deletePromotionRule = (id: string): void => {
+    mockPromotionRules = mockPromotionRules.filter(p => p.id !== id);
+}
+
+
+export const listenToAllPromotionRules = (
+  callback: (rules: PromotionRule[]) => void,
+  onError: (error: Error) => void
+): (() => void) => {
+    const interval = setInterval(() => {
+        try {
+            callback(mockPromotionRules);
+        } catch(e) {
+            onError(e as Error);
+        }
+    }, 5000); // Poll every 5 seconds
+    
+    // initial call
+    callback(mockPromotionRules);
+
+    return () => clearInterval(interval);
+};
