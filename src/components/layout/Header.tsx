@@ -59,17 +59,21 @@ export function Header() {
           <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
             {/* Render the list twice for a seamless loop */}
             {navItems.map((item, index) => (
-              <Link href={item.href} key={`first-${index}`} legacyBehavior>
-                <a className="mx-3 text-sm font-medium text-muted-foreground transition-all hover:text-primary hover:-translate-y-1 hover:[transform:rotateX(-15deg)] duration-300">
-                  {item.label}
-                </a>
+              <Link 
+                href={item.href} 
+                key={`first-${index}`} 
+                className="mx-3 text-sm font-medium text-muted-foreground transition-all hover:text-primary hover:-translate-y-1 hover:[transform:rotateX(-15deg)] duration-300"
+              >
+                {item.label}
               </Link>
             ))}
             {navItems.map((item, index) => (
-              <Link href={item.href} key={`second-${index}`} legacyBehavior>
-                <a className="mx-3 text-sm font-medium text-muted-foreground transition-all hover:text-primary hover:-translate-y-1 hover:[transform:rotateX(-15deg)] duration-300">
-                  {item.label}
-                </a>
+              <Link 
+                href={item.href} 
+                key={`second-${index}`}
+                className="mx-3 text-sm font-medium text-muted-foreground transition-all hover:text-primary hover:-translate-y-1 hover:[transform:rotateX(-15deg)] duration-300"
+              >
+                {item.label}
               </Link>
             ))}
           </div>
