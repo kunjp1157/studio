@@ -195,7 +195,7 @@ export default function FacilitiesPage() {
       ) : (
         <>
           {facilitiesToShow.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" style={{ perspective: '1200px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {facilitiesToShow.map((facility) => (
                 <FacilityCard key={facility.id} facility={facility} currency={currency} />
               ))}
