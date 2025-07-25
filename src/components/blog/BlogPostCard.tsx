@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Image from 'next/image';
@@ -68,7 +69,7 @@ export function BlogPostCard({ post, isFeatured = false }: BlogPostCardProps) {
       </CardContent>
       <CardFooter className="p-4 md:p-6 pt-0">
         <Link href={`/blog/${post.slug}`} className="w-full">
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full hover:scale-105 transition-transform duration-300">
             Read More <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </Link>

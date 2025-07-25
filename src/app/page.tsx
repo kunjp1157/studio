@@ -30,7 +30,7 @@ const HeroSection = () => (
 
 const FeatureCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => {
     return (
-        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateX(10deg)_rotateY(-5deg)_translateZ(20px)] hover:shadow-2xl hover:shadow-primary/20">
+        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateY(15deg)_rotateX(15deg)] hover:shadow-2xl hover:shadow-primary/20">
             <IconComponent name={icon} className="mx-auto h-10 w-10 text-primary mb-4 transition-transform duration-300 group-hover:scale-110" />
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
             <p className="text-muted-foreground text-sm">{description}</p>
