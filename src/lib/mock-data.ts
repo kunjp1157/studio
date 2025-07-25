@@ -6,8 +6,11 @@ import type { Sport, Amenity, MembershipPlan, Facility, UserProfile } from './ty
 
 // This file contains static mock data that is safe to be imported into client components.
 // It has no server-side dependencies like the 'pg' database driver.
+//
+// NOTE: To prevent circular dependencies, any data needed for initialization in `data.ts`
+// should be defined directly in `data.ts`.
 
-export const mockSports: Sport[] = [
+export const getAllSports = (): Sport[] => [
   { id: 'sport-1', name: 'Soccer', iconName: 'Goal', imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55', imageDataAiHint: 'soccer stadium' },
   { id: 'sport-2', name: 'Basketball', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1519861531473-9200262188bf', imageDataAiHint: 'basketball court' },
   { id: 'sport-3', name: 'Tennis', iconName: 'Activity', imageUrl: 'https://images.unsplash.com/photo-1554062614-6da4fa674b73', imageDataAiHint: 'tennis court' },
@@ -24,9 +27,10 @@ export const mockSports: Sport[] = [
   { id: 'sport-16', name: 'Gym', iconName: 'Dumbbell', imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48', imageDataAiHint: 'modern gym' },
 ];
 
-export const getAllSports = (): Sport[] => mockSports;
+export const mockSports: Sport[] = getAllSports();
 
-export const mockAmenities: Amenity[] = [
+
+export const getAllAmenities = (): Amenity[] => [
   { id: 'amenity-1', name: 'Parking', iconName: 'ParkingCircle' },
   { id: 'amenity-2', name: 'WiFi', iconName: 'Wifi' },
   { id: 'amenity-3', name: 'Showers', iconName: 'ShowerHead' },
@@ -35,6 +39,8 @@ export const mockAmenities: Amenity[] = [
   { id: 'amenity-6', name: 'Cafe', iconName: 'Utensils' },
   { id: 'amenity-7', name: 'Accessible', iconName: 'Users' },
 ];
+
+export const mockAmenities: Amenity[] = getAllAmenities();
 
 export const mockMembershipPlans: MembershipPlan[] = [
   { id: 'mem_basic_1', name: 'Basic', pricePerMonth: 0, benefits: ['Access to all facilities', 'Standard booking rates', 'Community access'] },
