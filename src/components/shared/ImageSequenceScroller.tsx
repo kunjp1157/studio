@@ -46,6 +46,14 @@ export function ImageSequenceScroller({
     }
   }, [handleScroll]);
 
+  // Preload images to ensure smooth transitions
+  useEffect(() => {
+    imageUrls.forEach(url => {
+      const img = new window.Image();
+      img.src = url;
+    });
+  }, [imageUrls]);
+
   if (!imageUrls || imageUrls.length === 0) {
     return null;
   }
