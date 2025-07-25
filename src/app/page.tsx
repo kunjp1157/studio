@@ -9,17 +9,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { IconComponent } from '@/components/shared/Icon';
 
 const HeroSection = () => (
-  <section className="text-center py-20 lg:py-28 auth-background rounded-lg shadow-2xl">
-    <div className="container mx-auto px-4 md:px-6 animate-fadeInUp">
-      <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-white [text-shadow:0_3px_8px_rgba(0,0,0,0.4)]">
+  <section className="text-center py-20 lg:py-28">
+    <div className="container mx-auto px-4 md:px-6">
+      <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-foreground animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
         Find & Book Your Perfect <span className="text-primary">Sports Arena</span>
       </h1>
-      <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
+      <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
         The ultimate platform to discover and book sports facilities in your city. Stop searching, start playing.
       </p>
-      <div className="mt-8">
+      <div className="mt-8 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
         <Link href="/facilities">
-          <Button size="lg" className="text-lg py-7 px-10 rounded-full bg-blue-400 hover:bg-blue-500 text-slate-900 font-bold hover:scale-105 transition-transform duration-300">
+          <Button size="lg" className="text-lg py-7 px-10 rounded-full hover:scale-105 transition-transform duration-300">
             Explore Facilities <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </Link>
