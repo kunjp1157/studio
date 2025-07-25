@@ -9,17 +9,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { IconComponent } from '@/components/shared/Icon';
 
 const HeroSection = () => (
-  <section className="text-center py-20 lg:py-28 auth-background rounded-lg shadow-2xl">
-    <div className="container mx-auto px-4 md:px-6">
-      <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-white animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
+  <section className="text-center py-20 lg:py-28 auth-background rounded-lg shadow-2xl [perspective:800px]">
+    <div className="container mx-auto px-4 md:px-6 animate-fadeInUp">
+      <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-white [text-shadow:0_4px_10px_rgba(0,0,0,0.3)] [transform:rotateX(10deg)]">
         Find & Book Your Perfect <span className="text-primary">Sports Arena</span>
       </h1>
-      <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
+      <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground [transform:rotateX(10deg)]">
         The ultimate platform to discover and book sports facilities in your city. Stop searching, start playing.
       </p>
-      <div className="mt-8 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
+      <div className="mt-8 [transform:rotateX(10deg)]">
         <Link href="/facilities">
-          <Button size="lg" className="text-lg py-7 px-10 rounded-full">
+          <Button size="lg" className="text-lg py-7 px-10 rounded-full hover:scale-105 transition-transform duration-300">
             Explore Facilities <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </Link>
@@ -30,8 +30,8 @@ const HeroSection = () => (
 
 const FeatureCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => {
     return (
-        <Card className="text-center p-6 bg-secondary/30">
-            <IconComponent name={icon} className="mx-auto h-10 w-10 text-primary mb-4" />
+        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateX(10deg)_rotateY(-5deg)_translateZ(20px)] hover:shadow-2xl hover:shadow-primary/20">
+            <IconComponent name={icon} className="mx-auto h-10 w-10 text-primary mb-4 transition-transform duration-300 group-hover:scale-110" />
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
             <p className="text-muted-foreground text-sm">{description}</p>
         </Card>
@@ -46,7 +46,7 @@ const FeaturesSection = () => (
         We offer unique tools and a seamless experience to make your sports life easier and more fun.
       </p>
     </div>
-    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
+    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12 [perspective:1000px]">
       <FeatureCard 
         icon="Sparkles" 
         title="AI Weekend Planner" 
@@ -90,7 +90,7 @@ export default async function HomePage() {
                 <h2 className="text-3xl font-bold font-headline">Featured Facilities</h2>
                 <p className="mt-2 text-muted-foreground">Check out some of the most popular venues on our platform.</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 [perspective:1000px]">
                 {featuredFacilities.map(facility => (
                 <FacilityCard key={facility.id} facility={facility} currency={settings.defaultCurrency} />
                 ))}
