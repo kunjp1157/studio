@@ -81,9 +81,9 @@ export function Header() {
           </Sheet>
         </div>
         
-        <Link href="/" className="mx-2 flex items-center space-x-2">
-          <MountainSnow className="h-6 w-6 text-primary" />
-          <span className="font-bold sm:inline-block text-lg font-headline">
+        <Link href="/" className="group mx-2 flex items-center space-x-2">
+          <MountainSnow className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12" />
+          <span className="font-bold sm:inline-block text-lg font-headline transition-colors group-hover:text-primary/80">
             {siteName}
           </span>
         </Link>
