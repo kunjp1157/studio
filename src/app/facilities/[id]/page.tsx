@@ -188,12 +188,6 @@ export default function FacilityDetailPage() {
         <div className="container mx-auto py-8 px-4 md:px-6">
             <div className="grid md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">
-                    <Skeleton className="aspect-video w-full rounded-lg" />
-                    <div className="grid grid-cols-3 gap-2">
-                        <Skeleton className="aspect-video w-full rounded-md" />
-                        <Skeleton className="aspect-video w-full rounded-md" />
-                        <Skeleton className="aspect-video w-full rounded-md" />
-                    </div>
                     <Skeleton className="h-10 w-3/4" />
                     <Skeleton className="h-6 w-1/2" />
                     <div className="space-y-2">
@@ -234,26 +228,6 @@ export default function FacilityDetailPage() {
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-          <div className="relative aspect-video rounded-lg overflow-hidden mb-6 shadow-lg">
-            <Image
-              src={facility.images[0] || `https://placehold.co/800x450.png?text=${encodeURIComponent(facility.name)}`}
-              alt={facility.name}
-              fill
-              sizes="(max-width: 1024px) 100vw, 800px"
-              className="object-cover transition-transform duration-500 hover:scale-105"
-              priority
-              data-ai-hint={facility.dataAiHint || 'sports facility large'}
-            />
-          </div>
-          {facility.images.length > 1 && (
-            <div className="grid grid-cols-3 gap-2 mb-6">
-              {facility.images.slice(1, 4).map((img, idx) => (
-                <div key={idx} className="relative aspect-video rounded-md overflow-hidden shadow-md">
-                  <Image src={img} alt={`${facility.name} - view ${idx + 2}`} fill sizes="(max-width: 768px) 30vw, 250px" objectFit="cover" data-ai-hint={facility.dataAiHint || 'sports detail'} />
-                </div>
-              ))}
-            </div>
-          )}
           
           <div className="flex justify-between items-start mb-2">
             <PageTitle title={facility.name} />
