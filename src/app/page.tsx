@@ -7,7 +7,6 @@ import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { IconComponent } from '@/components/shared/Icon';
-import { ImageSequenceScroller } from '@/components/shared/ImageSequenceScroller';
 
 const HeroSection = () => (
   <section className="text-center py-20 lg:py-28 auth-background rounded-2xl shadow-2xl">
@@ -82,23 +81,6 @@ export default async function HomePage() {
     .sort((a,b) => b.rating - a.rating)
     .slice(0, 4);
 
-  // A new array of sports-themed images from Unsplash.
-  const sportsImageUrls = [
-      "https://images.unsplash.com/photo-1579952363873-27f3bade9f55", // Soccer
-      "https://images.unsplash.com/photo-1546519638-68e109498ffc", // Basketball action
-      "https://images.unsplash.com/photo-1554062614-6da4fa674b73", // Tennis court
-      "https://images.unsplash.com/photo-1521587514789-53b8a3b09228", // Badminton
-      "https://images.unsplash.com/photo-1587280501635-39294b07c89f", // Volleyball
-      "https://images.unsplash.com/photo-1530549387789-4c1017266635", // Swimming
-      "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5", // Gym workout
-      "https://images.unsplash.com/photo-1565992441121-4367c2967103", // Running track
-      "https://images.unsplash.com/photo-1471506480216-e5719f9794d0", // Cycling
-      "https://images.unsplash.com/photo-1593341646782-e0b495cffc25", // Cricket
-      "https://images.unsplash.com/photo-1560272564-c83b66b1744d", // Soccer players
-      "https://images.unsplash.com/photo-1608245437945-f37a54f4a4a5", // Basketball hoop detail
-      "https://images.unsplash.com/photo-1585802615394-54849386d997", // Tennis ball
-  ];
-
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <HeroSection />
@@ -118,18 +100,6 @@ export default async function HomePage() {
       )}
       
       <FeaturesSection />
-
-      <section className="py-16 lg:py-24">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold font-headline">Scroll-Driven Animation</h2>
-          <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
-            Scroll inside the frame below to see the image sequence update in real-time.
-          </p>
-        </div>
-        <div className="mt-12">
-          <ImageSequenceScroller imageUrls={sportsImageUrls} frameHeight={100} />
-        </div>
-      </section>
 
     </div>
   );
