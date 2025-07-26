@@ -8,7 +8,7 @@ import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, ge
 
 // NOTE: To avoid circular dependencies and build errors, the static mock data
 // used for initializing the in-memory store is defined directly in this file.
-const mockSports: Sport[] = [
+let mockSports: Sport[] = [
   { id: 'sport-1', name: 'Soccer', iconName: 'Goal', imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55', imageDataAiHint: 'soccer stadium' },
   { id: 'sport-2', name: 'Basketball', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1519861531473-9200262188bf', imageDataAiHint: 'basketball court' },
   { id: 'sport-3', name: 'Tennis', iconName: 'Activity', imageUrl: 'https://images.unsplash.com/photo-1554062614-6da4fa674b73', imageDataAiHint: 'tennis court' },
@@ -831,6 +831,29 @@ export const listenToAllPromotionRules = (
     return () => clearInterval(interval);
 };
 
-    
+export const getAllSports = async (): Promise<Sport[]> => {
+    return Promise.resolve(mockSports);
+};
 
-    
+export const addSport = async (sportData: Omit<Sport, 'id'>): Promise<Sport> => {
+    const newSport: Sport = {
+        ...sportData,
+        id: `sport-${Date.now()}`
+    };
+    mockSports.push(newSport);
+    return Promise.resolve(newSport);
+};
+
+export const updateSport = async (sportId: string, sportData: Partial<Sport>): Promise<Sport> => {
+    const index = mockSports.findIndex(s => s.id === sportId);
+    if (index !== -1) {
+        mockSports[index] = { ...mockSports[index], ...sportData };
+        return Promise.resolve(mockSports[index]);
+    }
+    throw new Error("Sport not found for update.");
+};
+
+export const deleteSport = async (sportId: string): Promise<void> => {
+    mockSports = mockSports.filter(s => s.id !== sportId);
+    return Promise.resolve();
+};

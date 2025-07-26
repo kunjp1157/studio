@@ -26,6 +26,10 @@ import {
     getSportById,
     updateBooking as dbUpdateBooking,
     addNotification as dbAddNotification,
+    getAllSports as dbGetAllSports,
+    addSport as dbAddSport,
+    updateSport as dbUpdateSport,
+    deleteSport as dbDeleteSport,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -154,4 +158,26 @@ export async function addNotificationAction(
   notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>
 ): Promise<AppNotification> {
   return dbAddNotification(userId, notificationData);
+}
+
+export async function getAllSportsAction(): Promise<Sport[]> {
+  return dbGetAllSports();
+}
+
+export async function addSportAction(sportData: Omit<Sport, 'id'>): Promise<Sport> {
+  const newSport = await dbAddSport(sportData);
+  revalidatePath('/admin/sports');
+  return newSport;
+}
+
+export async function updateSportAction(sportId: string, sportData: Partial<Sport>): Promise<Sport> {
+  const updatedSport = await dbUpdateSport(sportId, sportData);
+  revalidatePath('/admin/sports');
+  revalidatePath(`/admin/sports/${sportId}/edit`);
+  return updatedSport;
+}
+
+export async function deleteSportAction(sportId: string): Promise<void> {
+  await dbDeleteSport(sportId);
+  revalidatePath('/admin/sports');
 }

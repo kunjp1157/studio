@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate } from 'lucide-react';
+import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate, Dices } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -98,6 +98,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <SidebarMenuButton isActive={isActive('/admin/facilities')} tooltip="Facilities">
                     <Building2 />
                     <span>Facilities</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/admin/sports">
+                  <SidebarMenuButton isActive={isActive('/admin/sports')} tooltip="Sports">
+                    <Dices />
+                    <span>Sports</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
