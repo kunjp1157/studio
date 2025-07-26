@@ -62,14 +62,14 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
       "flex flex-col h-full overflow-hidden rounded-xl",
       "shadow-lg hover:shadow-xl hover:shadow-primary/20",
       "transition-all duration-300 ease-in-out group preserve-3d",
-      "hover:[transform:rotateY(10deg)_rotateZ(3deg)_scale(1.05)]", // 3D rotation effect
+      "hover:[transform:rotateX(10deg)_scale(1.05)]", // <-- Updated Animation
       "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
       <CardContent className="p-4 flex-grow relative">
         <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-background/70 p-1 backdrop-blur-sm transition-all duration-300 hover:bg-background/90"
+            className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-background/70 p-1 backdrop-blur-sm transition-all duration-300 hover:bg-background/90 group-hover:scale-110"
             onClick={handleFavoriteClick}
             aria-label="Add to favorites"
         >
