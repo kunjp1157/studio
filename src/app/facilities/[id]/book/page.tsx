@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings, Sport, Booking, BlockedSlot } from '@/lib/types';
-import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist, addBooking, getBookingsForFacilityOnDate, getSiteSettings } from '@/lib/data';
+import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist, addBooking, getBookingsForFacilityOnDate, getSiteSettings, getUserById } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -383,6 +383,21 @@ export default function BookingPage() {
                     : item.details.pricePerItem * item.quantity * bookingDurationHours,
             })),
         });
+
+        // SIMULATE SMS SENDING
+        const settings = getSiteSettings();
+        const smsTemplate = settings.notificationTemplates?.find(t => t.type === 'booking_confirmed' && t.smsEnabled);
+        const user = getUserById(mockUser.id);
+        if (smsTemplate && user?.phone) {
+            console.log(`[SIMULATED SMS] To: ${user.phone}, Body: ${smsTemplate.smsBody}`);
+            addNotification(mockUser.id, {
+                type: 'general',
+                title: 'SMS Sent',
+                message: `A booking confirmation was sent to your phone at ${user.phone}.`,
+                iconName: 'MessageSquare'
+            });
+        }
+
 
         setIsLoading(false);
         setBookingStep('confirmation');
