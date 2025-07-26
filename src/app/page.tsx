@@ -113,10 +113,14 @@ export default async function HomePage() {
                 <h2 className="text-3xl font-bold font-headline">Featured Facilities</h2>
                 <p className="mt-2 text-muted-foreground">Check out some of the most popular venues on our platform.</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 [perspective:1000px]">
-                {featuredFacilities.map(facility => (
-                <FacilityCard key={facility.id} facility={facility} currency={settings.defaultCurrency} />
-                ))}
+            <div className="mt-12 overflow-hidden [perspective:1000px] [mask-image:linear-gradient(to_right,transparent,white_10%,white_90%,transparent)]">
+                <div className="flex animate-marquee hover:[animation-play-state:paused] w-max">
+                    {[...featuredFacilities, ...featuredFacilities].map((facility, index) => (
+                        <div key={`${facility.id}-${index}`} className="w-[300px] mx-4 shrink-0">
+                            <FacilityCard facility={facility} currency={settings.defaultCurrency} />
+                        </div>
+                    ))}
+                </div>
             </div>
         </section>
       )}
