@@ -18,26 +18,10 @@ export function SportCard({ sport }: SportCardProps) {
 
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg hover:-translate-y-2">
-      <CardHeader className="p-0 relative">
-        <Link href={`/facilities?sport=${sport.id}`} passHref>
-          <div className="aspect-[4/3] w-full relative">
-            <Image
-              src={sport.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(sport.name)}`}
-              alt={sport.name}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover"
-              data-ai-hint={sport.imageDataAiHint || sport.name.toLowerCase()}
-            />
-          </div>
-        </Link>
-      </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <div className="flex items-center mb-2">
-            {SportIconComponent && <SportIconComponent className="w-6 h-6 mr-2 text-primary" />}
-            <CardTitle className="text-xl font-headline truncate">{sport.name}</CardTitle>
-        </div>
-        <p className="text-sm text-muted-foreground line-clamp-2">
+      <CardContent className="p-6 flex-grow flex flex-col items-center text-center justify-center">
+        {SportIconComponent && <SportIconComponent className="w-16 h-16 mb-4 text-primary" />}
+        <CardTitle className="text-2xl font-headline truncate">{sport.name}</CardTitle>
+        <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
           Find top-rated facilities and courts to play {sport.name.toLowerCase()} near you.
         </p>
       </CardContent>
