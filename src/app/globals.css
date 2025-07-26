@@ -117,6 +117,9 @@ body {
   .preserve-3d {
     transform-style: preserve-3d;
   }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-chart-2 to-chart-4;
+  }
 }
 
 
