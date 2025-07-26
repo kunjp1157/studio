@@ -60,9 +60,9 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
   return (
     <Card className={cn(
       "flex flex-col h-full overflow-hidden rounded-xl",
-      "shadow-lg hover:shadow-xl hover:shadow-primary/20",
-      "transition-all duration-300 ease-in-out group preserve-3d",
-      "hover:[transform:rotateX(10deg)_scale(1.05)]", // <-- Updated Animation
+      "shadow-lg hover:shadow-2xl hover:shadow-primary/20",
+      "transition-all duration-500 ease-in-out group preserve-3d",
+      "hover:[transform:rotateX(10deg)_translateY(-10px)_scale(1.05)]",
       "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
       <CardContent className="p-4 flex-grow relative">
@@ -82,7 +82,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
             <CardTitle className="text-xl font-headline mb-1.5 truncate pr-8">{facility.name}</CardTitle>
              <div className="flex flex-col items-end shrink-0">
                 {facility.isPopular && (
-                    <Badge variant="default" className="mb-1 bg-primary text-primary-foreground shadow-md">Popular</Badge>
+                    <Badge variant="default" className="mb-1 bg-primary text-primary-foreground shadow-md transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">Popular</Badge>
                 )}
             </div>
         </div>
@@ -121,7 +121,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
       </CardContent>
       <CardFooter className="p-4 pt-2 mt-auto">
         <Link href={`/facilities/${facility.id}`} className="w-full">
-          <Button className="w-full" variant="default" aria-label={`View details for ${facility.name}`}>
+          <Button className="w-full transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg group-hover:shadow-primary/40" variant="default" aria-label={`View details for ${facility.name}`}>
             View Details & Book
           </Button>
         </Link>
