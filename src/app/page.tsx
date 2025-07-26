@@ -8,25 +8,47 @@ import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { IconComponent } from '@/components/shared/Icon';
 
-const HeroSection = () => (
-  <section className="text-center py-20 lg:py-28 auth-background rounded-2xl shadow-2xl">
-    <div className="container mx-auto px-4 md:px-6">
-      <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-white animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-        Find & Book Your Perfect <span className="text-primary">Sports Arena</span>
-      </h1>
-      <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
-        The ultimate platform to discover and book sports facilities in your city. Stop searching, start playing.
-      </p>
-      <div className="mt-8 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
-        <Link href="/facilities">
-          <Button size="lg" className="text-lg py-7 px-10 rounded-full hover:scale-110 transition-transform duration-300">
-            Explore Facilities <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </Link>
-      </div>
-    </div>
-  </section>
-);
+const HeroSection = () => {
+    const title = "Find & Book Your Perfect Sports Arena";
+    const description = "The ultimate platform to discover and book sports facilities in your city. Stop searching, start playing.";
+
+    return (
+        <section className="text-center py-20 lg:py-28 auth-background rounded-2xl shadow-2xl [perspective:1000px]">
+            <div className="container mx-auto px-4 md:px-6">
+                <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter text-white">
+                    {title.split("").map((char, index) => (
+                        <span 
+                            key={index} 
+                            className="inline-block animate-letter-float" 
+                            style={{ animationDelay: `${index * 0.05}s` }}
+                        >
+                            {char === " " ? "\u00A0" : char}
+                        </span>
+                    ))}
+                </h1>
+                <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
+                    {description.split("").map((char, index) => (
+                        <span 
+                            key={index} 
+                            className="inline-block animate-letter-float" 
+                            style={{ animationDelay: `${(title.length + index) * 0.02}s` }}
+                        >
+                            {char === " " ? "\u00A0" : char}
+                        </span>
+                    ))}
+                </p>
+                <div className="mt-8 animate-fadeInUp" style={{ animationDelay: '2.5s' }}>
+                    <Link href="/facilities">
+                        <Button size="lg" className="text-lg py-7 px-10 rounded-full hover:scale-110 transition-transform duration-300">
+                            Explore Facilities <ArrowRight className="ml-2 h-5 w-5" />
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        </section>
+    );
+};
+
 
 const FeatureCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => {
     return (
