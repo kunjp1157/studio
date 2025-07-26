@@ -10,7 +10,7 @@ import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy, Calendar as
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettingsAction } from '@/app/actions';
 import { UserSwitcher } from '../shared/UserSwitcher';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const navItems = [
   { href: "/facilities", label: "Facilities" },
@@ -59,6 +59,12 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left">
+              <SheetHeader>
+                <SheetTitle className="text-left flex items-center gap-2">
+                   <MountainSnow className="h-6 w-6 text-primary" />
+                   {siteName}
+                </SheetTitle>
+              </SheetHeader>
               <nav className="grid gap-6 text-lg font-medium mt-8">
                 {navItems.map((item) => (
                   <Link
