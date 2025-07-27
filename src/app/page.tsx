@@ -7,6 +7,7 @@ import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { IconComponent } from '@/components/shared/Icon';
+import { cn } from '@/lib/utils';
 
 const HeroSection = () => {
     const title = "Find & Book Your Perfect Sports Arena";
@@ -50,9 +51,11 @@ const HeroSection = () => {
 };
 
 
-const FeatureCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => {
+const FeatureCard = ({ icon, title, description, index }: { icon: string; title: string; description: string; index: number }) => {
     return (
-        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateY(-10deg)_scale(1.05)] hover:shadow-2xl hover:shadow-primary/20 rounded-xl h-full flex flex-col justify-center">
+        <Card className={cn("text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d h-full flex flex-col justify-center animate-float hover:!animate-none hover:-translate-y-2 hover:[transform:rotateY(-10deg)_scale(1.05)] hover:shadow-2xl hover:shadow-primary/20 rounded-xl")}
+              style={{ animationDelay: `${index * 200}ms` }}
+        >
             <IconComponent name={icon} className="mx-auto h-10 w-10 text-primary mb-4 transition-transform duration-300 group-hover:scale-110" />
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
             <p className="text-muted-foreground text-sm">{description}</p>
@@ -101,6 +104,7 @@ const FeaturesSection = () => {
                             icon={feature.icon}
                             title={feature.title}
                             description={feature.description}
+                            index={index}
                         />
                     </div>
                 ))}

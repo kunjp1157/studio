@@ -62,6 +62,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
       "flex flex-col h-full overflow-hidden rounded-xl",
       "shadow-lg hover:shadow-2xl hover:shadow-primary/20",
       "transition-all duration-500 ease-in-out group preserve-3d",
+      "animate-float hover:!animate-none",
       "hover:[transform:rotateX(10deg)_translateY(-10px)_scale(1.05)]",
       "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
