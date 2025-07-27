@@ -1,13 +1,10 @@
-
-
-
-
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
-import { mockStaticMembershipPlans, getMockSports, mockAmenities, staticUsers as mockUsers, staticFacilities as mockFacilities } from './mock-data';
+import { getStaticUsers, getStaticFacilities, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 
 // --- IN-MEMORY MOCK DATABASE ---
-
+let mockUsers: UserProfile[] = getStaticUsers();
+let mockFacilities: Facility[] = getStaticFacilities();
 let mockBookings: Booking[] = [];
 let mockReviews: Review[] = [];
 let mockTeams: Team[] = [];
@@ -22,8 +19,8 @@ let mockLfgRequests: LfgRequest[] = [];
 let mockChallenges: Challenge[] = [];
 
 
-// This is the static default user.
-export let mockUser: UserProfile = mockUsers.find(u => u.role === 'Admin')!;
+// This variable is now mainly for client-side state management, initialized by components.
+export let mockUser: UserProfile | undefined = undefined;
 
 // This function allows other components (like the UserSwitcher) to change the active user.
 export const setActiveMockUser = (role: 'admin' | 'owner' | 'user') => {
@@ -159,7 +156,7 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
         mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates };
         
         // Also update the active user if it's the one being changed
-        if (mockUser.id === userId) {
+        if (mockUser?.id === userId) {
             mockUser = mockUsers[userIndex];
         }
         return mockUsers[userIndex];
@@ -198,7 +195,7 @@ export const calculateAverageRating = (reviews: Review[] | undefined): number =>
 export const getReviewsByFacilityId = (facilityId: string): Review[] => mockReviews.filter(review => review.facilityId === facilityId);
 export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === teamId);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
-export const getNotificationsForUser = (userId: string): AppNotification[] => mockAppNotifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+export const getNotificationsForUser = async (userId: string): Promise<AppNotification[]> => Promise.resolve(mockAppNotifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
 export const getAllBlogPosts = (): BlogPost[] => mockBlogPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 export const getBlogPostBySlug = (slug: string): BlogPost | undefined => mockBlogPosts.find(post => post.slug === slug);
 export const getAllEvents = async (): Promise<SportEvent[]> => Promise.resolve(mockEvents);
@@ -231,7 +228,9 @@ export const createTeam = (teamData: { name: string; sportId: string; captainId:
   if (!sport) throw new Error('Sport not found');
   const newTeam: Team = { id: `team-${Date.now()}`, name: teamData.name, sport, captainId: teamData.captainId, memberIds: [teamData.captainId] };
   mockTeams.push(newTeam);
-  updateUser(teamData.captainId, { teamIds: [...(mockUser.teamIds || []), newTeam.id] });
+  if (mockUser) {
+    updateUser(teamData.captainId, { teamIds: [...(mockUser.teamIds || []), newTeam.id] });
+  }
   return newTeam;
 };
 export const leaveTeam = (teamId: string, userId: string): boolean => {
@@ -249,7 +248,9 @@ export const leaveTeam = (teamId: string, userId: string): boolean => {
       team.memberIds = team.memberIds.filter(id => id !== userId);
   }
   
-  updateUser(userId, { teamIds: mockUser.teamIds?.filter(id => id !== teamId) });
+  if (mockUser) {
+    updateUser(userId, { teamIds: mockUser.teamIds?.filter(id => id !== teamId) });
+  }
   return true;
 };
 
@@ -292,8 +293,8 @@ export const deleteTeam = (teamId: string, captainId: string): void => {
 };
 
 
-export const markNotificationAsRead = (userId: string, notificationId: string): void => { const notification = mockAppNotifications.find(n => n.id === notificationId && n.userId === userId); if (notification) notification.isRead = true; };
-export const markAllNotificationsAsRead = (userId: string): void => { mockAppNotifications.forEach(n => { if (n.userId === userId) n.isRead = true; }); };
+export const markNotificationAsRead = async (userId: string, notificationId: string): Promise<void> => { const notification = mockAppNotifications.find(n => n.id === notificationId && n.userId === userId); if (notification) notification.isRead = true; };
+export const markAllNotificationsAsRead = async (userId: string): Promise<void> => { mockAppNotifications.forEach(n => { if (n.userId === userId) n.isRead = true; }); };
 export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
 export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Promise<Review> => {
   const currentUser = getUserById(reviewData.userId);
@@ -570,3 +571,6 @@ export const deleteSport = async (sportId: string): Promise<void> => {
     }
     return Promise.resolve();
 };
+
+
+

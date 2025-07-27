@@ -18,6 +18,7 @@ import { User, LogOut, LayoutDashboard, CalendarDays, CreditCard, Heart, Group, 
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useState, useEffect } from 'react';
+import { staticUsers } from '@/lib/mock-data';
 
 
 export function UserNav() {
@@ -25,13 +26,24 @@ export function UserNav() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // On the client, read the user from sessionStorage.
+  const initializeUser = () => {
+    let activeUser: UserProfile | null = null;
     const storedUser = sessionStorage.getItem('activeUser');
     if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
+      activeUser = JSON.parse(storedUser);
+    } else {
+      // If no user is in session storage, default to the admin user
+      activeUser = staticUsers.find(u => u.role === 'Admin') || null;
+      if (activeUser) {
+        sessionStorage.setItem('activeUser', JSON.stringify(activeUser));
+      }
     }
+    setCurrentUser(activeUser);
     setIsLoading(false);
+  };
+
+  useEffect(() => {
+    initializeUser();
 
     // Listen for changes from the UserSwitcher component
     const handleUserChange = () => {
