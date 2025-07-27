@@ -13,7 +13,7 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks, Clock, Building } from 'lucide-react';
-import { mockSports, mockAmenities } from '@/lib/mock-data'; 
+import { getMockSports, mockAmenities } from '@/lib/mock-data'; 
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { formatCurrency } from '@/lib/utils';
@@ -53,6 +53,8 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
   const [indoorOutdoor, setIndoorOutdoor] = useState<'any' | 'indoor' | 'outdoor'>('any');
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
 
+  const mockSports = getMockSports();
+
   useEffect(() => {
       setPriceRange([minPrice, maxPrice]);
   }, [minPrice, maxPrice]);
@@ -65,7 +67,7 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
         sport: sportQueryParam,
       });
     }
-  }, [sportQueryParam]);
+  }, [sportQueryParam, onSearch]);
 
 
   const handleAmenityChange = (amenityId: string) => {
