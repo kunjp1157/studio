@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -81,7 +82,7 @@ export default function OwnerFacilitiesPage() {
     if (!currency) return <Skeleton className="h-5 w-24" />;
     if (!facility.sportPrices || facility.sportPrices.length === 0) return 'N/A';
     
-    const prices = facility.sportPrices.map(p => p.pricePerHour);
+    const prices = facility.sportPrices.map(p => p.price);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
 

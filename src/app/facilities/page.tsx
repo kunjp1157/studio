@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -96,7 +97,7 @@ export default function FacilitiesPage() {
       }
       if (filters.priceRange) {
         facilitiesToProcess = facilitiesToProcess.filter(f => 
-          f.sportPrices.some(p => p.pricePerHour >= filters.priceRange![0] && p.pricePerHour <= filters.priceRange![1])
+          f.sportPrices.some(p => p.price >= filters.priceRange![0] && p.price <= filters.priceRange![1])
         );
       }
       if (filters.selectedAmenities && filters.selectedAmenities.length > 0) {
@@ -127,10 +128,10 @@ export default function FacilitiesPage() {
     let sorted = [...facilities];
     switch (option) {
       case 'price-asc':
-        sorted.sort((a, b) => Math.min(...(a.sportPrices?.map(p => p.pricePerHour) || [Infinity])) - Math.min(...(b.sportPrices?.map(p => p.pricePerHour) || [Infinity])));
+        sorted.sort((a, b) => Math.min(...(a.sportPrices?.map(p => p.price) || [Infinity])) - Math.min(...(b.sportPrices?.map(p => p.price) || [Infinity])));
         break;
       case 'price-desc':
-        sorted.sort((a, b) => Math.min(...(b.sportPrices?.map(p => p.pricePerHour) || [Infinity])) - Math.min(...(a.sportPrices?.map(p => p.pricePerHour) || [Infinity])));
+        sorted.sort((a, b) => Math.min(...(b.sportPrices?.map(p => p.price) || [Infinity])) - Math.min(...(a.sportPrices?.map(p => p.price) || [Infinity])));
         break;
       case 'rating-desc':
         sorted.sort((a, b) => b.rating - a.rating);

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -83,7 +84,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
   }
 
   const minPrice = (facility.sportPrices && facility.sportPrices.length > 0)
-    ? Math.min(...facility.sportPrices.map(p => p.pricePerHour))
+    ? Math.min(...facility.sportPrices.map(p => p.price))
     : 0;
 
   return (

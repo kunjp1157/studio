@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings, Sport, Booking, BlockedSlot } from '@/lib/types';
+import type { Facility, TimeSlot, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, PricingRule, SiteSettings, Sport, Booking, BlockedSlot, SportPrice } from '@/lib/types';
 import { getFacilityById, mockUser, addNotification, getPromotionRuleByCode, calculateDynamicPrice, isUserOnWaitlist, addToWaitlist, addBooking, getBookingsForFacilityOnDate, getSiteSettings, getUserById } from '@/lib/data';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -149,7 +150,7 @@ export default function BookingPage() {
         const slotStartDate = parse(selectedSlot.startTime, 'HH:mm', selectedDate);
         const slotEndDate = parse(selectedSlot.endTime, 'HH:mm', selectedDate);
         if (slotEndDate < slotStartDate) slotEndDate.setDate(slotEndDate.getDate() + 1); // Handle midnight crossover
-        const diff = differenceInHours(slotEndDate, slotStartDate);
+        const diff = differenceInHours(slotEndDate, slotEndDate);
         return diff > 0 ? diff : 1; 
       } catch (error) {
         console.error("Error parsing slot times:", error);
@@ -170,12 +171,17 @@ export default function BookingPage() {
       }
       
       const { finalPrice, appliedRuleName, appliedRuleDetails } = calculateDynamicPrice(
-        sportPriceInfo.pricePerHour,
+        sportPriceInfo.price,
         selectedDate,
         selectedSlot,
         bookingDurationHours
       );
-      setBaseFacilityPrice(finalPrice);
+      
+      let calculatedBasePrice = finalPrice;
+      if (sportPriceInfo.pricingModel === 'per_hour_per_person') {
+          calculatedBasePrice *= parseInt(numberOfGuests, 10) || 1;
+      }
+      setBaseFacilityPrice(calculatedBasePrice);
 
       if (appliedRuleName && appliedRuleDetails) {
         let changeDescription = "";
@@ -188,7 +194,7 @@ export default function BookingPage() {
             case 'fixed_decrease': changeDescription = `(-${formatCurrency(appliedRuleDetails.value, currency)}/hr)`; break;
             case 'fixed_price': changeDescription = `(to ${formatCurrency(appliedRuleDetails.value, currency)}/hr)`; break;
         }
-        if (newHourlyRate !== sportPriceInfo.pricePerHour) {
+        if (newHourlyRate !== sportPriceInfo.price) {
              setAppliedPricingRuleMessage(`${appliedRuleName} ${changeDescription}`);
         } else {
             setAppliedPricingRuleMessage(null); 
@@ -200,7 +206,7 @@ export default function BookingPage() {
       setBaseFacilityPrice(0);
       setAppliedPricingRuleMessage(null);
     }
-  }, [facility, selectedDate, selectedSlot, bookingDurationHours, currency, selectedSportId]);
+  }, [facility, selectedDate, selectedSlot, bookingDurationHours, currency, selectedSportId, numberOfGuests]);
 
   useEffect(() => {
     let rentalCost = 0;
@@ -499,8 +505,19 @@ export default function BookingPage() {
     return formatCurrency(price, currency);
   };
 
+  const selectedSportPriceInfo = selectedSportId ? facility.sportPrices.find(p => p.sportId === selectedSportId) : null;
   const selectedSportInfo = selectedSportId ? facility.sports.find(s => s.id === selectedSportId) : null;
 
+  const getPriceDisplay = () => {
+    if (!selectedSportPriceInfo) {
+      return <span>N/A</span>;
+    }
+    const priceText = renderPrice(selectedSportPriceInfo.price);
+    if (selectedSportPriceInfo.pricingModel === 'per_hour_per_person') {
+      return <span>{priceText} / person / hour</span>;
+    }
+    return <span>{priceText} / hour</span>;
+  };
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -843,6 +860,12 @@ export default function BookingPage() {
                 <span className="text-muted-foreground">Sport:</span>
                 <span className="font-medium">{selectedSportInfo?.name || 'Not Selected'}</span>
               </div>
+              {selectedSportPriceInfo && (
+                <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Rate:</span>
+                    <span className="font-medium">{getPriceDisplay()}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Date:</span>
                 <span className="font-medium">{selectedDate ? format(selectedDate, 'PPP') : 'Not Selected'}</span>

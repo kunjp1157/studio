@@ -1,5 +1,6 @@
 
-import type { Sport, Amenity, MembershipPlan, Facility, UserProfile, UserRole, UserStatus, FacilityOperatingHours } from './types';
+
+import type { Sport, Amenity, MembershipPlan, Facility, UserProfile, UserRole, UserStatus, FacilityOperatingHours, PricingModel } from './types';
 
 // This file contains static mock data that is safe to be imported into client components.
 // It has no server-side dependencies like the 'pg' database driver.
@@ -142,8 +143,8 @@ export function getStaticFacilities(): Facility[] {
         ],
         sports: [allSports.find(s => s.id === 'sport-1')!, allSports.find(s => s.id === 'sport-2')!],
         sportPrices: [
-            { sportId: 'sport-1', pricePerHour: 2500 },
-            { sportId: 'sport-2', pricePerHour: 2200 },
+            { sportId: 'sport-1', price: 2500, pricingModel: 'per_hour_flat' },
+            { sportId: 'sport-2', price: 2200, pricingModel: 'per_hour_flat' },
         ],
         amenities: [
           mockAmenities.find(a => a.id === 'amenity-1')!,
@@ -172,7 +173,7 @@ export function getStaticFacilities(): Facility[] {
           'https://images.unsplash.com/photo-1596704179737-93b9576332a6'
         ],
         sports: [allSports.find(s => s.id === 'sport-3')!],
-        sportPrices: [ { sportId: 'sport-3', pricePerHour: 1800 } ],
+        sportPrices: [ { sportId: 'sport-3', price: 1800, pricingModel: 'per_hour_flat' } ],
         amenities: [
           mockAmenities.find(a => a.id === 'amenity-1')!,
           mockAmenities.find(a => a.id === 'amenity-3')!,
@@ -196,7 +197,7 @@ export function getStaticFacilities(): Facility[] {
           'https://images.unsplash.com/photo-1593341646782-e0b495cffc25'
         ],
         sports: [allSports.find(s => s.id === 'sport-13')!],
-        sportPrices: [ { sportId: 'sport-13', pricePerHour: 3000 } ],
+        sportPrices: [ { sportId: 'sport-13', price: 3000, pricingModel: 'per_hour_flat' } ],
         amenities: [
           mockAmenities.find(a => a.id === 'amenity-1')!,
           mockAmenities.find(a => a.id === 'amenity-6')!,
@@ -222,8 +223,8 @@ export function getStaticFacilities(): Facility[] {
         ],
         sports: [allSports.find(s => s.id === 'sport-5')!, allSports.find(s => s.id === 'sport-16')!],
         sportPrices: [
-            { sportId: 'sport-5', pricePerHour: 800 },
-            { sportId: 'sport-16', pricePerHour: 500 },
+            { sportId: 'sport-5', price: 400, pricingModel: 'per_hour_per_person' },
+            { sportId: 'sport-16', price: 500, pricingModel: 'per_hour_per_person' },
         ],
         amenities: [
           mockAmenities.find(a => a.id === 'amenity-1')!,
@@ -248,7 +249,7 @@ export function getStaticFacilities(): Facility[] {
         description: 'Indoor badminton arena with professional-grade courts and excellent lighting.',
         images: ['https://images.unsplash.com/photo-1620241422329-195c6450a803'],
         sports: [allSports.find(s => s.id === 'sport-4')!],
-        sportPrices: [{ sportId: 'sport-4', pricePerHour: 1200 }],
+        sportPrices: [{ sportId: 'sport-4', price: 1200, pricingModel: 'per_hour_flat' }],
         amenities: [mockAmenities.find(a => a.id === 'amenity-1')!, mockAmenities.find(a => a.id === 'amenity-3')!],
         operatingHours: defaultOperatingHours,
         rating: 4.6,
@@ -266,7 +267,7 @@ export function getStaticFacilities(): Facility[] {
         description: 'A tranquil space for yoga, meditation, and various dance forms. Embrace your inner peace and rhythm.',
         images: ['https://images.unsplash.com/photo-1599447462464-a393d5a87b87'],
         sports: [allSports.find(s => s.id === 'sport-6')!, allSports.find(s => s.id === 'sport-8')!],
-        sportPrices: [{ sportId: 'sport-6', pricePerHour: 900 }, { sportId: 'sport-8', pricePerHour: 1100 }],
+        sportPrices: [{ sportId: 'sport-6', price: 900, pricingModel: 'per_hour_per_person' }, { sportId: 'sport-8', price: 1100, pricingModel: 'per_hour_flat' }],
         amenities: [mockAmenities.find(a => a.id === 'amenity-4')!, mockAmenities.find(a => a.id === 'amenity-3')!, mockAmenities.find(a => a.id === 'amenity-2')!],
         operatingHours: defaultOperatingHours,
         rating: 4.9,
@@ -284,7 +285,7 @@ export function getStaticFacilities(): Facility[] {
         description: 'Fast-paced box cricket and futsal action. Perfect for a quick, high-energy game with friends.',
         images: ['https://images.unsplash.com/photo-1618293153926-6556b6c31d58'],
         sports: [allSports.find(s => s.id === 'sport-13')!, allSports.find(s => s.id === 'sport-1')!],
-        sportPrices: [{ sportId: 'sport-13', pricePerHour: 2000 }, { sportId: 'sport-1', pricePerHour: 1800 }],
+        sportPrices: [{ sportId: 'sport-13', price: 2000, pricingModel: 'per_hour_flat' }, { sportId: 'sport-1', price: 1800, pricingModel: 'per_hour_flat' }],
         amenities: [mockAmenities.find(a => a.id === 'amenity-1')!, mockAmenities.find(a => a.id === 'amenity-5')!],
         operatingHours: defaultOperatingHours,
         rating: 4.4,
@@ -302,7 +303,7 @@ export function getStaticFacilities(): Facility[] {
         description: 'High-end PC and console gaming lounge with the latest titles and fastest internet. Fuel your competitive spirit.',
         images: ['https://images.unsplash.com/photo-1550745165-9bc0b252726a'],
         sports: [allSports.find(s => s.id === 'sport-15')!],
-        sportPrices: [{ sportId: 'sport-15', pricePerHour: 400 }],
+        sportPrices: [{ sportId: 'sport-15', price: 400, pricingModel: 'per_hour_per_person' }],
         amenities: [mockAmenities.find(a => a.id === 'amenity-2')!, mockAmenities.find(a => a.id === 'amenity-6')!],
         operatingHours: defaultOperatingHours,
         rating: 4.8,
@@ -321,9 +322,9 @@ export function getStaticFacilities(): Facility[] {
         images: ['https://images.unsplash.com/photo-1517649763962-0c623066013b'],
         sports: [allSports.find(s => s.id === 'sport-7')!, allSports.find(s => s.id === 'sport-14')!, allSports.find(s => s.id === 'sport-10')!],
         sportPrices: [
-            { sportId: 'sport-7', pricePerHour: 500 },
-            { sportId: 'sport-14', pricePerHour: 600 },
-            { sportId: 'sport-10', pricePerHour: 400 },
+            { sportId: 'sport-7', price: 500, pricingModel: 'per_hour_per_person' },
+            { sportId: 'sport-14', price: 600, pricingModel: 'per_hour_flat' },
+            { sportId: 'sport-10', price: 400, pricingModel: 'per_hour_flat' },
         ],
         amenities: [mockAmenities.find(a => a.id === 'amenity-1')!, mockAmenities.find(a => a.id === 'amenity-7')!],
         operatingHours: defaultOperatingHours,
@@ -345,7 +346,7 @@ export function getStaticFacilities(): Facility[] {
             'https://placehold.co/800x450.png'
         ],
         sports: allSports,
-        sportPrices: allSports.map(sport => ({ sportId: sport.id, pricePerHour: 1500 })),
+        sportPrices: allSports.map(sport => ({ sportId: sport.id, price: 1500, pricingModel: 'per_hour_flat' })),
         amenities: mockAmenities,
         operatingHours: defaultOperatingHours,
         rating: 5.0,

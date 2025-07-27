@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -222,7 +223,7 @@ export default function FacilityDetailPage() {
   
   const reviewCount = facility.reviews?.length || 0;
   const hasRentals = facility.availableEquipment && facility.availableEquipment.length > 0;
-  const minPrice = facility.sportPrices.length > 0 ? Math.min(...facility.sportPrices.map(p => p.pricePerHour)) : 0;
+  const minPrice = facility.sportPrices.length > 0 ? Math.min(...facility.sportPrices.map(p => p.price)) : 0;
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -307,12 +308,13 @@ export default function FacilityDetailPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Sports & Pricing</CardTitle>
-                        <CardDescription>Hourly rates for different sports available at this facility.</CardDescription>
+                        <CardDescription>Rates for different sports available at this facility.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-2">
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {facility.sports.map((sport: Sport) => {
-                              const sportPrice = facility.sportPrices.find(p => p.sportId === sport.id);
+                            {facility.sportPrices.map((sportPrice) => {
+                              const sport = facility.sports.find(s => s.id === sportPrice.sportId);
+                              if (!sport) return null;
                               const IconComponent = getIconComponent(sport.iconName) || Zap;
                               return (
                                   <li key={sport.id} className="flex items-center justify-between text-foreground p-3 border rounded-md">
@@ -320,8 +322,9 @@ export default function FacilityDetailPage() {
                                         <IconComponent className="w-5 h-5 mr-3 text-primary" />
                                         <span className="font-medium">{sport.name}</span>
                                     </div>
-                                    <span className="font-semibold text-primary">
-                                        {sportPrice ? renderPrice(sportPrice.pricePerHour) + '/hr' : 'N/A'}
+                                    <span className="font-semibold text-primary text-sm text-right">
+                                        {renderPrice(sportPrice.price)}
+                                        {sportPrice.pricingModel === 'per_hour_flat' ? '/hr' : '/person/hr'}
                                     </span>
                                   </li>
                               );

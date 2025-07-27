@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -45,7 +46,8 @@ const facilityFormSchema = z.object({
   sports: z.array(z.string()).min(1, { message: "Select at least one sport." }),
   sportPrices: z.array(z.object({
     sportId: z.string(),
-    pricePerHour: z.coerce.number().min(0, "Price must be non-negative."),
+    price: z.coerce.number().min(0, "Price must be non-negative."),
+    pricingModel: z.enum(['per_hour_flat', 'per_hour_per_person']),
   })).optional().default([]),
   amenities: z.array(z.string()).optional().default([]),
   operatingHours: z.array(z.object({
@@ -156,7 +158,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
     // Add new prices for newly selected sports
     selectedSportIds.forEach(sportId => {
         if (!currentPricesMap.has(sportId)) {
-            currentPricesMap.set(sportId, { sportId, pricePerHour: 0 });
+            currentPricesMap.set(sportId, { sportId, price: 0, pricingModel: 'per_hour_flat' });
             needsUpdate = true;
         }
     });
@@ -390,25 +392,43 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center'><DollarSign className="mr-2 h-5 w-5 text-primary"/>Sport Prices</CardTitle>
-                <CardDescription>Set the price per hour for each sport offered at the facility.</CardDescription>
+                <CardDescription>Set the price for each sport offered at the facility.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                   {sportPrices.map((price, index) => {
                     const sport = mockSports.find(s => s.id === price.sportId);
                     if (!sport) return null;
                     return(
-                      <FormField
-                        key={price.sportId}
-                        control={form.control}
-                        name={`sportPrices.${index}.pricePerHour`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{sport.name} Price Per Hour ({currency})</FormLabel>
-                            <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div key={price.sportId} className="p-3 border rounded-md grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <FormField
+                          control={form.control}
+                          name={`sportPrices.${index}.price`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{sport.name} Price ({currency})</FormLabel>
+                              <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                         <FormField
+                          control={form.control}
+                          name={`sportPrices.${index}.pricingModel`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Pricing Model</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select a model" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    <SelectItem value="per_hour_flat">Per Hour (Flat Rate)</SelectItem>
+                                    <SelectItem value="per_hour_per_person">Per Hour, Per Person</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     )
                   })}
                   {selectedSportIds?.length === 0 && <p className="text-sm text-muted-foreground">Select one or more sports to set their prices.</p>}

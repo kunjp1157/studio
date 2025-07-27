@@ -1,5 +1,6 @@
 
 
+
 export interface Team {
   id: string;
   name: string;
@@ -87,9 +88,12 @@ export interface BlockedSlot {
   reason?: string;
 }
 
+export type PricingModel = 'per_hour_flat' | 'per_hour_per_person';
+
 export interface SportPrice {
   sportId: string;
-  pricePerHour: number;
+  price: number;
+  pricingModel: PricingModel;
 }
 
 export interface Facility {
