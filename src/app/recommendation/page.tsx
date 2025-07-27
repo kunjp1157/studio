@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -15,7 +16,7 @@ import { mockUser, mockBookings, getFacilityById } from '@/lib/data'; // For pre
 
 export default function RecommendationPage() {
   const [preferences, setPreferences] = useState(
-    `I like playing soccer and tennis. Looking for facilities in Metropolis, preferably with good parking and available on weekend afternoons. Budget-friendly options are a plus.`
+    `I like playing soccer and tennis. Looking for facilities in Pune, preferably with good parking and available on weekend afternoons. Budget-friendly options are a plus.`
   );
   
   const pastBookingsString = mockBookings

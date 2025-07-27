@@ -22,7 +22,7 @@ const HeroSection = () => {
                             className="inline-block animate-letter-float" 
                             style={{ animationDelay: `${index * 0.05}s` }}
                         >
-                            {char === " " ? "\u00A0" : char}
+                            {char === " " ? " " : char}
                         </span>
                     ))}
                 </h1>
@@ -33,7 +33,7 @@ const HeroSection = () => {
                             className="inline-block animate-letter-float" 
                             style={{ animationDelay: `${(title.length + index) * 0.02}s` }}
                         >
-                            {char === " " ? "\u00A0" : char}
+                            {char === " " ? " " : char}
                         </span>
                     ))}
                 </p>

@@ -155,7 +155,7 @@ export default function FacilitiesPage() {
     <div className="container mx-auto py-8 px-4 md:px-6">
       <PageTitle 
         title="All Sports Facilities"
-        description="Browse our comprehensive list of sports venues available in the city."
+        description="Browse our comprehensive list of sports venues available in Pune."
       />
 
       <div className="mb-8">

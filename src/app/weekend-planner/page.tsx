@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WeekendPlannerPage() {
   const [request, setRequest] = useState(
-    'My two friends and I want to have a sporty weekend in Metropolis. We love soccer but are open to trying tennis. We are free on Saturday and Sunday afternoons. Our total budget for activities is around 15000 INR.'
+    'My two friends and I want to have a sporty weekend in Pune. We love cricket but are open to trying tennis. We are free on Saturday and Sunday afternoons. Our total budget for activities is around 15000 INR.'
   );
   
   const [plan, setPlan] = useState<PlanWeekendOutput | null>(null);

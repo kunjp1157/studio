@@ -85,14 +85,14 @@ export default function ContactPage() {
               <MapPin className="h-8 w-8 text-primary mr-4 mt-1 shrink-0" />
               <div>
                 <h4 className="font-semibold">Address</h4>
-                <p className="text-muted-foreground">123 Sports Avenue, Metropolis, ST 90210</p>
+                <p className="text-muted-foreground">123 Sports Avenue, Koregaon Park, Pune, 411001</p>
               </div>
             </div>
             <div className="flex items-start">
               <Phone className="h-8 w-8 text-primary mr-4 mt-1 shrink-0" />
               <div>
                 <h4 className="font-semibold">Phone</h4>
-                <p className="text-muted-foreground">(555) 123-4567</p>
+                <p className="text-muted-foreground">(020) 1234-5678</p>
               </div>
             </div>
             <div className="flex items-start">

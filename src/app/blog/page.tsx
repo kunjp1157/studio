@@ -28,7 +28,7 @@ export default function BlogPage() {
       <div className="container mx-auto py-12 px-4 md:px-6">
         <PageTitle 
           title="Sports Arena Blog"
-          description="News, tips, and insights for sports enthusiasts in Metropolis."
+          description="News, tips, and insights for sports enthusiasts in Pune."
         />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           {Array.from({ length: 3 }).map((_, index) => (
@@ -47,7 +47,7 @@ export default function BlogPage() {
     <div className="container mx-auto py-8 px-4 md:px-6">
       <PageTitle 
         title="Sports Arena Blog"
-        description="News, tips, and insights for sports enthusiasts in Metropolis."
+        description="News, tips, and insights for sports enthusiasts in Pune."
       />
 
       {posts.length === 0 ? (
