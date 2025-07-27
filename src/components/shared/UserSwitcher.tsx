@@ -12,13 +12,13 @@ import { useRouter } from "next/navigation";
 import { UserCog } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { UserProfile, UserRole, UserStatus } from "@/lib/types";
-import { staticUsers } from "@/lib/mock-data";
+import { getStaticUsers } from "@/lib/mock-data";
 
 
 const allMockUsers: Record<'admin' | 'owner' | 'user', UserProfile | undefined> = {
-  admin: staticUsers.find(u => u.role === 'Admin'),
-  owner: staticUsers.find(u => u.role === 'FacilityOwner'),
-  user: staticUsers.find(u => u.role === 'User'),
+  admin: getStaticUsers().find(u => u.role === 'Admin'),
+  owner: getStaticUsers().find(u => u.role === 'FacilityOwner'),
+  user: getStaticUsers().find(u => u.role === 'User'),
 };
 
 export function UserSwitcher() {
