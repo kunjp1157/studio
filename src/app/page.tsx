@@ -52,7 +52,7 @@ const HeroSection = () => {
 
 const FeatureCard = ({ icon, title, description }: { icon: string; title: string; description: string }) => {
     return (
-        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateY(-10deg)_scale(1.05)] hover:shadow-2xl hover:shadow-primary/20 rounded-xl">
+        <Card className="text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d hover:-translate-y-2 hover:[transform:rotateY(-10deg)_scale(1.05)] hover:shadow-2xl hover:shadow-primary/20 rounded-xl h-full flex flex-col justify-center">
             <IconComponent name={icon} className="mx-auto h-10 w-10 text-primary mb-4 transition-transform duration-300 group-hover:scale-110" />
             <h3 className="text-xl font-semibold mb-2">{title}</h3>
             <p className="text-muted-foreground text-sm">{description}</p>
@@ -61,38 +61,54 @@ const FeatureCard = ({ icon, title, description }: { icon: string; title: string
 };
 
 
-const FeaturesSection = () => (
-  <section className="py-16 lg:py-24">
-    <div className="text-center">
-      <h2 className="text-3xl font-bold font-headline">Why Choose Sports Arena?</h2>
-      <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
-        We offer unique tools and a seamless experience to make your sports life easier and more fun.
-      </p>
-    </div>
-    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12 [perspective:1000px]">
-      <FeatureCard 
-        icon="Sparkles" 
-        title="AI Weekend Planner" 
-        description="Describe your ideal weekend and let our AI create a custom sports itinerary for you." 
-      />
-      <FeatureCard 
-        icon="Swords" 
-        title="Player Matchmaking" 
-        description="Find other players for a casual game or to complete your team roster." 
-      />
-      <FeatureCard 
-        icon="Trophy" 
-        title="Events & Tournaments" 
-        description="Discover and join exciting local sports events and compete for glory." 
-      />
-       <FeatureCard 
-        icon="Wand2" 
-        title="Smart Recommendations" 
-        description="Get personalized facility suggestions based on your preferences and booking history." 
-      />
-    </div>
-  </section>
-);
+const FeaturesSection = () => {
+    const features = [
+      { 
+        icon: "Sparkles", 
+        title: "AI Weekend Planner", 
+        description: "Describe your ideal weekend and let our AI create a custom sports itinerary for you." 
+      },
+      { 
+        icon: "Swords", 
+        title: "Player Matchmaking", 
+        description: "Find other players for a casual game or to complete your team roster." 
+      },
+      { 
+        icon: "Trophy", 
+        title: "Events & Tournaments", 
+        description: "Discover and join exciting local sports events and compete for glory." 
+      },
+       { 
+        icon: "Wand2", 
+        title: "Smart Recommendations", 
+        description: "Get personalized facility suggestions based on your preferences and booking history." 
+      },
+    ];
+    
+    return (
+      <section className="py-16 lg:py-24">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold font-headline">Why Choose Sports Arena?</h2>
+          <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
+            We offer unique tools and a seamless experience to make your sports life easier and more fun.
+          </p>
+        </div>
+        <div className="mt-12 overflow-hidden [perspective:1000px] [mask-image:linear-gradient(to_right,transparent,white_10%,white_90%,transparent)]">
+            <div className="flex animate-marquee hover:[animation-play-state:paused] w-max">
+                {[...features, ...features].map((feature, index) => (
+                    <div key={index} className="w-[280px] mx-4 shrink-0">
+                        <FeatureCard 
+                            icon={feature.icon}
+                            title={feature.title}
+                            description={feature.description}
+                        />
+                    </div>
+                ))}
+            </div>
+        </div>
+      </section>
+    );
+};
 
 
 export default async function HomePage() {
