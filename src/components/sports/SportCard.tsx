@@ -6,14 +6,15 @@ import Link from 'next/link';
 import type { Sport } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Building2 } from 'lucide-react';
 import { getIconComponent } from '@/components/shared/Icon';
 
 interface SportCardProps {
   sport: Sport;
+  venueCount: number;
 }
 
-export function SportCard({ sport }: SportCardProps) {
+export function SportCard({ sport, venueCount }: SportCardProps) {
   const SportIconComponent = getIconComponent(sport.iconName);
 
   return (
@@ -21,11 +22,12 @@ export function SportCard({ sport }: SportCardProps) {
       <CardContent className="p-6 flex-grow flex flex-col items-center text-center justify-center">
         {SportIconComponent && <SportIconComponent className="w-16 h-16 mb-4 text-primary" />}
         <CardTitle className="text-2xl font-headline truncate">{sport.name}</CardTitle>
-        <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-          Find top-rated facilities and courts to play {sport.name.toLowerCase()} near you.
-        </p>
+        <div className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
+            <Building2 className="h-4 w-4" />
+            <span>{venueCount} Venue{venueCount !== 1 ? 's' : ''} Available</span>
+        </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-4 pt-0 mt-auto">
         <Link href={`/facilities?sport=${sport.id}`} className="w-full">
           <Button className="w-full" variant="default" aria-label={`Find ${sport.name} facilities`}>
             Find Venues <ArrowRight className="ml-2 h-4 w-4" />

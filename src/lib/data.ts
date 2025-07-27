@@ -297,6 +297,28 @@ const staticFacilities: Facility[] = [
     isPopular: true,
     isIndoor: true,
     dataAiHint: 'gaming lounge',
+  },
+  {
+    id: 'facility-9',
+    name: 'Community Sports Hub',
+    type: 'Complex',
+    address: '55 Community Circle, Metropolis, ST 12345',
+    city: 'Metropolis',
+    location: 'Suburbia',
+    description: 'A versatile community center offering a variety of sports for all ages, including cycling, pool, and more.',
+    images: ['https://images.unsplash.com/photo-1517649763962-0c623066013b'],
+    sports: [mockSports.find(s => s.id === 'sport-7')!, mockSports.find(s => s.id === 'sport-14')!, mockSports.find(s => s.id === 'sport-10')!],
+    sportPrices: [
+        { sportId: 'sport-7', pricePerHour: 500 },
+        { sportId: 'sport-14', pricePerHour: 600 },
+        { sportId: 'sport-10', pricePerHour: 400 },
+    ],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-1')!, mockAmenities.find(a => a.id === 'amenity-7')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.2,
+    isPopular: false,
+    isIndoor: false,
+    dataAiHint: 'community center',
   }
 ];
 

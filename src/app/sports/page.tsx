@@ -4,21 +4,39 @@
 import { useState, useEffect } from 'react';
 import { SportCard } from '@/components/sports/SportCard';
 import { PageTitle } from '@/components/shared/PageTitle';
-import type { Sport } from '@/lib/types';
-import { mockSports } from '@/lib/mock-data';
+import type { Sport, Facility } from '@/lib/types';
+import { getFacilitiesAction, getAllSportsAction } from '@/app/actions';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 export default function SportsPage() {
   const [sports, setSports] = useState<Sport[]>([]);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Simulate fetching sports data
-    setTimeout(() => {
-      setSports(mockSports);
-      setIsLoading(false);
-    }, 300);
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const [sportsData, facilitiesData] = await Promise.all([
+                getAllSportsAction(),
+                getFacilitiesAction()
+            ]);
+            setSports(sportsData);
+            setFacilities(facilitiesData);
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchData();
   }, []);
+  
+  const getVenueCountForSport = (sportId: string): number => {
+    return facilities.filter(f => f.sports.some(s => s.id === sportId)).length;
+  }
+
 
   if (isLoading) {
     return (
@@ -46,7 +64,7 @@ export default function SportsPage() {
       {sports.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
           {sports.map((sport) => (
-            <SportCard key={sport.id} sport={sport} />
+            <SportCard key={sport.id} sport={sport} venueCount={getVenueCountForSport(sport.id)} />
           ))}
         </div>
       ) : (
