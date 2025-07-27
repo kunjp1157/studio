@@ -35,6 +35,10 @@ import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, Membersh
 import { revalidatePath } from 'next/cache';
 import { mockAmenities } from '@/lib/mock-data';
 
+export async function getSports() {
+    return dbGetAllSports();
+}
+
 export async function getFacilitiesAction(): Promise<Facility[]> {
   const facilities = await dbGetAllFacilities();
   return facilities;
@@ -47,7 +51,8 @@ export async function getFacilityByIdAction(id: string): Promise<Facility | unde
 
 // Action to add a facility. It takes form data, processes it, and calls the DB function.
 export async function addFacilityAction(facilityData: any): Promise<Facility> {
-    const sportData = (facilityData.sports || []).map(getSportById).filter(Boolean) as Sport[];
+    const mockSports = await getSports();
+    const sportData = (facilityData.sports || []).map((sportId: string) => mockSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
     const payload = {
       ...facilityData,
       sports: sportData,
@@ -63,8 +68,9 @@ export async function addFacilityAction(facilityData: any): Promise<Facility> {
 
 // Action to update a facility. It takes form data, processes it, and calls the DB function.
 export async function updateFacilityAction(facilityData: any): Promise<Facility> {
+    const mockSports = await getSports();
     const existingFacility = await dbGetFacilityById(facilityData.id);
-    const sportData = (facilityData.sports || []).map(getSportById).filter(Boolean) as Sport[];
+    const sportData = (facilityData.sports || []).map((sportId: string) => mockSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
     const payload = {
       ...existingFacility, // Start with existing data to preserve reviews, etc.
       ...facilityData,
