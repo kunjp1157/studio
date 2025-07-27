@@ -572,5 +572,17 @@ export const deleteSport = async (sportId: string): Promise<void> => {
     return Promise.resolve();
 };
 
+export const toggleFavoriteFacility = async (userId: string, facilityId: string): Promise<UserProfile | undefined> => {
+    const user = getUserById(userId);
+    if (!user) {
+        throw new Error("User not found.");
+    }
+    const currentFavorites = user.favoriteFacilities || [];
+    const isFavorited = currentFavorites.includes(facilityId);
 
-
+    const newFavorites = isFavorited
+        ? currentFavorites.filter(id => id !== facilityId)
+        : [...currentFavorites, facilityId];
+    
+    return updateUser(userId, { favoriteFacilities: newFavorites });
+};

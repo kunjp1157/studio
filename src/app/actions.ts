@@ -30,6 +30,7 @@ import {
     addSport as dbAddSport,
     updateSport as dbUpdateSport,
     deleteSport as dbDeleteSport,
+    toggleFavoriteFacility,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -186,4 +187,12 @@ export async function updateSportAction(sportId: string, sportData: Partial<Spor
 export async function deleteSportAction(sportId: string): Promise<void> {
   await dbDeleteSport(sportId);
   revalidatePath('/admin/sports');
+}
+
+export async function toggleFavoriteFacilityAction(userId: string, facilityId: string): Promise<UserProfile | undefined> {
+    const updatedUser = await toggleFavoriteFacility(userId, facilityId);
+    if(updatedUser) {
+        revalidatePath('/account/favorites'); // Revalidate favorites page if needed
+    }
+    return updatedUser;
 }

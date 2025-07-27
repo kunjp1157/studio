@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import type { Facility, SiteSettings } from '@/lib/types';
+import type { Facility, SiteSettings, UserProfile } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getIconComponent } from '@/components/shared/Icon';
+import { toggleFavoriteFacilityAction } from '@/app/actions';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -22,21 +24,48 @@ interface FacilityCardProps {
 
 export function FacilityCard({ facility, currency }: FacilityCardProps) {
   const { toast } = useToast();
-  // In a real app, this would be derived from the user's data
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation if the button is inside a Link
+  useEffect(() => {
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+      const user = JSON.parse(activeUserStr);
+      setCurrentUser(user);
+      setIsFavorited(user.favoriteFacilities?.includes(facility.id) || false);
+    }
+  }, [facility.id]);
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
+    if (!currentUser) {
+      toast({ title: 'Please log in', description: 'You must be logged in to favorite facilities.', variant: 'destructive' });
+      return;
+    }
 
+    setIsFavoriteLoading(true);
     const newFavoritedState = !isFavorited;
-    setIsFavorited(newFavoritedState);
     
-    toast({
-      title: newFavoritedState ? "Added to Favorites" : "Removed from Favorites",
-      description: `${facility.name} has been ${newFavoritedState ? 'added to' : 'removed from'} your favorites.`,
-    });
-    // In a real app, you'd update the user's favorite list here
+    try {
+        const updatedUser = await toggleFavoriteFacilityAction(currentUser.id, facility.id);
+        if (updatedUser) {
+            setIsFavorited(newFavoritedState);
+            // Update session storage to reflect the change immediately
+            sessionStorage.setItem('activeUser', JSON.stringify(updatedUser));
+            window.dispatchEvent(new Event('userChanged'));
+
+            toast({
+              title: newFavoritedState ? "Added to Favorites" : "Removed from Favorites",
+              description: `${facility.name} has been ${newFavoritedState ? 'added to' : 'removed from'} your favorites.`,
+            });
+        }
+    } catch (error) {
+        toast({ title: 'Error', description: 'Could not update favorites.', variant: 'destructive' });
+    } finally {
+        setIsFavoriteLoading(false);
+    }
   };
 
   const SportIcon = getIconComponent(facility.sports[0]?.iconName) || Zap;
@@ -73,11 +102,12 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
             className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-background/70 p-1 backdrop-blur-sm transition-all duration-300 hover:bg-background/90 group-hover:scale-110"
             onClick={handleFavoriteClick}
             aria-label="Add to favorites"
+            disabled={isFavoriteLoading}
         >
-            <Heart className={cn(
+            {isFavoriteLoading ? <LoadingSpinner size={16} /> : <Heart className={cn(
                 "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
                 isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
-            )} />
+            )} />}
         </Button>
         <div className="flex justify-between items-start">
             <CardTitle className="text-xl font-headline mb-1.5 truncate pr-8">{facility.name}</CardTitle>
