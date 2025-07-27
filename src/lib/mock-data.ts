@@ -2,15 +2,12 @@
 
 'use client'; // Mark as a client-safe module
 
-import type { Sport, Amenity, MembershipPlan, Facility, UserProfile } from './types';
+import type { Sport, Amenity, MembershipPlan, Facility, UserProfile, UserRole, UserStatus, FacilityOperatingHours } from './types';
 
 // This file contains static mock data that is safe to be imported into client components.
 // It has no server-side dependencies like the 'pg' database driver.
-//
-// NOTE: To prevent circular dependencies, any data needed for initialization in `data.ts`
-// should be defined directly in `data.ts`.
 
-export const mockSports: Sport[] = [
+const sports: Sport[] = [
   { id: 'sport-1', name: 'Soccer', iconName: 'Goal', imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55', imageDataAiHint: 'soccer stadium' },
   { id: 'sport-2', name: 'Basketball', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1519861531473-9200262188bf', imageDataAiHint: 'basketball court' },
   { id: 'sport-3', name: 'Tennis', iconName: 'Activity', imageUrl: 'https://images.unsplash.com/photo-1554062614-6da4fa674b73', imageDataAiHint: 'tennis court' },
@@ -27,6 +24,8 @@ export const mockSports: Sport[] = [
   { id: 'sport-16', name: 'Gym', iconName: 'Dumbbell', imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48', imageDataAiHint: 'modern gym' },
 ];
 
+export const getMockSports = (): Sport[] => sports;
+
 
 export const mockAmenities: Amenity[] = [
   { id: 'amenity-1', name: 'Parking', iconName: 'ParkingCircle' },
@@ -39,8 +38,295 @@ export const mockAmenities: Amenity[] = [
 ];
 
 
-export const mockMembershipPlans: MembershipPlan[] = [
+export const mockStaticMembershipPlans: MembershipPlan[] = [
   { id: 'mem_basic_1', name: 'Basic', pricePerMonth: 0, benefits: ['Access to all facilities', 'Standard booking rates', 'Community access'] },
   { id: 'mem_premium_2', name: 'Premium', pricePerMonth: 999, benefits: ['10% off all bookings', 'Priority booking slots', 'Free equipment rental (2 items/month)', 'Access to exclusive events'] },
   { id: 'mem_pro_3', name: 'Pro', pricePerMonth: 2499, benefits: ['25% off all bookings', 'Unlimited priority booking', 'Unlimited free equipment rental', 'Free entry to all events', 'Personalized coaching tips (AI-powered)'] },
+];
+
+export let staticUsers: UserProfile[] = [
+  { 
+    id: 'user-admin-kirtan', 
+    name: 'Kirtan Shah', 
+    email: 'kirtan.shah@example.com', 
+    role: 'Admin' as UserRole, 
+    status: 'Active' as UserStatus,
+    joinedAt: '2023-01-15T10:00:00Z', 
+    loyaltyPoints: 1250, 
+    profilePictureUrl: 'https://randomuser.me/api/portraits/men/75.jpg', 
+    dataAiHint: 'man smiling',
+    isProfilePublic: true,
+    achievements: [
+        { id: 'achieve-1', name: 'First Booking', description: 'Made your first booking.', unlockedAt: '2023-01-20T10:00:00Z', iconName: 'Medal' },
+        { id: 'achieve-2', name: 'Social Sharer', description: 'Shared an event on social media.', unlockedAt: '2023-02-10T10:00:00Z', iconName: 'Gift' },
+        { id: 'achieve-3', name: 'Weekend Warrior', description: 'Booked on a Saturday and Sunday in the same week.', unlockedAt: '2023-03-05T10:00:00Z', iconName: 'Swords' },
+        { id: 'achieve-4', name: 'Reviewer', description: 'Wrote your first review.', unlockedAt: '2023-03-15T10:00:00Z', iconName: 'MessageSquareText' },
+    ],
+    skillLevels: [
+        { sportId: 'sport-1', sportName: 'Soccer', level: 'Intermediate' },
+        { sportId: 'sport-3', sportName: 'Tennis', level: 'Beginner' },
+    ],
+    preferredSports: [
+        sports.find(s => s.id === 'sport-1')!,
+        sports.find(s => s.id === 'sport-3')!,
+    ],
+    teamIds: ['team-1'],
+    membershipLevel: 'Premium',
+  },
+  { 
+    id: 'user-owner-dana', 
+    name: 'Dana White', 
+    email: 'dana.white@example.com', 
+    role: 'FacilityOwner' as UserRole, 
+    status: 'Active' as UserStatus,
+    joinedAt: '2023-02-20T11:30:00Z', 
+    loyaltyPoints: 450, 
+    profilePictureUrl: 'https://randomuser.me/api/portraits/women/68.jpg', 
+    dataAiHint: 'woman portrait',
+    isProfilePublic: true,
+    achievements: [],
+    skillLevels: [],
+    teamIds: [],
+    membershipLevel: 'Basic',
+  },
+  {
+    id: 'user-regular-charlie',
+    name: 'Charlie Davis',
+    email: 'charlie.davis@example.com',
+    role: 'User' as UserRole,
+    status: 'Active' as UserStatus,
+    joinedAt: '2023-03-10T09:00:00Z',
+    loyaltyPoints: 800,
+    profilePictureUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+    dataAiHint: 'man glasses',
+    isProfilePublic: true,
+     achievements: [
+        { id: 'achieve-1', name: 'First Booking', description: 'Made your first booking.', unlockedAt: '2023-03-12T10:00:00Z', iconName: 'Medal' },
+    ],
+    skillLevels: [
+        { sportId: 'sport-2', sportName: 'Basketball', level: 'Advanced' },
+        { sportId: 'sport-13', sportName: 'Cricket', level: 'Intermediate' },
+    ],
+    preferredSports: [
+        sports.find(s => s.id === 'sport-2')!,
+        sports.find(s => s.id === 'sport-13')!,
+    ],
+    teamIds: ['team-1'],
+    membershipLevel: 'Basic',
+  }
+];
+
+const defaultOperatingHours: FacilityOperatingHours[] = [
+  { day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' },
+  { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' },
+  { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' },
+  { day: 'Sun', open: '09:00', close: '20:00' },
+];
+
+export let staticFacilities: Facility[] = [
+  {
+    id: 'facility-1',
+    name: 'Pune Sports Complex',
+    type: 'Complex',
+    address: '123 Stadium Way, Koregaon Park, Pune, 411001',
+    city: 'Pune',
+    location: 'Koregaon Park',
+    description: 'A state-of-the-art multi-sport complex in the heart of the city. Perfect for professional training and casual play alike.',
+    images: [
+      'https://images.unsplash.com/photo-1579952363873-27f3bade9f55',
+      'https://images.unsplash.com/photo-1627225793943-3442571a325a',
+      'https://images.unsplash.com/photo-1543351368-361947a7d3cf'
+    ],
+    sports: [sports.find(s => s.id === 'sport-1')!, sports.find(s => s.id === 'sport-2')!],
+    sportPrices: [
+        { sportId: 'sport-1', pricePerHour: 2500 },
+        { sportId: 'sport-2', pricePerHour: 2200 },
+    ],
+    amenities: [
+      mockAmenities.find(a => a.id === 'amenity-1')!,
+      mockAmenities.find(a => a.id === 'amenity-2')!,
+      mockAmenities.find(a => a.id === 'amenity-3')!,
+      mockAmenities.find(a => a.id === 'amenity-4')!,
+      mockAmenities.find(a => a.id === 'amenity-6')!,
+    ],
+    operatingHours: defaultOperatingHours,
+    rating: 4.8,
+    isPopular: true,
+    isIndoor: true,
+    dataAiHint: 'soccer stadium',
+    ownerId: 'user-owner-dana'
+  },
+  {
+    id: 'facility-2',
+    name: 'Deccan Gymkhana Tennis Club',
+    type: 'Court',
+    address: '456 Ace Avenue, Deccan, Pune, 411004',
+    city: 'Pune',
+    location: 'Deccan',
+    description: 'Premier outdoor clay courts with a serene ambiance. Join our community of passionate tennis players.',
+    images: [
+      'https://images.unsplash.com/photo-1554062614-6da4fa674b73',
+      'https://images.unsplash.com/photo-1596704179737-93b9576332a6'
+    ],
+    sports: [sports.find(s => s.id === 'sport-3')!],
+    sportPrices: [ { sportId: 'sport-3', pricePerHour: 1800 } ],
+    amenities: [
+      mockAmenities.find(a => a.id === 'amenity-1')!,
+      mockAmenities.find(a => a.id === 'amenity-3')!,
+      mockAmenities.find(a => a.id === 'amenity-4')!,
+    ],
+    operatingHours: defaultOperatingHours,
+    rating: 4.5,
+    isPopular: false,
+    isIndoor: false,
+    dataAiHint: 'tennis court',
+  },
+  {
+    id: 'facility-3',
+    name: 'Kothrud Cricket Ground',
+    type: 'Field',
+    address: '789 Boundary Rd, Kothrud, Pune, 411038',
+    city: 'Pune',
+    location: 'Kothrud',
+    description: 'A lush, expansive cricket field perfect for corporate matches and weekend games. Well-maintained pitch.',
+    images: [
+      'https://images.unsplash.com/photo-1593341646782-e0b495cffc25'
+    ],
+    sports: [sports.find(s => s.id === 'sport-13')!],
+    sportPrices: [ { sportId: 'sport-13', pricePerHour: 3000 } ],
+    amenities: [
+      mockAmenities.find(a => a.id === 'amenity-1')!,
+      mockAmenities.find(a => a.id === 'amenity-6')!,
+    ],
+    operatingHours: defaultOperatingHours,
+    rating: 4.7,
+    isPopular: true,
+    isIndoor: false,
+    dataAiHint: 'cricket stadium',
+    ownerId: 'user-owner-dana'
+  },
+  {
+    id: 'facility-4',
+    name: 'The Aundh Swim & Gym Hub',
+    type: 'Complex',
+    address: '101 Fitness Lane, Aundh, Pune, 411007',
+    city: 'Pune',
+    location: 'Aundh',
+    description: 'A complete fitness destination with an olympic-sized swimming pool and a fully-equipped modern gymnasium.',
+    images: [
+      'https://images.unsplash.com/photo-1551604313-26835b334a81',
+      'https://images.unsplash.com/photo-1534438327276-14e5300c3a48'
+    ],
+    sports: [sports.find(s => s.id === 'sport-5')!, sports.find(s => s.id === 'sport-16')!],
+    sportPrices: [
+        { sportId: 'sport-5', pricePerHour: 800 },
+        { sportId: 'sport-16', pricePerHour: 500 },
+    ],
+    amenities: [
+      mockAmenities.find(a => a.id === 'amenity-1')!,
+      mockAmenities.find(a => a.id === 'amenity-2')!,
+      mockAmenities.find(a => a.id === 'amenity-3')!,
+      mockAmenities.find(a => a.id === 'amenity-4')!,
+      mockAmenities.find(a => a.id === 'amenity-6')!,
+    ],
+    operatingHours: defaultOperatingHours,
+    rating: 4.9,
+    isPopular: true,
+    isIndoor: true,
+    dataAiHint: 'swimming pool gym',
+  },
+  {
+    id: 'facility-5',
+    name: 'Shuttle Up Badminton Arena',
+    type: 'Court',
+    address: '246 Shuttlecock Street, Baner, Pune, 411045',
+    city: 'Pune',
+    location: 'Baner',
+    description: 'Indoor badminton arena with professional-grade courts and excellent lighting.',
+    images: ['https://images.unsplash.com/photo-1620241422329-195c6450a803'],
+    sports: [sports.find(s => s.id === 'sport-4')!],
+    sportPrices: [{ sportId: 'sport-4', pricePerHour: 1200 }],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-1')!, mockAmenities.find(a => a.id === 'amenity-3')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.6,
+    isPopular: false,
+    isIndoor: true,
+    dataAiHint: 'badminton court',
+  },
+  {
+    id: 'facility-6',
+    name: 'Zenith Yoga & Dance Studio',
+    type: 'Studio',
+    address: '77 Harmony Plaza, Viman Nagar, Pune, 411014',
+    city: 'Pune',
+    location: 'Viman Nagar',
+    description: 'A tranquil space for yoga, meditation, and various dance forms. Embrace your inner peace and rhythm.',
+    images: ['https://images.unsplash.com/photo-1599447462464-a393d5a87b87'],
+    sports: [sports.find(s => s.id === 'sport-6')!, sports.find(s => s.id === 'sport-8')!],
+    sportPrices: [{ sportId: 'sport-6', pricePerHour: 900 }, { sportId: 'sport-8', pricePerHour: 1100 }],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-4')!, mockAmenities.find(a => a.id === 'amenity-3')!, mockAmenities.find(a => a.id === 'amenity-2')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.9,
+    isPopular: true,
+    isIndoor: true,
+    dataAiHint: 'yoga studio',
+  },
+  {
+    id: 'facility-7',
+    name: 'The Box Yard',
+    type: 'Box Cricket',
+    address: '88 Industrial Way, Hinjawadi, Pune, 411057',
+    city: 'Pune',
+    location: 'Hinjawadi',
+    description: 'Fast-paced box cricket and futsal action. Perfect for a quick, high-energy game with friends.',
+    images: ['https://images.unsplash.com/photo-1618293153926-6556b6c31d58'],
+    sports: [sports.find(s => s.id === 'sport-13')!, sports.find(s => s.id === 'sport-1')!],
+    sportPrices: [{ sportId: 'sport-13', pricePerHour: 2000 }, { sportId: 'sport-1', pricePerHour: 1800 }],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-1')!, mockAmenities.find(a => a.id === 'amenity-5')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.4,
+    isPopular: true,
+    isIndoor: false,
+    dataAiHint: 'box cricket',
+  },
+  {
+    id: 'facility-8',
+    name: 'Nexus Gaming Lounge',
+    type: 'Studio',
+    address: '1 Tech Tower, Hinjawadi, Pune, 411057',
+    city: 'Pune',
+    location: 'Hinjawadi',
+    description: 'High-end PC and console gaming lounge with the latest titles and fastest internet. Fuel your competitive spirit.',
+    images: ['https://images.unsplash.com/photo-1550745165-9bc0b252726a'],
+    sports: [sports.find(s => s.id === 'sport-15')!],
+    sportPrices: [{ sportId: 'sport-15', pricePerHour: 400 }],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-2')!, mockAmenities.find(a => a.id === 'amenity-6')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.8,
+    isPopular: true,
+    isIndoor: true,
+    dataAiHint: 'gaming lounge',
+  },
+  {
+    id: 'facility-9',
+    name: 'Community Sports Hub',
+    type: 'Complex',
+    address: '55 Community Circle, Kothrud, Pune, 411038',
+    city: 'Pune',
+    location: 'Kothrud',
+    description: 'A versatile community center offering a variety of sports for all ages, including cycling, pool, and more.',
+    images: ['https://images.unsplash.com/photo-1517649763962-0c623066013b'],
+    sports: [sports.find(s => s.id === 'sport-7')!, sports.find(s => s.id === 'sport-14')!, sports.find(s => s.id === 'sport-10')!],
+    sportPrices: [
+        { sportId: 'sport-7', pricePerHour: 500 },
+        { sportId: 'sport-14', pricePerHour: 600 },
+        { sportId: 'sport-10', pricePerHour: 400 },
+    ],
+    amenities: [mockAmenities.find(a => a.id === 'amenity-1')!, mockAmenities.find(a => a.id === 'amenity-7')!],
+    operatingHours: defaultOperatingHours,
+    rating: 4.2,
+    isPopular: false,
+    isIndoor: false,
+    dataAiHint: 'community center',
+  }
 ];
