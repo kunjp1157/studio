@@ -331,6 +331,28 @@ export function getStaticFacilities(): Facility[] {
         isPopular: false,
         isIndoor: false,
         dataAiHint: 'community center',
+      },
+      {
+        id: 'facility-10',
+        name: 'Pune Super Master Arena',
+        type: 'Complex',
+        address: '1 Master Sports Rd, Central Pune, Pune, 411001',
+        city: 'Pune',
+        location: 'Central Pune',
+        description: 'The ultimate destination for every sport imaginable. Our super master arena offers world-class facilities for a wide range of activities, ensuring an unparalleled experience for all athletes.',
+        images: [
+            'https://placehold.co/800x450.png',
+            'https://placehold.co/800x450.png'
+        ],
+        sports: allSports,
+        sportPrices: allSports.map(sport => ({ sportId: sport.id, pricePerHour: 1500 })),
+        amenities: mockAmenities,
+        operatingHours: defaultOperatingHours,
+        rating: 5.0,
+        isPopular: true,
+        isIndoor: true,
+        dataAiHint: 'sports complex stadium',
+        ownerId: 'user-owner-dana'
       }
     ];
 }
