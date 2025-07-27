@@ -162,10 +162,16 @@ body {
     }
 }
 
-@keyframes float {
-  0% { transform: translateY(0px) rotateY(0deg); }
-  50% { transform: translateY(-10px) rotateY(5deg); }
-  100% { transform: translateY(0px) rotateY(0deg); }
+@keyframes float-3d {
+  0% {
+    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotateX(10deg) rotateY(8deg);
+  }
+  100% {
+    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
+  }
 }
 
 .animate-letter-float {
@@ -201,7 +207,6 @@ body {
     animation: pop 0.3s ease-out;
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+.animate-float-3d {
+  animation: float-3d 8s ease-in-out infinite;
 }
-

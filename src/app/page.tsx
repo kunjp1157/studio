@@ -53,7 +53,7 @@ const HeroSection = () => {
 
 const FeatureCard = ({ icon, title, description, index }: { icon: string; title: string; description: string; index: number }) => {
     return (
-        <Card className={cn("text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d h-full flex flex-col justify-center animate-float hover:!animate-none hover:-translate-y-2 hover:[transform:rotateY(-10deg)_scale(1.05)] hover:shadow-2xl hover:shadow-primary/20 rounded-xl")}
+        <Card className={cn("text-center p-6 bg-secondary/30 transition-all duration-300 ease-in-out group preserve-3d h-full flex flex-col justify-center animate-float-3d hover:!animate-none hover:-translate-y-2 hover:[transform:rotateX(10deg)_rotateY(-5deg)_scale(1.05)] hover:shadow-2xl hover:shadow-primary/20 rounded-xl")}
               style={{ animationDelay: `${index * 200}ms` }}
         >
             <IconComponent name={icon} className="mx-auto h-10 w-10 text-primary mb-4 transition-transform duration-300 group-hover:scale-110" />
