@@ -102,7 +102,7 @@ export function Header() {
               <Link 
                 href={item.href} 
                 key={`first-${index}`}
-                className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md hover:-translate-y-1 hover:scale-110 duration-300"
+                className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md duration-300 hover:[transform:rotateX(15deg)_scale(1.1)]"
               >
                 {item.label}
               </Link>
@@ -111,7 +111,7 @@ export function Header() {
               <Link 
                 href={item.href} 
                 key={`second-${index}`}
-                className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md hover:-translate-y-1 hover:scale-110 duration-300"
+                className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md duration-300 hover:[transform:rotateX(15deg)_scale(1.1)]"
                 aria-hidden="true"
               >
                 {item.label}
