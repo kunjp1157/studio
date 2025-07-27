@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { SearchFilters, Amenity as AmenityType, SiteSettings, Facility } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -30,8 +31,11 @@ interface FacilitySearchFormProps {
 const ANY_SPORT_VALUE = "all-sports-filter-value";
 
 export function FacilitySearchForm({ onSearch, currency, facilities, cities = [], locations = [] }: FacilitySearchFormProps) {
+  const searchParams = useSearchParams();
+  const sportQueryParam = searchParams.get('sport');
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSport, setSelectedSport] = useState(ANY_SPORT_VALUE);
+  const [selectedSport, setSelectedSport] = useState(sportQueryParam || ANY_SPORT_VALUE);
   const [selectedCity, setSelectedCity] = useState('all');
   const [location, setLocation] = useState('all');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -52,6 +56,17 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
   useEffect(() => {
       setPriceRange([minPrice, maxPrice]);
   }, [minPrice, maxPrice]);
+  
+  // Effect to trigger search when component loads with a query parameter
+  useEffect(() => {
+    if (sportQueryParam) {
+      onSearch({ 
+        searchTerm: '', 
+        sport: sportQueryParam,
+      });
+    }
+  }, [sportQueryParam]);
+
 
   const handleAmenityChange = (amenityId: string) => {
     setSelectedAmenities(prev =>
