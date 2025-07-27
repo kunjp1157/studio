@@ -123,7 +123,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
       availableEquipment: initialData.availableEquipment || [],
       ownerId: initialData.ownerId,
     } : {
-      name: '', type: 'Court', address: '', city: '', location: '', description: '',
+      name: '', type: 'Court', address: '', city: 'Pune', location: '', description: '',
       images: [''], sports: [], sportPrices: [], amenities: [], operatingHours: defaultOperatingHours,
       rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
       availableEquipment: [],
@@ -281,14 +281,14 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
                  <FormField control={form.control} name="city" render={({ field }) => (
                     <FormItem>
                         <FormLabel className="flex items-center"><BuildingIcon className="mr-2 h-4 w-4 text-muted-foreground"/>City</FormLabel>
-                        <FormControl><Input placeholder="e.g., Metropolis" {...field} /></FormControl>
+                        <FormControl><Input placeholder="e.g., Pune" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
                 <FormField control={form.control} name="location" render={({ field }) => (
                     <FormItem>
                         <FormLabel className="flex items-center"><MapPinIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Area / Neighborhood</FormLabel>
-                        <FormControl><Input placeholder="e.g., Downtown" {...field} /></FormControl>
+                        <FormControl><Input placeholder="e.g., Koregaon Park" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />

@@ -7,7 +7,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { SportEvent, Facility, Sport, SiteSettings } from '@/lib/types';
-import { getAllSports } from '@/lib/mock-data';
+import { mockSports } from '@/lib/mock-data';
 import { addEvent, updateEvent, getSiteSettings } from '@/lib/data'; 
 import { getAllFacilitiesAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
@@ -59,7 +59,7 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
             getSiteSettings()
         ]);
         setFacilities(facilitiesData);
-        setSports(getAllSports());
+        setSports(mockSports);
         setCurrency(settingsData.defaultCurrency);
     };
     loadData();
