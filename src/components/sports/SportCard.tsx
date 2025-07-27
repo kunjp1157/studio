@@ -18,9 +18,9 @@ export function SportCard({ sport, venueCount }: SportCardProps) {
   const SportIconComponent = getIconComponent(sport.iconName);
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg hover:-translate-y-2">
+    <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg hover:-translate-y-2 group">
       <CardContent className="p-6 flex-grow flex flex-col items-center text-center justify-center">
-        {SportIconComponent && <SportIconComponent className="w-16 h-16 mb-4 text-primary" />}
+        {SportIconComponent && <SportIconComponent className="w-16 h-16 mb-4 text-primary transition-transform duration-300 group-hover:scale-110" />}
         <CardTitle className="text-2xl font-headline truncate">{sport.name}</CardTitle>
         <div className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
             <Building2 className="h-4 w-4" />

@@ -121,7 +121,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
       </CardContent>
       <CardFooter className="p-4 pt-2 mt-auto">
         <Link href={`/facilities/${facility.id}`} className="w-full">
-          <Button className="w-full transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg group-hover:shadow-primary/40" variant="default" aria-label={`View details for ${facility.name}`}>
+          <Button className="w-full transition-transform duration-300" variant="default" aria-label={`View details for ${facility.name}`}>
             View Details & Book
           </Button>
         </Link>

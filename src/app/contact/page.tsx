@@ -75,7 +75,7 @@ export default function ContactPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg bg-muted/30">
+        <Card className="shadow-lg bg-muted/30 transition-all duration-300 hover:shadow-primary/10">
           <CardHeader>
             <CardTitle className="text-2xl font-headline">Our Contact Information</CardTitle>
             <CardDescription>Alternatively, you can reach us through the following channels.</CardDescription>
