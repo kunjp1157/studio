@@ -147,11 +147,24 @@ body {
     }
 }
 
+@keyframes wave {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
 .animate-letter-float {
     transform-style: preserve-3d;
     transform-origin: bottom;
     opacity: 0;
     animation: letter-float 0.8s ease-out forwards;
+}
+
+.animate-wave {
+    animation: wave 2.5s ease-in-out infinite;
 }
 
 .animate-marquee {

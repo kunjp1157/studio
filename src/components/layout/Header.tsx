@@ -84,7 +84,15 @@ export function Header() {
         <Link href="/" className="group mx-2 flex items-center space-x-2">
           <MountainSnow className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12" />
           <span className="font-bold sm:inline-block text-lg font-headline transition-colors group-hover:text-primary/80">
-            {siteName}
+            {siteName.split("").map((char, index) => (
+              <span 
+                key={index} 
+                className="inline-block animate-wave" 
+                style={{ animationDelay: `${index * 0.07}s` }}
+              >
+                {char === " " ? "\u00A0" : char}
+              </span>
+            ))}
           </span>
         </Link>
         
