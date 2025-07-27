@@ -83,7 +83,7 @@ export function Header() {
         
         <Link href="/" className="group mx-2 flex items-center space-x-2">
           <MountainSnow className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12" />
-          <span className="font-bold sm:inline-block text-xl font-headline transition-colors group-hover:text-primary/80">
+          <span className="text-xl font-bold font-headline transition-colors group-hover:text-primary/80">
             {siteName.split("").map((char, index) => (
               <span 
                 key={index} 
@@ -102,7 +102,7 @@ export function Header() {
               <Link 
                 href={item.href} 
                 key={`first-${index}`}
-                className="mx-3 text-sm font-medium text-muted-foreground transition-all hover:text-primary hover:-translate-y-2 hover:[transform:rotateX(-20deg)_rotateZ(-5deg)_scale(1.1)] duration-300"
+                className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md hover:-translate-y-1 hover:scale-110 duration-300"
               >
                 {item.label}
               </Link>
@@ -111,7 +111,7 @@ export function Header() {
               <Link 
                 href={item.href} 
                 key={`second-${index}`}
-                className="mx-3 text-sm font-medium text-muted-foreground transition-all hover:text-primary hover:-translate-y-2 hover:[transform:rotateX(-20deg)_rotateZ(-5deg)_scale(1.1)] duration-300"
+                className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md hover:-translate-y-1 hover:scale-110 duration-300"
                 aria-hidden="true"
               >
                 {item.label}
