@@ -82,7 +82,7 @@ export function Header() {
         </div>
         
         <Link href="/" className="group mx-2 flex items-center space-x-2">
-          <MountainSnow className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12" />
+          <MountainSnow className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12 animate-float" />
           <span className="text-xl font-bold font-headline transition-colors group-hover:text-primary/80">
             {siteName.split("").map((char, index) => (
               <span 

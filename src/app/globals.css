@@ -162,6 +162,12 @@ body {
     }
 }
 
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+  100% { transform: translateY(0px); }
+}
+
 .animate-letter-float {
     transform-style: preserve-3d;
     transform-origin: bottom;
@@ -195,3 +201,6 @@ body {
     animation: pop 0.3s ease-out;
 }
 
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
