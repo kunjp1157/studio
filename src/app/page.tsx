@@ -1,5 +1,7 @@
 
+'use client';
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Star, Wand2, Swords, Sparkles, Trophy } from 'lucide-react';
@@ -8,36 +10,58 @@ import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { IconComponent } from '@/components/shared/Icon';
 import { cn } from '@/lib/utils';
+import type { Facility, SiteSettings } from '@/lib/types';
 
-const HeroSection = () => {
-    const title = "Find & Book Your Perfect Sports Arena";
-    const description = "The ultimate platform to discover and book sports facilities in your city. Stop searching, start playing.";
+
+const AnimatedText = ({ text, el: El = 'span', className, stagger = 80 }: { text: string; el?: React.ElementType; className?: string; stagger?: number }) => {
+    const [letters, setLetters] = useState<string[]>([]);
+
+    useEffect(() => {
+        const lettersArray = text.split('');
+        setLetters(lettersArray);
+    }, [text]);
+
+    useEffect(() => {
+        if (letters.length > 0) {
+            const spans = document.querySelectorAll(`.animated-letter-${text.split(" ")[0]}`);
+            spans.forEach((span, index) => {
+                 setTimeout(() => {
+                    span.classList.add('fall');
+                }, index * stagger);
+            });
+        }
+    }, [letters, text, stagger]);
 
     return (
-        <section className="text-center py-20 lg:py-28 auth-background rounded-2xl shadow-2xl [perspective:1000px]">
+        <El className={className}>
+            {letters.map((char, index) => (
+                <span
+                    key={index}
+                    className={`letter animated-letter-${text.split(" ")[0]}`}
+                >
+                    {char === ' ' ? '\u00A0' : char}
+                </span>
+            ))}
+        </El>
+    );
+};
+
+const HeroSection = () => {
+    return (
+        <section className="text-center py-20 lg:py-28 auth-background rounded-2xl shadow-2xl" style={{ perspective: '500px' }}>
             <div className="container mx-auto px-4 md:px-6">
-                <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter break-words">
-                    {title.split("").map((char, index) => (
-                        <span 
-                            key={index} 
-                            className="animate-letter-float" 
-                            style={{ animationDelay: `${index * 0.05}s` }}
-                        >
-                            {char === " " ? " " : char}
-                        </span>
-                    ))}
-                </h1>
-                <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground break-words">
-                    {description.split("").map((char, index) => (
-                        <span 
-                            key={index} 
-                            className="animate-letter-float" 
-                            style={{ animationDelay: `${(title.length + index) * 0.02}s` }}
-                        >
-                            {char === " " ? " " : char}
-                        </span>
-                    ))}
-                </p>
+                 <AnimatedText 
+                    text="Find & Book Your Perfect Sports Arena"
+                    el="h1"
+                    className="text-4xl md:text-6xl font-bold font-headline tracking-tighter break-words"
+                    stagger={50}
+                />
+                <AnimatedText
+                    text="The ultimate platform to discover and book sports facilities in your city. Stop searching, start playing."
+                    el="p"
+                    className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground break-words"
+                    stagger={20}
+                />
                 <div className="mt-8 animate-fadeInUp" style={{ animationDelay: '2.5s' }}>
                     <Link href="/facilities">
                         <Button size="lg" className="text-lg py-7 px-10 rounded-full hover:scale-110 transition-transform duration-300 animate-glow">
@@ -135,9 +159,22 @@ const FeaturesSection = () => {
 };
 
 
-export default async function HomePage() {
-  const allFacilities = await getFacilitiesAction();
-  const settings = await getSiteSettingsAction();
+export default function HomePage() {
+  const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [facilitiesData, settingsData] = await Promise.all([
+        getFacilitiesAction(),
+        getSiteSettingsAction()
+      ]);
+      setAllFacilities(facilitiesData);
+      setSettings(settingsData);
+    };
+    fetchData();
+  }, []);
+  
   const featuredFacilities = allFacilities
     .filter(f => f.isPopular)
     .sort((a,b) => b.rating - a.rating)
@@ -150,7 +187,7 @@ export default async function HomePage() {
     <div className="container mx-auto py-8 px-4 md:px-6">
       <HeroSection />
 
-      {featuredFacilities.length > 0 && (
+      {featuredFacilities.length > 0 && settings && (
         <section className="py-16 lg:py-24">
             <div className="text-center">
                 <h2 className="text-3xl font-bold font-headline">

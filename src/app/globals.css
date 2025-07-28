@@ -123,6 +123,17 @@ body {
     background-clip: text;
     color: transparent;
   }
+  .letter {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(-100px) rotateX(90deg);
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    min-width: 0.25rem; /* Give spaces some width */
+  }
+  .letter.fall {
+      opacity: 1;
+      transform: translateY(0) rotateX(0);
+  }
 }
 
 
