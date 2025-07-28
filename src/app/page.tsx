@@ -157,7 +157,7 @@ export default async function HomePage() {
                     {featuredTitle.split("").map((char, index) => (
                         <span 
                             key={index} 
-                            className="inline-block animate-letter-float" 
+                            className="animate-letter-fall-3d" 
                             style={{ animationDelay: `${index * 0.05}s` }}
                         >
                             {char === " " ? " " : char}
@@ -168,7 +168,7 @@ export default async function HomePage() {
                     {featuredDescription.split("").map((char, index) => (
                         <span 
                             key={index} 
-                            className="inline-block animate-letter-float" 
+                            className="animate-letter-fall-3d" 
                             style={{ animationDelay: `${(featuredTitle.length + index) * 0.02}s` }}
                         >
                             {char === " " ? " " : char}
