@@ -20,7 +20,7 @@ const HeroSection = () => {
                     {title.split("").map((char, index) => (
                         <span 
                             key={index} 
-                            className="inline-block animate-wave" 
+                            className="animate-letter-fall-3d" 
                             style={{ animationDelay: `${index * 0.05}s` }}
                         >
                             {char === " " ? " " : char}
@@ -31,7 +31,7 @@ const HeroSection = () => {
                     {description.split("").map((char, index) => (
                         <span 
                             key={index} 
-                            className="inline-block animate-wave" 
+                            className="animate-letter-fall-3d" 
                             style={{ animationDelay: `${(title.length + index) * 0.02}s` }}
                         >
                             {char === " " ? " " : char}
@@ -92,7 +92,7 @@ const FeaturesSection = () => {
     
     return (
       <section className="py-16 lg:py-24">
-        <div className="text-center">
+        <div className="text-center preserve-3d">
             <h2 className="text-3xl font-bold font-headline">
                 {title.split("").map((char, index) => (
                     <span 
