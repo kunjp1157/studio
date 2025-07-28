@@ -87,8 +87,8 @@ export function Header() {
             {siteName.split("").map((char, index) => (
               <span 
                 key={index} 
-                className="inline-block animate-wave" 
-                style={{ animationDelay: `${index * 0.07}s` }}
+                className="animate-letter-fall-3d" 
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
                 {char === " " ? "\u00A0" : char}
               </span>
