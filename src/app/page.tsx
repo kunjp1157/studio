@@ -142,6 +142,9 @@ export default async function HomePage() {
     .filter(f => f.isPopular)
     .sort((a,b) => b.rating - a.rating)
     .slice(0, 4);
+    
+  const featuredTitle = "Featured Facilities";
+  const featuredDescription = "Check out some of the most popular venues on our platform.";
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -150,8 +153,28 @@ export default async function HomePage() {
       {featuredFacilities.length > 0 && (
         <section className="py-16 lg:py-24">
             <div className="text-center">
-                <h2 className="text-3xl font-bold font-headline">Featured Facilities</h2>
-                <p className="mt-2 text-muted-foreground">Check out some of the most popular venues on our platform.</p>
+                <h2 className="text-3xl font-bold font-headline">
+                    {featuredTitle.split("").map((char, index) => (
+                        <span 
+                            key={index} 
+                            className="inline-block animate-wave" 
+                            style={{ animationDelay: `${index * 0.07}s` }}
+                        >
+                            {char === " " ? " " : char}
+                        </span>
+                    ))}
+                </h2>
+                <p className="mt-2 text-muted-foreground">
+                    {featuredDescription.split("").map((char, index) => (
+                        <span 
+                            key={index} 
+                            className="inline-block animate-wave" 
+                            style={{ animationDelay: `${(featuredTitle.length + index) * 0.05}s` }}
+                        >
+                            {char === " " ? " " : char}
+                        </span>
+                    ))}
+                </p>
             </div>
             <div className="mt-12 overflow-hidden [perspective:1000px] [mask-image:linear-gradient(to_right,transparent,white_10%,white_90%,transparent)]">
                 <div className="flex animate-marquee hover:[animation-play-state:paused] w-max">
