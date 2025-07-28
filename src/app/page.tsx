@@ -27,7 +27,7 @@ const HeroSection = () => {
                         </span>
                     ))}
                 </h1>
-                <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
+                <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground break-words">
                     {description.split("").map((char, index) => (
                         <span 
                             key={index} 
