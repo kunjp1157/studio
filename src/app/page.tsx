@@ -20,7 +20,7 @@ const HeroSection = () => {
                     {title.split("").map((char, index) => (
                         <span 
                             key={index} 
-                            className="inline-block animate-letter-float" 
+                            className="inline-block animate-wave" 
                             style={{ animationDelay: `${index * 0.05}s` }}
                         >
                             {char === " " ? " " : char}
@@ -31,7 +31,7 @@ const HeroSection = () => {
                     {description.split("").map((char, index) => (
                         <span 
                             key={index} 
-                            className="inline-block animate-letter-float" 
+                            className="inline-block animate-wave" 
                             style={{ animationDelay: `${(title.length + index) * 0.02}s` }}
                         >
                             {char === " " ? " " : char}
@@ -100,7 +100,7 @@ const FeaturesSection = () => {
                         className="inline-block animate-wave" 
                         style={{ animationDelay: `${index * 0.07}s` }}
                     >
-                        {char === " " ? "\u00A0" : char}
+                        {char === " " ? " " : char}
                     </span>
                 ))}
             </h2>
@@ -111,7 +111,7 @@ const FeaturesSection = () => {
                         className="inline-block animate-wave" 
                         style={{ animationDelay: `${(title.length + index) * 0.05}s` }}
                     >
-                        {char === " " ? "\u00A0" : char}
+                        {char === " " ? " " : char}
                     </span>
                 ))}
             </p>
