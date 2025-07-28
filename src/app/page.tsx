@@ -20,7 +20,7 @@ const HeroSection = () => {
                     {title.split("").map((char, index) => (
                         <span 
                             key={index} 
-                            className="animate-letter-fall-3d" 
+                            className="animate-letter-float" 
                             style={{ animationDelay: `${index * 0.05}s` }}
                         >
                             {char === " " ? " " : char}
@@ -31,7 +31,7 @@ const HeroSection = () => {
                     {description.split("").map((char, index) => (
                         <span 
                             key={index} 
-                            className="animate-letter-fall-3d" 
+                            className="animate-letter-float" 
                             style={{ animationDelay: `${(title.length + index) * 0.02}s` }}
                         >
                             {char === " " ? " " : char}
