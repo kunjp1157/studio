@@ -90,7 +90,7 @@ const FeaturesSection = () => {
     
     return (
       <section className="py-16 lg:py-24">
-        <div className="text-center">
+        <div className="text-center animate-float-3d">
           <h2 className="text-3xl font-bold font-headline">Why Choose Sports Arena?</h2>
           <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
             We offer unique tools and a seamless experience to make your sports life easier and more fun.
