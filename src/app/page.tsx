@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Star, Wand2, Swords, Sparkles, Trophy } from 'lucide-react';
@@ -13,31 +13,46 @@ import { cn } from '@/lib/utils';
 import type { Facility, SiteSettings } from '@/lib/types';
 
 
-const AnimatedText = ({ text, el: El = 'span', className, stagger = 80 }: { text: string; el?: React.ElementType; className?: string; stagger?: number }) => {
-    const [letters, setLetters] = useState<string[]>([]);
+const AnimatedText = ({ text, el: El = 'span', className, stagger = 80, repeatInterval = 5000 }: { text: string; el?: React.ElementType; className?: string; stagger?: number, repeatInterval?: number }) => {
+    const letters = text.split('');
+    const containerRef = useRef<HTMLElement>(null);
 
-    useEffect(() => {
-        const lettersArray = text.split('');
-        setLetters(lettersArray);
-    }, [text]);
+    const runAnimation = () => {
+        const spans = containerRef.current?.children;
+        if (!spans) return;
 
-    useEffect(() => {
-        if (letters.length > 0) {
-            const spans = document.querySelectorAll(`.animated-letter-${text.split(" ")[0]}`);
-            spans.forEach((span, index) => {
-                 setTimeout(() => {
-                    span.classList.add('fall');
-                }, index * stagger);
-            });
+        // Reset by removing the 'fall' class
+        for (let i = 0; i < spans.length; i++) {
+            spans[i].classList.remove('fall');
         }
-    }, [letters, text, stagger]);
+
+        // Add 'fall' class with a stagger after a short delay to allow reset
+        setTimeout(() => {
+            for (let i = 0; i < spans.length; i++) {
+                setTimeout(() => {
+                    spans[i].classList.add('fall');
+                }, i * stagger);
+            }
+        }, 100);
+    };
+
+    useEffect(() => {
+        // Initial animation
+        runAnimation();
+
+        // Set up repeating animation
+        const interval = setInterval(runAnimation, repeatInterval);
+
+        // Cleanup on component unmount
+        return () => clearInterval(interval);
+    }, [text, stagger, repeatInterval]);
 
     return (
-        <El className={className}>
+        <El className={className} ref={containerRef}>
             {letters.map((char, index) => (
                 <span
-                    key={index}
-                    className={`letter animated-letter-${text.split(" ")[0]}`}
+                    key={`${char}-${index}`}
+                    className="letter"
                 >
                     {char === ' ' ? '\u00A0' : char}
                 </span>
@@ -45,6 +60,7 @@ const AnimatedText = ({ text, el: El = 'span', className, stagger = 80 }: { text
         </El>
     );
 };
+
 
 const HeroSection = () => {
     return (
@@ -55,12 +71,14 @@ const HeroSection = () => {
                     el="h1"
                     className="text-4xl md:text-6xl font-bold font-headline tracking-tighter break-words"
                     stagger={50}
+                    repeatInterval={7000}
                 />
                 <AnimatedText
                     text="The ultimate platform to discover and book sports facilities in your city. Stop searching, start playing."
                     el="p"
                     className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground break-words"
                     stagger={20}
+                    repeatInterval={7000}
                 />
                 <div className="mt-8 animate-fadeInUp" style={{ animationDelay: '2.5s' }}>
                     <Link href="/facilities">
