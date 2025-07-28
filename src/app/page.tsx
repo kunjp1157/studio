@@ -16,7 +16,7 @@ const HeroSection = () => {
     return (
         <section className="text-center py-20 lg:py-28 auth-background rounded-2xl shadow-2xl [perspective:1000px]">
             <div className="container mx-auto px-4 md:px-6">
-                <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter">
+                <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tighter break-words">
                     {title.split("").map((char, index) => (
                         <span 
                             key={index} 
