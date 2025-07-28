@@ -17,7 +17,7 @@ import {
   Sparkles,
   Rocket,
   ThumbsUp,
-  MountainSnow,
+  Trophy,
   ClipboardCheck,
   Wrench,
   Cpu,
@@ -46,7 +46,7 @@ export default function ProjectPresentationPage() {
     <div className="bg-background min-h-screen">
         <div className="container mx-auto py-12 px-4 md:px-6 max-w-4xl">
             <header className="text-center mb-12">
-                <MountainSnow className="mx-auto h-16 w-16 text-primary mb-4" />
+                <Trophy className="mx-auto h-16 w-16 text-primary mb-4" />
                 <h1 className="text-5xl font-bold font-headline">Sports Arena</h1>
                 <p className="text-xl text-muted-foreground mt-2">A Modern Platform for Booking Sports Facilities</p>
                 <Separator className="my-6" />

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Send, ArrowLeft, MountainSnow } from 'lucide-react';
+import { Mail, Send, ArrowLeft, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
     <div className="flex items-center justify-center min-h-screen p-4 auth-background">
       <Card className="w-full max-w-md shadow-2xl overflow-hidden animate-fadeInUp bg-card/80 backdrop-blur-lg border-primary/20">
         <CardHeader className="text-center p-8 bg-primary/10">
-          <MountainSnow className="mx-auto h-12 w-12 text-primary" />
+          <Trophy className="mx-auto h-12 w-12 text-primary" />
           <CardTitle className="text-3xl font-headline text-foreground">Forgot Password?</CardTitle>
           <CardDescription className="text-muted-foreground">We'll send you a link to reset it.</CardDescription>
         </CardHeader>

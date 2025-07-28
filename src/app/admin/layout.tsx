@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MountainSnow, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate, Dices } from 'lucide-react';
+import { Trophy, LayoutDashboard, Building2, Users, Settings, LogOut, Award, CalendarDays as EventIcon, Ticket, DollarSign, Tag, LayoutTemplate, Dices } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -76,7 +76,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <Sidebar collapsible="none" className="border-r">
         <SidebarHeader className="p-4 border-b">
           <Link href="/admin" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-            <MountainSnow className="h-7 w-7 text-primary group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8" />
+            <Trophy className="h-7 w-7 text-primary group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8" />
             <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden font-headline">Admin Hub</span>
           </Link>
         </SidebarHeader>
@@ -202,7 +202,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-6 shadow-sm md:hidden">
             <SidebarTrigger />
             <Link href="/admin" className="flex items-center gap-2">
-              <MountainSnow className="h-6 w-6 text-primary" />
+              <Trophy className="h-6 w-6 text-primary" />
               <span className="text-lg font-semibold font-headline">Admin Hub</span>
             </Link>
         </header>

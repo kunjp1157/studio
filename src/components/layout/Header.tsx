@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { MountainSnow, Dices, Wand2, FileText, CalendarDays, Trophy, Calendar as CalendarIcon, Swords, Menu } from 'lucide-react'; 
+import { Trophy, Dices, Wand2, FileText, CalendarDays, Calendar as CalendarIcon, Swords, Menu } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettingsAction } from '@/app/actions';
 import { UserSwitcher } from '../shared/UserSwitcher';
@@ -61,7 +61,7 @@ export function Header() {
             <SheetContent side="left">
               <SheetHeader>
                 <SheetTitle className="text-left flex items-center gap-2">
-                   <MountainSnow className="h-6 w-6 text-primary" />
+                   <Trophy className="h-6 w-6 text-primary" />
                    {siteName}
                 </SheetTitle>
               </SheetHeader>
@@ -82,7 +82,7 @@ export function Header() {
         </div>
         
         <Link href="/" className="group mx-2 flex items-center space-x-2">
-          <MountainSnow className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12 animate-float" />
+          <Trophy className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12 animate-float" />
           <span className="text-xl font-bold font-headline transition-colors group-hover:text-primary/80">
             {siteName.split("").map((char, index) => (
               <span 
