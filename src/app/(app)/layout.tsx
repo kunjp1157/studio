@@ -16,6 +16,7 @@ export default function ProtectedAppLayout({
   const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
+    // This check now only runs on the client, preventing build errors.
     const checkAuth = () => {
       const activeUser = sessionStorage.getItem('activeUser');
       if (!activeUser) {
@@ -34,7 +35,7 @@ export default function ProtectedAppLayout({
 
   if (!isVerified) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <LoadingSpinner size={48} />
       </div>
     );

@@ -119,6 +119,16 @@ export default {
             boxShadow: '0 0 20px hsl(var(--primary)/.7), 0 0 30px hsl(var(--primary)/.7)' 
           }
         },
+        'fade-in-up': {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(20px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -128,8 +138,9 @@ export default {
         'wave': 'wave 1.5s ease-in-out infinite',
         'float-3d': 'float-3d 6s ease-in-out infinite',
         'marquee': 'marquee 30s linear infinite',
+        'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'),  require('@tailwindcss/typography'),],
 } satisfies Config;

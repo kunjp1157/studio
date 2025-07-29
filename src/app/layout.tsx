@@ -1,15 +1,20 @@
 
 'use client';
 
-import type { Metadata } from 'next';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Toaster } from "@/components/ui/toaster"
 import { PageTransitionWrapper } from '@/components/layout/PageTransitionWrapper';
 import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Inter } from 'next/font/google';
 
-// No static metadata here as the component is now client-side
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
+
 
 export default function RootLayout({
   children,
@@ -19,24 +24,28 @@ export default function RootLayout({
   const pathname = usePathname();
   
   const isAdminOrOwnerPath = pathname.startsWith('/admin') || pathname.startsWith('/owner');
+  const isAuthPage = pathname.startsWith('/account');
+  const isSpecialBg = isAuthPage && !pathname.startsWith('/account/profile') && !pathname.startsWith('/account/bookings') && !pathname.startsWith('/account/favorites') && !pathname.startsWith('/account/teams') && !pathname.startsWith('/account/payment-methods');
+
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <title>Sports Arena</title>
         <meta name="description" content="Book sports facilities in your city with ease." />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased min-h-screen flex flex-col">
-        {!isAdminOrOwnerPath && <Header />}
+      <body className={cn(
+          "font-sans antialiased min-h-screen flex flex-col",
+          inter.variable,
+          isSpecialBg ? 'bg-black' : ''
+      )}>
+        {!isAdminOrOwnerPath && !isSpecialBg && <Header />}
         <main className="flex-grow">
           <PageTransitionWrapper>
             {children}
           </PageTransitionWrapper>
         </main>
-        {!isAdminOrOwnerPath && <Footer />}
+        {!isAdminOrOwnerPath && !isSpecialBg && <Footer />}
         <Toaster />
       </body>
     </html>
