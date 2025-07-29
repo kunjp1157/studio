@@ -10,6 +10,7 @@ import { User, Key, Heart, LogIn } from 'lucide-react';
 import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
 import { getStaticUsers } from '@/lib/mock-data';
 import type { UserProfile } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 
 export default function LoginPage() {

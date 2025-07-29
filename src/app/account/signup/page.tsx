@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { User, Key, Heart, UserPlus } from 'lucide-react';
 import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
+import { cn } from '@/lib/utils';
 
 export default function SignupPage() {
   const [username, setUsername] = useState('');
