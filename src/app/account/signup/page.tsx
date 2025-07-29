@@ -15,16 +15,8 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-
-  useEffect(() => {
-    // Force the expanded form state on mobile for better usability
-    if (window.innerWidth <= 600) {
-      setIsHovered(true);
-    }
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +43,7 @@ export default function SignupPage() {
     <div className="auth-page">
       <AnimatedGridBackground />
       <div 
-        className={`auth-box ${isHovered ? 'force-hover' : ''}`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => window.innerWidth > 600 && setIsHovered(false)}
+        className="auth-box"
       >
         <div className="auth-container">
           <div className="auth-form-wrapper">
