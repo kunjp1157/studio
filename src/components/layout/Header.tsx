@@ -11,6 +11,7 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettingsAction } from '@/app/actions';
 import { UserSwitcher } from '../shared/UserSwitcher';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import type { UserProfile } from '@/lib/types';
 
 const navItems = [
   { href: "/facilities", label: "Facilities" },
@@ -26,6 +27,7 @@ const navItems = [
 export function Header() {
   const [siteName, setSiteName] = useState('Sports Arena');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -42,8 +44,24 @@ export function Header() {
 
     window.addEventListener('settingsChanged', handleSettingsChange);
 
+    const handleUserChange = () => {
+        const activeUser = sessionStorage.getItem('activeUser');
+        if (activeUser) {
+            setCurrentUser(JSON.parse(activeUser));
+        } else {
+            setCurrentUser(null);
+        }
+    };
+    
+    // Initial check
+    handleUserChange();
+    
+    window.addEventListener('userChanged', handleUserChange);
+
+
     return () => {
       window.removeEventListener('settingsChanged', handleSettingsChange);
+      window.removeEventListener('userChanged', handleUserChange);
     };
   }, [siteName]);
 
@@ -83,60 +101,56 @@ export function Header() {
         
         <Link href="/" className="group mx-2 flex items-center space-x-2">
           <Trophy className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12 animate-float" />
-          <span className="text-xl font-bold font-headline transition-colors group-hover:text-primary/80">
-            {siteName.split("").map((char, index) => (
-              <span 
-                key={index} 
-                className="animate-letter-fall-3d" 
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                {char === " " ? "\u00A0" : char}
-              </span>
-            ))}
+          <span className="text-xl font-bold font-headline transition-colors group-hover:text-primary/80 animate-letter-fall-3d">
+            {siteName}
           </span>
         </Link>
         
-        <div className="hidden md:flex flex-1 items-center overflow-hidden [perspective:500px]">
-          <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
-            {navItems.map((item, index) => (
-              <Link 
-                href={item.href} 
-                key={`first-${index}`}
-                className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md duration-300 hover:[transform:rotateX(15deg)_scale(1.1)]"
-              >
-                {item.label}
-              </Link>
-            ))}
-            {navItems.map((item, index) => (
-              <Link 
-                href={item.href} 
-                key={`second-${index}`}
-                className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md duration-300 hover:[transform:rotateX(15deg)_scale(1.1)]"
-                aria-hidden="true"
-              >
-                {item.label}
-              </Link>
-            ))}
+        {currentUser && (
+          <div className="hidden md:flex flex-1 items-center overflow-hidden [perspective:500px]">
+            <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
+              {navItems.map((item, index) => (
+                <Link 
+                  href={item.href} 
+                  key={`first-${index}`}
+                  className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md duration-300 hover:[transform:rotateX(15deg)_scale(1.1)]"
+                >
+                  {item.label}
+                </Link>
+              ))}
+              {navItems.map((item, index) => (
+                <Link 
+                  href={item.href} 
+                  key={`second-${index}`}
+                  className="mx-2 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary/70 hover:text-primary rounded-md duration-300 hover:[transform:rotateX(15deg)_scale(1.1)]"
+                  aria-hidden="true"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-1 items-center justify-end space-x-2 md:ml-6">
-            <>
-              <Link href="/recommendation" className="hidden xl:inline-flex">
-                <Button variant="ghost">
-                  <Wand2 className="h-4 w-4 mr-2" />
-                  Recommender
-                </Button>
-              </Link>
-              <Link href="/weekend-planner" className="hidden lg:inline-flex">
-                <Button>
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  AI Planner
-                </Button>
-              </Link>
-              <UserSwitcher />
-              <NotificationBell />
-            </>
+            {currentUser && (
+              <>
+                <Link href="/recommendation" className="hidden xl:inline-flex">
+                  <Button variant="ghost">
+                    <Wand2 className="h-4 w-4 mr-2" />
+                    Recommender
+                  </Button>
+                </Link>
+                <Link href="/weekend-planner" className="hidden lg:inline-flex">
+                  <Button>
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    AI Planner
+                  </Button>
+                </Link>
+                <UserSwitcher />
+                <NotificationBell />
+              </>
+            )}
           <UserNav />
         </div>
       </div>

@@ -27,29 +27,24 @@ export function UserNav() {
   const [isLoading, setIsLoading] = useState(true);
 
   const initializeUser = () => {
-    let activeUser: UserProfile | null = null;
     const storedUser = sessionStorage.getItem('activeUser');
     if (storedUser) {
-      activeUser = JSON.parse(storedUser);
+      setCurrentUser(JSON.parse(storedUser));
     } else {
-      // If no user is in session storage, default to the admin user
-      activeUser = staticUsers.find(u => u.role === 'Admin') || null;
-      if (activeUser) {
-        sessionStorage.setItem('activeUser', JSON.stringify(activeUser));
-      }
+      setCurrentUser(null);
     }
-    setCurrentUser(activeUser);
     setIsLoading(false);
   };
 
   useEffect(() => {
     initializeUser();
 
-    // Listen for changes from the UserSwitcher component
     const handleUserChange = () => {
         const updatedUser = sessionStorage.getItem('activeUser');
         if(updatedUser) {
             setCurrentUser(JSON.parse(updatedUser));
+        } else {
+            setCurrentUser(null);
         }
     };
     window.addEventListener('userChanged', handleUserChange);
@@ -61,12 +56,26 @@ export function UserNav() {
   }, []);
 
   const handleLogout = () => {
-    // "Logout" is now just a navigation action as there's no auth session.
-    router.push('/facilities');
+    sessionStorage.removeItem('activeUser');
+    setCurrentUser(null);
+    router.push('/account/login');
   };
 
-  if (isLoading || !currentUser) {
+  if (isLoading) {
     return <Skeleton className="h-10 w-10 rounded-full" />;
+  }
+
+  if (!currentUser) {
+    return (
+        <div className="flex items-center gap-2">
+            <Button asChild>
+                <Link href="/account/login">Log In</Link>
+            </Button>
+             <Button variant="outline" asChild>
+                <Link href="/account/signup">Sign Up</Link>
+            </Button>
+        </div>
+    );
   }
 
   return (
@@ -148,7 +157,7 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Exit</span>
+          <span>Log Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

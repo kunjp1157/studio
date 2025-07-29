@@ -8,6 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { User, Key, Heart, LogIn } from 'lucide-react';
 import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
+import { getStaticUsers } from '@/lib/mock-data';
+import type { UserProfile } from '@/lib/types';
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -27,14 +30,34 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Mock authentication: find a user with the matching email.
+    // In a real app, this would be an API call that validates email and password.
+    const allUsers = getStaticUsers();
+    const foundUser = allUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
+
     setTimeout(() => {
       setIsLoading(false);
-      toast({
-        title: 'Logged In Successfully!',
-        description: `Welcome back, ${email}!`,
-        className: 'bg-green-500 text-white',
-      });
-      router.push('/facilities');
+
+      if (foundUser) {
+        // --- This is our mock login ---
+        sessionStorage.setItem('activeUser', JSON.stringify(foundUser));
+        window.dispatchEvent(new Event('userChanged')); // Notify other components like the header
+        // ------------------------------
+
+        toast({
+          title: 'Logged In Successfully!',
+          description: `Welcome back, ${foundUser.name}!`,
+          className: 'bg-green-500 text-white',
+        });
+        router.push('/facilities');
+      } else {
+        toast({
+          title: 'Login Failed',
+          description: 'No user found with that email address. Please sign up.',
+          variant: 'destructive',
+        });
+      }
     }, 1500);
   };
 
