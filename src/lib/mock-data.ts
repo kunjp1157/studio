@@ -5,7 +5,7 @@ import type { Sport, Amenity, MembershipPlan, Facility, UserProfile, UserRole, U
 // This file contains static mock data that is safe to be imported into client components.
 // It has no server-side dependencies like the 'pg' database driver.
 
-const sports: Sport[] = [
+const sportsData: Sport[] = [
   { id: 'sport-1', name: 'Soccer', iconName: 'Goal', imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55', imageDataAiHint: 'soccer stadium' },
   { id: 'sport-2', name: 'Basketball', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1519861531473-9200262188bf', imageDataAiHint: 'basketball court' },
   { id: 'sport-3', name: 'Tennis', iconName: 'Activity', imageUrl: 'https://images.unsplash.com/photo-1554062614-6da4fa674b73', imageDataAiHint: 'tennis court' },
@@ -22,8 +22,10 @@ const sports: Sport[] = [
   { id: 'sport-16', name: 'Gym', iconName: 'Dumbbell', imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48', imageDataAiHint: 'modern gym' },
 ];
 
+export const mockSports: Sport[] = sportsData;
+
 export function getMockSports(): Sport[] {
-    return sports;
+    return sportsData;
 };
 
 

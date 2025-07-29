@@ -11,9 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import type { SportEvent, Facility } from '@/lib/types';
+import type { SportEvent, Facility, Sport } from '@/lib/types';
 import { getAllEventsAction, getFacilityByIdAction } from '@/app/actions';
-import { mockSports } from '@/lib/mock-data';
+import { getMockSports } from '@/lib/mock-data';
 import { CalendarDays, MapPin, Users, Ticket, AlertCircle, Trophy, Zap, FilterX, ListFilter, Dices, SortAsc } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format, parseISO, isSameDay, isPast } from 'date-fns';
@@ -30,6 +30,7 @@ export default function EventsPage() {
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [sortOption, setSortOption] = useState<SortOption>('date-asc');
+  const [mockSports, setMockSports] = useState<Sport[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -37,6 +38,7 @@ export default function EventsPage() {
         const eventsData = await getAllEventsAction();
         setAllEvents(eventsData);
         setFilteredEvents(eventsData.sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()));
+        setMockSports(getMockSports());
         setIsLoading(false);
     };
     fetchEvents();
