@@ -30,6 +30,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { PageTitle } from '@/components/shared/PageTitle';
+import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 
 const CardSkeleton = () => (
     <div className="bg-card p-4 rounded-lg shadow-md">
