@@ -164,6 +164,35 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
     return undefined;
 };
 
+export const addUser = async (userData: { name: string, email: string }): Promise<UserProfile> => {
+  return new Promise((resolve, reject) => {
+    if (mockUsers.some(u => u.email.toLowerCase() === userData.email.toLowerCase())) {
+      reject(new Error("A user with this email already exists."));
+      return;
+    }
+
+    const newUser: UserProfile = {
+      id: `user-${Date.now()}`,
+      name: userData.name,
+      email: userData.email,
+      role: 'User',
+      status: 'Active',
+      joinedAt: new Date().toISOString(),
+      membershipLevel: 'Basic',
+      isProfilePublic: true,
+      loyaltyPoints: 0,
+      achievements: [],
+      skillLevels: [],
+      preferredSports: [],
+      favoriteFacilities: [],
+      teamIds: [],
+    };
+
+    mockUsers.push(newUser);
+    resolve(newUser);
+  });
+};
+
 
 export const getBookingsForFacilityOnDate = async (facilityId: string, date: string): Promise<Booking[]> => {
     const bookings = mockBookings.filter(b => b.facilityId === facilityId && b.date === date && (b.status === 'Confirmed' || b.status === 'Pending'));

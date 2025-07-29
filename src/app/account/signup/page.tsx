@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
 import { Heart, UserPlus } from 'lucide-react';
+import { addUser } from '@/lib/data';
 
 export default function SignupPage() {
   const [username, setUsername] = useState('');
@@ -18,7 +19,7 @@ export default function SignupPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       toast({
@@ -28,14 +29,26 @@ export default function SignupPage() {
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    
+    try {
+      await addUser({ name: username, email });
+      
       toast({
         title: 'Account Created!',
         description: `Welcome to Sports Arena, ${username}! Please log in.`,
       });
       router.push('/account/login');
-    }, 1500);
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast({
+        title: 'Signup Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (

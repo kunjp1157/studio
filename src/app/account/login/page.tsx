@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
-import { getStaticUsers } from '@/lib/mock-data';
+import { getAllUsers } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 import { Heart, LogIn } from 'lucide-react';
 
@@ -18,11 +18,11 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const allUsers = getStaticUsers();
+    const allUsers = await getAllUsers();
     const foundUser = allUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
 
     setTimeout(() => {
