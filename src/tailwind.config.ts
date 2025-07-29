@@ -129,6 +129,10 @@ export default {
             transform: 'translateY(0)',
           },
         },
+        rotating: {
+          '0%': { '--a': '0deg' },
+          '100%': { '--a': '360deg' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -139,6 +143,7 @@ export default {
         'float-3d': 'float-3d 6s ease-in-out infinite',
         'marquee': 'marquee 30s linear infinite',
         'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
+        'rotating': 'rotating 4s linear infinite',
       },
     },
   },
