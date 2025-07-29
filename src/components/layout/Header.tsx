@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,43 @@ const navItems = [
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/blog", label: "Blog" },
 ];
+
+const AnimatedLogo = ({ text }: { text: string }) => {
+    const letters = text.split('');
+    const containerRef = useRef<HTMLSpanElement>(null);
+
+    useEffect(() => {
+        const runAnimation = () => {
+            const spans = containerRef.current?.children;
+            if (!spans) return;
+            for (let i = 0; i < spans.length; i++) {
+                spans[i].classList.remove('fall');
+            }
+            setTimeout(() => {
+                for (let i = 0; i < spans.length; i++) {
+                    setTimeout(() => {
+                        spans[i].classList.add('fall');
+                    }, i * 80);
+                }
+            }, 100);
+        };
+        
+        runAnimation();
+        const interval = setInterval(runAnimation, 7000);
+        return () => clearInterval(interval);
+    }, [text]);
+
+    return (
+        <span ref={containerRef} className="text-xl font-bold font-headline transition-colors group-hover:text-primary/80">
+            {letters.map((char, index) => (
+                <span key={`${char}-${index}`} className="letter">
+                    {char === ' ' ? '\u00A0' : char}
+                </span>
+            ))}
+        </span>
+    );
+};
+
 
 export function Header() {
   const [siteName, setSiteName] = useState('Sports Arena');
@@ -99,11 +136,9 @@ export function Header() {
           </Sheet>
         </div>
         
-        <Link href="/" className="group mx-2 flex items-center space-x-2">
-          <Trophy className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12 animate-float" />
-          <span className="text-xl font-bold font-headline transition-colors group-hover:text-primary/80 animate-letter-fall-3d">
-            {siteName}
-          </span>
+        <Link href="/" className="group mx-2 flex items-center space-x-2" style={{ perspective: '500px' }}>
+          <Trophy className="h-6 w-6 text-primary transition-transform duration-300 group-hover:-rotate-12 animate-float-3d" />
+          <AnimatedLogo text={siteName} />
         </Link>
         
         {currentUser && (

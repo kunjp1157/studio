@@ -1,38 +1,42 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, Swords, Trophy, Wand2 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { ArrowRight, Sparkles, Swords, Trophy, Wand2, Star } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { IconComponent } from '@/components/shared/Icon';
 import { cn } from '@/lib/utils';
+import { getFacilitiesAction, getSiteSettingsAction } from './actions';
+import type { Facility, SiteSettings } from '@/lib/types';
+import { FacilityCard } from '@/components/facilities/FacilityCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const AnimatedText = ({ text, el: El = 'span', className, stagger = 80, repeatInterval = 5000 }: { text: string; el?: React.ElementType; className?: string; stagger?: number, repeatInterval?: number }) => {
     const letters = text.split('');
     const containerRef = useRef<HTMLElement>(null);
 
-    const runAnimation = () => {
-        const spans = containerRef.current?.children;
-        if (!spans) return;
-
-        // Reset by removing the 'fall' class
-        for (let i = 0; i < spans.length; i++) {
-            spans[i].classList.remove('fall');
-        }
-
-        // Add 'fall' class with a stagger after a short delay to allow reset
-        setTimeout(() => {
-            for (let i = 0; i < spans.length; i++) {
-                setTimeout(() => {
-                    spans[i].classList.add('fall');
-                }, i * stagger);
-            }
-        }, 100);
-    };
-
     useEffect(() => {
+        const runAnimation = () => {
+            const spans = containerRef.current?.children;
+            if (!spans) return;
+
+            // Reset by removing the 'fall' class
+            for (let i = 0; i < spans.length; i++) {
+                spans[i].classList.remove('fall');
+            }
+
+            // Add 'fall' class with a stagger after a short delay to allow reset
+            setTimeout(() => {
+                for (let i = 0; i < spans.length; i++) {
+                    setTimeout(() => {
+                        spans[i].classList.add('fall');
+                    }, i * stagger);
+                }
+            }, 100);
+        };
+        
         // Initial animation
         runAnimation();
 
@@ -172,12 +176,69 @@ const FeaturesSection = () => {
     );
 };
 
+const PopularFacilitiesSection = () => {
+    const [facilities, setFacilities] = useState<Facility[]>([]);
+    const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [facilitiesData, settingsData] = await Promise.all([
+                    getFacilitiesAction(),
+                    getSiteSettingsAction()
+                ]);
+                setFacilities(facilitiesData.filter(f => f.isPopular).slice(0, 4));
+                setCurrency(settingsData.defaultCurrency);
+            } catch (error) {
+                console.error("Failed to fetch popular facilities", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    return (
+        <section className="py-16 lg:py-24 bg-card/40 rounded-2xl">
+            <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold font-headline flex items-center justify-center gap-2">
+                    <Star className="text-primary" />
+                    Popular Facilities
+                </h2>
+                <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
+                    Check out some of the top-rated and most frequently booked venues on our platform.
+                </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 [perspective:1000px]">
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, index) => (
+                  <Card key={index} className="p-4"><Skeleton className="h-64 w-full" /></Card>
+                ))
+              ) : (
+                facilities.map(facility => (
+                  <FacilityCard key={facility.id} facility={facility} currency={currency} />
+                ))
+              )}
+            </div>
+             <div className="text-center mt-12">
+                <Link href="/facilities">
+                    <Button size="lg" variant="outline">
+                        View All Facilities <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                </Link>
+            </div>
+        </section>
+    );
+};
+
 
 export default function HomePage() {
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6">
+    <div className="container mx-auto py-8 px-4 md:px-6 space-y-12">
       <HeroSection />
       <FeaturesSection />
+      <PopularFacilitiesSection />
     </div>
   );
 }

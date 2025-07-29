@@ -155,7 +155,7 @@ body {
     }
     100% {
         opacity: 1;
-        transform: translateY(0) rotateX(0deg);
+        transform: translateY(0) rotateX(0);
     }
 }
 
@@ -391,4 +391,19 @@ body {
 .letter.fall {
     opacity: 1;
     transform: translateY(0) rotateX(0);
+}
+
+.animate-letter-fall-3d {
+  display: inline-block;
+}
+
+@keyframes letter-fall-3d {
+  0% {
+    transform: translateY(-100px) rotateX(90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) rotateX(0);
+    opacity: 1;
+  }
 }
