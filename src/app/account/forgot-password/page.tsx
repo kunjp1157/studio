@@ -1,245 +1,65 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-body {
-  font-family: 'Inter', sans-serif;
-}
+'use client';
 
-@layer base {
-  :root {
-    --background: 222.2 84% 4.9%; /* Dark Blue-Black */
-    --foreground: 210 40% 98%; /* Almost White */
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
+import { Key } from 'lucide-react';
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-    --primary: 198 93% 60%; /* Bright Cyan/Blue */
-    --primary-foreground: 222.2 47.4% 11.2%; /* Dark Blue */
-    
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    // Mock API call
+    setTimeout(() => {
+      setIsLoading(false);
+      toast({
+        title: 'Password Reset Link Sent',
+        description: `If an account exists for ${email}, a reset link has been sent.`,
+        className: 'bg-green-500 text-white',
+      });
+      router.push('/account/login');
+    }, 1500);
+  };
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 198 93% 60%; /* Bright Cyan/Blue */
-
-    --chart-1: 198 93% 60%;
-    --chart-2: 282 89% 67%;
-    --chart-3: 343 91% 65%;
-    --chart-4: 37 92% 56%;
-    --chart-5: 162 88% 50%;
-
-    --radius: 0.75rem;
-
-    /* Sidebar specific colors */
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 198 93% 60%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 198 93% 60%;
-
-    /* New custom properties for auth forms */
-    --auth-form-bg-dark: #2d2d39;
-    --auth-form-border-dark: #25252b;
-    --auth-form-accent-pink: #ff2770;
-    --auth-form-accent-blue: #45f3ff;
-  }
-
-  .dark {
-     /* Using the same theme for both light and dark for a consistent dark mode experience */
-    --background: 222.2 84% 4.9%; /* Dark Blue-Black */
-    --foreground: 210 40% 98%; /* Almost White */
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 198 93% 60%; /* Bright Cyan/Blue */
-    --primary-foreground: 222.2 47.4% 11.2%; /* Dark Blue */
-    
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 198 93% 60%; /* Bright Cyan/Blue */
-
-    --chart-1: 198 93% 60%;
-    --chart-2: 282 89% 67%;
-    --chart-3: 343 91% 65%;
-    --chart-4: 37 92% 56%;
-    --chart-5: 162 88% 50%;
-
-    /* Sidebar specific colors */
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 198 93% 60%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 198 93% 60%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-@layer utilities {
-  .preserve-3d {
-    transform-style: preserve-3d;
-  }
-  .text-gradient {
-    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--chart-2)), hsl(var(--chart-3)));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-}
-
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-@keyframes letter-float {
-    0% {
-        opacity: 0;
-        transform: translateY(20px) rotateX(-90deg);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) rotateX(0);
-    }
-}
-
-@keyframes wave {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-4px);
-    }
-}
-
-@keyframes float-3d {
-  0% {
-    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
-  }
-  50% {
-    transform: translateY(-15px) rotateX(10deg) rotateY(8deg);
-  }
-  100% {
-    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
-  }
-}
-
-.animate-letter-float {
-    transform-style: preserve-3d;
-    transform-origin: bottom;
-    opacity: 0;
-    animation: letter-float 0.8s ease-out forwards;
-}
-
-.animate-wave {
-    animation: wave 2.5s ease-in-out infinite;
-}
-
-.animate-marquee {
-  animation: marquee 50s linear infinite;
-}
-
-.animate-fadeInUp {
-  animation: fadeInUp 0.5s ease-out forwards;
-}
-
-@keyframes pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-.animate-pop {
-    animation: pop 0.3s ease-out;
-}
-
-.animate-float-3d {
-  animation: float-3d 8s ease-in-out infinite;
-}
-
-@property --a {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
-.letter {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(-100px) rotateX(90deg);
-  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-}
-.letter.fall {
-    opacity: 1;
-    transform: translateY(0) rotateX(0);
-}
-
-.animate-letter-fall-3d {
-  display: inline-block;
-}
-
-@keyframes letter-fall-3d {
-  0% {
-    transform: translateY(-100px) rotateX(90deg);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0) rotateX(0);
-    opacity: 1;
-  }
+  return (
+    <div className="auth-page">
+      <AnimatedGridBackground />
+      <div className="auth-box">
+        <div className="auth-container">
+          <div className="auth-form-wrapper">
+            <h2 className="auth-title flex items-center gap-2">
+              <Key />
+              <span>Reset Password</span>
+            </h2>
+            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="auth-input"
+              />
+              <button type="submit" className="auth-submit" disabled={isLoading}>
+                {isLoading ? <LoadingSpinner size={20} /> : 'Send Reset Link'}
+              </button>
+              <div className="auth-group">
+                <Link href="/account/login">Remembered your password?</Link>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

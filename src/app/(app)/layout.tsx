@@ -19,10 +19,12 @@ export default function ProtectedAppLayout({
     const checkAuth = () => {
       const activeUser = sessionStorage.getItem('activeUser');
       if (!activeUser) {
-        // If no login page, we can't redirect. For now, we'll just let them through
-        // but a real app would have a login page.
-        // We will assume a default user is set for demo purposes.
-        setIsVerified(true);
+        toast({
+          title: 'Please log in',
+          description: 'You need to be logged in to access this page.',
+          variant: 'destructive',
+        });
+        router.replace('/account/login');
       } else {
         setIsVerified(true);
       }

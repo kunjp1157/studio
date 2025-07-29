@@ -33,10 +33,10 @@ export default function SignupPage() {
       setIsLoading(false);
       toast({
         title: 'Account Created!',
-        description: `Welcome to Sports Arena, ${username}!`,
+        description: `Welcome to Sports Arena, ${username}! Please log in.`,
         className: 'bg-green-500 text-white',
       });
-      router.push('/facilities');
+      router.push('/account/login');
     }, 1500);
   };
 

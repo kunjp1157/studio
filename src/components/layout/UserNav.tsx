@@ -26,22 +26,15 @@ export function UserNav() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const initializeUser = () => {
-    const storedUser = sessionStorage.getItem('activeUser');
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    } else {
-      // If no user in session, set a default one (e.g., admin) for demo purposes
-      const defaultUser = getStaticUsers().find(u => u.role === 'Admin');
-      if (defaultUser) {
-        sessionStorage.setItem('activeUser', JSON.stringify(defaultUser));
-        setCurrentUser(defaultUser);
-      }
-    }
-    setIsLoading(false);
-  };
-
   useEffect(() => {
+    const initializeUser = () => {
+      const storedUser = sessionStorage.getItem('activeUser');
+      if (storedUser) {
+        setCurrentUser(JSON.parse(storedUser));
+      }
+      setIsLoading(false);
+    };
+
     initializeUser();
 
     const handleUserChange = () => {
@@ -63,9 +56,7 @@ export function UserNav() {
   const handleLogout = () => {
     sessionStorage.removeItem('activeUser');
     setCurrentUser(null);
-    // In a real app, you'd likely redirect to a login page.
-    // Since it's removed, we'll just refresh the page.
-    window.location.reload();
+    router.push('/account/login');
   };
 
   if (isLoading) {
@@ -75,7 +66,8 @@ export function UserNav() {
   if (!currentUser) {
     return (
         <div className="flex items-center gap-2">
-            <p className="text-sm text-muted-foreground">No User</p>
+            <Button asChild><Link href="/account/login">Login</Link></Button>
+            <Button variant="outline" asChild><Link href="/account/signup">Sign Up</Link></Button>
         </div>
     );
   }
