@@ -26,7 +26,6 @@ export default function LoginPage() {
       const allUsers = await getAllUsers();
       const foundUser = allUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
 
-      // Enhanced check for both user and password
       if (foundUser && (!foundUser.password || foundUser.password === password)) {
         sessionStorage.setItem('activeUser', JSON.stringify(foundUser));
         window.dispatchEvent(new Event('userChanged'));
