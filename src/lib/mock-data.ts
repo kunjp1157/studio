@@ -49,9 +49,10 @@ export const mockStaticMembershipPlans: MembershipPlan[] = [
 export function getStaticUsers(): UserProfile[] {
     return [
       { 
-        id: 'user-admin-kirtan', 
-        name: 'Kirtan Shah', 
-        email: 'kirtan.shah@example.com', 
+        id: 'user-admin-kunj', 
+        name: 'Kunj Patel', 
+        email: 'kunjp1157@gmail.com',
+        password: 'Kunj@2810',
         role: 'Admin' as UserRole, 
         status: 'Active' as UserStatus,
         joinedAt: '2023-01-15T10:00:00Z', 

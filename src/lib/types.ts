@@ -1,6 +1,7 @@
 
 
 
+
 export interface Team {
   id: string;
   name: string;
@@ -190,6 +191,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  password?: string;
   phone?: string;
   profilePictureUrl?: string;
   dataAiHint?: string; 

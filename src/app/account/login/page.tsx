@@ -22,13 +22,12 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const allUsers = await getAllUsers();
-    const foundUser = allUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
+    try {
+      const allUsers = await getAllUsers();
+      const foundUser = allUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
 
-    setTimeout(() => {
-      setIsLoading(false);
-
-      if (foundUser) {
+      // Enhanced check for both user and password
+      if (foundUser && (!foundUser.password || foundUser.password === password)) {
         sessionStorage.setItem('activeUser', JSON.stringify(foundUser));
         window.dispatchEvent(new Event('userChanged'));
 
@@ -38,13 +37,21 @@ export default function LoginPage() {
         });
         router.push('/dashboard');
       } else {
-        toast({
+         toast({
           title: 'Login Failed',
-          description: 'No user found with that email address. Please sign up.',
+          description: 'Invalid email or password. Please try again.',
           variant: 'destructive',
         });
       }
-    }, 1500);
+    } catch (error) {
+       toast({
+          title: 'Login Error',
+          description: 'An unexpected error occurred. Please try again later.',
+          variant: 'destructive',
+        });
+    } finally {
+       setIsLoading(false);
+    }
   };
 
   return (
