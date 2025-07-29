@@ -57,9 +57,7 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <AnimatedGridBackground />
-      <div 
-        className="auth-box"
-      >
+      <div className="auth-box">
         <div className="auth-container">
           <div className="auth-form-wrapper">
             <h2 className="auth-title flex items-center gap-2">
