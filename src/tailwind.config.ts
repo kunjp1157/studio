@@ -89,6 +89,23 @@ export default {
             height: '0',
           },
         },
+        fall: {
+          '0%': { transform: 'translateY(-50px) rotateX(90deg)', opacity: '0' },
+          '100%': { transform: 'translateY(0) rotateX(0deg)', opacity: '1' },
+        },
+        wave: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        'float-3d': {
+            '0%': { transform: 'translateY(0px) rotateX(0deg)' },
+            '50%': { transform: 'translateY(-10px) rotateX(5deg)' },
+            '100%': { transform: 'translateY(0px) rotateX(0deg)' },
+        },
+        marquee: {
+            '0%': { transform: 'translateX(0)' },
+            '100%': { transform: 'translateX(-50%)' },
+        },
         pop: {
           '0%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(1.3)' },
@@ -96,10 +113,10 @@ export default {
         },
         glow: {
           '0%, 100%': { 
-            boxShadow: '0 0 5px hsl(var(--primary)), 0 0 10px hsl(var(--primary))' 
+            boxShadow: '0 0 5px hsl(var(--primary)/.5), 0 0 10px hsl(var(--primary)/.5)' 
           },
           '50%': { 
-            boxShadow: '0 0 20px hsl(var(--primary)), 0 0 30px hsl(var(--primary))' 
+            boxShadow: '0 0 20px hsl(var(--primary)/.7), 0 0 30px hsl(var(--primary)/.7)' 
           }
         },
       },
@@ -108,6 +125,9 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'pop': 'pop 0.3s ease-out',
         'glow': 'glow 2.5s ease-in-out infinite',
+        'wave': 'wave 1.5s ease-in-out infinite',
+        'float-3d': 'float-3d 6s ease-in-out infinite',
+        'marquee': 'marquee 30s linear infinite',
       },
     },
   },
