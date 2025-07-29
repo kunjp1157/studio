@@ -1,17 +1,15 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { User, Key, Heart, LogIn } from 'lucide-react';
 import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
 import { getStaticUsers } from '@/lib/mock-data';
 import type { UserProfile } from '@/lib/types';
-import { cn } from '@/lib/utils';
-
+import { Heart, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -24,8 +22,6 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock authentication: find a user with the matching email.
-    // In a real app, this would be an API call that validates email and password.
     const allUsers = getStaticUsers();
     const foundUser = allUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
 
@@ -33,17 +29,14 @@ export default function LoginPage() {
       setIsLoading(false);
 
       if (foundUser) {
-        // --- This is our mock login ---
         sessionStorage.setItem('activeUser', JSON.stringify(foundUser));
-        window.dispatchEvent(new Event('userChanged')); // Notify other components like the header
-        // ------------------------------
+        window.dispatchEvent(new Event('userChanged'));
 
         toast({
           title: 'Logged In Successfully!',
           description: `Welcome back, ${foundUser.name}!`,
-          className: 'bg-green-500 text-white',
         });
-        router.push('/facilities');
+        router.push('/dashboard');
       } else {
         toast({
           title: 'Login Failed',
@@ -63,7 +56,7 @@ export default function LoginPage() {
             <h2 className="auth-title flex items-center gap-2">
               <LogIn />
               <span>Sign In</span>
-              <Heart style={{ color: '#ff2770', filter: 'drop-shadow(0 0 5px #ff2770)'}}/>
+              <Heart style={{ color: 'var(--auth-form-accent-pink)', filter: 'drop-shadow(0 0 5px var(--auth-form-accent-pink))'}}/>
             </h2>
             <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
               <input

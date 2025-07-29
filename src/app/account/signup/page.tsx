@@ -1,14 +1,13 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { User, Key, Heart, UserPlus } from 'lucide-react';
 import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
-import { cn } from '@/lib/utils';
+import { Heart, UserPlus } from 'lucide-react';
 
 export default function SignupPage() {
   const [username, setUsername] = useState('');
@@ -34,7 +33,6 @@ export default function SignupPage() {
       toast({
         title: 'Account Created!',
         description: `Welcome to Sports Arena, ${username}! Please log in.`,
-        className: 'bg-green-500 text-white',
       });
       router.push('/account/login');
     }, 1500);
@@ -49,7 +47,7 @@ export default function SignupPage() {
             <h2 className="auth-title flex items-center gap-2">
               <UserPlus />
               <span>Register</span>
-              <Heart style={{ color: '#ff2770', filter: 'drop-shadow(0 0 5px #ff2770)'}}/>
+              <Heart style={{ color: 'var(--auth-form-accent-pink)', filter: 'drop-shadow(0 0 5px var(--auth-form-accent-pink))'}}/>
             </h2>
             <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
               <input

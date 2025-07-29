@@ -9,36 +9,36 @@ body {
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%; /* Dark Blue-Black */
-    --foreground: 210 40% 98%; /* Almost White */
+    --background: 210 20% 95%; /* Light Desaturated Blue */
+    --foreground: 222.2 84% 4.9%; /* Dark Blue-Black */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 210 20% 98%; /* Lighter shade for cards */
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 210 20% 98%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 198 93% 60%; /* Bright Cyan/Blue */
-    --primary-foreground: 222.2 47.4% 11.2%; /* Dark Blue */
+    --primary: 210 75% 50%; /* Vibrant Blue */
+    --primary-foreground: 210 40% 98%; /* Almost White */
     
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 77.5%; /* Muted Blue */
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217.2 32.6% 87.5%;
+    --muted-foreground: 215 20.2% 45.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 180 60% 40%; /* Contrasting Teal */
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 198 93% 60%; /* Bright Cyan/Blue */
+    --border: 217.2 32.6% 77.5%;
+    --input: 217.2 32.6% 82.5%;
+    --ring: 210 75% 50%;
 
-    --chart-1: 198 93% 60%;
-    --chart-2: 282 89% 67%;
+    --chart-1: 210 75% 50%;
+    --chart-2: 180 60% 40%;
     --chart-3: 343 91% 65%;
     --chart-4: 37 92% 56%;
     --chart-5: 162 88% 50%;
@@ -63,7 +63,6 @@ body {
   }
 
   .dark {
-     /* Using the same theme for both light and dark for a consistent dark mode experience */
     --background: 222.2 84% 4.9%; /* Dark Blue-Black */
     --foreground: 210 40% 98%; /* Almost White */
 
@@ -123,12 +122,6 @@ body {
   .preserve-3d {
     transform-style: preserve-3d;
   }
-  .text-gradient {
-    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--chart-2)), hsl(var(--chart-3)));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
 }
 
 
@@ -143,106 +136,8 @@ body {
   }
 }
 
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-@keyframes letter-float {
-    0% {
-        opacity: 0;
-        transform: translateY(20px) rotateX(-90deg);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) rotateX(0);
-    }
-}
-
-@keyframes wave {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-4px);
-    }
-}
-
-@keyframes float-3d {
-  0% {
-    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
-  }
-  50% {
-    transform: translateY(-15px) rotateX(10deg) rotateY(8deg);
-  }
-  100% {
-    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
-  }
-}
-
-.animate-letter-float {
-    transform-style: preserve-3d;
-    transform-origin: bottom;
-    opacity: 0;
-    animation: letter-float 0.8s ease-out forwards;
-}
-
-.animate-wave {
-    animation: wave 2.5s ease-in-out infinite;
-}
-
-.animate-marquee {
-  animation: marquee 50s linear infinite;
-}
-
 .animate-fadeInUp {
   animation: fadeInUp 0.5s ease-out forwards;
-}
-
-@keyframes pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-.animate-pop {
-    animation: pop 0.3s ease-out;
-}
-
-.animate-float-3d {
-  animation: float-3d 8s ease-in-out infinite;
-}
-
-@property --a {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
-.letter {
-  display: inline-block;
-  opacity: 0;
-  transform: translateY(-100px) rotateX(90deg);
-  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-}
-.letter.fall {
-    opacity: 1;
-    transform: translateY(0) rotateX(0);
-}
-
-.animate-letter-fall-3d {
-  display: inline-block;
-}
-
-@keyframes letter-fall-3d {
-  0% {
-    transform: translateY(-100px) rotateX(90deg);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0) rotateX(0);
-    opacity: 1;
-  }
 }
 
 /* Auth Page Specific Styles */
@@ -266,6 +161,21 @@ body {
   flex-wrap: wrap;
   overflow: hidden;
 }
+
+#background-section::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(#000, var(--auth-form-accent-pink), #000);
+  animation: animate-gradient 5s linear infinite;
+}
+
+@keyframes animate-gradient {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
 #background-section span {
   position: relative;
   display: block;
@@ -275,49 +185,104 @@ body {
   z-index: 2;
   transition: 1.5s;
 }
+
 #background-section span:hover {
   background: var(--auth-form-accent-pink);
   transition: 0s;
 }
 
+@property --a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rotating {
+  0% { --a: 0deg; }
+  100% { --a: 360deg; }
+}
+
 .auth-box {
   position: relative;
+  z-index: 1000;
   width: 450px;
   height: 620px;
-  max-width: 90%;
+  background: repeating-conic-gradient(
+          from var(--a),
+          var(--auth-form-accent-pink) 0%,
+          var(--auth-form-accent-pink) 5%,
+          transparent 5%,
+          transparent 40%,
+          var(--auth-form-accent-pink) 50%
+  );
+  filter: drop-shadow(0 15px 50px #000);
+  border-radius: 20px;
+  animation: rotating 4s linear infinite;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(0, 0, 0, 0.5);
-  overflow: hidden;
+}
+.auth-box::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: repeating-conic-gradient(
+          from var(--a),
+          var(--auth-form-accent-blue) 0%,
+          var(--auth-form-accent-blue) 5%,
+          transparent 5%,
+          transparent 40%,
+          var(--auth-form-accent-blue) 50%
+  );
+  filter: drop-shadow(0 15px 50px #000);
   border-radius: 20px;
+  animation: rotating 4s linear infinite;
+  animation-delay: -1s;
+}
+.auth-box::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: #2d2d39;
+  border-radius: 15px;
+  border: 8px solid #25252b;
 }
 
 .auth-container {
   position: absolute;
-  inset: 4px;
-  background: var(--auth-form-bg-dark);
-  padding: 50px 40px;
-  border-radius: 15px;
-  z-index: 2;
+  inset: 40px;
   display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  z-index: 1001;
+  box-shadow: inset 0 10px 20px rgba(0, 0, 0, 0.5);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.5);
 }
 
 .auth-form-wrapper {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
   gap: 20px;
-  width: 100%;
+  width: 70%;
 }
 
 .auth-title {
-  color: #fff;
   text-transform: uppercase;
   font-weight: 600;
   letter-spacing: 0.2em;
+  color: #fff;
+}
+.auth-title i {
+  color: var(--auth-form-accent-pink);
+  text-shadow: 0 0 5px var(--auth-form-accent-pink), 0 0 20px var(--auth-form-accent-pink);
 }
 
 .auth-input {
@@ -331,9 +296,7 @@ body {
   border-radius: 30px;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
-.auth-input::placeholder {
-  color: #bbb;
-}
+.auth-input::placeholder { color: #bbb; }
 .auth-input:focus {
   border-color: var(--auth-form-accent-blue);
   box-shadow: 0 0 10px var(--auth-form-accent-blue);
@@ -354,7 +317,7 @@ body {
 }
 .auth-submit:hover,
 .auth-submit:focus {
-  box-shadow: 0 0 10px var(--auth-form-accent-blue), 0 0 30px var(--auth-form-accent-blue);
+  box-shadow: 0 0 10px var(--auth-form-accent-blue), 0 0 60px var(--auth-form-accent-blue);
 }
 
 .auth-group {
@@ -362,7 +325,6 @@ body {
   display: flex;
   justify-content: space-between;
 }
-
 .auth-group a {
   color: #fff;
   text-decoration: none;
@@ -370,7 +332,13 @@ body {
   border-radius: 4px;
   transition: color 0.3s;
 }
-
-.auth-group a:hover {
-  color: var(--auth-form-accent-blue);
+.auth-group a:focus {
+  outline: 2px solid var(--auth-form-accent-blue);
+  outline-offset: 2px;
 }
+.auth-group a:hover { color: var(--auth-form-accent-blue); }
+.auth-group a:nth-child(2) {
+  color: var(--auth-form-accent-pink);
+  font-weight: 600;
+}
+.auth-group a:nth-child(2):hover { color: #ff6a9e; }
