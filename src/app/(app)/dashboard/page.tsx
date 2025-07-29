@@ -8,7 +8,7 @@ import { ArrowRight, Sparkles, Swords, Trophy, Wand2, Star } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { IconComponent } from '@/components/shared/Icon';
 import { cn } from '@/lib/utils';
-import { getFacilitiesAction, getSiteSettingsAction } from '../actions';
+import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 import type { Facility, SiteSettings } from '@/lib/types';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { Skeleton } from '@/components/ui/skeleton';
