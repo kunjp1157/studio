@@ -1,70 +1,245 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-'use client';
+body {
+  font-family: 'Inter', sans-serif;
+}
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Send, ArrowLeft, Trophy } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+@layer base {
+  :root {
+    --background: 222.2 84% 4.9%; /* Dark Blue-Black */
+    --foreground: 210 40% 98%; /* Almost White */
 
-export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const router = useRouter();
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    toast({
-      title: 'Password Reset Email Sent',
-      description: `If an account exists for ${email}, you will receive password reset instructions.`,
-    });
-    router.push('/account/login'); 
-  };
+    --primary: 198 93% 60%; /* Bright Cyan/Blue */
+    --primary-foreground: 222.2 47.4% 11.2%; /* Dark Blue */
+    
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-  return (
-    <div className="flex items-center justify-center min-h-screen p-4 auth-background">
-      <Card className="w-full max-w-md shadow-2xl overflow-hidden animate-fadeInUp bg-card/80 backdrop-blur-lg border-primary/20">
-        <CardHeader className="text-center p-8 bg-primary/10">
-          <Trophy className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="text-3xl font-headline text-foreground">Forgot Password?</CardTitle>
-          <CardDescription className="text-muted-foreground">We'll send you a link to reset it.</CardDescription>
-        </CardHeader>
-        <CardContent className="px-8 py-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="pl-10 h-12 rounded-full bg-secondary/50 border-border focus:bg-background focus:border-primary"
-              />
-            </div>
-            <Button type="submit" className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-base font-bold" disabled={isLoading}>
-              {isLoading ? <LoadingSpinner size={20} /> : <Send className="mr-2"/>}
-              {isLoading ? 'Sending...' : 'Send Reset Link'}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="p-6 justify-center text-sm border-t border-primary/20">
-          <Link href="/account/login" className="font-bold text-primary hover:underline flex items-center">
-            <ArrowLeft className="inline h-4 w-4 mr-1" /> Back to Log in
-          </Link>
-        </CardFooter>
-      </Card>
-    </div>
-  );
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 198 93% 60%; /* Bright Cyan/Blue */
+
+    --chart-1: 198 93% 60%;
+    --chart-2: 282 89% 67%;
+    --chart-3: 343 91% 65%;
+    --chart-4: 37 92% 56%;
+    --chart-5: 162 88% 50%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar specific colors */
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 198 93% 60%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 198 93% 60%;
+
+    /* New custom properties for auth forms */
+    --auth-form-bg-dark: #2d2d39;
+    --auth-form-border-dark: #25252b;
+    --auth-form-accent-pink: #ff2770;
+    --auth-form-accent-blue: #45f3ff;
+  }
+
+  .dark {
+     /* Using the same theme for both light and dark for a consistent dark mode experience */
+    --background: 222.2 84% 4.9%; /* Dark Blue-Black */
+    --foreground: 210 40% 98%; /* Almost White */
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 198 93% 60%; /* Bright Cyan/Blue */
+    --primary-foreground: 222.2 47.4% 11.2%; /* Dark Blue */
+    
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 198 93% 60%; /* Bright Cyan/Blue */
+
+    --chart-1: 198 93% 60%;
+    --chart-2: 282 89% 67%;
+    --chart-3: 343 91% 65%;
+    --chart-4: 37 92% 56%;
+    --chart-5: 162 88% 50%;
+
+    /* Sidebar specific colors */
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 198 93% 60%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 198 93% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .text-gradient {
+    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--chart-2)), hsl(var(--chart-3)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes letter-float {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) rotateX(-90deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) rotateX(0);
+    }
+}
+
+@keyframes wave {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+@keyframes float-3d {
+  0% {
+    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotateX(10deg) rotateY(8deg);
+  }
+  100% {
+    transform: translateY(0px) rotateX(0deg) rotateY(0deg);
+  }
+}
+
+.animate-letter-float {
+    transform-style: preserve-3d;
+    transform-origin: bottom;
+    opacity: 0;
+    animation: letter-float 0.8s ease-out forwards;
+}
+
+.animate-wave {
+    animation: wave 2.5s ease-in-out infinite;
+}
+
+.animate-marquee {
+  animation: marquee 50s linear infinite;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.animate-pop {
+    animation: pop 0.3s ease-out;
+}
+
+.animate-float-3d {
+  animation: float-3d 8s ease-in-out infinite;
+}
+
+@property --a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(-100px) rotateX(90deg);
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+.letter.fall {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+}
+
+.animate-letter-fall-3d {
+  display: inline-block;
+}
+
+@keyframes letter-fall-3d {
+  0% {
+    transform: translateY(-100px) rotateX(90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) rotateX(0);
+    opacity: 1;
+  }
 }

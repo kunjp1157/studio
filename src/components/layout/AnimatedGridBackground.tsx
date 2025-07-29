@@ -1,20 +1,43 @@
-
 'use client';
 
-import { useEffect, useRef } from 'react';
+import type { Metadata } from 'next';
+import './globals.css';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { Toaster } from "@/components/ui/toaster"
+import { PageTransitionWrapper } from '@/components/layout/PageTransitionWrapper';
+import { usePathname } from 'next/navigation';
 
-export function AnimatedGridBackground() {
-  const sectionRef = useRef<HTMLDivElement>(null);
+// No static metadata here as the component is now client-side
 
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (section && section.children.length === 0) {
-      for (let i = 0; i < 300; i++) {
-        const span = document.createElement('span');
-        section.appendChild(span);
-      }
-    }
-  }, []);
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const pathname = usePathname();
+  
+  const isAdminOrOwnerPath = pathname.startsWith('/admin') || pathname.startsWith('/owner');
 
-  return <div ref={sectionRef} className="auth-grid-bg" />;
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>Sports Arena</title>
+        <meta name="description" content="Book sports facilities in your city with ease." />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body className="font-body antialiased min-h-screen flex flex-col">
+        {!isAdminOrOwnerPath && <Header />}
+        <main className="flex-grow">
+          <PageTransitionWrapper>
+            {children}
+          </PageTransitionWrapper>
+        </main>
+        {!isAdminOrOwnerPath && <Footer />}
+        <Toaster />
+      </body>
+    </html>
+  );
 }

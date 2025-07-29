@@ -18,7 +18,7 @@ import { User, LogOut, LayoutDashboard, CalendarDays, CreditCard, Heart, Group, 
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useState, useEffect } from 'react';
-import { staticUsers } from '@/lib/mock-data';
+import { getStaticUsers } from '@/lib/mock-data';
 
 
 export function UserNav() {
@@ -31,7 +31,12 @@ export function UserNav() {
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     } else {
-      setCurrentUser(null);
+      // If no user in session, set a default one (e.g., admin) for demo purposes
+      const defaultUser = getStaticUsers().find(u => u.role === 'Admin');
+      if (defaultUser) {
+        sessionStorage.setItem('activeUser', JSON.stringify(defaultUser));
+        setCurrentUser(defaultUser);
+      }
     }
     setIsLoading(false);
   };
@@ -58,7 +63,9 @@ export function UserNav() {
   const handleLogout = () => {
     sessionStorage.removeItem('activeUser');
     setCurrentUser(null);
-    router.push('/account/login');
+    // In a real app, you'd likely redirect to a login page.
+    // Since it's removed, we'll just refresh the page.
+    window.location.reload();
   };
 
   if (isLoading) {
@@ -68,12 +75,7 @@ export function UserNav() {
   if (!currentUser) {
     return (
         <div className="flex items-center gap-2">
-            <Button asChild>
-                <Link href="/account/login">Log In</Link>
-            </Button>
-             <Button variant="outline" asChild>
-                <Link href="/account/signup">Sign Up</Link>
-            </Button>
+            <p className="text-sm text-muted-foreground">No User</p>
         </div>
     );
   }

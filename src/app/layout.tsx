@@ -18,17 +18,7 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   
-  // Define public paths that should not have the main header/footer
-  const publicAuthPaths = [
-    '/account/login',
-    '/account/signup',
-    '/account/forgot-password'
-  ];
-
   const isAdminOrOwnerPath = pathname.startsWith('/admin') || pathname.startsWith('/owner');
-
-  // Determine if the current path is one of the public auth pages
-  const isPublicAuthPage = publicAuthPaths.includes(pathname);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -40,13 +30,13 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
-        {!isPublicAuthPage && !isAdminOrOwnerPath && <Header />}
+        {!isAdminOrOwnerPath && <Header />}
         <main className="flex-grow">
           <PageTransitionWrapper>
             {children}
           </PageTransitionWrapper>
         </main>
-        {!isPublicAuthPage && !isAdminOrOwnerPath && <Footer />}
+        {!isAdminOrOwnerPath && <Footer />}
         <Toaster />
       </body>
     </html>
