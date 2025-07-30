@@ -12,14 +12,14 @@ body {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
-    --card: 217.2 32.6% 17.5%;
+    --card: 222.2 84% 8%; /* Slightly lighter than background for depth */
     --card-foreground: 210 40% 98%;
 
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
     
-    --primary: 210 90% 55%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 22 91% 65%; /* Bright Orange */
+    --primary-foreground: 222.2 84% 4.9%; /* Dark Blue for text on orange */
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -27,33 +27,33 @@ body {
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
     
-    --accent: 343 91% 65%;
+    --accent: 210 90% 55%; /* Bright Blue */
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 50.6%; /* Vivid Red */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
+    --border: 217.2 32.6% 25%; /* Lighter border */
     --input: 217.2 32.6% 17.5%;
-    --ring: 210 90% 55%;
+    --ring: 22 91% 65%; /* Orange ring */
 
     --radius: 0.75rem;
 
-    --chart-1: 210 90% 55%;
-    --chart-2: 343 91% 65%;
+    --chart-1: 22 91% 65%; /* Orange */
+    --chart-2: 210 90% 55%; /* Blue */
     --chart-3: 162 88% 50%;
     --chart-4: 37 92% 56%;
     --chart-5: 282 88% 50%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-background: 222.2 84% 6%; /* Slightly different from main bg */
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 198 93% 60%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-primary: 22 91% 65%; /* Orange for active items */
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217.2 32.6% 20%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 198 93% 60%;
+    --sidebar-border: 217.2 32.6% 20%;
+    --sidebar-ring: 22 91% 65%;
 
     /* Auth Form Specific Colors */
     --auth-form-bg-dark: #2d2d39;
@@ -66,14 +66,14 @@ body {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
-    --card: 217.2 32.6% 17.5%;
+    --card: 222.2 84% 8%; /* Slightly lighter than background for depth */
     --card-foreground: 210 40% 98%;
 
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 90% 55%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 22 91% 65%; /* Bright Orange */
+    --primary-foreground: 222.2 84% 4.9%; /* Dark Blue for text on orange */
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -81,31 +81,31 @@ body {
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 343 91% 65%;
+    --accent: 210 90% 55%; /* Bright Blue */
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 50.6%; /* Vivid Red */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
+    --border: 217.2 32.6% 25%; /* Lighter border */
     --input: 217.2 32.6% 17.5%;
-    --ring: 210 90% 55%;
+    --ring: 22 91% 65%;
     
-    --chart-1: 210 90% 55%;
-    --chart-2: 343 91% 65%;
+    --chart-1: 22 91% 65%; /* Orange */
+    --chart-2: 210 90% 55%; /* Blue */
     --chart-3: 162 88% 50%;
     --chart-4: 37 92% 56%;
     --chart-5: 282 88% 50%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-background: 222.2 84% 6%; /* Slightly different from main bg */
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 198 93% 60%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-primary: 22 91% 65%; /* Orange for active items */
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217.2 32.6% 20%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 198 93% 60%;
+    --sidebar-border: 217.2 32.6% 20%;
+    --sidebar-ring: 22 91% 65%;
 
     /* Auth Form Specific Colors */
     --auth-form-bg-dark: #2d2d39;
@@ -202,6 +202,22 @@ body {
 .animate-glow {
   animation: glow 2.5s ease-in-out infinite;
 }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
 
 /* Auth Page Specific Styles */
 #background-section {
@@ -366,7 +382,7 @@ body {
     color: var(--auth-form-accent-pink);
     font-weight: 600;
 }
-.auth-group a:nth-child(2):hover { color: #ff6a9e; }
+.group a:nth-child(2):hover { color: #ff6a9e; }
 
 
 @media (max-width: 900px) {

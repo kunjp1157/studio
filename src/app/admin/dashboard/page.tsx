@@ -18,17 +18,17 @@ import type { Booking, UserProfile, Facility, SiteSettings } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const bookingsChartConfig = {
-  bookings: { label: 'Bookings', color: 'hsl(var(--chart-1))' },
-} satisfies ChartConfig;
-
 const revenueChartConfig = {
-  revenue: { label: 'Revenue', color: 'hsl(var(--chart-2))' },
+  revenue: { label: 'Revenue', color: 'hsl(var(--chart-1))' },
 } satisfies ChartConfig;
 
 const facilityUsageChartConfig = {
   bookings: { label: 'Bookings', color: 'hsl(var(--chart-1))' },
   facilityName: { label: 'Facility' },
+} satisfies ChartConfig;
+
+const popularSportsChartConfig = {
+  bookings: { label: 'Bookings', color: 'hsl(var(--chart-1))' },
 } satisfies ChartConfig;
 
 // Define a unified activity item type
@@ -63,7 +63,7 @@ const ActivityItem = ({ item, currency }: { item: ActivityFeedItemType, currency
             <Ticket className="h-3 w-3" /> {timeAgo}
           </p>
         </div>
-        <div className="text-sm font-semibold text-green-600 dark:text-green-500 text-right">
+        <div className="text-sm font-semibold text-green-400 text-right">
           {currency ? `+${formatCurrency(item.bookingData.totalPrice, currency)}` : <Skeleton className="h-5 w-16" />}
         </div>
       </div>
@@ -123,21 +123,13 @@ export default function AdminDashboardPage() {
     fetchData();
   }, []);
 
-  const { totalFacilities, activeUsers, totalBookingsThisMonth, totalRevenueThisMonth, monthlyBookingsData, monthlyRevenueData, facilityUsageData, activityFeed } = useMemo(() => {
+  const { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed } = useMemo(() => {
     const now = new Date();
-    const currentMonth = getMonth(now);
-    const currentYr = getYear(now);
-
+    
     const totalFacilities = facilities.length;
     const activeUsers = users.filter(u => u.status === 'Active').length;
-
-    const bookingsThisMonth = bookings.filter(b => {
-        const bookingDate = parseISO(b.bookedAt);
-        return getMonth(bookingDate) === currentMonth && getYear(bookingDate) === currentYr && b.status === 'Confirmed';
-    });
-
-    const totalBookingsThisMonth = bookingsThisMonth.length;
-    const totalRevenueThisMonth = bookingsThisMonth.reduce((sum, b) => sum + b.totalPrice, 0);
+    const totalBookings = bookings.filter(b => b.status === 'Confirmed').length;
+    const totalRevenue = bookings.filter(b => b.status === 'Confirmed').reduce((sum, b) => sum + b.totalPrice, 0);
 
     const last6Months: { month: string; year: number; monthKey: string }[] = [];
     for (let i = 5; i >= 0; i--) {
@@ -145,40 +137,32 @@ export default function AdminDashboardPage() {
         last6Months.push({ month: format(d, 'MMM'), year: getYear(d), monthKey: format(d, 'yyyy-MM') });
     }
 
-    const aggregatedBookings: Record<string, number> = {};
     const aggregatedRevenue: Record<string, number> = {};
-
     bookings.forEach(booking => {
         if (booking.status === 'Confirmed') {
             const bookingDate = parseISO(booking.bookedAt);
             const monthKey = format(bookingDate, 'yyyy-MM');
             if (last6Months.some(m => m.monthKey === monthKey)) {
-                aggregatedBookings[monthKey] = (aggregatedBookings[monthKey] || 0) + 1;
                 aggregatedRevenue[monthKey] = (aggregatedRevenue[monthKey] || 0) + booking.totalPrice;
             }
         }
     });
-
-    const monthlyBookingsData = last6Months.map(m => ({
-        month: m.month,
-        bookings: aggregatedBookings[m.monthKey] || 0,
-    }));
     const monthlyRevenueData = last6Months.map(m => ({
         month: m.month,
         revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
     }));
-
-    const facilityUsageMap = new Map<string, number>();
+    
+    const sportUsageMap = new Map<string, number>();
     bookings.forEach(booking => {
         if (booking.status === 'Confirmed') {
-            const facilityName = booking.facilityName || facilities.find(f => f.id === booking.facilityId)?.name || 'Unknown';
-            facilityUsageMap.set(facilityName, (facilityUsageMap.get(facilityName) || 0) + 1);
+            sportUsageMap.set(booking.sportName, (sportUsageMap.get(booking.sportName) || 0) + 1);
         }
     });
-    const facilityUsageData = Array.from(facilityUsageMap.entries()).map(([name, count]) => ({
-        facilityName: name,
-        bookings: count,
-    }));
+    const popularSportsData = Array.from(sportUsageMap.entries())
+        .map(([name, count]) => ({ sportName: name, bookings: count }))
+        .sort((a,b) => b.bookings - a.bookings)
+        .slice(0, 7);
+
 
     const bookingActivities: ActivityFeedItemType[] = bookings.map(b => ({
         type: 'booking',
@@ -187,18 +171,16 @@ export default function AdminDashboardPage() {
         facility: facilities.find(f => f.id === b.facilityId),
         bookingData: b,
     }));
-
     const newUserActivities: ActivityFeedItemType[] = users.map(u => ({
         type: 'newUser',
         timestamp: u.joinedAt,
         user: u,
     }));
-
     const combinedFeed = [...bookingActivities, ...newUserActivities]
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 7);
+        .slice(0, 5); // Limit to 5 for the new layout
 
-    return { totalFacilities, activeUsers, totalBookingsThisMonth, totalRevenueThisMonth, monthlyBookingsData, monthlyRevenueData, facilityUsageData, activityFeed: combinedFeed };
+    return { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed: combinedFeed };
   }, [facilities, users, bookings]);
 
 
@@ -207,10 +189,10 @@ export default function AdminDashboardPage() {
         <div className="space-y-8">
             <PageTitle title="Admin Dashboard" description="Overview of Sports Arena activities and performance." />
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Revenue (This Month)</CardTitle><DollarSign className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-28" /><Skeleton className="h-4 w-24 mt-1" /></CardContent></Card>
-                <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Bookings (This Month)</CardTitle><Ticket className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /><Skeleton className="h-4 w-20 mt-1" /></CardContent></Card>
-                <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Active Users</CardTitle><Users className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /><Skeleton className="h-4 w-16 mt-1" /></CardContent></Card>
-                <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Listed Facilities</CardTitle><Building2 className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /><Skeleton className="h-4 w-20 mt-1" /></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Revenue</CardTitle><DollarSign className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-28" /></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Bookings</CardTitle><Ticket className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Active Users</CardTitle><Users className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Listed Facilities</CardTitle><Building2 className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
              </div>
              <Skeleton className="h-[400px] w-full" />
         </div>
@@ -222,29 +204,29 @@ export default function AdminDashboardPage() {
       <PageTitle title="Admin Dashboard" description="Overview of Sports Arena activities and performance." />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-md">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue (This Month)</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {currency ? formatCurrency(totalRevenueThisMonth, currency) : <Skeleton className="h-8 w-28" />}
+              {currency ? formatCurrency(totalRevenue, currency) : <Skeleton className="h-8 w-28" />}
             </div>
-            <p className="text-xs text-muted-foreground">+15.2% from last month (mock)</p>
+            <p className="text-xs text-muted-foreground">Based on all confirmed bookings</p>
           </CardContent>
         </Card>
-        <Card className="shadow-md">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings (This Month)</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
             <Ticket className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalBookingsThisMonth.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">+8.1% from last month (mock)</p>
+            <div className="text-2xl font-bold">{totalBookings.toLocaleString()}</div>
+             <p className="text-xs text-muted-foreground">All confirmed bookings</p>
           </CardContent>
         </Card>
-        <Card className="shadow-md">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
             <Users className="h-5 w-5 text-muted-foreground" />
@@ -254,7 +236,7 @@ export default function AdminDashboardPage() {
             <p className="text-xs text-muted-foreground">Platform-wide</p>
           </CardContent>
         </Card>
-        <Card className="shadow-md">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Listed Facilities</CardTitle>
             <Building2 className="h-5 w-5 text-muted-foreground" />
@@ -266,44 +248,25 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <AnalyticsChart
-          title="Monthly Bookings (Last 6 Months)"
-          description="Total confirmed bookings per month."
-          data={monthlyBookingsData}
-          chartConfig={bookingsChartConfig}
-          type="bar"
-          dataKey="bookings"
-          categoryKey="month"
-        />
-        <AnalyticsChart
-          title="Monthly Revenue (Last 6 Months)"
-          description="Total confirmed revenue per month."
+          title="Monthly Revenue"
+          description="Revenue from last 6 months."
           data={monthlyRevenueData}
           chartConfig={revenueChartConfig}
           type="line"
           dataKey="revenue"
           categoryKey="month"
+          className="lg:col-span-2"
         />
-      </div>
-       <div className="grid gap-6 lg:grid-cols-2">
-         <AnalyticsChart
-            title="Facility Usage (All Time Bookings)"
-            description="Total bookings per facility."
-            data={facilityUsageData}
-            chartConfig={facilityUsageChartConfig}
-            type="pie"
-            categoryKey="facilityName" 
-            valueKey="bookings"   
-         />
-         <Card className="shadow-lg">
+         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center">
-                    <Activity className="mr-2 h-6 w-6 text-primary" />
+                    <Activity className="mr-2 h-5 w-5" />
                     Recent Activity
                 </CardTitle>
                 <CardDescription>
-                  A feed of recent platform activities like new bookings and user registrations.
+                  Latest bookings and new user registrations.
                 </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -318,6 +281,17 @@ export default function AdminDashboardPage() {
               </div>
             </CardContent>
          </Card>
+      </div>
+       <div className="grid gap-6">
+         <AnalyticsChart
+            title="Popular Sports"
+            description="Booking counts for the most popular sports."
+            data={popularSportsData}
+            chartConfig={popularSportsChartConfig}
+            type="bar"
+            dataKey="bookings"
+            categoryKey="sportName"
+         />
        </div>
     </div>
   );

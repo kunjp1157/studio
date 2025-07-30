@@ -29,10 +29,11 @@ interface AnalyticsChartProps<TData extends object> {
   data: TData[];
   chartConfig: ChartConfig;
   type: 'bar' | 'line' | 'pie';
-  dataKey: keyof TData; // For bar/line charts (Y-axis)
-  categoryKey: keyof TData; // For bar/line charts (X-axis) or pie chart segments
-  valueKey?: keyof TData; // For pie chart values
-  colors?: string[]; // For pie chart
+  dataKey: keyof TData;
+  categoryKey: keyof TData;
+  valueKey?: keyof TData;
+  colors?: string[];
+  className?: string;
 }
 
 
@@ -71,8 +72,9 @@ export function AnalyticsChart<TData extends object>({
   type,
   dataKey,
   categoryKey,
-  valueKey, // Only for pie
+  valueKey,
   colors = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'],
+  className
 }: AnalyticsChartProps<TData>) {
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -127,10 +129,9 @@ export function AnalyticsChart<TData extends object>({
 
 
   return (
-    <Card className="shadow-lg">
+    <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <TrendingUp className="h-6 w-6 mr-2 text-primary" />
           {title}
         </CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
@@ -145,28 +146,20 @@ export function AnalyticsChart<TData extends object>({
                 tickLine={false}
                 tickMargin={10}
                 axisLine={false}
-                tickFormatter={(value) => typeof value === 'string' ? value.slice(0, 3) : value}
+                tickFormatter={(value) => typeof value === 'string' ? value : value}
               />
               <YAxis />
               <ShadChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-              <Bar dataKey={dataKey as string} fill={`var(--color-${String(dataKey)})`} radius={8}>
-                <LabelList
-                    position="top"
-                    offset={12}
-                    fill="hsl(var(--foreground))"
-                    fontSize={12}
-                />
-              </Bar>
+              <Bar dataKey={dataKey as string} fill="var(--color-bookings)" radius={4} />
             </BarChart>
           )}
           {type === 'line' && (
-            <LineChart accessibilityLayer data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <LineChart accessibilityLayer data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid vertical={false} />
               <XAxis dataKey={categoryKey as string} tickLine={false} axisLine={false} tickMargin={8} />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+              <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value) => `₹${Number(value) / 1000}k`} />
               <ShadChartTooltip cursor={false} content={<DefaultChartTooltipContent config={chartConfig}/>} />
-              <Line type="monotone" dataKey={dataKey as string} stroke={`var(--color-${String(dataKey)})`} strokeWidth={2} dot={true} />
-              <ChartLegend content={<ChartLegendContent />} />
+              <Line type="monotone" dataKey={dataKey as string} stroke={`var(--color-${String(dataKey)})`} strokeWidth={3} dot={false} />
             </LineChart>
           )}
           {type === 'pie' && valueKey && (
@@ -196,14 +189,6 @@ export function AnalyticsChart<TData extends object>({
           )}
         </ChartContainer>
       </CardContent>
-      {/* <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
-        </div>
-      </CardFooter> */}
     </Card>
   );
 }
