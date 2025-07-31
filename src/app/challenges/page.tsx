@@ -16,7 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, getOpenChallenges, createChallenge, acceptChallenge, mockSports, getUserById, getSportById } from '@/lib/data';
+import { mockUser, getOpenChallenges, createChallenge, acceptChallenge, getUserById, getSportById } from '@/lib/data';
+import { getMockSports } from '@/lib/mock-data';
 import type { Challenge, UserProfile, Sport } from '@/lib/types';
 import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, CalendarDays, BookUser } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -94,6 +95,7 @@ export default function ChallengesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sportFilter, setSportFilter] = useState<string>('all');
+  const [mockSports, setMockSports] = useState<Sport[]>([]);
   const { toast } = useToast();
 
   const form = useForm<ChallengeFormValues>({
@@ -103,6 +105,7 @@ export default function ChallengesPage() {
 
   useEffect(() => {
     setIsLoading(true);
+    setMockSports(getMockSports());
     setTimeout(() => {
       setChallenges(getOpenChallenges());
       setIsLoading(false);
