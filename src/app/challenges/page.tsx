@@ -21,12 +21,16 @@ import { getMockSports } from '@/lib/mock-data';
 import type { Challenge, UserProfile, Sport } from '@/lib/types';
 import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, CalendarDays, BookUser } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, parseISO, startOfDay } from 'date-fns';
 import { getIconComponent } from '@/components/shared/Icon';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 const challengeFormSchema = z.object({
   sportId: z.string({ required_error: "Please select a sport." }),
-  proposedDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Please select a valid date and time." }),
+  proposedDate: z.date({ required_error: "Please select a date." }),
+  proposedTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time (HH:MM)." }),
   notes: z.string().min(10, { message: "Please provide a few more details (min 10 characters)." }).max(280, { message: "Notes cannot exceed 280 characters." }),
 });
 
@@ -100,7 +104,7 @@ export default function ChallengesPage() {
 
   const form = useForm<ChallengeFormValues>({
     resolver: zodResolver(challengeFormSchema),
-    defaultValues: { sportId: '', proposedDate: '', notes: '' },
+    defaultValues: { sportId: '', proposedTime: '', notes: '' },
   });
 
   useEffect(() => {
@@ -114,8 +118,18 @@ export default function ChallengesPage() {
   
   const onSubmit = async (data: ChallengeFormValues) => {
     setIsSubmitting(true);
+    
+    const [hours, minutes] = data.proposedTime.split(':').map(Number);
+    const combinedDateTime = new Date(data.proposedDate);
+    combinedDateTime.setHours(hours, minutes);
+
     await new Promise(resolve => setTimeout(resolve, 700));
-    const updatedChallenges = createChallenge({ ...data, challengerId: mockUser.id });
+    const updatedChallenges = createChallenge({ 
+        challengerId: mockUser.id,
+        sportId: data.sportId,
+        notes: data.notes,
+        proposedDate: combinedDateTime.toISOString(),
+    });
     setChallenges(updatedChallenges);
     toast({
         title: "Challenge Issued!",
@@ -162,17 +176,58 @@ export default function ChallengesPage() {
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="proposedDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Proposed Date & Time</FormLabel>
-                                    <FormControl><Input type="datetime-local" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="proposedDate"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Proposed Date</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                    "w-full pl-3 text-left font-normal",
+                                                    !field.value && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {field.value ? (
+                                                    format(field.value, "PPP")
+                                                    ) : (
+                                                    <span>Pick a date</span>
+                                                    )}
+                                                    <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date) => date < startOfDay(new Date())}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="proposedTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Proposed Time</FormLabel>
+                                        <FormControl><Input type="time" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <FormField
                             control={form.control}
                             name="notes"
