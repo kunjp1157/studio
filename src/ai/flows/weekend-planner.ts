@@ -41,12 +41,12 @@ export type PlanWeekendOutput = z.infer<typeof PlanWeekendOutputSchema>;
 
 // The main exported function that the UI will call
 export async function planWeekend(input: PlanWeekendInput): Promise<PlanWeekendOutput> {
-  const facilities = getAllFacilities();
+  const facilities = await getAllFacilities();
   const settings = getSiteSettings();
 
   const facilityContext = facilities
     .map(f => {
-        const minPrice = f.sportPrices.length > 0 ? Math.min(...f.sportPrices.map(p => p.pricePerHour)) : 0;
+        const minPrice = f.sportPrices.length > 0 ? Math.min(...f.sportPrices.map(p => p.price)) : 0;
         return `- ${f.name} (Sports: ${f.sports.map(s => s.name).join(', ')}), Location: ${f.location}, Price from: ${minPrice} ${settings.defaultCurrency}/hr`;
     })
     .join('\n');
