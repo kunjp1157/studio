@@ -358,12 +358,13 @@ export const getOpenChallenges = (): Challenge[] => {
     return mockChallenges.filter(c => c.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
-export const createChallenge = (data: { challengerId: string; sportId: string; proposedDate: string; notes: string }): Challenge[] => {
+export const createChallenge = (data: { challengerId: string; sportId: string; facilityId: string; proposedDate: string; notes: string }): Challenge[] => {
     const challenger = getUserById(data.challengerId);
     const sport = getSportById(data.sportId);
+    const facility = mockFacilities.find(f => f.id === data.facilityId);
 
-    if (!challenger || !sport) {
-        throw new Error("Invalid challenger or sport ID");
+    if (!challenger || !sport || !facility) {
+        throw new Error("Invalid challenger, sport, or facility ID");
     }
 
     const newChallenge: Challenge = {
@@ -371,6 +372,8 @@ export const createChallenge = (data: { challengerId: string; sportId: string; p
         challengerId: data.challengerId,
         challenger,
         sport,
+        facilityId: data.facilityId,
+        facilityName: facility.name,
         proposedDate: new Date(data.proposedDate).toISOString(),
         notes: data.notes,
         status: 'open',

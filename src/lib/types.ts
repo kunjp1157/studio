@@ -2,6 +2,7 @@
 
 
 
+
 export interface Team {
   id: string;
   name: string;
@@ -336,6 +337,8 @@ export interface Challenge {
   opponentId?: string;
   opponent?: UserProfile;
   sport: Sport;
+  facilityId: string;
+  facilityName: string;
   proposedDate: string; // ISO string
   notes: string;
   status: 'open' | 'accepted' | 'completed' | 'cancelled';

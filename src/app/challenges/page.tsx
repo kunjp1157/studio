@@ -16,10 +16,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { getOpenChallenges, createChallenge, acceptChallenge, getUserById, getSportById } from '@/lib/data';
+import { getOpenChallenges, createChallenge, acceptChallenge, getUserById, getSportById, getFacilityById } from '@/lib/data';
 import { getMockSports } from '@/lib/mock-data';
-import type { Challenge, UserProfile, Sport } from '@/lib/types';
-import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, CalendarDays, BookUser } from 'lucide-react';
+import { getAllFacilitiesAction } from '@/app/actions';
+import type { Challenge, UserProfile, Sport, Facility } from '@/lib/types';
+import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, CalendarDays, BookUser, Building } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, formatDistanceToNow, parseISO, startOfDay } from 'date-fns';
 import { getIconComponent } from '@/components/shared/Icon';
@@ -29,6 +30,7 @@ import { cn } from '@/lib/utils';
 
 const challengeFormSchema = z.object({
   sportId: z.string({ required_error: "Please select a sport." }),
+  facilityId: z.string({ required_error: "Please select a venue." }),
   proposedDate: z.date({ required_error: "Please select a date." }),
   proposedTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Please enter a valid time (HH:MM)." }),
   notes: z.string().min(10, { message: "Please provide a few more details (min 10 characters)." }).max(280, { message: "Notes cannot exceed 280 characters." }),
@@ -80,6 +82,10 @@ const ChallengeCard = ({ challenge, onAccept, currentUser }: { challenge: Challe
                     <span>Challenge for a game of {challenge.sport.name}</span>
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground gap-1.5">
+                    <Building className="h-4 w-4"/>
+                    Venue: {challenge.facilityName}
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground gap-1.5">
                     <CalendarDays className="h-4 w-4"/> 
                     Proposed for: {format(parseISO(challenge.proposedDate), 'MMM d, yyyy @ p')}
                 </div>
@@ -102,12 +108,13 @@ export default function ChallengesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [mockSports, setMockSports] = useState<Sport[]>([]);
+  const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
   const form = useForm<ChallengeFormValues>({
     resolver: zodResolver(challengeFormSchema),
-    defaultValues: { sportId: '', proposedTime: '', notes: '' },
+    defaultValues: { sportId: '', facilityId: '', proposedTime: '', notes: '' },
   });
   
   useEffect(() => {
@@ -120,6 +127,11 @@ export default function ChallengesPage() {
   useEffect(() => {
     setIsLoading(true);
     setMockSports(getMockSports());
+    const fetchFacilities = async () => {
+        const facilitiesData = await getAllFacilitiesAction();
+        setAllFacilities(facilitiesData);
+    };
+    fetchFacilities();
     setTimeout(() => {
       setChallenges(getOpenChallenges());
       setIsLoading(false);
@@ -141,6 +153,7 @@ export default function ChallengesPage() {
     const updatedChallenges = createChallenge({ 
         challengerId: currentUser.id,
         sportId: data.sportId,
+        facilityId: data.facilityId,
         notes: data.notes,
         proposedDate: combinedDateTime.toISOString(),
     });
@@ -194,13 +207,27 @@ export default function ChallengesPage() {
                                 </FormItem>
                             )}
                         />
+                         <FormField
+                            control={form.control}
+                            name="facilityId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Venue</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a venue" /></SelectTrigger></FormControl>
+                                        <SelectContent>{allFacilities.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="proposedDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Proposed Date</FormLabel>
+                                        <FormLabel>Date</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -239,7 +266,7 @@ export default function ChallengesPage() {
                                 name="proposedTime"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Proposed Time</FormLabel>
+                                        <FormLabel>Time</FormLabel>
                                         <FormControl><Input type="time" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
