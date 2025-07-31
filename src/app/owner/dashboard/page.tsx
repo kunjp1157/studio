@@ -45,33 +45,33 @@ export default function OwnerDashboardPage() {
     return () => window.removeEventListener('userChanged', handleUserChange);
   }, []);
 
+  const fetchData = async () => {
+    if (!currentUser) return;
+    
+    setIsLoading(true);
+    try {
+        const [settings, ownerFacilities, allBookings] = await Promise.all([
+            getSiteSettingsAction(),
+            getFacilitiesByOwnerIdAction(currentUser.id),
+            getAllBookingsAction()
+        ]);
+        
+        setCurrency(settings.defaultCurrency);
+        setFacilities(ownerFacilities);
+
+        const facilityIds = ownerFacilities.map(f => f.id);
+        const ownerBookings = allBookings.filter(b => facilityIds.includes(b.facilityId));
+        setBookings(ownerBookings);
+
+    } catch (error) {
+        console.error("Error fetching owner dashboard data:", error);
+    } finally {
+        setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-        if (!currentUser) return;
-        
-        setIsLoading(true);
-        try {
-            const [settings, ownerFacilities, allBookings] = await Promise.all([
-                getSiteSettingsAction(),
-                getFacilitiesByOwnerIdAction(currentUser.id),
-                getAllBookingsAction()
-            ]);
-            
-            setCurrency(settings.defaultCurrency);
-            setFacilities(ownerFacilities);
-
-            const facilityIds = ownerFacilities.map(f => f.id);
-            const ownerBookings = allBookings.filter(b => facilityIds.includes(b.facilityId));
-            setBookings(ownerBookings);
-
-        } catch (error) {
-            console.error("Error fetching owner dashboard data:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
+    
     fetchData();
     
     window.addEventListener('dataChanged', fetchData);

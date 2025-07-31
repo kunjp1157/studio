@@ -98,24 +98,25 @@ export default function AdminDashboardPage() {
 
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchData = async () => {
+    setIsLoading(true);
+    const [facilitiesData, usersData, bookingsData, settingsData] = await Promise.all([
+        getFacilitiesAction(),
+        getUsersAction(),
+        getAllBookingsAction(),
+        getSiteSettingsAction()
+    ]);
+    setFacilities(facilitiesData);
+    setUsers(usersData);
+    setBookings(bookingsData);
+    setCurrency(settingsData.defaultCurrency);
+    setIsLoading(false);
+  }
+    
   useEffect(() => {
-    
-    const fetchData = async () => {
-        setIsLoading(true);
-        const [facilitiesData, usersData, bookingsData, settingsData] = await Promise.all([
-            getFacilitiesAction(),
-            getUsersAction(),
-            getAllBookingsAction(),
-            getSiteSettingsAction()
-        ]);
-        setFacilities(facilitiesData);
-        setUsers(usersData);
-        setBookings(bookingsData);
-        setCurrency(settingsData.defaultCurrency);
-        setIsLoading(false);
-    }
-    
     fetchData();
+    window.addEventListener('dataChanged', fetchData);
+    return () => window.removeEventListener('dataChanged', fetchData);
   }, []);
 
   const { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed } = useMemo(() => {

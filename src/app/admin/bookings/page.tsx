@@ -59,29 +59,32 @@ export default function AdminBookingsPage() {
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            const [bookingsData, settingsData, usersData, facilitiesData] = await Promise.all([
-                getAllBookingsAction(),
-                getSiteSettingsAction(),
-                getUsersAction(),
-                getFacilitiesAction(),
-            ]);
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+        const [bookingsData, settingsData, usersData, facilitiesData] = await Promise.all([
+            getAllBookingsAction(),
+            getSiteSettingsAction(),
+            getUsersAction(),
+            getFacilitiesAction(),
+        ]);
 
-            setAllBookings(bookingsData);
-            setCurrency(settingsData.defaultCurrency);
-            setUsers(usersData.reduce((acc, user) => { acc[user.id] = user; return acc; }, {} as Record<string, UserProfile>));
-            setFacilities(facilitiesData.reduce((acc, facility) => { acc[facility.id] = facility; return acc; }, {} as Record<string, Facility>));
+        setAllBookings(bookingsData);
+        setCurrency(settingsData.defaultCurrency);
+        setUsers(usersData.reduce((acc, user) => { acc[user.id] = user; return acc; }, {} as Record<string, UserProfile>));
+        setFacilities(facilitiesData.reduce((acc, facility) => { acc[facility.id] = facility; return acc; }, {} as Record<string, Facility>));
 
-        } catch (error) {
-             toast({ title: "Error", description: "Could not load bookings data.", variant: "destructive" });
-        } finally {
-            setIsLoading(false);
-        }
+    } catch (error) {
+         toast({ title: "Error", description: "Could not load bookings data.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchData();
+    window.addEventListener('dataChanged', fetchData);
+    return () => window.removeEventListener('dataChanged', fetchData);
   }, [toast]);
 
 

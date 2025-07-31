@@ -1,4 +1,5 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { getStaticUsers, getStaticFacilities, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -71,7 +72,7 @@ let mockBlogPosts: BlogPost[] = [
       <ul>
         <li><strong>Fast-Paced:</strong> With a smaller playing area, every ball is an event. There's no downtime waiting for the ball to be retrieved from the boundary.</li>
         <li><strong>Accessible:</strong> You don't need a full team of 11 players. Games are often played with 6-8 players per side.</li>
-        <li><strong>All-Weather Play:</strong> Many box cricket venues are covered or indoors, meaning you can play rain or shine.</li>
+        <li><strong>All-Weather Play:</strong> Many of our listed facilities are covered or indoors, meaning you can play rain or shine.</li>
         <li><strong>Great for All Skill Levels:</strong> It's a fun way for beginners to learn the basics and for experienced players to sharpen their reflexes.</li>
       </ul>
       <p>Many of our listed facilities, like The Box Yard, offer excellent box cricket arenas. It's a fantastic way to get a great workout and have fun with friends. Give it a try!</p>
@@ -181,6 +182,7 @@ export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<F
         id: `facility-${Date.now()}-${Math.random()}`
     };
     mockFacilities.push(newFacility);
+    window.dispatchEvent(new CustomEvent('dataChanged'));
     return Promise.resolve(newFacility);
 };
 
@@ -188,6 +190,7 @@ export const updateFacility = async (facilityData: Facility): Promise<Facility> 
     const index = mockFacilities.findIndex(f => f.id === facilityData.id);
     if (index !== -1) {
         mockFacilities[index] = facilityData;
+        window.dispatchEvent(new CustomEvent('dataChanged'));
         return Promise.resolve(mockFacilities[index]);
     }
     throw new Error("Facility not found for update");
@@ -197,6 +200,7 @@ export const deleteFacility = async (facilityId: string): Promise<void> => {
     const index = mockFacilities.findIndex(f => f.id === facilityId);
     if (index > -1) {
         mockFacilities.splice(index, 1);
+        window.dispatchEvent(new CustomEvent('dataChanged'));
     }
     return Promise.resolve();
 };
@@ -212,6 +216,7 @@ export const addBooking = async (bookingData: Omit<Booking, 'id' | 'bookedAt'>):
         bookedAt: new Date().toISOString()
     };
     mockBookings.push(newBooking);
+    window.dispatchEvent(new CustomEvent('dataChanged'));
     return Promise.resolve(newBooking);
 };
 
@@ -219,6 +224,7 @@ export const updateBooking = async (bookingId: string, updates: Partial<Booking>
     const bookingIndex = mockBookings.findIndex(b => b.id === bookingId);
     if (bookingIndex > -1) {
         mockBookings[bookingIndex] = { ...mockBookings[bookingIndex], ...updates };
+        window.dispatchEvent(new CustomEvent('dataChanged'));
         return Promise.resolve(mockBookings[bookingIndex]);
     }
     return Promise.resolve(undefined);
@@ -234,6 +240,7 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
         if (mockUser?.id === userId) {
             mockUser = mockUsers[userIndex];
         }
+        window.dispatchEvent(new CustomEvent('dataChanged'));
         return mockUsers[userIndex];
     }
     return undefined;
@@ -264,6 +271,7 @@ export const addUser = async (userData: { name: string, email: string }): Promis
     };
 
     mockUsers.push(newUser);
+    window.dispatchEvent(new CustomEvent('dataChanged'));
     resolve(newUser);
   });
 };
@@ -297,7 +305,7 @@ export const calculateAverageRating = (reviews: Review[] | undefined): number =>
 };
 
 export const getReviewsByFacilityId = (facilityId: string): Review[] => mockReviews.filter(review => review.facilityId === facilityId);
-export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === teamId);
+export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === team.id);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
 export const getNotificationsForUser = async (userId: string): Promise<AppNotification[]> => Promise.resolve(mockAppNotifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
 export const getAllBlogPosts = (): BlogPost[] => mockBlogPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
@@ -325,6 +333,7 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
 
 export const updateSiteSettings = (updates: Partial<SiteSettings>): SiteSettings => {
     mockSiteSettings = { ...mockSiteSettings, ...updates };
+    window.dispatchEvent(new CustomEvent('settingsChanged'));
     return mockSiteSettings;
 };
 export const createTeam = (teamData: { name: string; sportId: string; captainId: string }): Team => {
@@ -335,6 +344,7 @@ export const createTeam = (teamData: { name: string; sportId: string; captainId:
   if (mockUser) {
     updateUser(teamData.captainId, { teamIds: [...(mockUser.teamIds || []), newTeam.id] });
   }
+  window.dispatchEvent(new CustomEvent('dataChanged'));
   return newTeam;
 };
 export const leaveTeam = (teamId: string, userId: string): boolean => {
@@ -355,6 +365,7 @@ export const leaveTeam = (teamId: string, userId: string): boolean => {
   if (mockUser) {
     updateUser(userId, { teamIds: mockUser.teamIds?.filter(id => id !== teamId) });
   }
+  window.dispatchEvent(new CustomEvent('dataChanged'));
   return true;
 };
 
@@ -369,6 +380,7 @@ export const removeUserFromTeam = (teamId: string, memberIdToRemove: string, cap
     if (userToRemove) {
       updateUser(memberIdToRemove, { teamIds: userToRemove.teamIds?.filter(id => id !== teamId) });
     }
+    window.dispatchEvent(new CustomEvent('dataChanged'));
 };
 
 export const transferCaptaincy = (teamId: string, newCaptainId: string, oldCaptainId: string): void => {
@@ -378,6 +390,7 @@ export const transferCaptaincy = (teamId: string, newCaptainId: string, oldCapta
     if (!team.memberIds.includes(newCaptainId)) throw new Error("The new captain must be a member of the team.");
     
     team.captainId = newCaptainId;
+    window.dispatchEvent(new CustomEvent('dataChanged'));
 };
 
 export const deleteTeam = (teamId: string, captainId: string): void => {
@@ -394,6 +407,7 @@ export const deleteTeam = (teamId: string, captainId: string): void => {
     });
 
     mockTeams.splice(teamIndex, 1);
+    window.dispatchEvent(new CustomEvent('dataChanged'));
 };
 
 
@@ -411,7 +425,7 @@ export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'u
     const newRating = calculateAverageRating(reviews);
     await updateFacility({ ...facility, reviews, rating: newRating });
   }
-
+  window.dispatchEvent(new CustomEvent('dataChanged'));
   return newReview;
 };
 
@@ -430,6 +444,7 @@ export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt
         facilityName: facility.name
     };
     mockLfgRequests.unshift(newRequest);
+    window.dispatchEvent(new CustomEvent('dataChanged'));
     return getOpenLfgRequests();
 };
 
@@ -438,6 +453,7 @@ export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[
     if (request && !request.interestedUserIds.includes(userId) && request.userId !== userId) {
         request.interestedUserIds.push(userId);
     }
+    window.dispatchEvent(new CustomEvent('dataChanged'));
     return getOpenLfgRequests();
 };
 
@@ -467,6 +483,7 @@ export const createChallenge = (data: { challengerId: string; sportId: string; f
         createdAt: new Date().toISOString(),
     };
     mockChallenges.unshift(newChallenge);
+    window.dispatchEvent(new CustomEvent('dataChanged'));
     return getOpenChallenges();
 };
 
@@ -489,6 +506,7 @@ export const acceptChallenge = (challengeId: string, opponentId: string): Challe
     } else {
         throw new Error("Failed to accept challenge. It might already be taken or you cannot accept your own challenge.");
     }
+    window.dispatchEvent(new CustomEvent('dataChanged'));
     return getOpenChallenges();
 };
 
@@ -514,6 +532,7 @@ export const addEvent = async (event: Omit<SportEvent, 'id' | 'sport' | 'registe
             facilityName: facility.name 
         };
         mockEvents.push(newEvent);
+        window.dispatchEvent(new CustomEvent('dataChanged'));
     } else {
         console.error("Could not create event: Sport or Facility not found.");
     }
@@ -527,17 +546,18 @@ export const updateEvent = async (eventData: Omit<SportEvent, 'sport'> & { sport
             return;
         }
         mockEvents[index] = { ...mockEvents[index], ...eventData, sport: sport };
+        window.dispatchEvent(new CustomEvent('dataChanged'));
     }
 };
-export const deleteEvent = (id: string): void => { mockEvents = mockEvents.filter(e => e.id !== id); };
-export const registerForEvent = (eventId: string): boolean => { const event = mockEvents.find(e => e.id === eventId); if (event && (!event.maxParticipants || event.registeredParticipants < event.maxParticipants)) { event.registeredParticipants++; return true; } return false; };
-export const addPricingRule = (rule: Omit<PricingRule, 'id'>): void => { mockPricingRules.push({ ...rule, id: `pr-${Date.now()}` }); };
-export const updatePricingRule = (rule: PricingRule): void => { const index = mockPricingRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPricingRules[index] = rule; };
-export const deletePricingRule = (id: string): void => { mockPricingRules = mockPricingRules.filter(r => r.id !== id); };
-export const addPromotionRule = (rule: Omit<PromotionRule, 'id'>): void => { mockPromotionRules.push({ ...rule, id: `promo-${Date.now()}` }); };
-export const updatePromotionRule = (rule: PromotionRule): void => { const index = mockPromotionRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPromotionRules[index] = rule; };
+export const deleteEvent = (id: string): void => { mockEvents = mockEvents.filter(e => e.id !== id); window.dispatchEvent(new CustomEvent('dataChanged')); };
+export const registerForEvent = (eventId: string): boolean => { const event = mockEvents.find(e => e.id === eventId); if (event && (!event.maxParticipants || event.registeredParticipants < event.maxParticipants)) { event.registeredParticipants++; window.dispatchEvent(new CustomEvent('dataChanged')); return true; } return false; };
+export const addPricingRule = (rule: Omit<PricingRule, 'id'>): void => { mockPricingRules.push({ ...rule, id: `pr-${Date.now()}` }); window.dispatchEvent(new CustomEvent('dataChanged')); };
+export const updatePricingRule = (rule: PricingRule): void => { const index = mockPricingRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPricingRules[index] = rule; window.dispatchEvent(new CustomEvent('dataChanged')); };
+export const deletePricingRule = (id: string): void => { mockPricingRules = mockPricingRules.filter(r => r.id !== id); window.dispatchEvent(new CustomEvent('dataChanged')); };
+export const addPromotionRule = (rule: Omit<PromotionRule, 'id'>): void => { mockPromotionRules.push({ ...rule, id: `promo-${Date.now()}` }); window.dispatchEvent(new CustomEvent('dataChanged')); };
+export const updatePromotionRule = (rule: PromotionRule): void => { const index = mockPromotionRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPromotionRules[index] = rule; window.dispatchEvent(new CustomEvent('dataChanged')); };
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => Promise.resolve(mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive));
-export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
+export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); window.dispatchEvent(new CustomEvent('dataChanged')); };
 export async function listenToOwnerBookings(ownerId: string, callback: (bookings: Booking[]) => void, onError: (error: Error) => void): Promise<() => void> {
     const facilities = await getFacilitiesByOwnerId(ownerId);
     const facilityIds = facilities.map(f => f.id);
@@ -558,6 +578,7 @@ export const blockTimeSlot = async (facilityId: string, ownerId: string, newBloc
            facility.blockedSlots = [];
        }
        facility.blockedSlots.push(newBlock);
+       window.dispatchEvent(new CustomEvent('dataChanged'));
        return true;
    }
    return false;
@@ -568,6 +589,7 @@ export const unblockTimeSlot = async (facilityId: string, ownerId: string, date:
     if (facility && facility.blockedSlots) {
         const initialLength = facility.blockedSlots.length;
         facility.blockedSlots = facility.blockedSlots.filter(s => !(s.date === date && s.startTime === startTime));
+        window.dispatchEvent(new CustomEvent('dataChanged'));
         return facility.blockedSlots.length < initialLength;
     }
     return false;
@@ -638,6 +660,7 @@ export const listenToAllPricingRules = (
 
 export const deletePromotionRule = (id: string): void => {
     mockPromotionRules = mockPromotionRules.filter(p => p.id !== id);
+    window.dispatchEvent(new CustomEvent('dataChanged'));
 }
 
 
@@ -669,6 +692,7 @@ export const addSport = async (sportData: Omit<Sport, 'id'>): Promise<Sport> => 
         id: `sport-${Date.now()}`
     };
     getMockSports().push(newSport);
+    window.dispatchEvent(new CustomEvent('dataChanged'));
     return Promise.resolve(newSport);
 };
 
@@ -677,6 +701,7 @@ export const updateSport = async (sportId: string, sportData: Partial<Sport>): P
     const index = sports.findIndex(s => s.id === sportId);
     if (index !== -1) {
         sports[index] = { ...sports[index], ...sportData };
+        window.dispatchEvent(new CustomEvent('dataChanged'));
         return Promise.resolve(sports[index]);
     }
     throw new Error("Sport not found for update.");
@@ -687,6 +712,7 @@ export const deleteSport = async (sportId: string): Promise<void> => {
     const index = sports.findIndex(s => s.id === sportId);
     if (index > -1) {
         sports.splice(index, 1);
+        window.dispatchEvent(new CustomEvent('dataChanged'));
     }
     return Promise.resolve();
 };
