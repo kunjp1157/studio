@@ -1,5 +1,4 @@
-// This file is intentionally left minimal to resolve a build conflict.
-// The primary page for this route is located at /src/app/facilities/page.tsx.
-export default function ConflictingFacilitiesPage() {
+// This file is intentionally left blank to remove the duplicate route.
+export default function Page() {
   return null;
 }
