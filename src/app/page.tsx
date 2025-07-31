@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 // This is just a redirector component.
-// It redirects to the main login page.
+// It redirects to the main dashboard page.
 export default function RootPage() {
     const router = useRouter();
 
     useEffect(() => {
-        router.replace('/account/login');
+        router.replace('/dashboard');
     }, [router]);
 
     return (
