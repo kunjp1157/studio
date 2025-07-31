@@ -22,11 +22,6 @@ const revenueChartConfig = {
   revenue: { label: 'Revenue', color: 'hsl(var(--chart-1))' },
 } satisfies ChartConfig;
 
-const facilityUsageChartConfig = {
-  bookings: { label: 'Bookings', color: 'hsl(var(--chart-1))' },
-  facilityName: { label: 'Facility' },
-} satisfies ChartConfig;
-
 const popularSportsChartConfig = {
   bookings: { label: 'Bookings', color: 'hsl(var(--chart-1))' },
 } satisfies ChartConfig;
@@ -161,7 +156,7 @@ export default function AdminDashboardPage() {
     const popularSportsData = Array.from(sportUsageMap.entries())
         .map(([name, count]) => ({ sportName: name, bookings: count }))
         .sort((a,b) => b.bookings - a.bookings)
-        .slice(0, 7);
+        .slice(0, 5);
 
 
     const bookingActivities: ActivityFeedItemType[] = bookings.map(b => ({
@@ -178,7 +173,7 @@ export default function AdminDashboardPage() {
     }));
     const combinedFeed = [...bookingActivities, ...newUserActivities]
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5); // Limit to 5 for the new layout
+        .slice(0, 10);
 
     return { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed: combinedFeed };
   }, [facilities, users, bookings]);
@@ -194,7 +189,10 @@ export default function AdminDashboardPage() {
                 <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Active Users</CardTitle><Users className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
                 <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Listed Facilities</CardTitle><Building2 className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><Skeleton className="h-8 w-16" /></CardContent></Card>
              </div>
-             <Skeleton className="h-[400px] w-full" />
+             <div className="grid lg:grid-cols-3 gap-6">
+                <Skeleton className="lg:col-span-2 h-[400px] w-full" />
+                <Skeleton className="h-[400px] w-full" />
+             </div>
         </div>
     );
   }
@@ -248,51 +246,52 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <AnalyticsChart
-          title="Monthly Revenue"
-          description="Revenue from last 6 months."
-          data={monthlyRevenueData}
-          chartConfig={revenueChartConfig}
-          type="line"
-          dataKey="revenue"
-          categoryKey="month"
-          className="lg:col-span-2"
-        />
-         <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center">
-                    <Activity className="mr-2 h-5 w-5" />
-                    Recent Activity
-                </CardTitle>
-                <CardDescription>
-                  Latest bookings and new user registrations.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-               <div className="space-y-1 p-4 max-h-[300px] overflow-y-auto">
-                  {activityFeed.length > 0 ? (
-                      activityFeed.map((item, index) => <ActivityItem key={index} item={item} currency={currency} />)
-                  ) : (
-                      <p className="text-sm text-center text-muted-foreground py-8">
-                          No recent activity to display.
-                      </p>
-                  )}
-              </div>
-            </CardContent>
-         </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+            <AnalyticsChart
+              title="Monthly Revenue"
+              description="Revenue from last 6 months."
+              data={monthlyRevenueData}
+              chartConfig={revenueChartConfig}
+              type="line"
+              dataKey="revenue"
+              categoryKey="month"
+            />
+        </div>
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center">
+                        <Activity className="mr-2 h-5 w-5" />
+                        Recent Activity
+                    </CardTitle>
+                    <CardDescription>
+                      Latest platform activities.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                   <div className="space-y-1 p-4 max-h-[350px] overflow-y-auto">
+                      {activityFeed.length > 0 ? (
+                          activityFeed.map((item, index) => <ActivityItem key={index} item={item} currency={currency} />)
+                      ) : (
+                          <p className="text-sm text-center text-muted-foreground py-8">
+                              No recent activity to display.
+                          </p>
+                      )}
+                  </div>
+                </CardContent>
+            </Card>
+            <AnalyticsChart
+                title="Popular Sports"
+                description="Top 5 sports by booking count."
+                data={popularSportsData}
+                chartConfig={popularSportsChartConfig}
+                type="bar"
+                dataKey="bookings"
+                categoryKey="sportName"
+            />
+        </div>
       </div>
-       <div className="grid gap-6">
-         <AnalyticsChart
-            title="Popular Sports"
-            description="Booking counts for the most popular sports."
-            data={popularSportsData}
-            chartConfig={popularSportsChartConfig}
-            type="bar"
-            dataKey="bookings"
-            categoryKey="sportName"
-         />
-       </div>
     </div>
   );
 }
