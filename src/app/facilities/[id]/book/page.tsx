@@ -12,10 +12,10 @@ import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { mockUser, getPromotionRuleByCode, addBooking, addNotification, getSiteSettings } from '@/lib/data';
-import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo } from '@/lib/types';
+import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo, RentedItemInfo } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode } from 'lucide-react';
+import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode, PackageSearch } from 'lucide-react';
 import Image from 'next/image';
 
 const UpiIcon = () => (
@@ -157,7 +157,20 @@ function BookingConfirmationContent() {
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Date</span><span className="font-semibold">{format(parseISO(bookingData.date), 'EEEE, MMM d, yyyy')}</span></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Time</span><span className="font-semibold">{bookingData.startTime} - {bookingData.endTime}</span></div>
                 <hr/>
-                <div className="flex justify-between items-center"><span className="text-muted-foreground">Base Price</span><span className="font-semibold">{formatCurrency(bookingData.totalPrice, currency)}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Base Price</span><span className="font-semibold">{formatCurrency(bookingData.baseFacilityPrice!, currency)}</span></div>
+                {bookingData.equipmentRentalCost! > 0 && (
+                  <div className="flex justify-between items-center"><span className="text-muted-foreground">Equipment Rentals</span><span className="font-semibold">{formatCurrency(bookingData.equipmentRentalCost!, currency)}</span></div>
+                )}
+                {bookingData.rentedEquipment && bookingData.rentedEquipment.length > 0 && (
+                  <div className="pl-4 space-y-1">
+                    {bookingData.rentedEquipment.map(item => (
+                      <div key={item.equipmentId} className="flex justify-between items-center text-xs text-muted-foreground">
+                        <span>{item.name} (x{item.quantity})</span>
+                        <span>{formatCurrency(item.totalCost, currency)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {appliedPromotion && (
                      <div className="flex justify-between items-center text-green-600"><span className="text-muted-foreground">Discount ({appliedPromotion.code})</span><span className="font-semibold">- {formatCurrency(appliedPromotion.discountAmount, currency)}</span></div>
                 )}

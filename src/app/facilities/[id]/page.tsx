@@ -18,18 +18,19 @@ import { ReviewItem } from '@/components/reviews/ReviewItem';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
-import { format, parseISO, startOfDay } from 'date-fns';
+import { format, parseISO, startOfDay, differenceInHours, parse } from 'date-fns';
 import {
   MapPin, CalendarDays, Clock, Users, SunMoon, DollarSign, Sparkles, AlertCircle, Heart,
-  ThumbsUp, ThumbsDown
+  ThumbsUp, ThumbsDown, PackageSearch, Minus, Plus
 } from 'lucide-react';
-import type { Facility, Amenity as AmenityType, Review, Sport, TimeSlot, SiteSettings, BlockedSlot, UserProfile, Booking } from '@/lib/types';
+import type { Facility, Amenity as AmenityType, Review, Sport, TimeSlot, SiteSettings, BlockedSlot, UserProfile, Booking, RentalEquipment, RentedItemInfo } from '@/lib/types';
 import { getSiteSettingsAction, getFacilityByIdAction, toggleFavoriteFacilityAction } from '@/app/actions';
 import { calculateDynamicPrice, getBookingsForFacilityOnDate } from '@/lib/data';
 import { getIconComponent } from '@/components/shared/Icon';
 import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summarize-reviews';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 const generateTimeSlots = (
@@ -86,6 +87,7 @@ export default function FacilityDetailPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedSport, setSelectedSport] = useState<Sport | undefined>(undefined);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | undefined>(undefined);
+  const [selectedEquipment, setSelectedEquipment] = useState<Record<string, number>>({});
   
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [isSlotsLoading, setIsSlotsLoading] = useState(false);
@@ -151,20 +153,97 @@ export default function FacilityDetailPage() {
     }
   }, [facility, toast]);
 
+  const bookingDurationHours = useMemo(() => {
+    if (selectedSlot) {
+      const startTime = parse(selectedSlot.startTime, 'HH:mm', new Date());
+      const endTime = parse(selectedSlot.endTime, 'HH:mm', new Date());
+      return differenceInHours(endTime, startTime) || 1;
+    }
+    return 1;
+  }, [selectedSlot]);
+
+  const equipmentRentalCost = useMemo(() => {
+    if (!facility?.availableEquipment || Object.keys(selectedEquipment).length === 0) {
+      return 0;
+    }
+
+    return Object.entries(selectedEquipment).reduce((total, [equipmentId, quantity]) => {
+      const equipment = facility.availableEquipment!.find(e => e.id === equipmentId);
+      if (equipment && quantity > 0) {
+        const itemCost = equipment.pricePerItem * quantity;
+        if (equipment.priceType === 'per_hour') {
+          return total + (itemCost * bookingDurationHours);
+        }
+        return total + itemCost;
+      }
+      return total;
+    }, 0);
+  }, [selectedEquipment, facility?.availableEquipment, bookingDurationHours]);
+
   const dynamicPrice = useMemo(() => {
     if (facility && selectedSport && selectedDate && selectedSlot) {
       const sportPriceInfo = facility.sportPrices.find(p => p.sportId === selectedSport.id);
       if (!sportPriceInfo) return null;
-      return calculateDynamicPrice(sportPriceInfo.price, selectedDate, selectedSlot, 1);
+      
+      const priceResult = calculateDynamicPrice(sportPriceInfo.price, selectedDate, selectedSlot, bookingDurationHours);
+      
+      return {
+          ...priceResult,
+          finalPrice: priceResult.finalPrice + equipmentRentalCost
+      };
     }
     return null;
-  }, [facility, selectedSport, selectedDate, selectedSlot]);
+  }, [facility, selectedSport, selectedDate, selectedSlot, bookingDurationHours, equipmentRentalCost]);
+  
+  const handleEquipmentQuantityChange = (equipmentId: string, change: 1 | -1) => {
+    setSelectedEquipment(prev => {
+        const currentQuantity = prev[equipmentId] || 0;
+        const newQuantity = Math.max(0, currentQuantity + change);
+        
+        const equipment = facility?.availableEquipment?.find(e => e.id === equipmentId);
+        if (equipment && newQuantity > equipment.stock) {
+            toast({
+                title: 'Stock Limit Reached',
+                description: `Only ${equipment.stock} units of ${equipment.name} available.`,
+                variant: 'destructive',
+            });
+            return { ...prev, [equipmentId]: equipment.stock };
+        }
+
+        if (newQuantity === 0) {
+            const { [equipmentId]: _, ...rest } = prev;
+            return rest;
+        }
+        
+        return { ...prev, [equipmentId]: newQuantity };
+    });
+  };
   
   const handleBooking = () => {
     if (!facility || !selectedSport || !selectedDate || !selectedSlot || !dynamicPrice || !currentUser) {
         toast({ title: "Incomplete Selection", description: "Please select a sport, date, and available time slot.", variant: "destructive"});
         return;
     }
+
+    const rentedItems: RentedItemInfo[] = Object.entries(selectedEquipment)
+      .map(([equipmentId, quantity]) => {
+        const equipment = facility.availableEquipment?.find(e => e.id === equipmentId);
+        if (!equipment || quantity <= 0) return null;
+        
+        const itemCost = equipment.pricePerItem * quantity;
+        const totalCost = equipment.priceType === 'per_hour' ? itemCost * bookingDurationHours : itemCost;
+
+        return {
+          equipmentId,
+          name: equipment.name,
+          quantity,
+          priceAtBooking: equipment.pricePerItem,
+          priceTypeAtBooking: equipment.priceType,
+          totalCost
+        };
+      })
+      .filter((item): item is RentedItemInfo => item !== null);
+
 
     const bookingData = {
       facilityId: facility.id,
@@ -177,8 +256,11 @@ export default function FacilityDetailPage() {
       startTime: selectedSlot.startTime,
       endTime: selectedSlot.endTime,
       totalPrice: dynamicPrice.finalPrice,
+      baseFacilityPrice: dynamicPrice.finalPrice - equipmentRentalCost,
+      equipmentRentalCost: equipmentRentalCost,
       status: 'Confirmed' as const,
       userId: currentUser.id,
+      rentedEquipment: rentedItems,
     };
     
     router.push(`/facilities/${facility.id}/book?data=${encodeURIComponent(JSON.stringify(bookingData))}`);
@@ -361,14 +443,46 @@ export default function FacilityDetailPage() {
                
                {dynamicPrice && siteSettings ? (
                     <div className="p-3 bg-muted rounded-md text-center">
-                        <p className="text-sm text-muted-foreground">Price for this slot:</p>
+                        <p className="text-sm text-muted-foreground">Total Price (incl. rentals):</p>
                         <p className="text-2xl font-bold text-primary">{formatCurrency(dynamicPrice.finalPrice, siteSettings.defaultCurrency)}</p>
                     </div>
                ) : (
                    selectedSlot && <div className="p-3 text-center"><Skeleton className="h-12 w-32 mx-auto" /></div>
                )}
             </CardContent>
-            <CardFooter className="flex-col gap-2">
+            
+            {facility.availableEquipment && facility.availableEquipment.length > 0 && (
+                <Accordion type="single" collapsible className="w-full px-6">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>
+                           <span className='flex items-center text-sm font-medium'><PackageSearch className="mr-2 h-4 w-4"/>Rent Equipment (Optional)</span>
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-3 pt-2">
+                             {facility.availableEquipment.map(item => (
+                                <div key={item.id} className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-medium text-sm">{item.name}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                           {siteSettings ? formatCurrency(item.pricePerItem, siteSettings.defaultCurrency) : ''} / {item.priceType === 'per_booking' ? 'booking' : 'hour'}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => handleEquipmentQuantityChange(item.id, -1)} disabled={(selectedEquipment[item.id] || 0) === 0}>
+                                            <Minus className="h-4 w-4" />
+                                        </Button>
+                                        <span className="w-6 text-center font-semibold">{selectedEquipment[item.id] || 0}</span>
+                                        <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => handleEquipmentQuantityChange(item.id, 1)} disabled={(selectedEquipment[item.id] || 0) >= item.stock}>
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            )}
+
+            <CardFooter className="flex-col gap-2 pt-6">
               <Button className="w-full" onClick={handleBooking} disabled={!selectedSlot || !selectedSport || isBooking}>
                 {isBooking ? <LoadingSpinner size={20} className="mr-2" /> : <CalendarDays className="mr-2 h-4 w-4" />}
                 {isBooking ? 'Processing...' : 'Book Now'}
@@ -384,5 +498,3 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
-
-    
