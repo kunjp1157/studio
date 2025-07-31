@@ -24,12 +24,13 @@ import {
   ThumbsUp, ThumbsDown
 } from 'lucide-react';
 import type { Facility, Amenity as AmenityType, Review, Sport, TimeSlot, SiteSettings, BlockedSlot, UserProfile } from '@/lib/types';
-import { getSiteSettingsAction, getBookingsForFacilityOnDate, toggleFavoriteFacilityAction } from '@/app/actions';
+import { getSiteSettingsAction, getBookingsForFacilityOnDate, toggleFavoriteFacilityAction, getFacilityByIdAction } from '@/app/actions';
 import { calculateDynamicPrice } from '@/lib/data';
 import { getIconComponent } from '@/components/shared/Icon';
 import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summarize-reviews';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getFacilityByIdAction } from '@/app/actions';
+import { Label } from '@/components/ui/label';
+
 
 const generateTimeSlots = (
   facility: Facility,
@@ -383,3 +384,5 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
+
+    
