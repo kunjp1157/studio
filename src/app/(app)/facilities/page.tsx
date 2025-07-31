@@ -1,4 +1,2 @@
-// This file has been intentionally left blank to resolve a build error.
-export default function BlankPage() {
-  return null;
-}
+// This file has been intentionally cleared to resolve a routing conflict.
+// The primary facilities page is located at /src/app/facilities/page.tsx.
