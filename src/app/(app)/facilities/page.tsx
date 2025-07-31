@@ -1,4 +1,4 @@
-// This file is intentionally left empty to resolve route conflicts.
-export default function RemovedPage() {
+// This file has been intentionally left blank to resolve a build error.
+export default function BlankPage() {
   return null;
 }
