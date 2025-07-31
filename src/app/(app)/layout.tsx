@@ -1,6 +1,4 @@
-// This file is intentionally left blank to remove the unnecessary route group.
-import type { ReactNode } from 'react';
-
-export default function AppLayout({ children }: { children: ReactNode }) {
+// This file has been cleared to remove the conflicting route group.
+export default function ClearedLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

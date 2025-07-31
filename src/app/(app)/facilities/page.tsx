@@ -1,4 +1,4 @@
-// This file is intentionally left blank to remove the duplicate route.
-export default function Page() {
+// This file has been cleared to resolve the duplicate route error.
+export default function ClearedPage() {
   return null;
 }
