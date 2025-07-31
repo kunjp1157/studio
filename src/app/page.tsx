@@ -6,13 +6,12 @@ import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 // This is just a redirector component.
-// It redirects to the main dashboard, which is a protected route.
-// The auth layout will then redirect to login if the user is not authenticated.
+// It redirects to the main login page.
 export default function RootPage() {
     const router = useRouter();
 
     useEffect(() => {
-        router.replace('/dashboard');
+        router.replace('/account/login');
     }, [router]);
 
     return (
