@@ -6,22 +6,28 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { Trophy, Dices, Wand2, FileText, CalendarDays, Calendar as CalendarIcon, Swords, Menu } from 'lucide-react'; 
+import { Trophy, Dices, Wand2, FileText, CalendarDays, Calendar as CalendarIcon, Swords, Menu, Sparkles } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettingsAction } from '@/app/actions';
 import { UserSwitcher } from '../shared/UserSwitcher';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import type { UserProfile } from '@/lib/types';
+import { Separator } from '../ui/separator';
 
 const navItems = [
-  { href: "/facilities", label: "Facilities" },
-  { href: "/sports", label: "Sports" },
-  { href: "/events", label: "Events" },
-  { href: "/memberships", label: "Memberships" },
-  { href: "/challenges", label: "Challenges" },
-  { href: "/matchmaking", label: "Matchmaking" },
-  { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/blog", label: "Blog" },
+  { href: "/facilities", label: "Facilities", icon: Dices },
+  { href: "/sports", label: "Sports", icon: Swords },
+  { href: "/events", label: "Events", icon: CalendarDays },
+  { href: "/memberships", label: "Memberships", icon: Trophy },
+  { href: "/challenges", label: "Challenges", icon: Swords },
+  { href: "/matchmaking", label: "Matchmaking", icon: Dices },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/blog", label: "Blog", icon: FileText },
+];
+
+const aiNavItems = [
+    { href: "/recommendation", label: "AI Recommender", icon: Wand2 },
+    { href: "/weekend-planner", label: "AI Weekend Planner", icon: CalendarIcon },
 ];
 
 const AnimatedLogo = ({ text }: { text: string }) => {
@@ -53,7 +59,7 @@ const AnimatedLogo = ({ text }: { text: string }) => {
         <span ref={containerRef} className="text-xl font-bold font-headline transition-colors group-hover:text-primary/80">
             {letters.map((char, index) => (
                 <span key={`${char}-${index}`} className="letter">
-                    {char === ' ' ? '\u00A0' : char}
+                    {char === ' ' ? ' ' : char}
                 </span>
             ))}
         </span>
@@ -120,14 +126,28 @@ export function Header() {
                    {siteName}
                 </SheetTitle>
               </SheetHeader>
-              <nav className="grid gap-6 text-lg font-medium mt-8">
+              <nav className="grid gap-4 text-lg font-medium mt-8">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                ))}
+                 <Separator className="my-2" />
+                 <div className="text-sm font-semibold text-muted-foreground px-3 flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> AI Tools</div>
+                 {aiNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <item.icon className="h-5 w-5" />
                     {item.label}
                   </Link>
                 ))}
