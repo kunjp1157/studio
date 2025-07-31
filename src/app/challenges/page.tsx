@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, getOpenChallenges, createChallenge, acceptChallenge, getUserById, getSportById } from '@/lib/data';
+import { getOpenChallenges, createChallenge, acceptChallenge, getUserById, getSportById } from '@/lib/data';
 import { getMockSports } from '@/lib/mock-data';
 import type { Challenge, UserProfile, Sport } from '@/lib/types';
 import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, CalendarDays, BookUser } from 'lucide-react';
@@ -36,9 +36,11 @@ const challengeFormSchema = z.object({
 
 type ChallengeFormValues = z.infer<typeof challengeFormSchema>;
 
-const ChallengeCard = ({ challenge, onAccept }: { challenge: Challenge, onAccept: (challengeId: string) => void }) => {
+const ChallengeCard = ({ challenge, onAccept, currentUser }: { challenge: Challenge, onAccept: (challengeId: string) => void, currentUser: UserProfile | null }) => {
     const { toast } = useToast();
-    const isMyChallenge = challenge.challengerId === mockUser.id;
+    if (!currentUser) return null;
+    
+    const isMyChallenge = challenge.challengerId === currentUser.id;
     const SportIcon = getIconComponent(challenge.sport.iconName) || Dices;
     
     const handleAccept = () => {
@@ -100,12 +102,20 @@ export default function ChallengesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [mockSports, setMockSports] = useState<Sport[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
   const form = useForm<ChallengeFormValues>({
     resolver: zodResolver(challengeFormSchema),
     defaultValues: { sportId: '', proposedTime: '', notes: '' },
   });
+  
+  useEffect(() => {
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+      setCurrentUser(JSON.parse(activeUserStr));
+    }
+  }, []);
 
   useEffect(() => {
     setIsLoading(true);
@@ -117,6 +127,10 @@ export default function ChallengesPage() {
   }, []);
   
   const onSubmit = async (data: ChallengeFormValues) => {
+    if (!currentUser) {
+      toast({ title: "Error", description: "You must be logged in to issue a challenge.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     
     const [hours, minutes] = data.proposedTime.split(':').map(Number);
@@ -125,7 +139,7 @@ export default function ChallengesPage() {
 
     await new Promise(resolve => setTimeout(resolve, 700));
     const updatedChallenges = createChallenge({ 
-        challengerId: mockUser.id,
+        challengerId: currentUser.id,
         sportId: data.sportId,
         notes: data.notes,
         proposedDate: combinedDateTime.toISOString(),
@@ -140,7 +154,11 @@ export default function ChallengesPage() {
   };
 
   const handleAcceptChallenge = (challengeId: string) => {
-    const updatedChallenges = acceptChallenge(challengeId, mockUser.id);
+    if (!currentUser) {
+      toast({ title: "Error", description: "You must be logged in to accept a challenge.", variant: "destructive" });
+      return;
+    }
+    const updatedChallenges = acceptChallenge(challengeId, currentUser.id);
     setChallenges(updatedChallenges);
   };
 
@@ -281,7 +299,7 @@ export default function ChallengesPage() {
                 </Alert>
             ) : (
                 <div className="grid md:grid-cols-2 gap-6">
-                    {filteredChallenges.map(req => <ChallengeCard key={req.id} challenge={req} onAccept={handleAcceptChallenge}/>)}
+                    {filteredChallenges.map(req => <ChallengeCard key={req.id} challenge={req} onAccept={handleAcceptChallenge} currentUser={currentUser} />)}
                 </div>
             )}
         </div>
