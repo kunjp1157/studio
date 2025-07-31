@@ -16,9 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { getOpenChallenges, createChallenge, acceptChallenge, getUserById, getSportById, getFacilityById } from '@/lib/data';
+import { getOpenChallenges, createChallenge, acceptChallenge, getUserById, getSportById, getFacilityById, getAllFacilities } from '@/lib/data';
 import { getMockSports } from '@/lib/mock-data';
-import { getAllFacilitiesAction } from '@/app/actions';
 import type { Challenge, UserProfile, Sport, Facility } from '@/lib/types';
 import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, CalendarDays, BookUser, Building } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -128,7 +127,7 @@ export default function ChallengesPage() {
     setIsLoading(true);
     setMockSports(getMockSports());
     const fetchFacilities = async () => {
-        const facilitiesData = await getAllFacilitiesAction();
+        const facilitiesData = await getAllFacilities();
         setAllFacilities(facilitiesData);
     };
     fetchFacilities();
