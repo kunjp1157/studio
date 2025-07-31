@@ -66,9 +66,12 @@ export default function DashboardPage() {
     }
     fetchData();
 
-    window.addEventListener('dataChanged', fetchData);
+    const handleDataChange = () => {
+        fetchData();
+    };
+    window.addEventListener('dataChanged', handleDataChange);
     return () => {
-        window.removeEventListener('dataChanged', fetchData);
+        window.removeEventListener('dataChanged', handleDataChange);
     };
   }, [fetchData]);
 
@@ -160,4 +163,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
