@@ -202,7 +202,7 @@ export function Header() {
                     AI Planner
                   </Button>
                 </Link>
-                <UserSwitcher />
+                {currentUser.role === 'Admin' && <UserSwitcher />}
                 <NotificationBell />
               </>
             )}
