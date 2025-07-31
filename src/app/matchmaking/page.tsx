@@ -16,10 +16,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, getOpenLfgRequests, createLfgRequest, expressInterestInLfg, getUserById, getSportById } from '@/lib/data';
-import { mockSports } from '@/lib/mock-data';
-import type { LfgRequest, UserProfile, Sport, SkillLevel } from '@/lib/types';
-import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, BarChart, Clock, Users2 } from 'lucide-react';
+import { mockUser, getOpenLfgRequests, createLfgRequest, expressInterestInLfg, getUserById, getSportById, getAllFacilities } from '@/lib/data';
+import { getMockSports } from '@/lib/mock-data';
+import type { LfgRequest, UserProfile, Sport, SkillLevel, Facility } from '@/lib/types';
+import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, BarChart, Clock, Users2, Building } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
@@ -27,6 +27,7 @@ import { getIconComponent } from '@/components/shared/Icon';
 
 const lfgFormSchema = z.object({
   sportId: z.string({ required_error: "Please select a sport." }),
+  facilityId: z.string({ required_error: "Please select a venue." }),
   skillLevel: z.enum(['Any', 'Beginner', 'Intermediate', 'Advanced']).default('Any'),
   playersNeeded: z.coerce.number().int().min(1, "Must need at least 1 player").optional(),
   preferredTime: z.string().max(50, "Keep it brief!").optional(),
@@ -76,7 +77,10 @@ const LfgRequestCard = ({ request, onInterest }: { request: LfgRequest, onIntere
                     <SportIcon className="h-5 w-5 text-primary" />
                     <span>Looking for a game of {sport.name}</span>
                 </div>
-
+                 <div className="flex items-center text-sm text-muted-foreground gap-1.5">
+                    <Building className="h-4 w-4"/>
+                    Venue: {request.facilityName}
+                </div>
                 <div className="space-y-1.5">
                     {request.skillLevel && request.skillLevel !== 'Any' && (
                         <div className="flex items-center text-xs text-muted-foreground gap-1.5"><BarChart className="h-3 w-3"/> Skill Level: {request.skillLevel}</div>
@@ -136,15 +140,21 @@ export default function MatchmakingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sportFilter, setSportFilter] = useState<string>('all');
+  const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
   const { toast } = useToast();
 
   const form = useForm<LfgFormValues>({
     resolver: zodResolver(lfgFormSchema),
-    defaultValues: { sportId: '', skillLevel: 'Any', playersNeeded: undefined, preferredTime: '', notes: '' },
+    defaultValues: { sportId: '', facilityId: '', skillLevel: 'Any', playersNeeded: undefined, preferredTime: '', notes: '' },
   });
 
   useEffect(() => {
     setIsLoading(true);
+    const fetchFacilities = async () => {
+        const facilitiesData = await getAllFacilities();
+        setAllFacilities(facilitiesData);
+    };
+    fetchFacilities();
     setTimeout(() => {
       setRequests(getOpenLfgRequests());
       setIsLoading(false);
@@ -177,6 +187,8 @@ export default function MatchmakingPage() {
     if (sportFilter === 'all') return requests;
     return requests.filter(req => req.sportId === sportFilter);
   }, [requests, sportFilter]);
+  
+  const mockSports = getMockSports();
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -200,6 +212,20 @@ export default function MatchmakingPage() {
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select a sport" /></SelectTrigger></FormControl>
                                         <SelectContent>{mockSports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="facilityId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Venue</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Select a venue" /></SelectTrigger></FormControl>
+                                        <SelectContent>{allFacilities.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent>
                                     </Select>
                                     <FormMessage />
                                 </FormItem>

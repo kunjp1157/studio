@@ -1,3 +1,4 @@
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { getStaticUsers, getStaticFacilities, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -340,8 +341,20 @@ export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'u
   return newReview;
 };
 
-export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds'>): LfgRequest[] => {
-    const newRequest: LfgRequest = { ...requestData, id: `lfg-${Date.now()}`, createdAt: new Date().toISOString(), status: 'open', interestedUserIds: [] };
+export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds' | 'facilityName'>): LfgRequest[] => {
+    const facility = mockFacilities.find(f => f.id === requestData.facilityId);
+    if (!facility) {
+        throw new Error("Facility not found");
+    }
+
+    const newRequest: LfgRequest = {
+        ...requestData,
+        id: `lfg-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        status: 'open',
+        interestedUserIds: [],
+        facilityName: facility.name
+    };
     mockLfgRequests.unshift(newRequest);
     return getOpenLfgRequests();
 };

@@ -3,6 +3,7 @@
 
 
 
+
 export interface Team {
   id: string;
   name: string;
@@ -321,6 +322,8 @@ export interface LfgRequest {
   id: string;
   userId: string;
   sportId: string;
+  facilityId: string;
+  facilityName: string;
   notes: string;
   createdAt: string; 
   status: 'open' | 'closed';
