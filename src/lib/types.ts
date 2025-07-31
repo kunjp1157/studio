@@ -68,7 +68,7 @@ export interface PromotionRule {
 
 export interface RentalEquipment {
   id: string;
-  facilityId: string; 
+  facilityId?: string; 
   name: string;
   description?: string;
   pricePerItem: number; 

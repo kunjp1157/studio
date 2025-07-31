@@ -588,7 +588,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => appendEquipment({ name: '', pricePerItem: 0, priceType: 'per_booking', stock: 1, imageUrl: '', dataAiHint: '' })}
+                        onClick={() => appendEquipment({ id: `new-${Date.now()}`, name: '', pricePerItem: 0, priceType: 'per_booking', stock: 1, imageUrl: '', dataAiHint: '' })}
                     >
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Equipment
                     </Button>

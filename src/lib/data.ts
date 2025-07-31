@@ -577,6 +577,10 @@ export const blockTimeSlot = async (facilityId: string, ownerId: string, newBloc
        if (!facility.blockedSlots) {
            facility.blockedSlots = [];
        }
+       // Ensure no duplicates
+       const alreadyExists = facility.blockedSlots.some(s => s.date === newBlock.date && s.startTime === newBlock.startTime);
+       if(alreadyExists) return false;
+       
        facility.blockedSlots.push(newBlock);
        window.dispatchEvent(new CustomEvent('dataChanged'));
        return true;
@@ -730,4 +734,9 @@ export const toggleFavoriteFacility = async (userId: string, facilityId: string)
         : [...currentFavorites, facilityId];
     
     return updateUser(userId, { favoriteFacilities: newFavorites });
+};
+
+export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] => {
+    const facility = mockFacilities.find(f => f.id === facilityId);
+    return facility?.availableEquipment || [];
 };
