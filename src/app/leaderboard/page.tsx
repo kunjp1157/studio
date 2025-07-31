@@ -18,16 +18,22 @@ export default function LeaderboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const users = getAllUsers();
-      // Filter out suspended users and sort by loyalty points
-      const sortedUsers = users
-        .filter(u => u.status === 'Active')
-        .sort((a, b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0));
-      setLeaderboard(sortedUsers);
-      setIsLoading(false);
-    }, 500);
+    const fetchLeaderboard = async () => {
+        setIsLoading(true);
+        try {
+            const users = await getAllUsers();
+            // Filter out suspended users and sort by loyalty points
+            const sortedUsers = users
+                .filter(u => u.status === 'Active')
+                .sort((a, b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0));
+            setLeaderboard(sortedUsers);
+        } catch (error) {
+            console.error("Failed to load leaderboard data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchLeaderboard();
   }, []);
 
   const getRankColor = (rank: number) => {
