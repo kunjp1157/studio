@@ -1,5 +1,4 @@
-
-// This file has been cleared to resolve the duplicate route error.
-export default function ClearedPage() {
+// This page has been removed to resolve a build conflict.
+export default function RemovedPage() {
   return null;
 }

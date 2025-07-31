@@ -15,7 +15,6 @@ import type { UserProfile } from '@/lib/types';
 import { Separator } from '../ui/separator';
 
 const navItems = [
-  { href: "/facilities", label: "Facilities", icon: Dices },
   { href: "/sports", label: "Sports", icon: Swords },
   { href: "/events", label: "Events", icon: CalendarDays },
   { href: "/memberships", label: "Memberships", icon: Trophy },
