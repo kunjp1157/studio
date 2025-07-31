@@ -158,19 +158,24 @@ function BookingConfirmationContent() {
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Time</span><span className="font-semibold">{bookingData.startTime} - {bookingData.endTime}</span></div>
                 <hr/>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Base Price</span><span className="font-semibold">{formatCurrency(bookingData.baseFacilityPrice!, currency)}</span></div>
-                {bookingData.equipmentRentalCost! > 0 && (
-                  <div className="flex justify-between items-center"><span className="text-muted-foreground">Equipment Rentals</span><span className="font-semibold">{formatCurrency(bookingData.equipmentRentalCost!, currency)}</span></div>
-                )}
+                
                 {bookingData.rentedEquipment && bookingData.rentedEquipment.length > 0 && (
-                  <div className="pl-4 space-y-1">
-                    {bookingData.rentedEquipment.map(item => (
-                      <div key={item.equipmentId} className="flex justify-between items-center text-xs text-muted-foreground">
-                        <span>{item.name} (x{item.quantity})</span>
-                        <span>{formatCurrency(item.totalCost, currency)}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Equipment Rentals</span>
+                      <span className="font-semibold">{formatCurrency(bookingData.equipmentRentalCost!, currency)}</span>
+                    </div>
+                    <div className="pl-4 space-y-1 border-l-2 ml-1">
+                      {bookingData.rentedEquipment.map(item => (
+                        <div key={item.equipmentId} className="flex justify-between items-center text-xs text-muted-foreground">
+                          <span>{item.name} (x{item.quantity})</span>
+                          <span>{formatCurrency(item.totalCost, currency)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
+                
                 {appliedPromotion && (
                      <div className="flex justify-between items-center text-green-600"><span className="text-muted-foreground">Discount ({appliedPromotion.code})</span><span className="font-semibold">- {formatCurrency(appliedPromotion.discountAmount, currency)}</span></div>
                 )}
