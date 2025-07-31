@@ -2,35 +2,19 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
-import type { SearchFilters, Amenity as AmenityType, SiteSettings, Facility } from '@/lib/types';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { SearchFilters, SiteSettings, Facility } from '@/lib/types';
 import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks, Clock, Building, ArrowRight, Star, Wand2, Swords, Sparkles, Trophy } from 'lucide-react';
-import { getMockSports, mockAmenities } from '@/lib/mock-data'; 
-import { format } from 'date-fns';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { formatCurrency } from '@/lib/utils';
-import { getIconComponent } from '@/components/shared/Icon';
 import Link from 'next/link';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { IconComponent } from '@/components/shared/Icon';
-import { cn } from '@/lib/utils';
 import { AlertCircle, SortAsc } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CardSkeleton = () => (
     <div className="bg-card p-4 rounded-lg shadow-md">
@@ -46,10 +30,9 @@ type SortOption = 'default' | 'price-asc' | 'price-desc' | 'rating-desc';
 
 export default function FacilitiesPage() {
   const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
-  const [facilitiesToShow, setFacilitiesToShow] = useState<Facility[]>([]);
+  const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortOption, setSortOption] = useState<SortOption>('default');
-  const [currentFilters, setCurrentFilters] = useState<SearchFilters | null>(null);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const { toast } = useToast();
 
@@ -73,6 +56,7 @@ export default function FacilitiesPage() {
         
         setCurrency(settingsData.defaultCurrency);
         setAllFacilities(facilitiesData);
+        setFilteredFacilities(facilitiesData); // Initially show all
     } catch (error) {
         toast({
           title: "Error",
@@ -87,69 +71,56 @@ export default function FacilitiesPage() {
 
   useEffect(() => {
     fetchInitialData();
-    window.addEventListener('dataChanged', fetchInitialData);
-    return () => {
-        window.removeEventListener('dataChanged', fetchInitialData);
-    };
   }, [fetchInitialData]);
 
-  useEffect(() => {
+  const handleSearch = useCallback((filters: SearchFilters) => {
     let facilitiesToProcess = [...allFacilities];
 
-    if (currentFilters) {
-      const filters = currentFilters;
-      if (filters.searchTerm) {
+    if (filters.searchTerm) {
         facilitiesToProcess = facilitiesToProcess.filter(f => 
           f.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
           f.description.toLowerCase().includes(filters.searchTerm.toLowerCase())
         );
-      }
-      if (filters.sport) {
+    }
+    if (filters.sport) {
         facilitiesToProcess = facilitiesToProcess.filter(f => f.sports.some(s => s.id === filters.sport));
-      }
-      if (filters.city) {
-          facilitiesToProcess = facilitiesToProcess.filter(f => f.city === filters.city);
-      }
-      if (filters.location) {
+    }
+    if (filters.city) {
+        facilitiesToProcess = facilitiesToProcess.filter(f => f.city === filters.city);
+    }
+    if (filters.location) {
         facilitiesToProcess = facilitiesToProcess.filter(f => f.location.toLowerCase().includes(filters.location.toLowerCase()));
-      }
-      if (filters.indoorOutdoor) {
+    }
+    if (filters.indoorOutdoor) {
         facilitiesToProcess = facilitiesToProcess.filter(f => {
           if (filters.indoorOutdoor === 'indoor') return f.isIndoor === true;
           if (filters.indoorOutdoor === 'outdoor') return f.isIndoor === false;
           return true;
         });
-      }
-      if (filters.priceRange) {
+    }
+    if (filters.priceRange) {
         facilitiesToProcess = facilitiesToProcess.filter(f => 
           f.sportPrices.some(p => p.price >= filters.priceRange![0] && p.price <= filters.priceRange![1])
         );
-      }
-      if (filters.selectedAmenities && filters.selectedAmenities.length > 0) {
+    }
+    if (filters.selectedAmenities && filters.selectedAmenities.length > 0) {
         facilitiesToProcess = facilitiesToProcess.filter(f => 
           filters.selectedAmenities!.every(saId => f.amenities.some(fa => fa.id === saId))
         );
-      }
-      // Filter by operating time if both date and time are selected
-      if (filters.date && filters.time) {
+    }
+    if (filters.date && filters.time) {
         const selectedDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][filters.date.getDay()] as 'Sun' | 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat';
         facilitiesToProcess = facilitiesToProcess.filter(facility => {
             const operatingHoursForDay = facility.operatingHours.find(h => h.day === selectedDay);
-            if (!operatingHoursForDay) {
-                return false; // Facility is not open on this day
-            }
-            // Check if selected time is within the facility's open and close times
+            if (!operatingHoursForDay) return false;
             return filters.time! >= operatingHoursForDay.open && filters.time! < operatingHoursForDay.close;
         });
-      }
     }
-
-    const sorted = sortFacilities(facilitiesToProcess, sortOption);
-    setFacilitiesToShow(sorted);
-
-  }, [allFacilities, currentFilters, sortOption]);
-
-  const sortFacilities = (facilities: Facility[], option: SortOption): Facility[] => {
+    
+    setFilteredFacilities(facilitiesToProcess);
+  }, [allFacilities]);
+  
+  const sortFacilities = useCallback((facilities: Facility[], option: SortOption): Facility[] => {
     let sorted = [...facilities];
     switch (option) {
       case 'price-asc':
@@ -167,15 +138,11 @@ export default function FacilitiesPage() {
         break;
     }
     return sorted;
-  };
+  }, []);
 
-  const handleSearch = (filters: SearchFilters) => {
-    setCurrentFilters(filters);
-  };
-  
-  const handleSortChange = (newSortOption: SortOption) => {
-    setSortOption(newSortOption);
-  };
+  useEffect(() => {
+    setFilteredFacilities(prev => sortFacilities(prev, sortOption));
+  }, [sortOption, sortFacilities]);
   
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -195,9 +162,8 @@ export default function FacilitiesPage() {
       </div>
 
       <div className="flex justify-end items-center mb-6 gap-4">
-        {/* Sort Dropdown */}
         <div className="w-full sm:w-auto">
-            <Select value={sortOption} onValueChange={(value) => handleSortChange(value as SortOption)}>
+            <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
                 <SelectTrigger className="w-full sm:w-[220px]">
                     <SortAsc className="mr-2 h-4 w-4 text-muted-foreground" />
                     <SelectValue placeholder="Sort by..." />
@@ -220,9 +186,9 @@ export default function FacilitiesPage() {
         </div>
       ) : (
         <>
-          {facilitiesToShow.length > 0 ? (
+          {filteredFacilities.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 [perspective:1000px]">
-              {facilitiesToShow.map((facility) => (
+              {filteredFacilities.map((facility) => (
                 <FacilityCard key={facility.id} facility={facility} currency={currency} />
               ))}
             </div>

@@ -114,29 +114,39 @@ export default function BookingsPage() {
   }, [currentUser, toast]);
 
   useEffect(() => {
-    fetchBookings();
-    window.addEventListener('dataChanged', fetchBookings);
-    return () => {
-        window.removeEventListener('dataChanged', fetchBookings);
+    if (currentUser) {
+        fetchBookings();
+    }
+    const handleDataChange = () => {
+      if (currentUser) {
+        fetchBookings();
+      }
     };
-  }, [fetchBookings]);
+    window.addEventListener('dataChanged', handleDataChange);
+    return () => {
+        window.removeEventListener('dataChanged', handleDataChange);
+    };
+  }, [currentUser, fetchBookings]);
 
   useEffect(() => {
     const fetchRelatedFacilities = async () => {
         if (bookings.length > 0) {
             const facilityIds = [...new Set(bookings.map(b => b.facilityId))];
-            const facilityPromises = facilityIds.map(async id => {
-                if (facilities[id]) return null;
-                const facility = await getFacilityById(id);
-                return {id, data: facility};
-            });
-            const facilitiesData = (await Promise.all(facilityPromises)).filter(Boolean);
+            const neededIds = facilityIds.filter(id => !facilities[id]);
 
-            if(facilitiesData.length > 0) {
-              setFacilities(prev => facilitiesData.reduce((acc, {id, data}) => {
-                  if (data) acc[id] = data;
-                  return acc;
-              }, {...prev}));
+            if (neededIds.length > 0) {
+                const facilityPromises = neededIds.map(async id => {
+                    const facility = await getFacilityById(id);
+                    return {id, data: facility};
+                });
+                const facilitiesData = (await Promise.all(facilityPromises)).filter(Boolean);
+
+                if(facilitiesData.length > 0) {
+                  setFacilities(prev => facilitiesData.reduce((acc, {id, data}) => {
+                      if (data) acc[id] = data;
+                      return acc;
+                  }, {...prev}));
+                }
             }
         }
     };
