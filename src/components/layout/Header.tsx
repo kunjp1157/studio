@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { UserNav } from './UserNav';
-import { Trophy, Dices, Wand2, FileText, CalendarDays, Calendar as CalendarIcon, Swords, Menu, Sparkles } from 'lucide-react'; 
+import { Trophy, Dices, Wand2, FileText, CalendarDays, Calendar as CalendarIcon, Swords, Menu, Sparkles, Building2 } from 'lucide-react'; 
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { getSiteSettingsAction } from '@/app/actions';
 import { UserSwitcher } from '../shared/UserSwitcher';
@@ -15,6 +15,7 @@ import type { UserProfile } from '@/lib/types';
 import { Separator } from '../ui/separator';
 
 const navItems = [
+  { href: "/facilities", label: "Facilities", icon: Building2 },
   { href: "/sports", label: "Sports", icon: Swords },
   { href: "/events", label: "Events", icon: CalendarDays },
   { href: "/memberships", label: "Memberships", icon: Trophy },
