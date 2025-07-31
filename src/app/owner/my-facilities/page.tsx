@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -54,29 +54,35 @@ export default function OwnerFacilitiesPage() {
     return () => window.removeEventListener('userChanged', handleUserChange);
   }, []);
 
-  useEffect(() => {
-    const fetchFacilities = async () => {
-        if (!currentUser) return;
-        setIsLoading(true);
-        try {
-            const [ownerFacilities, settings] = await Promise.all([
-                getFacilitiesByOwnerIdAction(currentUser.id),
-                getSiteSettingsAction()
-            ]);
-            setFacilities(ownerFacilities);
-            setCurrency(settings.defaultCurrency);
-        } catch (error) {
-             toast({
-                title: "Error",
-                description: "Could not load your facilities.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    fetchFacilities();
+  const fetchFacilities = useCallback(async () => {
+    if (!currentUser) return;
+    setIsLoading(true);
+    try {
+        const [ownerFacilities, settings] = await Promise.all([
+            getFacilitiesByOwnerIdAction(currentUser.id),
+            getSiteSettingsAction()
+        ]);
+        setFacilities(ownerFacilities);
+        setCurrency(settings.defaultCurrency);
+    } catch (error) {
+         toast({
+            title: "Error",
+            description: "Could not load your facilities.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   }, [currentUser, toast]);
+
+
+  useEffect(() => {
+    fetchFacilities();
+    window.addEventListener('dataChanged', fetchFacilities);
+    return () => {
+        window.removeEventListener('dataChanged', fetchFacilities);
+    };
+  }, [fetchFacilities]);
 
   const getPriceRange = (facility: Facility) => {
     if (!currency) return <Skeleton className="h-5 w-24" />;

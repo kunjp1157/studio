@@ -1,15 +1,15 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Booking, Facility, Review, SiteSettings } from '@/lib/types';
-import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking, listenToUserBookings, getSiteSettings } from '@/lib/data';
+import type { Booking, Facility, Review, SiteSettings, UserProfile } from '@/lib/types';
+import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking, getBookingsByUserIdAction, getSiteSettingsAction } from '@/lib/data';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -69,41 +69,57 @@ export default function BookingsPage() {
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const [facilities, setFacilities] = useState<Record<string, Facility>>({});
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-      const settings = getSiteSettings();
-      setCurrency(settings.defaultCurrency);
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+      setCurrentUser(JSON.parse(activeUserStr));
+    }
+  }, []);
 
-      const unsubscribe = listenToUserBookings(
-          mockUser.id, 
-          (userBookings) => {
-              userBookings.sort((a, b) => {
-                const aDate = parseISO(a.date + 'T' + a.startTime);
-                const bDate = parseISO(b.date + 'T' + b.startTime);
-                const aIsPast = isPast(aDate);
-                const bIsPast = isPast(bDate);
+  const fetchBookings = useCallback(async () => {
+    if (!currentUser) return;
+    setIsLoading(true);
+     try {
+        const [userBookings, settings] = await Promise.all([
+            getBookingsByUserIdAction(currentUser.id),
+            getSiteSettingsAction()
+        ]);
+        
+        setCurrency(settings.defaultCurrency);
+        
+        userBookings.sort((a, b) => {
+          const aDate = parseISO(a.date + 'T' + a.startTime);
+          const bDate = parseISO(b.date + 'T' + b.startTime);
+          const aIsPast = isPast(aDate);
+          const bIsPast = isPast(bDate);
 
-                if (aIsPast && !bIsPast) return 1;
-                if (!aIsPast && bIsPast) return -1;
-                
-                if (aIsPast) {
-                    return bDate.getTime() - aDate.getTime();
-                } else {
-                    return aDate.getTime() - bDate.getTime();
-                }
-              });
-              setBookings(userBookings);
-              setIsLoading(false);
-          },
-          (error) => {
-              console.error("Failed to listen to user bookings:", error);
-              toast({ title: "Error", description: "Could not load real-time bookings.", variant: "destructive" });
-              setIsLoading(false);
+          if (aIsPast && !bIsPast) return 1;
+          if (!aIsPast && bIsPast) return -1;
+          
+          if (aIsPast) {
+              return bDate.getTime() - aDate.getTime();
+          } else {
+              return aDate.getTime() - bDate.getTime();
           }
-      );
+        });
+        setBookings(userBookings);
+    } catch (error) {
+        console.error("Failed to fetch user bookings:", error);
+        toast({ title: "Error", description: "Could not load bookings.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [currentUser, toast]);
 
-      return () => unsubscribe();
-  }, [toast]);
+  useEffect(() => {
+    fetchBookings();
+    window.addEventListener('dataChanged', fetchBookings);
+    return () => {
+        window.removeEventListener('dataChanged', fetchBookings);
+    };
+  }, [fetchBookings]);
 
   useEffect(() => {
     const fetchRelatedFacilities = async () => {
@@ -128,6 +144,7 @@ export default function BookingsPage() {
   }, [bookings, facilities]);
 
   const handleCancelBooking = async (bookingId: string) => {
+    if (!currentUser) return;
     setIsActionLoading(true);
     const bookingToCancel = bookings.find(b => b.id === bookingId);
 
@@ -139,7 +156,7 @@ export default function BookingsPage() {
         });
         
         if (bookingToCancel) {
-          addNotification(mockUser.id, {
+          addNotification(currentUser.id, {
               type: 'booking_cancelled',
               title: 'Booking Cancelled',
               message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} has been cancelled.`,
@@ -163,12 +180,12 @@ export default function BookingsPage() {
   };
 
   const handleReviewSubmit = async (rating: number, comment: string, bookingId: string) => {
-    if (!selectedBookingForReview) return;
+    if (!selectedBookingForReview || !currentUser) return;
 
     try {
       await addMockReview({
         facilityId: selectedBookingForReview.facilityId,
-        userId: mockUser.id,
+        userId: currentUser.id,
         rating,
         comment,
         bookingId,
@@ -180,7 +197,7 @@ export default function BookingsPage() {
         className: "bg-green-500 text-white",
       });
       
-      addNotification(mockUser.id, {
+      addNotification(currentUser.id, {
         type: 'review_submitted',
         title: 'Review Submitted!',
         message: `Your review for ${selectedBookingForReview.facilityName} has been posted.`,

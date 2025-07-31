@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, Swords, Trophy, Wand2, Star } from 'lucide-react';
@@ -181,23 +181,30 @@ const PopularFacilitiesSection = () => {
     const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [facilitiesData, settingsData] = await Promise.all([
-                    getFacilitiesAction(),
-                    getSiteSettingsAction()
-                ]);
-                setFacilities(facilitiesData.filter(f => f.isPopular).slice(0, 4));
-                setCurrency(settingsData.defaultCurrency);
-            } catch (error) {
-                console.error("Failed to fetch popular facilities", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchData();
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const [facilitiesData, settingsData] = await Promise.all([
+                getFacilitiesAction(),
+                getSiteSettingsAction()
+            ]);
+            setFacilities(facilitiesData.filter(f => f.isPopular).slice(0, 4));
+            setCurrency(settingsData.defaultCurrency);
+        } catch (error) {
+            console.error("Failed to fetch popular facilities", error);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchData();
+        window.addEventListener('dataChanged', fetchData);
+        return () => {
+            window.removeEventListener('dataChanged', fetchData);
+        };
+    }, [fetchData]);
+
 
     return (
         <section className="py-16 lg:py-24 bg-card/40 rounded-2xl">

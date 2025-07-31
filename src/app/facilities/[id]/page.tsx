@@ -2,12 +2,12 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { Facility, Amenity, Sport, Review, RentalEquipment, SiteSettings } from '@/lib/types';
-import { getFacilityByIdAction, getSiteSettingsAction } from '@/app/actions';
+import type { Facility, Amenity, Sport, Review, RentalEquipment, SiteSettings, UserProfile } from '@/lib/types';
+import { getFacilityByIdAction, getSiteSettingsAction, toggleFavoriteFacilityAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,21 +67,37 @@ export default function FacilityDetailPage() {
   const { toast } = useToast();
   const [summary, setSummary] = useState<SummarizeReviewsOutput | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-        if (facilityId) {
-            const foundFacility = await getFacilityByIdAction(facilityId);
-            const settings = await getSiteSettingsAction();
-            setTimeout(() => { // Simulate fetch delay
-                setFacility(foundFacility || null);
-                setCurrency(settings.defaultCurrency);
-            }, 300);
+    const userStr = sessionStorage.getItem('activeUser');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setCurrentUser(user);
+    }
+  }, []);
+
+  const fetchInitialData = useCallback(async () => {
+    if (facilityId) {
+        const foundFacility = await getFacilityByIdAction(facilityId);
+        const settings = await getSiteSettingsAction();
+        setFacility(foundFacility || null);
+        setCurrency(settings.defaultCurrency);
+        if (foundFacility && currentUser) {
+            setIsFavorited(currentUser.favoriteFacilities?.includes(foundFacility.id) || false);
         }
-    };
+    }
+  }, [facilityId, currentUser]);
+
+
+  useEffect(() => {
     fetchInitialData();
-  }, [facilityId]);
+    window.addEventListener('dataChanged', fetchInitialData);
+    return () => {
+        window.removeEventListener('dataChanged', fetchInitialData);
+    }
+  }, [fetchInitialData]);
 
   useEffect(() => {
     if (facility && facility.reviews && facility.reviews.length >= 3) {
@@ -104,14 +120,28 @@ export default function FacilityDetailPage() {
     }
   }, [facility]);
 
-  const handleFavoriteClick = () => {
-    if (!facility) return;
+  const handleFavoriteClick = async () => {
+    if (!facility || !currentUser) {
+        toast({ title: 'Please log in', description: 'You must be logged in to favorite facilities.', variant: 'destructive' });
+        return;
+    }
     const newFavoritedState = !isFavorited;
-    setIsFavorited(newFavoritedState);
-    toast({
-      title: newFavoritedState ? "Added to Favorites" : "Removed from Favorites",
-      description: `${facility.name} has been ${newFavoritedState ? 'added to' : 'removed from'} your favorites.`,
-    });
+    setIsFavorited(newFavoritedState); // Optimistic update
+
+    try {
+        const updatedUser = await toggleFavoriteFacilityAction(currentUser.id, facility.id);
+        if (updatedUser) {
+            sessionStorage.setItem('activeUser', JSON.stringify(updatedUser));
+            window.dispatchEvent(new Event('userChanged'));
+            toast({
+              title: newFavoritedState ? "Added to Favorites" : "Removed from Favorites",
+              description: `${facility.name} has been ${newFavoritedState ? 'added to' : 'removed from'} your favorites.`,
+            });
+        }
+    } catch (error) {
+        setIsFavorited(!newFavoritedState); // Revert on error
+        toast({ title: 'Error', description: 'Could not update favorites.', variant: 'destructive' });
+    }
   };
   
   const renderPrice = (price: number) => {

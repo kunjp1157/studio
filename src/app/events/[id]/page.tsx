@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import type { SportEvent, Facility, SiteSettings } from '@/lib/types';
-import { addNotification, mockUser, registerForEvent as mockRegisterForEvent } from '@/lib/data';
+import type { SportEvent, Facility, SiteSettings, UserProfile } from '@/lib/types';
+import { addNotification, registerForEvent as mockRegisterForEvent } from '@/lib/data';
 import { getSiteSettingsAction, getFacilityByIdAction, getEventByIdAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -30,20 +30,31 @@ export default function EventDetailPage() {
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined);
   const [isRegistering, setIsRegistering] = useState(false);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    const fetchEventData = async () => {
-        if (eventId) {
-            const foundEvent = await getEventByIdAction(eventId);
-            setEvent(foundEvent || null);
-            if (foundEvent) {
-                const foundFacility = await getFacilityByIdAction(foundEvent.facilityId);
-                setFacility(foundFacility || null);
-            }
+    const userStr = sessionStorage.getItem('activeUser');
+    if (userStr) {
+      setCurrentUser(JSON.parse(userStr));
+    }
+  }, []);
+
+  const fetchEventData = useCallback(async () => {
+    if (eventId) {
+        const foundEvent = await getEventByIdAction(eventId);
+        setEvent(foundEvent || null);
+        if (foundEvent) {
+            const foundFacility = await getFacilityByIdAction(foundEvent.facilityId);
+            setFacility(foundFacility || null);
         }
-    };
-    fetchEventData();
+    }
   }, [eventId]);
+
+  useEffect(() => {
+    fetchEventData();
+    window.addEventListener('dataChanged', fetchEventData);
+    return () => window.removeEventListener('dataChanged', fetchEventData);
+  }, [fetchEventData]);
   
   useEffect(() => {
     const fetchSettings = async () => {
@@ -54,7 +65,7 @@ export default function EventDetailPage() {
   }, []);
 
   const handleRegisterClick = async () => {
-    if (!event) return;
+    if (!event || !currentUser) return;
     setIsRegistering(true);
     
     // Simulate API call for registration
@@ -70,7 +81,7 @@ export default function EventDetailPage() {
       });
       // Update local event state to reflect new participant count
       setEvent(prev => prev ? {...prev, registeredParticipants: prev.registeredParticipants + 1} : null);
-      addNotification(mockUser.id, {
+      addNotification(currentUser.id, {
         type: 'general', // Or a new 'event_registration' type
         title: 'Event Registration Confirmed',
         message: `You are now registered for ${event.name}.`,

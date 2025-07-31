@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -32,17 +32,21 @@ export default function EventsPage() {
   const [sortOption, setSortOption] = useState<SortOption>('date-asc');
   const [mockSports, setMockSports] = useState<Sport[]>([]);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-        setIsLoading(true);
-        const eventsData = await getAllEventsAction();
-        setAllEvents(eventsData);
-        setFilteredEvents(eventsData.sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()));
-        setMockSports(getMockSports());
-        setIsLoading(false);
-    };
-    fetchEvents();
+  const fetchEvents = useCallback(async () => {
+    setIsLoading(true);
+    const eventsData = await getAllEventsAction();
+    setAllEvents(eventsData);
+    setFilteredEvents(eventsData.sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()));
+    setMockSports(getMockSports());
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchEvents();
+    window.addEventListener('dataChanged', fetchEvents);
+    return () => window.removeEventListener('dataChanged', fetchEvents);
+  }, [fetchEvents]);
+
 
   useEffect(() => {
     let eventsToDisplay = [...allEvents];
@@ -103,14 +107,15 @@ export default function EventsPage() {
       <Card key={event.id} className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg">
         <CardHeader className="p-0 relative">
             <Link href={`/events/${event.id}`}>
-                <Image
-                    src={event.imageUrl || `https://placehold.co/400x200.png?text=${encodeURIComponent(event.name)}`}
-                    alt={event.name}
-                    width={400}
-                    height={200}
-                    className="w-full h-48 object-cover"
-                    data-ai-hint={event.imageDataAiHint || "sports event"}
-                />
+                <div className="aspect-video relative">
+                    <Image
+                        src={event.imageUrl || `https://placehold.co/400x200.png?text=${encodeURIComponent(event.name)}`}
+                        alt={event.name}
+                        fill
+                        className="object-cover"
+                        data-ai-hint={event.imageDataAiHint || "sports event"}
+                    />
+                </div>
             </Link>
              <Badge 
                 variant={isEventPast ? "secondary" : (isEventFull ? "destructive" : "default")}

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -71,21 +71,20 @@ export function Header() {
   const [siteName, setSiteName] = useState('Sports Arena');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  
+  const fetchSettings = useCallback(async () => {
+    const currentSettings = await getSiteSettingsAction();
+    if (currentSettings.siteName !== siteName) {
+        setSiteName(currentSettings.siteName);
+    }
+  }, [siteName]);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-        const currentSettings = await getSiteSettingsAction();
-        if (currentSettings.siteName !== siteName) {
-            setSiteName(currentSettings.siteName);
-        }
-    }
     fetchSettings(); 
 
-    const handleSettingsChange = () => {
+    const handleDataChange = () => {
         fetchSettings();
     };
-
-    window.addEventListener('settingsChanged', handleSettingsChange);
 
     const handleUserChange = () => {
         const activeUser = sessionStorage.getItem('activeUser');
@@ -99,14 +98,15 @@ export function Header() {
     // Initial check
     handleUserChange();
     
+    window.addEventListener('dataChanged', handleDataChange);
     window.addEventListener('userChanged', handleUserChange);
 
 
     return () => {
-      window.removeEventListener('settingsChanged', handleSettingsChange);
+      window.removeEventListener('dataChanged', handleDataChange);
       window.removeEventListener('userChanged', handleUserChange);
     };
-  }, [siteName]);
+  }, [fetchSettings]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

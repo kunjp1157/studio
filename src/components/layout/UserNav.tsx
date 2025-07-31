@@ -46,16 +46,18 @@ export function UserNav() {
         }
     };
     window.addEventListener('userChanged', handleUserChange);
+    window.addEventListener('dataChanged', handleUserChange); // Also listen for general data changes
 
     return () => {
         window.removeEventListener('userChanged', handleUserChange);
+        window.removeEventListener('dataChanged', handleUserChange);
     };
 
   }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem('activeUser');
-    setCurrentUser(null);
+    window.dispatchEvent(new Event('userChanged')); // Notify components of logout
     router.push('/account/login');
   };
 

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -50,39 +50,49 @@ export default function MembershipsPage() {
   const [upiId, setUpiId] = useState('');
   const [membershipQrCodeUrl, setMembershipQrCodeUrl] = useState('');
 
-  useEffect(() => {
+  const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
-    const fetchInitialData = async () => {
-        try {
-            const [plansData, settingsData] = await Promise.all([
-                getAllMembershipPlansAction(),
-                getSiteSettingsAction(),
-            ]);
-            
-            setPlans(plansData.sort((a,b) => a.pricePerMonth - b.pricePerMonth));
-            setCurrency(settingsData.defaultCurrency);
+    try {
+        const [plansData, settingsData] = await Promise.all([
+            getAllMembershipPlansAction(),
+            getSiteSettingsAction(),
+        ]);
+        
+        setPlans(plansData.sort((a,b) => a.pricePerMonth - b.pricePerMonth));
+        setCurrency(settingsData.defaultCurrency);
 
-            const activeUser = sessionStorage.getItem('activeUser');
-            if (activeUser) {
-                setCurrentUser(JSON.parse(activeUser));
-            }
-
-        } catch (error) {
-            toast({ title: "Error", description: "Could not load membership data.", variant: "destructive" });
-        } finally {
-            setIsLoading(false);
+        const activeUser = sessionStorage.getItem('activeUser');
+        if (activeUser) {
+            setCurrentUser(JSON.parse(activeUser));
         }
-    };
+
+    } catch (error) {
+        toast({ title: "Error", description: "Could not load membership data.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
     fetchInitialData();
+
+    const handleDataChange = () => {
+        fetchInitialData();
+    };
 
     const handleUserChange = () => {
         const activeUser = sessionStorage.getItem('activeUser');
         if (activeUser) setCurrentUser(JSON.parse(activeUser));
     };
-    window.addEventListener('userChanged', handleUserChange);
-    return () => window.removeEventListener('userChanged', handleUserChange);
 
-  }, [toast]);
+    window.addEventListener('dataChanged', handleDataChange);
+    window.addEventListener('userChanged', handleUserChange);
+    return () => {
+        window.removeEventListener('dataChanged', handleDataChange);
+        window.removeEventListener('userChanged', handleUserChange);
+    };
+
+  }, [fetchInitialData]);
 
   const handleChoosePlan = (plan: MembershipPlan) => {
     setSelectedPlanForPayment(plan);
