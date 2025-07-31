@@ -10,7 +10,81 @@ let mockBookings: Booking[] = [];
 let mockReviews: Review[] = [];
 let mockTeams: Team[] = [];
 let mockAppNotifications: AppNotification[] = [];
-let mockBlogPosts: BlogPost[] = [];
+let mockBlogPosts: BlogPost[] = [
+  {
+    id: 'blog-1',
+    slug: 'benefits-of-sports',
+    title: 'Top 5 Health Benefits of Playing Sports Regularly',
+    excerpt: 'Discover how incorporating regular sports activities into your routine can drastically improve your physical and mental well-being.',
+    content: `
+      <p>Engaging in sports is more than just a hobby; it's a powerful tool for enhancing your overall health. Here are five key benefits:</p>
+      <ol>
+        <li><strong>Improved Cardiovascular Health:</strong> Regular physical activity strengthens your heart, improves blood circulation, and reduces the risk of heart disease.</li>
+        <li><strong>Weight Management:</strong> Sports are a fantastic way to burn calories and maintain a healthy weight, which is crucial for preventing a range of health issues.</li>
+        <li><strong>Stress Reduction:</strong> Physical exertion is a natural stress-reliever. It releases endorphins, which act as mood elevators and can help combat anxiety and depression.</li>
+        <li><strong>Enhanced Social Skills:</strong> Team sports, in particular, foster communication, teamwork, and leadership skills. They provide a great opportunity to connect with like-minded individuals.</li>
+        <li><strong>Increased Bone Density:</strong> Weight-bearing activities like running, tennis, and basketball help in building and maintaining strong bones, reducing the risk of osteoporosis later in life.</li>
+      </ol>
+      <p>Ready to get started? <a href="/facilities">Browse our facilities</a> and book your next game today!</p>
+    `,
+    imageUrl: 'https://images.unsplash.com/photo-1575361204480-aadea25a6e68?q=80&w=2071&auto=format&fit=crop',
+    imageAlt: 'A group of people playing volleyball on a sunny day',
+    authorName: 'Dr. Eva Rostova',
+    authorAvatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
+    publishedAt: '2024-05-15T10:00:00Z',
+    tags: ['Health', 'Fitness', 'Wellness'],
+    isFeatured: true,
+    dataAiHint: 'people playing sport',
+  },
+  {
+    id: 'blog-2',
+    slug: 'choosing-the-right-facility',
+    title: 'How to Choose the Perfect Sports Facility for Your Needs',
+    excerpt: 'Finding the right place to play can make all the difference. Here are some tips to help you select the best facility for your game.',
+    content: `
+      <p>Choosing a sports facility involves more than just finding an open slot. Consider these factors to ensure a great experience:</p>
+      <ul>
+        <li><strong>Location & Accessibility:</strong> Is it easy to get to? Is there adequate parking or public transport access?</li>
+        <li><strong>Court/Field Quality:</strong> Check reviews for comments on the maintenance of the playing surface. A well-kept area prevents injuries and improves the game.</li>
+        <li><strong>Amenities:</strong> Do you need lockers, showers, or a place to buy refreshments? Use our platform's amenity filters to find facilities that have what you need.</li>
+        <li><strong>Cost:</strong> Compare prices, but also consider the value. A slightly more expensive facility might offer better quality and amenities that are worth the price.</li>
+        <li><strong>Booking Policy:</strong> Understand the cancellation and refund policies before you book to avoid any surprises.</li>
+      </ul>
+      <p>Using the advanced search filters on Sports Arena can help you narrow down your options and find the perfect match in minutes!</p>
+    `,
+    imageUrl: 'https://images.unsplash.com/photo-1565992441121-4367c2967103?q=80&w=1974&auto=format&fit=crop',
+    imageAlt: 'An empty, well-lit tennis court at night',
+    authorName: 'Mark Chen',
+    authorAvatarUrl: 'https://randomuser.me/api/portraits/men/35.jpg',
+    publishedAt: '2024-05-10T14:30:00Z',
+    tags: ['Tips', 'Facilities', 'Booking'],
+    dataAiHint: 'tennis court',
+  },
+  {
+    id: 'blog-3',
+    slug: 'intro-to-box-cricket',
+    title: 'Get into the Game: An Introduction to Box Cricket',
+    excerpt: 'Heard of Box Cricket but not sure what it is? This fast-paced version of the classic sport is taking the city by storm.',
+    content: `
+      <p>Box cricket is a high-energy, condensed version of cricket played in a netted enclosure. It's perfect for smaller groups and offers a more intense, action-packed experience.</p>
+      <h3>Why Try Box Cricket?</h3>
+      <ul>
+        <li><strong>Fast-Paced:</strong> With a smaller playing area, every ball is an event. There's no downtime waiting for the ball to be retrieved from the boundary.</li>
+        <li><strong>Accessible:</strong> You don't need a full team of 11 players. Games are often played with 6-8 players per side.</li>
+        <li><strong>All-Weather Play:</strong> Many box cricket venues are covered or indoors, meaning you can play rain or shine.</li>
+        <li><strong>Great for All Skill Levels:</strong> It's a fun way for beginners to learn the basics and for experienced players to sharpen their reflexes.</li>
+      </ul>
+      <p>Many of our listed facilities, like The Box Yard, offer excellent box cricket arenas. It's a fantastic way to get a great workout and have fun with friends. Give it a try!</p>
+    `,
+    imageUrl: 'https://images.unsplash.com/photo-1618293153926-6556b6c31d58?q=80&w=1974&auto=format&fit=crop',
+    imageAlt: 'A box cricket arena with a green turf',
+    authorName: 'Priya Sharma',
+    authorAvatarUrl: 'https://randomuser.me/api/portraits/women/33.jpg',
+    publishedAt: '2024-05-05T09:00:00Z',
+    tags: ['Sports', 'Cricket', 'Local'],
+    dataAiHint: 'box cricket',
+  }
+];
 let mockEvents: SportEvent[] = [];
 let mockPricingRules: PricingRule[] = [];
 let mockPromotionRules: PromotionRule[] = [];
