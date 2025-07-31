@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Image from 'next/image';
@@ -19,22 +18,6 @@ interface BlogPostCardProps {
 export function BlogPostCard({ post, isFeatured = false }: BlogPostCardProps) {
   return (
     <Card className={`flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg hover:-translate-y-2 ${isFeatured ? 'md:col-span-2' : ''}`}>
-      {post.imageUrl && (
-        <CardHeader className="p-0 relative">
-          <Link href={`/blog/${post.slug}`}>
-            <div className={`aspect-video w-full relative ${isFeatured ? 'md:h-80 h-60' : 'h-48'}`}>
-              <Image
-                src={post.imageUrl}
-                alt={post.imageAlt || post.title}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover"
-                data-ai-hint={post.dataAiHint || 'blog post image'}
-              />
-            </div>
-          </Link>
-        </CardHeader>
-      )}
       <CardContent className="p-4 md:p-6 flex-grow">
         <Link href={`/blog/${post.slug}`}>
           <CardTitle className={`font-headline mb-2 hover:text-primary transition-colors ${isFeatured ? 'text-2xl md:text-3xl' : 'text-xl'}`}>

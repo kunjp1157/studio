@@ -75,20 +75,6 @@ export default function BlogPostPage() {
             </div>
           )}
         </header>
-
-        {post.imageUrl && (
-          <div className="relative aspect-video rounded-lg overflow-hidden mb-8 shadow-lg">
-            <Image
-              src={post.imageUrl}
-              alt={post.imageAlt || post.title}
-              fill
-              sizes="(max-width: 768px) 100vw, 768px"
-              className="object-cover"
-              priority // Good for LCP on blog post pages
-              data-ai-hint={post.dataAiHint || 'blog post header'}
-            />
-          </div>
-        )}
         
         {/* In a real app, use a Markdown renderer or dangerouslySetInnerHTML for rich text */}
         <Card className="prose prose-lg max-w-none dark:prose-invert shadow-none border-none bg-transparent p-0">
