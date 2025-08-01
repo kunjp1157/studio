@@ -368,6 +368,36 @@ export default function FacilityDetailPage() {
                 </CardContent>
             </Card>
           </div>
+          
+           {sportSpecificEquipment && sportSpecificEquipment.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className='flex items-center'><PackageSearch className="mr-2 h-5 w-5 text-primary"/>Rent Equipment (Optional)</CardTitle>
+                        <CardDescription>Add rental equipment to your booking. Prices are calculated for your selected time slot duration.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3 pt-2">
+                            {sportSpecificEquipment.map(item => (
+                            <div key={item.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                                <div>
+                                    <p className="font-medium text-sm">{item.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {siteSettings ? formatCurrency(item.pricePerItem, siteSettings.defaultCurrency) : ''} / {item.priceType === 'per_booking' ? 'booking' : 'hour'}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => handleEquipmentQuantityChange(item.id, -1)} disabled={(selectedEquipment[item.id] || 0) === 0}>
+                                        <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <span className="w-6 text-center font-semibold">{selectedEquipment[item.id] || 0}</span>
+                                    <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => handleEquipmentQuantityChange(item.id, 1)} disabled={(selectedEquipment[item.id] || 0) >= item.stock}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
            
            <Card>
             <CardHeader>
@@ -463,36 +493,6 @@ export default function FacilityDetailPage() {
                )}
             </CardContent>
             
-            {sportSpecificEquipment && sportSpecificEquipment.length > 0 && (
-                <Accordion type="single" collapsible className="w-full px-6">
-                    <AccordionItem value="item-1">
-                        <AccordionTrigger>
-                           <span className='flex items-center text-sm font-medium'><PackageSearch className="mr-2 h-4 w-4"/>Rent Equipment (Optional)</span>
-                        </AccordionTrigger>
-                        <AccordionContent className="space-y-3 pt-2">
-                             {sportSpecificEquipment.map(item => (
-                                <div key={item.id} className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium text-sm">{item.name}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                           {siteSettings ? formatCurrency(item.pricePerItem, siteSettings.defaultCurrency) : ''} / {item.priceType === 'per_booking' ? 'booking' : 'hour'}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => handleEquipmentQuantityChange(item.id, -1)} disabled={(selectedEquipment[item.id] || 0) === 0}>
-                                            <Minus className="h-4 w-4" />
-                                        </Button>
-                                        <span className="w-6 text-center font-semibold">{selectedEquipment[item.id] || 0}</span>
-                                        <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => handleEquipmentQuantityChange(item.id, 1)} disabled={(selectedEquipment[item.id] || 0) >= item.stock}>
-                                            <Plus className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            )}
 
             <CardFooter className="flex-col gap-2 pt-6">
               <Button className="w-full" onClick={handleBooking} disabled={!selectedSlot || !selectedSport || isBooking}>
@@ -510,3 +510,4 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
+
