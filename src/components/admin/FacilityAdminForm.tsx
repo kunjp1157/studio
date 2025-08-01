@@ -30,6 +30,7 @@ const rentalEquipmentSchema = z.object({
   pricePerItem: z.coerce.number().min(0, { message: "Price must be non-negative." }),
   priceType: z.enum(['per_booking', 'per_hour']),
   stock: z.coerce.number().int().min(0, { message: "Stock must be a non-negative integer." }),
+  sportIds: z.array(z.string()).min(1, "Select at least one sport for this equipment."),
 });
 
 const facilityFormSchema = z.object({
@@ -489,12 +490,48 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
                                     <FormItem><FormLabel>Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                             </div>
+                            <FormField
+                                control={form.control}
+                                name={`availableEquipment.${index}.sportIds`}
+                                render={() => (
+                                <FormItem>
+                                    <FormLabel>Applicable Sports</FormLabel>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    {mockSports.map((sport) => (
+                                        <FormField
+                                        key={sport.id}
+                                        control={form.control}
+                                        name={`availableEquipment.${index}.sportIds`}
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                            <FormControl>
+                                                <Checkbox
+                                                checked={field.value?.includes(sport.id)}
+                                                onCheckedChange={(checked) => {
+                                                    const currentValues = field.value || [];
+                                                    const newValues = checked
+                                                    ? [...currentValues, sport.id]
+                                                    : currentValues.filter((id) => id !== sport.id);
+                                                    field.onChange(newValues);
+                                                }}
+                                                />
+                                            </FormControl>
+                                            <FormLabel className="text-sm font-normal">{sport.name}</FormLabel>
+                                            </FormItem>
+                                        )}
+                                        />
+                                    ))}
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
                         </div>
                     ))}
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => appendEquipment({ id: `new-${Date.now()}`, name: '', pricePerItem: 0, priceType: 'per_booking', stock: 1})}
+                        onClick={() => appendEquipment({ id: `new-${Date.now()}`, name: '', pricePerItem: 0, priceType: 'per_booking', stock: 1, sportIds: [] })}
                     >
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Equipment
                     </Button>
