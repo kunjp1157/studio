@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Save, PlusCircle, Trash2, ArrowLeft, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LocateFixed, Star, Building as BuildingIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { generateImageFromPrompt } from '@/ai/flows/generate-image-flow';
 
 
 const rentalEquipmentSchema = z.object({
