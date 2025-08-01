@@ -28,8 +28,6 @@ let mockBlogPosts: BlogPost[] = [
       </ol>
       <p>Ready to get started? <a href="/facilities">Browse our facilities</a> and book your next game today!</p>
     `,
-    imageUrl: 'https://images.unsplash.com/photo-1575361204480-aadea25a6e68?q=80&w=2071&auto=format&fit=crop',
-    imageAlt: 'A group of people playing volleyball on a sunny day',
     authorName: 'Dr. Eva Rostova',
     authorAvatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
     publishedAt: '2024-05-15T10:00:00Z',
@@ -53,8 +51,6 @@ let mockBlogPosts: BlogPost[] = [
       </ul>
       <p>Using the advanced search filters on Sports Arena can help you narrow down your options and find the perfect match in minutes!</p>
     `,
-    imageUrl: 'https://images.unsplash.com/photo-1565992441121-4367c2967103?q=80&w=1974&auto=format&fit=crop',
-    imageAlt: 'An empty, well-lit tennis court at night',
     authorName: 'Mark Chen',
     authorAvatarUrl: 'https://randomuser.me/api/portraits/men/35.jpg',
     publishedAt: '2024-05-10T14:30:00Z',
@@ -77,8 +73,6 @@ let mockBlogPosts: BlogPost[] = [
       </ul>
       <p>Many of our listed facilities, like The Box Yard, offer excellent box cricket arenas. It's a fantastic way to get a great workout and have fun with friends. Give it a try!</p>
     `,
-    imageUrl: 'https://images.unsplash.com/photo-1618293153926-6556b6c31d58?q=80&w=1974&auto=format&fit=crop',
-    imageAlt: 'A box cricket arena with a green turf',
     authorName: 'Priya Sharma',
     authorAvatarUrl: 'https://randomuser.me/api/portraits/women/33.jpg',
     publishedAt: '2024-05-05T09:00:00Z',

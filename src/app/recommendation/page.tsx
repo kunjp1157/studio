@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,27 +12,43 @@ import { Wand2, Lightbulb, ThumbsUp, ThumbsDown, AlertCircle, Sparkles } from 'l
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { recommendFacility, type RecommendFacilityOutput } from '@/ai/flows/facility-recommendation';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, mockBookings, getFacilityById } from '@/lib/data'; // For pre-filling example data
+import { getBookingsByUserId, getFacilityById, getStaticUsers } from '@/lib/data'; // For pre-filling example data
+import type { UserProfile, Booking } from '@/lib/types';
+
 
 export default function RecommendationPage() {
   const [preferences, setPreferences] = useState(
     `I like playing soccer and tennis. Looking for facilities in Pune, preferably with good parking and available on weekend afternoons. Budget-friendly options are a plus.`
   );
   
-  const pastBookingsString = mockBookings
-    .filter(b => b.userId === mockUser.id)
-    .slice(0, 2) // Take last 2 bookings for brevity
-    .map(b => {
-        const facility = getFacilityById(b.facilityId);
-        return `- ${b.facilityName} (${facility?.type || 'Unknown Type'}) on ${b.date} from ${b.startTime} to ${b.endTime} for ${facility?.sports.map(s => s.name).join('/') || 'activity'}. Status: ${b.status}.`;
-    })
-    .join('\n');
-
-  const [pastBookingHistory, setPastBookingHistory] = useState(pastBookingsString || 'No significant past booking history provided.');
+  const [pastBookingHistory, setPastBookingHistory] = useState('No significant past booking history provided.');
   const [recommendation, setRecommendation] = useState<RecommendFacilityOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+        const user = JSON.parse(activeUser);
+        setCurrentUser(user);
+        
+        const fetchBookings = async () => {
+            const userBookings = await getBookingsByUserId(user.id);
+            if(userBookings.length > 0) {
+                const bookingPromises = userBookings.slice(0,2).map(async (b: Booking) => {
+                    const facility = await getFacilityById(b.facilityId);
+                    return `- ${b.facilityName} (${facility?.type || 'Unknown Type'}) on ${b.date} from ${b.startTime} to ${b.endTime} for ${b.sportName}. Status: ${b.status}.`;
+                });
+                const bookingsStrings = await Promise.all(bookingPromises);
+                setPastBookingHistory(bookingsStrings.join('\n'));
+            }
+        };
+
+        fetchBookings();
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
