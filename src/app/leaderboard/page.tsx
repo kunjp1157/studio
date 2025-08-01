@@ -7,7 +7,7 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { mockUser, getAllUsers } from '@/lib/data';
+import { getAllUsers } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Trophy, Gem } from 'lucide-react';
@@ -16,8 +16,14 @@ import { cn } from '@/lib/utils';
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+        setCurrentUser(JSON.parse(activeUserStr));
+    }
+
     const fetchLeaderboard = async () => {
         setIsLoading(true);
         try {
@@ -94,7 +100,7 @@ export default function LeaderboardPage() {
               <TableBody>
                 {leaderboard.map((user, index) => {
                   const rank = index + 1;
-                  const isCurrentUser = user.id === mockUser.id;
+                  const isCurrentUser = user.id === currentUser?.id;
                   return (
                     <TableRow key={user.id} className={cn(isCurrentUser && 'bg-primary/10')}>
                       <TableCell className="text-center font-bold text-lg">
