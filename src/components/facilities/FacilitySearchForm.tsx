@@ -25,12 +25,12 @@ interface FacilitySearchFormProps {
   currency: SiteSettings['defaultCurrency'] | null;
   facilities: Facility[];
   cities: string[];
-  locations: string[];
+  locations: string[]; // All locations, will be filtered client-side
 }
 
 const ANY_SPORT_VALUE = "all-sports-filter-value";
 
-export function FacilitySearchForm({ onSearch, currency, facilities, cities = [], locations = [] }: FacilitySearchFormProps) {
+export function FacilitySearchForm({ onSearch, currency, facilities, cities = [], locations: allLocations = [] }: FacilitySearchFormProps) {
   const searchParams = useSearchParams();
   const sportQueryParam = searchParams.get('sport');
 
@@ -53,13 +53,14 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
   const [indoorOutdoor, setIndoorOutdoor] = useState<'any' | 'indoor' | 'outdoor'>('any');
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
 
+  const [filteredLocations, setFilteredLocations] = useState<string[]>(allLocations);
+
   const mockSports = getMockSports();
 
   useEffect(() => {
       setPriceRange([minPrice, maxPrice]);
   }, [minPrice, maxPrice]);
   
-  // Effect to trigger search when component loads with a query parameter
   useEffect(() => {
     if (sportQueryParam) {
       onSearch({ 
@@ -68,6 +69,17 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
       });
     }
   }, [sportQueryParam, onSearch]);
+
+  useEffect(() => {
+    if (selectedCity === 'all') {
+      setFilteredLocations(allLocations);
+      setLocation('all'); // Reset location when city is reset
+    } else {
+      const locationsInCity = [...new Set(facilities.filter(f => f.city === selectedCity).map(f => f.location))];
+      setFilteredLocations(locationsInCity);
+      setLocation('all'); // Reset location filter when city changes
+    }
+  }, [selectedCity, facilities, allLocations]);
 
 
   const handleAmenityChange = (amenityId: string) => {
@@ -157,14 +169,14 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
           <Label htmlFor="location-filter" className="block text-sm font-medium text-foreground mb-1">
             Area / Location
           </Label>
-          <Select value={location} onValueChange={setLocation}>
+          <Select value={location} onValueChange={setLocation} disabled={selectedCity === 'all'}>
             <SelectTrigger id="location-filter">
               <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="All Areas" />
+              <SelectValue placeholder="Select a city first" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Areas</SelectItem>
-              {locations.map((loc) => (
+              {filteredLocations.map((loc) => (
                 <SelectItem key={loc} value={loc}>
                   {loc}
                 </SelectItem>
