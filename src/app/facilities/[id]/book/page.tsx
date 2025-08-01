@@ -119,7 +119,7 @@ function BookingConfirmationContent() {
         type: 'booking_confirmed',
         title: 'Booking Confirmed!',
         message: `Your booking for ${newBooking.facilityName} is confirmed.`,
-        link: '/account/bookings',
+        link: `/account/bookings/${newBooking.id}/receipt`,
         iconName: 'CheckCircle',
     });
 
@@ -127,7 +127,7 @@ function BookingConfirmationContent() {
       title: "Booking Confirmed!",
       description: `Your reservation at ${newBooking.facilityName} is complete.`,
     });
-    router.push('/account/bookings');
+    router.push(`/account/bookings/${newBooking.id}/receipt`);
   };
 
   if (!bookingData || !currency) {
