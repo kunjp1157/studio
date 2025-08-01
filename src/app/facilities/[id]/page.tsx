@@ -20,7 +20,7 @@ import {
   MapPin, CalendarDays, Clock, Users, SunMoon, DollarSign, Sparkles, Heart,
   ThumbsUp, ThumbsDown, PackageSearch, Minus, Plus
 } from 'lucide-react';
-import type { Facility, Review, Sport, TimeSlot, SiteSettings, UserProfile, Booking, RentedItemInfo } from '@/lib/types';
+import type { Facility, Review, Sport, TimeSlot, SiteSettings, UserProfile, Booking, RentedItemInfo, RentalEquipment } from '@/lib/types';
 import { getSiteSettingsAction, getFacilityByIdAction, toggleFavoriteFacilityAction } from '@/app/actions';
 import { calculateDynamicPrice, getBookingsForFacilityOnDate } from '@/lib/data';
 import { getIconComponent } from '@/components/shared/Icon';
@@ -158,14 +158,22 @@ export default function FacilityDetailPage() {
     }
     return 1;
   }, [selectedSlot]);
+  
+  const sportSpecificEquipment = useMemo(() => {
+    if (!facility?.availableEquipment || !selectedSport) {
+      return [];
+    }
+    return facility.availableEquipment.filter(e => e.sportIds.includes(selectedSport.id));
+  }, [facility?.availableEquipment, selectedSport]);
+
 
   const equipmentRentalCost = useMemo(() => {
-    if (!facility?.availableEquipment || Object.keys(selectedEquipment).length === 0) {
+    if (sportSpecificEquipment.length === 0 || Object.keys(selectedEquipment).length === 0) {
       return 0;
     }
 
     return Object.entries(selectedEquipment).reduce((total, [equipmentId, quantity]) => {
-      const equipment = facility.availableEquipment!.find(e => e.id === equipmentId);
+      const equipment = sportSpecificEquipment.find(e => e.id === equipmentId);
       if (equipment && quantity > 0) {
         const itemCost = equipment.pricePerItem * quantity;
         if (equipment.priceType === 'per_hour') {
@@ -175,7 +183,7 @@ export default function FacilityDetailPage() {
       }
       return total;
     }, 0);
-  }, [selectedEquipment, facility?.availableEquipment, bookingDurationHours]);
+  }, [selectedEquipment, sportSpecificEquipment, bookingDurationHours]);
 
   const dynamicPrice = useMemo(() => {
     if (facility && selectedSport && selectedDate && selectedSlot) {
@@ -197,7 +205,7 @@ export default function FacilityDetailPage() {
         const currentQuantity = prev[equipmentId] || 0;
         const newQuantity = Math.max(0, currentQuantity + change);
         
-        const equipment = facility?.availableEquipment?.find(e => e.id === equipmentId);
+        const equipment = sportSpecificEquipment.find(e => e.id === equipmentId);
         if (equipment && newQuantity > equipment.stock) {
             toast({
                 title: 'Stock Limit Reached',
@@ -224,7 +232,7 @@ export default function FacilityDetailPage() {
 
     const rentedItems: RentedItemInfo[] = Object.entries(selectedEquipment)
       .map(([equipmentId, quantity]) => {
-        const equipment = facility.availableEquipment?.find(e => e.id === equipmentId);
+        const equipment = sportSpecificEquipment.find(e => e.id === equipmentId);
         if (!equipment || quantity <= 0) return null;
         
         const itemCost = equipment.pricePerItem * quantity;
@@ -245,7 +253,6 @@ export default function FacilityDetailPage() {
     const bookingData = {
       facilityId: facility.id,
       facilityName: facility.name,
-      facilityImage: '', // Removed image
       dataAiHint: facility.dataAiHint,
       sportId: selectedSport.id,
       sportName: selectedSport.name,
@@ -284,6 +291,12 @@ export default function FacilityDetailPage() {
       setIsFavoriteLoading(false);
     }
   };
+  
+  useEffect(() => {
+    // Reset equipment selection when sport changes
+    setSelectedEquipment({});
+  }, [selectedSport]);
+
 
   if (facility === undefined) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
@@ -450,14 +463,14 @@ export default function FacilityDetailPage() {
                )}
             </CardContent>
             
-            {facility.availableEquipment && facility.availableEquipment.length > 0 && (
+            {sportSpecificEquipment && sportSpecificEquipment.length > 0 && (
                 <Accordion type="single" collapsible className="w-full px-6">
                     <AccordionItem value="item-1">
                         <AccordionTrigger>
                            <span className='flex items-center text-sm font-medium'><PackageSearch className="mr-2 h-4 w-4"/>Rent Equipment (Optional)</span>
                         </AccordionTrigger>
                         <AccordionContent className="space-y-3 pt-2">
-                             {facility.availableEquipment.map(item => (
+                             {sportSpecificEquipment.map(item => (
                                 <div key={item.id} className="flex items-center justify-between">
                                     <div>
                                         <p className="font-medium text-sm">{item.name}</p>

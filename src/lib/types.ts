@@ -6,6 +6,7 @@
 
 
 
+
 export interface Team {
   id: string;
   name: string;
@@ -68,12 +69,12 @@ export interface PromotionRule {
 
 export interface RentalEquipment {
   id: string;
-  facilityId?: string; 
   name: string;
   description?: string;
   pricePerItem: number; 
   priceType: 'per_booking' | 'per_hour'; 
-  stock: number; 
+  stock: number;
+  sportIds: string[]; // Link equipment to one or more sports
 }
 
 export interface FacilityOperatingHours {

@@ -1,6 +1,6 @@
 
 
-import type { Sport, Amenity, MembershipPlan, Facility, UserProfile, UserRole, UserStatus, FacilityOperatingHours, PricingModel } from './types';
+import type { Sport, Amenity, MembershipPlan, Facility, UserProfile, UserRole, UserStatus, FacilityOperatingHours, PricingModel, RentalEquipment } from './types';
 
 // This file contains static mock data that is safe to be imported into client components.
 // It has no server-side dependencies like the 'pg' database driver.
@@ -164,6 +164,18 @@ const defaultOperatingHours: FacilityOperatingHours[] = [
   { day: 'Sun', open: '09:00', close: '20:00' },
 ];
 
+const standardEquipment: RentalEquipment[] = [
+    { id: 'equip-1', name: 'Soccer Ball', pricePerItem: 100, priceType: 'per_booking', stock: 20, sportIds: ['sport-1'] },
+    { id: 'equip-2', name: 'Basketball', pricePerItem: 100, priceType: 'per_booking', stock: 15, sportIds: ['sport-2'] },
+    { id: 'equip-3', name: 'Tennis Racket', pricePerItem: 250, priceType: 'per_hour', stock: 10, sportIds: ['sport-3'] },
+    { id: 'equip-4', name: 'Tennis Balls (3)', pricePerItem: 50, priceType: 'per_booking', stock: 30, sportIds: ['sport-3'] },
+    { id: 'equip-5', name: 'Badminton Racket', pricePerItem: 200, priceType: 'per_hour', stock: 12, sportIds: ['sport-4'] },
+    { id: 'equip-6', name: 'Shuttlecock (tube)', pricePerItem: 150, priceType: 'per_booking', stock: 25, sportIds: ['sport-4'] },
+    { id: 'equip-7', name: 'Cricket Bat', pricePerItem: 300, priceType: 'per_hour', stock: 8, sportIds: ['sport-13'] },
+    { id: 'equip-8', name: 'Cricket Ball', pricePerItem: 150, priceType: 'per_booking', stock: 10, sportIds: ['sport-13'] },
+    { id: 'equip-9', name: 'Yoga Mat', pricePerItem: 50, priceType: 'per_booking', stock: 20, sportIds: ['sport-6'] },
+];
+
 export function getStaticFacilities(): Facility[] {
     const allSports = getMockSports();
     return [
@@ -192,6 +204,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: true,
         dataAiHint: 'soccer stadium',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-1') || e.sportIds.includes('sport-2')),
         ownerId: 'user-owner-dana'
       },
       {
@@ -214,6 +227,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: false,
         isIndoor: false,
         dataAiHint: 'tennis court',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-3')),
       },
       {
         id: 'facility-3',
@@ -278,6 +292,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: false,
         isIndoor: true,
         dataAiHint: 'badminton court',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-4')),
       },
       {
         id: 'facility-6',
@@ -295,6 +310,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: true,
         dataAiHint: 'yoga studio',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-6')),
       },
       {
         id: 'facility-7',
@@ -312,6 +328,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: false,
         dataAiHint: 'box cricket',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-13') || e.sportIds.includes('sport-1')),
       },
       {
         id: 'facility-8',
