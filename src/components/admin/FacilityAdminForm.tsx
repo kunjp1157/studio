@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -29,8 +30,6 @@ const rentalEquipmentSchema = z.object({
   pricePerItem: z.coerce.number().min(0, { message: "Price must be non-negative." }),
   priceType: z.enum(['per_booking', 'per_hour']),
   stock: z.coerce.number().int().min(0, { message: "Stock must be a non-negative integer." }),
-  imageUrl: z.string().url({ message: "Must be a valid URL." }).optional().or(z.literal('')),
-  dataAiHint: z.string().optional(),
 });
 
 const facilityFormSchema = z.object({
@@ -495,7 +494,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => appendEquipment({ id: `new-${Date.now()}`, name: '', pricePerItem: 0, priceType: 'per_booking', stock: 1, imageUrl: '', dataAiHint: '' })}
+                        onClick={() => appendEquipment({ id: `new-${Date.now()}`, name: '', pricePerItem: 0, priceType: 'per_booking', stock: 1})}
                     >
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Equipment
                     </Button>

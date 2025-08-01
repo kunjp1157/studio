@@ -5,6 +5,7 @@
 
 
 
+
 export interface Team {
   id: string;
   name: string;
@@ -23,8 +24,6 @@ export interface Sport {
   id: string;
   name: string;
   iconName?: string; 
-  imageUrl?: string; 
-  imageDataAiHint?: string; 
 }
 
 export interface Review {
@@ -74,8 +73,6 @@ export interface RentalEquipment {
   description?: string;
   pricePerItem: number; 
   priceType: 'per_booking' | 'per_hour'; 
-  imageUrl?: string;
-  dataAiHint?: string;
   stock: number; 
 }
 
@@ -108,7 +105,6 @@ export interface Facility {
   city: string;
   location: string; 
   description: string;
-  images: string[]; 
   sports: Sport[];
   sportPrices: SportPrice[];
   amenities: Amenity[];
@@ -151,7 +147,6 @@ export interface Booking {
   userId: string;
   facilityId: string;
   facilityName: string; 
-  facilityImage: string; 
   dataAiHint?: string;
   sportId: string;
   sportName: string;
@@ -245,8 +240,6 @@ export interface SportEvent {
   entryFee?: number;
   maxParticipants?: number;
   registeredParticipants: number;
-  imageUrl?: string;
-  imageDataAiHint?: string;
 }
 
 export interface SearchFilters {
@@ -281,8 +274,6 @@ export interface BlogPost {
   title: string;
   excerpt: string;
   content: string; 
-  imageUrl?: string;
-  imageAlt?: string;
   authorName: string;
   authorAvatarUrl?: string;
   publishedAt: string; 
