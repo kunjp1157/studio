@@ -15,7 +15,7 @@ import { getPromotionRuleByCode, addBooking, addNotification, getSiteSettings } 
 import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo, RentedItemInfo, UserProfile } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode, PackageSearch } from 'lucide-react';
+import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode, PackageSearch, HandCoins } from 'lucide-react';
 
 const UpiIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5">
@@ -39,7 +39,7 @@ function BookingConfirmationContent() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'qr'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'qr' | 'pay_at_venue'>('card');
   const [upiId, setUpiId] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
@@ -106,12 +106,15 @@ function BookingConfirmationContent() {
 
     const finalPrice = bookingData.totalPrice - (appliedPromotion?.discountAmount || 0);
 
-    // Simulate payment processing
-    await new Promise(res => setTimeout(res, 2000));
+    // Simulate payment processing unless it's pay at venue
+    if (paymentMethod !== 'pay_at_venue') {
+      await new Promise(res => setTimeout(res, 2000));
+    }
     
     const newBooking = await addBooking({
       ...bookingData,
       totalPrice: finalPrice,
+      status: paymentMethod === 'pay_at_venue' ? 'Pending' : 'Confirmed',
       appliedPromotion: appliedPromotion || undefined,
     });
     
@@ -139,6 +142,7 @@ function BookingConfirmationContent() {
   }
 
   const finalPrice = bookingData.totalPrice - (appliedPromotion?.discountAmount || 0);
+  const showPaymentForm = finalPrice > 0;
 
   return (
     <>
@@ -192,49 +196,76 @@ function BookingConfirmationContent() {
         <Card className="shadow-lg">
             <CardHeader><CardTitle>Payment Method</CardTitle><CardDescription>This is a mock payment screen.</CardDescription></CardHeader>
             <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2 border p-4 rounded-md">
-                    <input type="radio" id="card" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
-                    <Label htmlFor="card" className="flex items-center text-base"><CreditCard className="mr-2 h-5 w-5"/> Credit/Debit Card</Label>
-                </div>
-                <div className="flex items-center space-x-2 border p-4 rounded-md">
-                     <input type="radio" id="upi" name="payment" value="upi" checked={paymentMethod === 'upi'} onChange={() => setPaymentMethod('upi')} />
-                    <Label htmlFor="upi" className="flex items-center text-base"><UpiIcon /> UPI</Label>
-                </div>
-                <div className="flex items-center space-x-2 border p-4 rounded-md">
-                     <input type="radio" id="qr" name="payment" value="qr" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} />
-                    <Label htmlFor="qr" className="flex items-center text-base"><QrCode className="mr-2 h-5 w-5"/> Scan QR Code</Label>
-                </div>
+                {showPaymentForm ? (
+                <>
+                  <div className="flex items-center space-x-2 border p-4 rounded-md">
+                      <input type="radio" id="card" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
+                      <Label htmlFor="card" className="flex items-center text-base"><CreditCard className="mr-2 h-5 w-5"/> Credit/Debit Card</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border p-4 rounded-md">
+                       <input type="radio" id="upi" name="payment" value="upi" checked={paymentMethod === 'upi'} onChange={() => setPaymentMethod('upi')} />
+                      <Label htmlFor="upi" className="flex items-center text-base"><UpiIcon /> UPI</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border p-4 rounded-md">
+                       <input type="radio" id="qr" name="payment" value="qr" checked={paymentMethod === 'qr'} onChange={() => setPaymentMethod('qr')} />
+                      <Label htmlFor="qr" className="flex items-center text-base"><QrCode className="mr-2 h-5 w-5"/> Scan QR Code</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border p-4 rounded-md">
+                       <input type="radio" id="pay_at_venue" name="payment" value="pay_at_venue" checked={paymentMethod === 'pay_at_venue'} onChange={() => setPaymentMethod('pay_at_venue')} />
+                      <Label htmlFor="pay_at_venue" className="flex items-center text-base"><HandCoins className="mr-2 h-5 w-5"/> Pay at Venue</Label>
+                  </div>
 
-                {paymentMethod === 'upi' && (
-                     <div className="mt-4">
-                        <Label htmlFor="upi-id">UPI ID</Label>
-                        <Input 
-                            id="upi-id" 
-                            type="text" 
-                            placeholder="yourname@bank" 
-                            value={upiId}
-                            onChange={(e) => setUpiId(e.target.value)}
-                            required 
-                        />
-                    </div>
-                )}
-                 {paymentMethod === 'qr' && (
-                     <div className="mt-4 space-y-4 pt-4 border-t text-center">
-                        <p className="text-sm text-muted-foreground">QR Code generation is unavailable.</p>
-                         <Alert>
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>After Payment</AlertTitle>
-                            <AlertDescription>
-                                Once your payment is complete, click the confirm button below to finalize your booking.
-                            </AlertDescription>
-                        </Alert>
-                    </div>
+                  {paymentMethod === 'upi' && (
+                       <div className="mt-4">
+                          <Label htmlFor="upi-id">UPI ID</Label>
+                          <Input 
+                              id="upi-id" 
+                              type="text" 
+                              placeholder="yourname@bank" 
+                              value={upiId}
+                              onChange={(e) => setUpiId(e.target.value)}
+                              required 
+                          />
+                      </div>
+                  )}
+                   {paymentMethod === 'qr' && (
+                       <div className="mt-4 space-y-4 pt-4 border-t text-center">
+                          <p className="text-sm text-muted-foreground">QR Code generation is unavailable.</p>
+                           <Alert>
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertTitle>After Payment</AlertTitle>
+                              <AlertDescription>
+                                  Once your payment is complete, click the confirm button below to finalize your booking.
+                              </AlertDescription>
+                          </Alert>
+                      </div>
+                  )}
+                   {paymentMethod === 'pay_at_venue' && (
+                       <div className="mt-4 space-y-4 pt-4 border-t text-center">
+                           <Alert>
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertTitle>Pay at Venue</AlertTitle>
+                              <AlertDescription>
+                                Your booking will be confirmed, and you can pay upon arrival at the facility.
+                              </AlertDescription>
+                          </Alert>
+                      </div>
+                  )}
+                </>
+                ) : (
+                    <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Free Booking</AlertTitle>
+                        <AlertDescription>
+                            This booking is free. No payment is required. Just confirm your slot!
+                        </AlertDescription>
+                    </Alert>
                 )}
             </CardContent>
             <CardFooter className="flex-col space-y-2">
                 <Button className="w-full" size="lg" onClick={handleConfirmBooking} disabled={isConfirming}>
                     {isConfirming ? <LoadingSpinner size={20} className="mr-2"/> : <Ticket className="mr-2 h-4 w-4"/>}
-                    {isConfirming ? "Confirming..." : `Pay & Confirm Booking`}
+                    {isConfirming ? "Confirming..." : (paymentMethod === 'pay_at_venue' || !showPaymentForm ? "Confirm Booking" : "Pay & Confirm Booking")}
                 </Button>
                 <Button className="w-full" variant="outline" onClick={() => router.back()} disabled={isConfirming}>
                     <ArrowLeft className="mr-2 h-4 w-4"/> Go Back & Edit
