@@ -16,7 +16,6 @@ import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo, Rented
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode, PackageSearch } from 'lucide-react';
-import Image from 'next/image';
 
 const UpiIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5">
@@ -68,19 +67,6 @@ function BookingConfirmationContent() {
     const settings = getSiteSettings();
     setCurrency(settings.defaultCurrency);
   }, [searchParams, router, toast]);
-
-  useEffect(() => {
-    if (paymentMethod === 'qr' && bookingData && currency) {
-        const upiData = new URLSearchParams({
-            pa: 'merchant-upi@bank', // Mock merchant UPI
-            pn: 'Sports Arena Booking',
-            am: (bookingData.totalPrice - (appliedPromotion?.discountAmount || 0)).toFixed(2),
-            cu: currency,
-            tn: `Booking for ${bookingData.facilityName}`
-        }).toString();
-        setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?${upiData}`);
-    }
-  }, [paymentMethod, bookingData, currency, appliedPromotion]);
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return;
@@ -232,18 +218,9 @@ function BookingConfirmationContent() {
                         />
                     </div>
                 )}
-                 {paymentMethod === 'qr' && qrCodeUrl && (
+                 {paymentMethod === 'qr' && (
                      <div className="mt-4 space-y-4 pt-4 border-t text-center">
-                        <p className="text-sm text-muted-foreground">Scan the QR code below with your UPI app to pay.</p>
-                        <div className="flex justify-center">
-                            <Image
-                                src={qrCodeUrl}
-                                alt="Scan to pay for booking"
-                                width={180}
-                                height={180}
-                                className="rounded-md border"
-                            />
-                        </div>
+                        <p className="text-sm text-muted-foreground">QR Code generation is unavailable.</p>
                          <Alert>
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>After Payment</AlertTitle>

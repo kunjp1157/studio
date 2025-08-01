@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, notFound } from 'next/navigation';
 import type { BlogPost } from '@/lib/types';
@@ -56,7 +55,7 @@ export default function BlogPostPage() {
           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
             <div className="flex items-center">
               <Avatar className="h-8 w-8 mr-2">
-                <AvatarImage src={post.authorAvatarUrl} alt={post.authorName} data-ai-hint="author avatar" />
+                <AvatarImage src={post.authorAvatarUrl} alt={post.authorName} />
                 <AvatarFallback>{post.authorName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
               </Avatar>
               <span>{post.authorName}</span>

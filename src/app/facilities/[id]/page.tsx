@@ -2,16 +2,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { StarDisplay } from '@/components/shared/StarDisplay';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ReviewItem } from '@/components/reviews/ReviewItem';
@@ -20,10 +17,10 @@ import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO, startOfDay, differenceInHours, parse } from 'date-fns';
 import {
-  MapPin, CalendarDays, Clock, Users, SunMoon, DollarSign, Sparkles, AlertCircle, Heart,
+  MapPin, CalendarDays, Clock, Users, SunMoon, DollarSign, Sparkles, Heart,
   ThumbsUp, ThumbsDown, PackageSearch, Minus, Plus
 } from 'lucide-react';
-import type { Facility, Amenity as AmenityType, Review, Sport, TimeSlot, SiteSettings, BlockedSlot, UserProfile, Booking, RentalEquipment, RentedItemInfo } from '@/lib/types';
+import type { Facility, Review, Sport, TimeSlot, SiteSettings, UserProfile, Booking, RentedItemInfo } from '@/lib/types';
 import { getSiteSettingsAction, getFacilityByIdAction, toggleFavoriteFacilityAction } from '@/app/actions';
 import { calculateDynamicPrice, getBookingsForFacilityOnDate } from '@/lib/data';
 import { getIconComponent } from '@/components/shared/Icon';
@@ -248,7 +245,7 @@ export default function FacilityDetailPage() {
     const bookingData = {
       facilityId: facility.id,
       facilityName: facility.name,
-      facilityImage: facility.images[0] || '',
+      facilityImage: '', // Removed image
       dataAiHint: facility.dataAiHint,
       sportId: selectedSport.id,
       sportName: selectedSport.name,
@@ -301,7 +298,9 @@ export default function FacilityDetailPage() {
       <div className="grid lg:grid-cols-3 gap-8 mt-8">
         <div className="lg:col-span-2 space-y-6">
           <Card className="overflow-hidden shadow-lg">
-            <Image src={facility.images[0]} alt={facility.name} width={800} height={450} className="w-full h-auto object-cover" priority data-ai-hint={facility.dataAiHint || "sports facility detail"}/>
+             <div className="w-full h-auto object-cover bg-muted/50 aspect-video flex items-center justify-center">
+                 <p className="text-muted-foreground">Image removed</p>
+             </div>
           </Card>
 
           <Card>

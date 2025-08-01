@@ -21,7 +21,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getIconComponent } from '@/components/shared/Icon';
-import { ImageSequenceScroller } from '@/components/shared/ImageSequenceScroller';
 import { mockSports, getStaticFacilities } from '@/lib/mock-data';
 import type { Facility } from '@/lib/types';
 
@@ -93,11 +92,6 @@ export default function HomePage() {
     setFacilities(getStaticFacilities());
   }, []);
 
-  const imageUrls = facilities
-    .flatMap(f => f.images)
-    .filter(Boolean)
-    .slice(0, 150); // Limit frames for performance
-
   return (
     <div className="flex flex-col items-center justify-center text-center space-y-12 py-12 md:py-20 px-4 md:px-6">
       
@@ -158,19 +152,7 @@ export default function HomePage() {
         </Card>
       </div>
 
-       {/* Image Scroller Section */}
-      {imageUrls.length > 0 && (
-         <div className="w-full max-w-5xl animate-fadeInUp" style={{animationDelay: '1.6s'}}>
-            <h2 className="text-3xl font-bold mb-4">A World of Sports Awaits</h2>
-            <ImageSequenceScroller
-              imageUrls={imageUrls}
-              frameHeight={50}
-            />
-             <p className="text-sm text-muted-foreground mt-2">Scroll down on the image to see more facilities.</p>
-         </div>
-      )}
-
-      {/* Marquee Section */}
+       {/* Marquee Section */}
       <div className="w-full">
          <SportMarquee />
       </div>

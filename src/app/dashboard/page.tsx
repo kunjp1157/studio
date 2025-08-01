@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -118,14 +117,6 @@ export default function DashboardPage() {
             {featuredFacility ? (
                 <Link href={`/facilities/${featuredFacility.id}`}>
                     <Card className="group overflow-hidden relative shadow-lg hover:shadow-xl transition-all duration-300">
-                        <Image 
-                            src={featuredFacility.images[0]}
-                            alt={featuredFacility.name}
-                            width={800}
-                            height={450}
-                            className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
-                            data-ai-hint={featuredFacility.dataAiHint || "sports facility"}
-                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"/>
                         <CardHeader className="absolute bottom-0 left-0 p-6 text-white">
                             <CardTitle className="text-3xl font-headline group-hover:text-primary transition-colors">{featuredFacility.name}</CardTitle>

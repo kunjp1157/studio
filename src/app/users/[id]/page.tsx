@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useParams, notFound } from 'next/navigation';
 import type { UserProfile, Sport, Achievement, UserSkill } from '@/lib/types';
 import { getUserById, getSportById } from '@/lib/data';
@@ -13,8 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Award, Gem, Heart, Medal, UserCircle, Shield, ShieldCheck, Dumbbell, Zap, Swords, AlertCircle, Calendar, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Shield, ShieldCheck, Dumbbell, Zap, Swords, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Award, Gem, Heart, Medal, UserCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
@@ -64,7 +63,7 @@ export default function PublicProfilePage() {
                 <CardHeader>
                     <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-6 space-y-4 sm:space-y-0">
                         <Avatar className="h-28 w-28 border-4 border-primary shadow-md">
-                            <AvatarImage src={user.profilePictureUrl} alt={user.name} data-ai-hint={user.dataAiHint || "user avatar"} />
+                            <AvatarImage src={user.profilePictureUrl} alt={user.name} />
                             <AvatarFallback className="text-4xl">{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                         </Avatar>
                         <div className="text-center sm:text-left">

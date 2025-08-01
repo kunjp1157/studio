@@ -3,13 +3,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review, SiteSettings, UserProfile } from '@/lib/types';
-import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
+import { getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
 import { getBookingsByUserIdAction, getSiteSettingsAction } from '@/app/actions';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -32,8 +31,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
@@ -252,24 +249,16 @@ export default function BookingsPage() {
 
     return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg hover:-translate-y-2">
-        <CardHeader className="p-0 relative">
-        <Image
-            src={booking.facilityImage || `https://placehold.co/400x200.png?text=${encodeURIComponent(booking.facilityName)}`}
-            alt={booking.facilityName}
-            width={400}
-            height={200}
-            className="w-full h-36 object-cover"
-            data-ai-hint={booking.dataAiHint || "sports facility booking"}
-        />
-        <Badge 
-            variant={booking.status === 'Confirmed' ? 'default' : booking.status === 'Cancelled' ? 'destructive' : 'secondary'}
-            className={`absolute top-2 right-2 ${booking.status === 'Confirmed' && !bookingIsPast ? 'bg-green-500 text-white' : ''}`}
-        >
-            {booking.status}
-        </Badge>
+        <CardHeader className="p-4 relative">
+            <Badge 
+                variant={booking.status === 'Confirmed' ? 'default' : booking.status === 'Cancelled' ? 'destructive' : 'secondary'}
+                className={`absolute top-2 right-2 ${booking.status === 'Confirmed' && !bookingIsPast ? 'bg-green-500 text-white' : ''}`}
+            >
+                {booking.status}
+            </Badge>
+             <CardTitle className="text-xl mb-1 truncate font-headline">{booking.facilityName}</CardTitle>
         </CardHeader>
-        <CardContent className="p-4">
-        <CardTitle className="text-xl mb-1 truncate font-headline">{booking.facilityName}</CardTitle>
+        <CardContent className="p-4 pt-0">
         <div className="text-sm text-muted-foreground mb-3 flex items-center">
             <MapPin className="w-4 h-4 mr-1.5 text-primary" />
             {facilityDetails?.location || 'Unknown Location'}

@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import type { SportEvent, Facility, SiteSettings, UserProfile } from '@/lib/types';
@@ -121,19 +120,6 @@ export default function EventDetailPage() {
       </Button>
 
       <Card className="shadow-xl overflow-hidden">
-        {event.imageUrl && (
-          <div className="relative aspect-video md:h-[400px] w-full">
-            <Image
-              src={event.imageUrl}
-              alt={event.name}
-              fill
-              sizes="(max-width: 768px) 100vw, 800px"
-              className="object-cover"
-              priority
-              data-ai-hint={event.imageDataAiHint || "sports event banner"}
-            />
-          </div>
-        )}
         <CardHeader className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <PageTitle title={event.name} className="mb-0" />

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,8 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Save, PlusCircle, Trash2, ArrowLeft, UploadCloud, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Image as ImageIcon, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LayoutPanelLeft, LocateFixed, Star, Sparkles, Building as BuildingIcon } from 'lucide-react';
-import { generateImageFromPrompt } from '@/ai/flows/generate-image-flow';
+import { Save, PlusCircle, Trash2, ArrowLeft, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LocateFixed, Star, Building as BuildingIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 
@@ -42,7 +40,6 @@ const facilityFormSchema = z.object({
   city: z.string().min(2, { message: "City is required." }),
   location: z.string().min(2, { message: "Area / Neighborhood is required." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  images: z.array(z.string().url({ message: "Please enter a valid URL or leave empty if not applicable." }).or(z.literal(''))).min(1, { message: "At least one image URL is required (can be placeholder). Use https://placehold.co/800x450.png for placeholders."}).transform(arr => arr.filter(img => img.trim() !== '')),
   sports: z.array(z.string()).min(1, { message: "Select at least one sport." }),
   sportPrices: z.array(z.object({
     sportId: z.string(),
@@ -116,7 +113,6 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
       sportPrices: initialData.sportPrices || [],
       amenities: initialData.amenities.map(a => a.id),
       operatingHours: initialData.operatingHours?.length === 7 ? initialData.operatingHours : defaultOperatingHours,
-      images: initialData.images.length > 0 ? initialData.images : [''],
       isIndoor: initialData.isIndoor ?? false,
       rating: initialData.rating ?? 0,
       capacity: initialData.capacity ?? 0,
@@ -126,16 +122,11 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
       ownerId: initialData.ownerId,
     } : {
       name: '', type: 'Court', address: '', city: 'Pune', location: '', description: '',
-      images: [''], sports: [], sportPrices: [], amenities: [], operatingHours: defaultOperatingHours,
+      sports: [], sportPrices: [], amenities: [], operatingHours: defaultOperatingHours,
       rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
       availableEquipment: [],
       ownerId: ownerId,
     },
-  });
-
-  const { fields: imageFields, append: appendImage, remove: removeImage } = useFieldArray({
-    control: form.control,
-    name: "images"
   });
   
   const { fields: hoursFields } = useFieldArray({
@@ -175,32 +166,6 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
         form.setValue('sportPrices', Array.from(currentPricesMap.values()), { shouldValidate: true, shouldDirty: true });
     }
   }, [selectedSportIds, form]);
-
-  const handleGenerateImage = async () => {
-      if (!imageGenPrompt) {
-          toast({ title: 'Prompt is empty', description: 'Please describe the image you want to generate.', variant: 'destructive' });
-          return;
-      }
-      setIsGeneratingImage(true);
-      try {
-          const result = await generateImageFromPrompt({ prompt: imageGenPrompt });
-          if (result.imageUrl) {
-              const currentImages = form.getValues('images');
-              const emptyIndex = currentImages.findIndex(img => !img || img.trim() === '');
-              if (emptyIndex !== -1) {
-                  form.setValue(`images.${emptyIndex}`, result.imageUrl, { shouldValidate: true, shouldDirty: true });
-              } else {
-                  appendImage(result.imageUrl);
-              }
-              toast({ title: 'Image Generated!', description: 'The AI-generated image has been added to your facility images.', className: 'bg-green-500 text-white' });
-          }
-      } catch (error) {
-          console.error("Image generation failed", error);
-          toast({ title: 'Image Generation Failed', description: 'Could not generate the image. Please try again.', variant: 'destructive' });
-      } finally {
-          setIsGeneratingImage(false);
-      }
-  };
 
   const onSubmit = async (data: FacilityFormValues) => {
     setIsLoading(true);
@@ -302,61 +267,6 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
                 <FormMessage />
               </FormItem>
             )} />
-
-            <div>
-                <FormLabel className="flex items-center"><ImageIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Image URLs</FormLabel>
-                <FormDescription>Add URLs for facility images. Use https://placehold.co/ for placeholders if needed.</FormDescription>
-                {imageFields.map((field, index) => (
-                    <FormField
-                    key={field.id}
-                    control={form.control}
-                    name={`images.${index}`}
-                    render={({ field: imageField }) => (
-                        <FormItem className="flex items-center gap-2 mt-2">
-                            <FormControl><Input placeholder="https://example.com/image.png" {...imageField} /></FormControl>
-                            {imageFields.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeImage(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
-                        </FormItem>
-                    )}
-                    />
-                ))}
-                 <FormMessage>{form.formState.errors.images?.root?.message || form.formState.errors.images?.[0]?.message}</FormMessage>
-                <Button type="button" variant="outline" size="sm" onClick={() => appendImage('')} className="mt-2">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Image URL
-                </Button>
-            </div>
-             <FormField control={form.control} name="dataAiHint" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><UploadCloud className="mr-2 h-4 w-4 text-muted-foreground"/>AI Hint for Images (Optional)</FormLabel>
-                  <FormControl><Input placeholder="e.g., soccer field night" {...field} /></FormControl>
-                  <FormDescription>Keywords to help AI generate placeholder images if URLs are for placeholders.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            
-            <Card>
-              <CardHeader>
-                  <CardTitle className="flex items-center"><Sparkles className="mr-2 h-5 w-5 text-primary"/> AI Image Generator (Optional)</CardTitle>
-                  <CardDescription>Don't have a good photo? Describe your facility and let AI create one for you. The generated image will be added to the Image URLs list above.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                  <div>
-                      <Label htmlFor="image-gen-prompt">Image Description</Label>
-                      <Textarea
-                          id="image-gen-prompt"
-                          placeholder="e.g., A modern indoor basketball court with bright lights and polished wooden floors, empty."
-                          value={imageGenPrompt}
-                          onChange={(e) => setImageGenPrompt(e.target.value)}
-                          rows={3}
-                          disabled={isGeneratingImage}
-                      />
-                  </div>
-                  <Button type="button" onClick={handleGenerateImage} disabled={isGeneratingImage || !imageGenPrompt}>
-                      {isGeneratingImage ? <LoadingSpinner size={20} className="mr-2" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                      {isGeneratingImage ? 'Generating...' : 'Generate Image'}
-                  </Button>
-              </CardContent>
-            </Card>
-
 
             <FormField control={form.control} name="sports" render={() => (
               <FormItem>
@@ -580,9 +490,6 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
                                     <FormItem><FormLabel>Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
                             </div>
-                             <FormField control={form.control} name={`availableEquipment.${index}.imageUrl`} render={({ field }) => (
-                                <FormItem><FormLabel>Image URL (Optional)</FormLabel><FormControl><Input placeholder="https://placehold.co/100x100.png" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
                         </div>
                     ))}
                     <Button

@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -105,34 +104,22 @@ export default function EventsPage() {
 
     return (
       <Card key={event.id} className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden rounded-lg">
-        <CardHeader className="p-0 relative">
-            <Link href={`/events/${event.id}`}>
-                <div className="aspect-video relative">
-                    <Image
-                        src={event.imageUrl || `https://placehold.co/400x200.png?text=${encodeURIComponent(event.name)}`}
-                        alt={event.name}
-                        fill
-                        className="object-cover"
-                        data-ai-hint={event.imageDataAiHint || "sports event"}
-                    />
-                </div>
-            </Link>
+        <CardHeader className="p-4 relative">
              <Badge 
                 variant={isEventPast ? "secondary" : (isEventFull ? "destructive" : "default")}
                 className={`absolute top-2 right-2 ${!isEventPast && !isEventFull ? "bg-green-500 text-white hover:bg-green-600" : ""}`}
             >
               {isEventPast ? "Concluded" : (isEventFull ? "Full" : "Open")}
             </Badge>
+             <div className="flex items-center mb-2">
+                <SportIcon className="h-6 w-6 text-primary mr-2 shrink-0" />
+                <Link href={`/events/${event.id}`}>
+                    <CardTitle className="text-xl font-headline truncate hover:text-primary" title={event.name}>{event.name}</CardTitle>
+                </Link>
+            </div>
+            <CardDescription className="text-sm">{event.sport.name} Event</CardDescription>
         </CardHeader>
-        <CardContent className="p-4 flex-grow">
-          <div className="flex items-center mb-2">
-            <SportIcon className="h-6 w-6 text-primary mr-2 shrink-0" />
-            <Link href={`/events/${event.id}`}>
-                <CardTitle className="text-xl font-headline truncate hover:text-primary" title={event.name}>{event.name}</CardTitle>
-            </Link>
-          </div>
-          <CardDescription className="mb-3 text-sm">{event.sport.name} Event</CardDescription>
-          
+        <CardContent className="p-4 pt-0 flex-grow">
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center">
                 <CalendarDays className="w-4 h-4 mr-2 text-primary shrink-0" />

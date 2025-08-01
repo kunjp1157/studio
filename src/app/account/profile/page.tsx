@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -141,7 +140,7 @@ export default function ProfilePage() {
             <div className="flex items-center space-x-6">
               <div className="relative">
                   <Avatar className="h-24 w-24 border-2 border-primary shadow-md">
-                  <AvatarImage src={user.profilePictureUrl} alt={user.name} data-ai-hint={user.dataAiHint || "user avatar"} />
+                  <AvatarImage src={user.profilePictureUrl} alt={user.name} />
                   <AvatarFallback className="text-3xl">{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   {isEditing && (
