@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, getPromotionRuleByCode, addBooking, addNotification, getSiteSettings } from '@/lib/data';
-import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo, RentedItemInfo } from '@/lib/types';
+import { getPromotionRuleByCode, addBooking, addNotification, getSiteSettings } from '@/lib/data';
+import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo, RentedItemInfo, UserProfile } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode, PackageSearch } from 'lucide-react';
@@ -43,6 +43,15 @@ function BookingConfirmationContent() {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'qr'>('card');
   const [upiId, setUpiId] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+      setCurrentUser(JSON.parse(activeUser));
+    }
+  }, []);
 
   useEffect(() => {
     const dataString = searchParams.get('data');
@@ -100,7 +109,7 @@ function BookingConfirmationContent() {
   };
 
   const handleConfirmBooking = async () => {
-    if (!bookingData) return;
+    if (!bookingData || !currentUser) return;
     setIsConfirming(true);
 
     if (paymentMethod === 'upi' && !upiId.trim()) {
@@ -120,7 +129,7 @@ function BookingConfirmationContent() {
       appliedPromotion: appliedPromotion || undefined,
     });
     
-    addNotification(mockUser.id, {
+    addNotification(currentUser.id, {
         type: 'booking_confirmed',
         title: 'Booking Confirmed!',
         message: `Your booking for ${newBooking.facilityName} is confirmed.`,
