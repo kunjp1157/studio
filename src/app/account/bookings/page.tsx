@@ -115,15 +115,6 @@ export default function BookingsPage() {
     if (currentUser) {
         fetchBookings();
     }
-    const handleDataChange = () => {
-      if (currentUser) {
-        fetchBookings();
-      }
-    };
-    window.addEventListener('dataChanged', handleDataChange);
-    return () => {
-        window.removeEventListener('dataChanged', handleDataChange);
-    };
   }, [currentUser, fetchBookings]);
 
   useEffect(() => {
@@ -171,6 +162,7 @@ export default function BookingsPage() {
               link: '/account/bookings',
           });
         }
+        await fetchBookings();
     } catch (error) {
         toast({
             title: "Error",
@@ -198,7 +190,7 @@ export default function BookingsPage() {
         comment,
         bookingId,
       });
-
+      await fetchBookings();
       toast({
         title: "Review Submitted!",
         description: `Thank you for reviewing ${selectedBookingForReview.facilityName}.`,
