@@ -3,8 +3,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Booking, Facility, TimeSlot, SiteSettings, BlockedSlot } from '@/lib/types';
-import { getBookingById, getFacilityById, calculateDynamicPrice, updateBooking, addNotification, mockUser, getBookingsForFacilityOnDate, getSiteSettings } from '@/lib/data';
+import type { Booking, Facility, TimeSlot, SiteSettings, BlockedSlot, UserProfile } from '@/lib/types';
+import { getBookingByIdAction, getFacilityByIdAction, updateBookingAction, addNotificationAction, getBookingsForFacilityOnDateAction, getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, parseISO, differenceInHours, parse, startOfDay } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { calculateDynamicPrice } from '@/lib/data'; // This one is a utility, can stay
 
 const generateTimeSlots = (
   bookedSlots: string[],
@@ -57,6 +58,7 @@ export default function EditBookingPage() {
   const [booking, setBooking] = useState<Booking | null | undefined>(undefined);
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -67,16 +69,23 @@ export default function EditBookingPage() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  useEffect(() => {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+        setCurrentUser(JSON.parse(activeUser));
+    }
+  }, []);
 
   useEffect(() => {
     const fetchInitialData = async () => {
       if (bookingId) {
         setIsLoading(true);
-        const settings = getSiteSettings();
-        const foundBooking = await getBookingById(bookingId);
+        const settings = await getSiteSettingsAction();
+        const foundBooking = await getBookingByIdAction(bookingId);
         
         if (foundBooking) {
-          const foundFacility = await getFacilityById(foundBooking.facilityId);
+          const foundFacility = await getFacilityByIdAction(foundBooking.facilityId);
           setBooking(foundBooking);
           setFacility(foundFacility || null);
           setSelectedDate(parseISO(foundBooking.date));
@@ -96,7 +105,7 @@ export default function EditBookingPage() {
     setIsSlotsLoading(true);
     try {
         const formattedDate = format(date, 'yyyy-MM-dd');
-        const bookingsOnDate = await getBookingsForFacilityOnDate(facility.id, formattedDate);
+        const bookingsOnDate = await getBookingsForFacilityOnDateAction(facility.id, formattedDate);
         const bookedStartTimes = bookingsOnDate
           .filter(b => b.id !== bookingId) // Exclude the current booking from being "booked"
           .map(b => b.startTime);
@@ -130,38 +139,39 @@ export default function EditBookingPage() {
   }, [selectedSlot, selectedDate, booking]);
 
   useEffect(() => {
-    if (facility && selectedDate && selectedSlot && booking) {
+    if (facility && selectedSport && selectedDate && selectedSlot && booking) {
       const sportPriceInfo = facility.sportPrices.find(p => p.sportId === booking!.sportId);
       if (!sportPriceInfo) return;
       
-      const { finalPrice } = calculateDynamicPrice(
-        sportPriceInfo.pricePerHour,
-        selectedDate,
-        selectedSlot,
-        bookingDurationHours
-      );
-      setNewTotalPrice(finalPrice);
+      const priceResult = calculateDynamicPrice(sportPriceInfo.price, selectedDate, selectedSlot, bookingDurationHours);
+      setNewTotalPrice(priceResult.finalPrice);
     } else {
       setNewTotalPrice(null);
     }
   }, [facility, selectedDate, selectedSlot, bookingDurationHours, booking]);
+  
+  const selectedSport = useMemo(() => {
+      if (!facility || !booking) return undefined;
+      return facility.sports.find(s => s.id === booking.sportId);
+  }, [facility, booking]);
+
 
   const handleSubmit = async () => {
-    if (!booking || !facility || !selectedDate || !selectedSlot || newTotalPrice === null) {
+    if (!booking || !facility || !selectedDate || !selectedSlot || newTotalPrice === null || !currentUser) {
       toast({ title: "Incomplete Selection", description: "Please select a new date and time.", variant: "destructive" });
       return;
     }
 
     setIsSubmitting(true);
     
-    await updateBooking(booking.id, {
+    await updateBookingAction(booking.id, {
       date: format(selectedDate, 'yyyy-MM-dd'),
       startTime: selectedSlot.startTime,
       endTime: selectedSlot.endTime,
       totalPrice: newTotalPrice,
     });
     
-    addNotification(mockUser.id, {
+    await addNotificationAction(currentUser.id, {
         type: 'general',
         title: 'Booking Modified',
         message: `Your booking for ${facility.name} has been successfully updated.`,

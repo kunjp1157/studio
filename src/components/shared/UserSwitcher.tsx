@@ -12,45 +12,57 @@ import { useRouter } from "next/navigation";
 import { UserCog } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { UserProfile, UserRole, UserStatus } from "@/lib/types";
-import { getStaticUsers } from "@/lib/mock-data";
-
-
-const allMockUsers: Record<'admin' | 'owner' | 'user', UserProfile | undefined> = {
-  admin: getStaticUsers().find(u => u.role === 'Admin'),
-  owner: getStaticUsers().find(u => u.role === 'FacilityOwner'),
-  user: getStaticUsers().find(u => u.role === 'User'),
-};
+import { getUsersAction } from "@/app/actions";
 
 export function UserSwitcher() {
   const router = useRouter();
   const [currentUserRole, setCurrentUserRole] = useState('admin');
+  const [allUsers, setAllUsers] = useState<Record<'admin' | 'owner' | 'user', UserProfile | undefined>>({
+    admin: undefined,
+    owner: undefined,
+    user: undefined,
+  });
+
+  useEffect(() => {
+    const fetchAndSetUsers = async () => {
+        const users = await getUsersAction();
+        setAllUsers({
+            admin: users.find(u => u.role === 'Admin'),
+            owner: users.find(u => u.role === 'FacilityOwner'),
+            user: users.find(u => u.role === 'User' && u.email.startsWith('charlie')), // Be more specific for the default user
+        });
+    };
+    fetchAndSetUsers();
+  }, []);
 
   useEffect(() => {
     // On initial load, set the active user in session storage if not already set.
     const storedUser = sessionStorage.getItem('activeUser');
     if (storedUser) {
         const activeUser = JSON.parse(storedUser);
-        setCurrentUserRole(activeUser.role?.toLowerCase() || 'admin');
-    } else {
-        const adminUser = allMockUsers.admin;
-        if (adminUser) {
-            sessionStorage.setItem('activeUser', JSON.stringify(adminUser));
-            setCurrentUserRole('admin');
-        }
+        const role = activeUser.role?.toLowerCase() as 'admin' | 'owner' | 'user';
+        setCurrentUserRole(role);
+    } else if (allUsers.admin) {
+        sessionStorage.setItem('activeUser', JSON.stringify(allUsers.admin));
+        setCurrentUserRole('admin');
+        window.dispatchEvent(new Event('userChanged'));
     }
-  }, []);
+  }, [allUsers]);
 
   const handleValueChange = (value: 'admin' | 'owner' | 'user') => {
-    const newActiveUser = allMockUsers[value];
+    const newActiveUser = allUsers[value];
     if (!newActiveUser) return;
     
-    // Store the new user in session storage for client components to access.
     sessionStorage.setItem('activeUser', JSON.stringify(newActiveUser));
-    
-    // Dispatch a custom event to notify other components (like UserNav) immediately.
     window.dispatchEvent(new Event('userChanged'));
 
     setCurrentUserRole(value);
+    
+    // Redirect to a safe page after role switch
+    if(value === 'admin') router.push('/admin/dashboard');
+    else if (value === 'owner') router.push('/owner/dashboard');
+    else router.push('/dashboard');
+    
     router.refresh(); 
   }
 

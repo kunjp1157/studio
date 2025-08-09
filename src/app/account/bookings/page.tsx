@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review, SiteSettings, UserProfile } from '@/lib/types';
-import { getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
-import { getBookingsByUserIdAction, getSiteSettingsAction } from '@/app/actions';
+import { getFacilityByIdAction, addReview as addMockReview, addNotificationAction, updateBookingAction, getBookingsByUserIdAction, getSiteSettingsAction } from '@/app/actions';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +35,6 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-
 
 const BookingCardSkeleton = () => (
     <Card className="overflow-hidden shadow-lg">
@@ -125,7 +123,7 @@ export default function BookingsPage() {
 
             if (neededIds.length > 0) {
                 const facilityPromises = neededIds.map(async id => {
-                    const facility = await getFacilityById(id);
+                    const facility = await getFacilityByIdAction(id);
                     return {id, data: facility};
                 });
                 const facilitiesData = (await Promise.all(facilityPromises)).filter(Boolean);
@@ -148,14 +146,14 @@ export default function BookingsPage() {
     const bookingToCancel = bookings.find(b => b.id === bookingId);
 
     try {
-        await updateBooking(bookingId, { status: 'Cancelled' });
+        await updateBookingAction(bookingId, { status: 'Cancelled' });
         toast({
           title: "Booking Cancelled",
           description: "Your booking has been successfully cancelled.",
         });
         
         if (bookingToCancel) {
-          addNotification(currentUser.id, {
+          await addNotificationAction(currentUser.id, {
               type: 'booking_cancelled',
               title: 'Booking Cancelled',
               message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} has been cancelled.`,
@@ -197,7 +195,7 @@ export default function BookingsPage() {
         className: "bg-green-500 text-white",
       });
       
-      addNotification(currentUser.id, {
+      await addNotificationAction(currentUser.id, {
         type: 'review_submitted',
         title: 'Review Submitted!',
         message: `Your review for ${selectedBookingForReview.facilityName} has been posted.`,

@@ -18,8 +18,6 @@ import { User, LogOut, LayoutDashboard, CalendarDays, CreditCard, Heart, Group, 
 import type { UserProfile } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { useState, useEffect } from 'react';
-import { getStaticUsers } from '@/lib/mock-data';
-
 
 export function UserNav() {
   const router = useRouter();
@@ -46,11 +44,9 @@ export function UserNav() {
         }
     };
     window.addEventListener('userChanged', handleUserChange);
-    window.addEventListener('dataChanged', handleUserChange); // Also listen for general data changes
 
     return () => {
         window.removeEventListener('userChanged', handleUserChange);
-        window.removeEventListener('dataChanged', handleUserChange);
     };
 
   }, []);
