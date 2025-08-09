@@ -21,8 +21,8 @@ import {
   ThumbsUp, ThumbsDown, PackageSearch, Minus, Plus
 } from 'lucide-react';
 import type { Facility, Review, Sport, TimeSlot, SiteSettings, UserProfile, Booking, RentedItemInfo, RentalEquipment } from '@/lib/types';
-import { getSiteSettingsAction, getFacilityByIdAction, toggleFavoriteFacilityAction } from '@/app/actions';
-import { calculateDynamicPrice, getBookingsForFacilityOnDate } from '@/lib/data';
+import { getSiteSettingsAction, getFacilityByIdAction, toggleFavoriteFacilityAction, getBookingsForFacilityOnDateAction } from '@/app/actions';
+import { calculateDynamicPrice } from '@/lib/data';
 import { getIconComponent } from '@/components/shared/Icon';
 import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summarize-reviews';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -105,11 +105,11 @@ export default function FacilityDetailPage() {
     if (facilityId) {
       const foundFacility = await getFacilityByIdAction(facilityId);
       setFacility(foundFacility || null);
-      if (foundFacility?.sports.length) {
+      if (foundFacility?.sports.length && !selectedSport) {
         setSelectedSport(foundFacility.sports[0]);
       }
     }
-  }, [facilityId]);
+  }, [facilityId, selectedSport]);
 
   useEffect(() => {
     fetchFacilityData();
@@ -122,20 +122,37 @@ export default function FacilityDetailPage() {
       }
   }, [currentUser, facility]);
 
+  const fetchSlots = useCallback(async () => {
+      if (facility && selectedDate) {
+          setIsSlotsLoading(true);
+          const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+          const bookingsOnDate = await getBookingsForFacilityOnDateAction(facility.id, formattedDate);
+          const slots = generateTimeSlots(facility, selectedDate, bookingsOnDate);
+          setTimeSlots(slots);
+          
+          // If the currently selected slot is now booked, deselect it
+          if (selectedSlot && !slots.find(s => s.startTime === selectedSlot.startTime)?.isAvailable) {
+              setSelectedSlot(undefined);
+              toast({
+                  title: 'Slot Just Booked',
+                  description: `The time slot ${selectedSlot.startTime} is no longer available. Please select another time.`,
+                  variant: 'destructive'
+              });
+          }
+
+          setIsSlotsLoading(false);
+      }
+  }, [facility, selectedDate, selectedSlot, toast]);
+
+
   useEffect(() => {
-    const fetchSlots = async () => {
-        if (facility && selectedDate) {
-            setIsSlotsLoading(true);
-            const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-            const bookingsOnDate = await getBookingsForFacilityOnDate(facility.id, formattedDate);
-            const slots = generateTimeSlots(facility, selectedDate, bookingsOnDate);
-            setTimeSlots(slots);
-            setSelectedSlot(undefined);
-            setIsSlotsLoading(false);
-        }
-    };
-    fetchSlots();
-  }, [facility, selectedDate]);
+    fetchSlots(); // Initial fetch
+    
+    // Set up polling for live availability
+    const intervalId = setInterval(fetchSlots, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on component unmount
+  }, [fetchSlots]);
   
   const handleGenerateSummary = useCallback(async () => {
     if (!facility || !facility.reviews || facility.reviews.length < 3) return;
@@ -510,4 +527,3 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
-
