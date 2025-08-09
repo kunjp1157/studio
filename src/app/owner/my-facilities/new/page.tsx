@@ -31,6 +31,7 @@ export default function AddOwnerFacilityPage() {
         onSubmitSuccess={() => {
           router.push('/owner/my-facilities');
         }}
+        currentUserRole={currentUser.role}
       />
     </div>
   );

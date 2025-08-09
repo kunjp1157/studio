@@ -75,14 +75,14 @@ export default function EditOwnerFacilityPage() {
     );
   }
   
-  if (!facility) {
+  if (!facility || !currentUser) {
      return (
       <div className="space-y-8 container mx-auto py-8 px-4 md:px-6">
         <PageTitle title="Edit Facility" />
          <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Facility Data Unavailable</AlertTitle>
-            <AlertDescription>The facility data could not be loaded.</AlertDescription>
+            <AlertDescription>The facility data or user session could not be loaded.</AlertDescription>
         </Alert>
         <Button variant="outline" onClick={() => router.push('/owner/my-facilities')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Facilities
@@ -98,6 +98,7 @@ export default function EditOwnerFacilityPage() {
       <FacilityAdminForm 
         initialData={facility} 
         onSubmitSuccess={() => router.push('/owner/my-facilities')} 
+        currentUserRole={currentUser.role}
       />
     </div>
   );

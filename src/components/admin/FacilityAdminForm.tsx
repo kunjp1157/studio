@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice } from '@/lib/types';
+import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice, UserRole } from '@/lib/types';
 import { mockSports, mockAmenities } from '@/lib/mock-data';
 import { getSiteSettingsAction, addFacilityAction, updateFacilityAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
@@ -80,6 +80,7 @@ interface FacilityAdminFormProps {
   initialData?: Facility | null; 
   onSubmitSuccess?: () => void;
   ownerId?: string;
+  currentUserRole?: UserRole;
 }
 
 const defaultOperatingHours: FacilityOperatingHours[] = [
@@ -90,7 +91,7 @@ const defaultOperatingHours: FacilityOperatingHours[] = [
 ];
 
 
-export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: FacilityAdminFormProps) {
+export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, currentUserRole }: FacilityAdminFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -201,6 +202,8 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
         setIsLoading(false);
     }
   };
+
+  const isOwner = currentUserRole === 'FacilityOwner';
 
   return (
     <Form {...form}>
@@ -429,15 +432,17 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId }: Fac
                 )} />
             </div>
             <div className="grid md:grid-cols-2 gap-6">
-              <FormField control={form.control} name="isPopular" render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                          <FormLabel className="text-base flex items-center"><TrendingUpIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Mark as Popular</FormLabel>
-                          <FormDescription>Popular facilities are highlighted.</FormDescription>
-                      </div>
-                      <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                  </FormItem>
-              )} />
+              {!isOwner && (
+                <FormField control={form.control} name="isPopular" render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <FormLabel className="text-base flex items-center"><TrendingUpIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Mark as Popular</FormLabel>
+                            <FormDescription>Popular facilities are highlighted.</FormDescription>
+                        </div>
+                        <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )} />
+              )}
               <FormField control={form.control} name="isIndoor" render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
