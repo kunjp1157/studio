@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice, UserRole } from '@/lib/types';
+import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice, UserRole, MaintenanceSchedule } from '@/lib/types';
 import { mockSports, mockAmenities } from '@/lib/mock-data';
 import { getSiteSettingsAction, addFacilityAction, updateFacilityAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Save, PlusCircle, Trash2, ArrowLeft, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LocateFixed, Star, Building as BuildingIcon } from 'lucide-react';
+import { Save, PlusCircle, Trash2, ArrowLeft, PackageSearch, Building2, MapPinIcon, DollarSign, Info, Users, SunMoon, TrendingUpIcon, ClockIcon, Zap, Dices, LocateFixed, Star, Building as BuildingIcon, Wrench } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { generateImageFromPrompt } from '@/ai/flows/generate-image-flow';
 
@@ -32,6 +32,13 @@ const rentalEquipmentSchema = z.object({
   priceType: z.enum(['per_booking', 'per_hour']),
   stock: z.coerce.number().int().min(0, { message: "Stock must be a non-negative integer." }),
   sportIds: z.array(z.string()).min(1, "Select at least one sport for this equipment."),
+});
+
+const maintenanceScheduleSchema = z.object({
+  id: z.string().optional(),
+  taskName: z.string().min(3, "Task name is required."),
+  recurrenceInDays: z.coerce.number().int().min(1, "Recurrence must be at least 1 day."),
+  lastPerformedDate: z.string().refine(val => !isNaN(Date.parse(val)), "Invalid date format"),
 });
 
 const facilityFormSchema = z.object({
@@ -59,6 +66,7 @@ const facilityFormSchema = z.object({
   isIndoor: z.boolean().optional().default(false),
   dataAiHint: z.string().optional(),
   availableEquipment: z.array(rentalEquipmentSchema).optional().default([]),
+  maintenanceSchedules: z.array(maintenanceScheduleSchema).optional().default([]),
   ownerId: z.string().optional(),
 }).refine(data => {
     const selectedSportIds = new Set(data.sports);
@@ -121,12 +129,14 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
       isPopular: initialData.isPopular ?? false,
       dataAiHint: initialData.dataAiHint ?? '',
       availableEquipment: initialData.availableEquipment || [],
+      maintenanceSchedules: initialData.maintenanceSchedules || [],
       ownerId: initialData.ownerId,
     } : {
       name: '', type: 'Court', address: '', city: 'Pune', location: '', description: '',
       sports: [], sportPrices: [], amenities: [], operatingHours: defaultOperatingHours,
       rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
       availableEquipment: [],
+      maintenanceSchedules: [],
       ownerId: ownerId,
     },
   });
@@ -139,6 +149,11 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
   const { fields: equipmentFields, append: appendEquipment, remove: removeEquipment } = useFieldArray({
     control: form.control,
     name: "availableEquipment"
+  });
+  
+  const { fields: maintenanceFields, append: appendMaintenance, remove: removeMaintenance } = useFieldArray({
+    control: form.control,
+    name: "maintenanceSchedules"
   });
 
   const selectedSportIds = form.watch('sports');
@@ -540,6 +555,49 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
                         onClick={() => appendEquipment({ id: `new-${Date.now()}`, name: '', pricePerItem: 0, priceType: 'per_booking', stock: 1, sportIds: [] })}
                     >
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Equipment
+                    </Button>
+                </CardContent>
+            </Card>
+
+            <Card className="mt-6">
+                <CardHeader>
+                    <CardTitle className="flex items-center"><Wrench className="mr-2 h-5 w-5 text-primary" /> Manage Maintenance Schedules</CardTitle>
+                    <CardDescription>Set up recurring maintenance tasks for this facility.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {maintenanceFields.map((field, index) => (
+                        <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/30">
+                            <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => removeMaintenance(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <span className="sr-only">Remove Schedule</span>
+                            </Button>
+                            <FormField
+                                control={form.control}
+                                name={`maintenanceSchedules.${index}.taskName`}
+                                render={({ field }) => (
+                                    <FormItem><FormLabel>Task Name</FormLabel><FormControl><Input placeholder="e.g., Mow the lawn" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}
+                            />
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name={`maintenanceSchedules.${index}.recurrenceInDays`}
+                                    render={({ field }) => (
+                                        <FormItem><FormLabel>Recurs Every (Days)</FormLabel><FormControl><Input type="number" placeholder="e.g., 14" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name={`maintenanceSchedules.${index}.lastPerformedDate`}
+                                    render={({ field }) => (
+                                        <FormItem><FormLabel>Last Performed On</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                     <Button type="button" variant="outline" onClick={() => appendMaintenance({ id: `new-${Date.now()}`, taskName: '', recurrenceInDays: 7, lastPerformedDate: new Date().toISOString().split('T')[0] })}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Maintenance Schedule
                     </Button>
                 </CardContent>
             </Card>

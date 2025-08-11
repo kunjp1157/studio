@@ -1,11 +1,10 @@
 
-
-
-
-
-
-
-
+export interface MaintenanceSchedule {
+  id: string;
+  taskName: string;
+  recurrenceInDays: number;
+  lastPerformedDate: string; // ISO Date string
+}
 
 export interface Team {
   id: string;
@@ -120,6 +119,7 @@ export interface Facility {
   availableEquipment?: RentalEquipment[];
   ownerId?: string;
   blockedSlots?: BlockedSlot[];
+  maintenanceSchedules?: MaintenanceSchedule[];
 }
 
 export interface TimeSlot {
