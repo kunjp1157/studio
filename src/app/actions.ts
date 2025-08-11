@@ -31,6 +31,7 @@ import {
     updateSport as dbUpdateSport,
     deleteSport as dbDeleteSport,
     toggleFavoriteFacility,
+    getBookingsForFacilityOnDate,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -142,6 +143,10 @@ export async function markAllNotificationsAsReadAction(userId: string): Promise<
 
 export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
     return getBookingsByUserId(userId);
+}
+
+export async function getBookingsForFacilityOnDateAction(facilityId: string, date: string): Promise<Booking[]> {
+    return getBookingsForFacilityOnDate(facilityId, date);
 }
 
 export async function blockTimeSlot(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
