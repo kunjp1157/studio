@@ -65,6 +65,7 @@ export async function addFacilityAction(facilityData: any): Promise<Facility> {
     const newFacility = await dbAddFacility(payload);
     revalidatePath('/admin/facilities');
     revalidatePath('/owner/my-facilities');
+    revalidatePath('/facilities'); // Revalidate public facilities page
     return newFacility;
 }
 
@@ -84,6 +85,7 @@ export async function updateFacilityAction(facilityData: any): Promise<Facility>
     revalidatePath(`/owner/my-facilities/${facilityData.id}/edit`);
     revalidatePath('/admin/facilities');
     revalidatePath('/owner/my-facilities');
+    revalidatePath('/facilities'); // Revalidate public facilities page
     return updatedFacility;
 }
 
