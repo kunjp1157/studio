@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { getPromotionRuleByCode, addBooking, addNotification, getSiteSettings } from '@/lib/data';
+import { getPromotionRuleByCode, getSiteSettings } from '@/lib/data';
+import { addBookingAction, addNotificationAction } from '@/app/actions';
 import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo, RentedItemInfo, UserProfile } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -111,14 +112,14 @@ function BookingConfirmationContent() {
       await new Promise(res => setTimeout(res, 2000));
     }
     
-    const newBooking = await addBooking({
+    const newBooking = await addBookingAction({
       ...bookingData,
       totalPrice: finalPrice,
       status: paymentMethod === 'pay_at_venue' ? 'Pending' : 'Confirmed',
       appliedPromotion: appliedPromotion || undefined,
     });
     
-    addNotification(currentUser.id, {
+    await addNotificationAction(currentUser.id, {
         type: 'booking_confirmed',
         title: 'Booking Confirmed!',
         message: `Your booking for ${newBooking.facilityName} is confirmed.`,

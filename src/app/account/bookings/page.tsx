@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review, SiteSettings, UserProfile } from '@/lib/types';
-import { getFacilityByIdAction, addReview as addMockReview, addNotificationAction, updateBookingAction, getBookingsByUserIdAction, getSiteSettingsAction } from '@/app/actions';
+import { getFacilityByIdAction, addReviewAction, addNotificationAction, updateBookingAction, getBookingsByUserIdAction, getSiteSettingsAction } from '@/app/actions';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -181,7 +181,7 @@ export default function BookingsPage() {
     if (!selectedBookingForReview || !currentUser) return;
 
     try {
-      await addMockReview({
+      await addReviewAction({
         facilityId: selectedBookingForReview.facilityId,
         userId: currentUser.id,
         rating,

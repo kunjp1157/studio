@@ -31,9 +31,11 @@ import {
     updateSport as dbUpdateSport,
     deleteSport as dbDeleteSport,
     toggleFavoriteFacility,
-    getBookingsForFacilityOnDate,
+    getBookingsForFacilityOnDate as dbGetBookingsForFacilityOnDate,
+    addBooking as dbAddBooking,
+    addReview as dbAddReview,
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport } from '@/lib/types';
+import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import { mockAmenities } from '@/lib/mock-data';
 
@@ -93,6 +95,7 @@ export async function deleteFacilityAction(facilityId: string): Promise<void> {
   await dbDeleteFacility(facilityId);
   revalidatePath('/admin/facilities');
   revalidatePath('/owner/my-facilities');
+  revalidatePath('/facilities');
 }
 
 export async function getUsersAction(): Promise<UserProfile[]> {
@@ -148,24 +151,54 @@ export async function getBookingsByUserIdAction(userId: string): Promise<Booking
 }
 
 export async function getBookingsForFacilityOnDateAction(facilityId: string, date: string): Promise<Booking[]> {
-    return getBookingsForFacilityOnDate(facilityId, date);
+    return dbGetBookingsForFacilityOnDate(facilityId, date);
 }
 
-export async function blockTimeSlot(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
-    return dbBlockTimeSlot(facilityId, ownerId, newBlock);
+export async function blockTimeSlotAction(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
+    const success = await dbBlockTimeSlot(facilityId, ownerId, newBlock);
+    if(success) {
+        revalidatePath(`/owner/availability`);
+        revalidatePath(`/facilities/${facilityId}`);
+    }
+    return success;
 }
 
-export async function unblockTimeSlot(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
-    return dbUnblockTimeSlot(facilityId, ownerId, date, startTime);
+export async function unblockTimeSlotAction(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
+    const success = await dbUnblockTimeSlot(facilityId, ownerId, date, startTime);
+    if (success) {
+        revalidatePath(`/owner/availability`);
+        revalidatePath(`/facilities/${facilityId}`);
+    }
+    return success;
 }
 
 export async function updateUserAction(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
-    return dbUpdateUser(userId, updates);
+    const user = await dbUpdateUser(userId, updates);
+    if (user) {
+        revalidatePath(`/account/profile`);
+        revalidatePath(`/admin/users`);
+    }
+    return user;
 }
 
 export async function updateBookingAction(bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> {
-    return dbUpdateBooking(bookingId, updates);
+    const booking = await dbUpdateBooking(bookingId, updates);
+    if (booking) {
+        revalidatePath(`/account/bookings`);
+        revalidatePath(`/account/bookings/${bookingId}/edit`);
+        revalidatePath(`/admin/bookings`);
+    }
+    return booking;
 }
+
+export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
+    const newBooking = await dbAddBooking(bookingData);
+    revalidatePath('/account/bookings');
+    revalidatePath(`/facilities/${bookingData.facilityId}`);
+    revalidatePath('/admin/bookings');
+    return newBooking;
+}
+
 
 export async function addNotificationAction(
   userId: string,
@@ -199,7 +232,15 @@ export async function deleteSportAction(sportId: string): Promise<void> {
 export async function toggleFavoriteFacilityAction(userId: string, facilityId: string): Promise<UserProfile | undefined> {
     const updatedUser = await toggleFavoriteFacility(userId, facilityId);
     if(updatedUser) {
-        revalidatePath('/account/favorites'); // Revalidate favorites page if needed
+        revalidatePath('/account/favorites');
+        revalidatePath(`/facilities/${facilityId}`);
     }
     return updatedUser;
+}
+
+export async function addReviewAction(reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> {
+    const newReview = await dbAddReview(reviewData);
+    revalidatePath(`/facilities/${reviewData.facilityId}`);
+    revalidatePath('/account/bookings'); // Revalidate bookings to show "Reviewed" status
+    return newReview;
 }
