@@ -56,6 +56,8 @@ import { Label } from '@/components/ui/label';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
 
 const userFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -357,72 +359,74 @@ export default function AdminUsersPage() {
                     <DialogTitle>Edit User: {selectedUser.name}</DialogTitle>
                     <DialogDescription>Modify the user's details below.</DialogDescription>
                 </DialogHeader>
-                <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-6 py-4">
-                    <FormField control={form.control} name="name" render={({ field }) => (
-                        <FormItem>
-                            <Label htmlFor="edit-name">Full Name</Label>
-                            <Input id="edit-name" {...field} />
-                            {form.formState.errors.name && <p className="text-xs text-destructive mt-1">{form.formState.errors.name.message}</p>}
-                        </FormItem>
-                    )} />
-                    <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem>
-                            <Label htmlFor="edit-email">Email Address</Label>
-                            <Input id="edit-email" type="email" {...field} />
-                            {form.formState.errors.email && <p className="text-xs text-destructive mt-1">{form.formState.errors.email.message}</p>}
-                        </FormItem>
-                    )} />
-                     <FormField control={form.control} name="membershipLevel" render={({ field }) => (
-                        <FormItem>
-                            <Label htmlFor="edit-membershipLevel">Membership Level</Label>
-                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <SelectTrigger id="edit-membershipLevel"><SelectValue placeholder="Select membership" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Basic">Basic</SelectItem>
-                                    <SelectItem value="Premium">Premium</SelectItem>
-                                    <SelectItem value="Pro">Pro</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {form.formState.errors.membershipLevel && <p className="text-xs text-destructive mt-1">{form.formState.errors.membershipLevel.message}</p>}
-                        </FormItem>
-                    )} />
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="role" render={({ field }) => (
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-6 py-4">
+                        <FormField control={form.control} name="name" render={({ field }) => (
                             <FormItem>
-                                <Label htmlFor="edit-role">Role</Label>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <SelectTrigger id="edit-role"><SelectValue placeholder="Select role" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="User">User</SelectItem>
-                                        <SelectItem value="FacilityOwner">Facility Owner</SelectItem>
-                                        <SelectItem value="Admin">Admin</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {form.formState.errors.role && <p className="text-xs text-destructive mt-1">{form.formState.errors.role.message}</p>}
+                                <Label htmlFor="edit-name">Full Name</Label>
+                                <Input id="edit-name" {...field} />
+                                {form.formState.errors.name && <p className="text-xs text-destructive mt-1">{form.formState.errors.name.message}</p>}
                             </FormItem>
                         )} />
-                        <FormField control={form.control} name="status" render={({ field }) => (
+                        <FormField control={form.control} name="email" render={({ field }) => (
                             <FormItem>
-                                <Label htmlFor="edit-status">Status</Label>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <SelectTrigger id="edit-status"><SelectValue placeholder="Select status" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Active">Active</SelectItem>
-                                        <SelectItem value="Suspended">Suspended</SelectItem>
-                                        <SelectItem value="PendingApproval">Pending Approval</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {form.formState.errors.status && <p className="text-xs text-destructive mt-1">{form.formState.errors.status.message}</p>}
+                                <Label htmlFor="edit-email">Email Address</Label>
+                                <Input id="edit-email" type="email" {...field} />
+                                {form.formState.errors.email && <p className="text-xs text-destructive mt-1">{form.formState.errors.email.message}</p>}
                             </FormItem>
                         )} />
-                    </div>
-                    <DialogClose asChild>
-                         <Button type="button" variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit">
-                       'Save Changes'
-                    </Button>
-                </form>
+                        <FormField control={form.control} name="membershipLevel" render={({ field }) => (
+                            <FormItem>
+                                <Label htmlFor="edit-membershipLevel">Membership Level</Label>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <SelectTrigger id="edit-membershipLevel"><SelectValue placeholder="Select membership" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Basic">Basic</SelectItem>
+                                        <SelectItem value="Premium">Premium</SelectItem>
+                                        <SelectItem value="Pro">Pro</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {form.formState.errors.membershipLevel && <p className="text-xs text-destructive mt-1">{form.formState.errors.membershipLevel.message}</p>}
+                            </FormItem>
+                        )} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="role" render={({ field }) => (
+                                <FormItem>
+                                    <Label htmlFor="edit-role">Role</Label>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <SelectTrigger id="edit-role"><SelectValue placeholder="Select role" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="User">User</SelectItem>
+                                            <SelectItem value="FacilityOwner">Facility Owner</SelectItem>
+                                            <SelectItem value="Admin">Admin</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {form.formState.errors.role && <p className="text-xs text-destructive mt-1">{form.formState.errors.role.message}</p>}
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="status" render={({ field }) => (
+                                <FormItem>
+                                    <Label htmlFor="edit-status">Status</Label>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <SelectTrigger id="edit-status"><SelectValue placeholder="Select status" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Active">Active</SelectItem>
+                                            <SelectItem value="Suspended">Suspended</SelectItem>
+                                            <SelectItem value="PendingApproval">Pending Approval</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {form.formState.errors.status && <p className="text-xs text-destructive mt-1">{form.formState.errors.status.message}</p>}
+                                </FormItem>
+                            )} />
+                        </div>
+                        <DialogClose asChild>
+                            <Button type="button" variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button type="submit">
+                        'Save Changes'
+                        </Button>
+                    </form>
+                </Form>
             </DialogContent>
         </Dialog>
     )}
