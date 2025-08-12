@@ -43,6 +43,12 @@ export default function FacilitiesPage() {
   
   useEffect(() => {
     fetchInitialData();
+    // Add event listener for real-time updates
+    window.addEventListener('dataChanged', fetchInitialData);
+
+    return () => {
+      window.removeEventListener('dataChanged', fetchInitialData);
+    };
   }, [fetchInitialData]);
 
   const handleSearch = useCallback((filters: SearchFilters) => {
