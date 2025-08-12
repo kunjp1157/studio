@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -7,7 +8,7 @@ import { LayoutDashboard, Building, Ticket, DollarSign, Users, Construction } fr
 import type { SiteSettings, Booking, Facility, UserProfile } from '@/lib/types';
 import { getSiteSettingsAction, getFacilitiesByOwnerIdAction, getAllBookingsAction } from '@/app/actions';
 import { formatCurrency } from '@/lib/utils';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getMonth, getYear, parseISO, isAfter, format, subMonths } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -45,7 +46,7 @@ export default function OwnerDashboardPage() {
     return () => window.removeEventListener('userChanged', handleUserChange);
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!currentUser) return;
     
     setIsLoading(true);
@@ -68,7 +69,7 @@ export default function OwnerDashboardPage() {
     } finally {
         setIsLoading(false);
     }
-  };
+  }, [currentUser]);
 
   useEffect(() => {
     
@@ -76,7 +77,7 @@ export default function OwnerDashboardPage() {
     
     window.addEventListener('dataChanged', fetchData);
     return () => window.removeEventListener('dataChanged', fetchData);
-  }, [currentUser]);
+  }, [currentUser, fetchData]);
 
 
   const { ownerStats, facilityUsageData, upcomingBookings } = useMemo(() => {
