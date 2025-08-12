@@ -415,6 +415,10 @@ export const isUserOnWaitlist = (userId: string, facilityId: string, date: strin
 }
 export const getOpenLfgRequests = (): LfgRequest[] => mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 export const getAllBookings = async (): Promise<Booking[]> => Promise.resolve(mockBookings);
+export const getEventsByFacilityIds = async (facilityIds: string[]): Promise<SportEvent[]> => Promise.resolve(mockEvents.filter(e => facilityIds.includes(e.facilityId)));
+export const getLfgRequestsByFacilityIds = async (facilityIds: string[]): Promise<LfgRequest[]> => Promise.resolve(mockLfgRequests.filter(lfg => facilityIds.includes(lfg.facilityId)));
+export const getChallengesByFacilityIds = async (facilityIds: string[]): Promise<Challenge[]> => Promise.resolve(mockChallenges.filter(c => facilityIds.includes(c.facilityId)));
+
 
 export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
   let iconName = 'Info';
@@ -814,3 +818,4 @@ export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] =
     const facility = mockFacilities.find(f => f.id === facilityId);
     return facility?.availableEquipment || [];
 };
+

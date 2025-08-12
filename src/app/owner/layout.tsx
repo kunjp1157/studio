@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, LayoutDashboard, Ticket, CalendarClock, BarChart2, Settings, LogOut, HandCoins } from 'lucide-react';
+import { Building, LayoutDashboard, Ticket, CalendarClock, BarChart2, Settings, LogOut, HandCoins, CalendarDays, Swords, Dices } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import type { UserProfile } from '@/lib/types';
@@ -141,6 +141,26 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
+            </SidebarGroup>
+
+             <SidebarGroup>
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:justify-center">Community</SidebarGroupLabel>
+                <SidebarMenuItem>
+                    <Link href="/owner/my-events">
+                      <SidebarMenuButton isActive={isActive('/owner/my-events')} tooltip="Facility Events">
+                          <CalendarDays />
+                          <span>Facility Events</span>
+                      </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+                 <SidebarMenuItem>
+                    <Link href="/owner/matchmaking">
+                      <SidebarMenuButton isActive={isActive('/owner/matchmaking')} tooltip="Matchmaking Posts">
+                          <Dices />
+                          <span>Matchmaking</span>
+                      </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
             </SidebarGroup>
 
             <SidebarGroup>

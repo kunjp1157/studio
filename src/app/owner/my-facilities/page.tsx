@@ -77,12 +77,14 @@ export default function OwnerFacilitiesPage() {
 
 
   useEffect(() => {
-    fetchFacilities();
+    if(currentUser) {
+      fetchFacilities();
+    }
     window.addEventListener('dataChanged', fetchFacilities);
     return () => {
         window.removeEventListener('dataChanged', fetchFacilities);
     };
-  }, [fetchFacilities]);
+  }, [currentUser, fetchFacilities]);
 
   const getPriceRange = (facility: Facility) => {
     if (!currency) return <Skeleton className="h-5 w-24" />;
