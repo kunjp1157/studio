@@ -47,7 +47,7 @@ import { Badge } from '@/components/ui/badge';
 import type { UserProfile, UserRole, UserStatus, Facility } from '@/lib/types';
 import { updateUser as updateMockUser, addNotification } from '@/lib/data';
 import { getUsersAction, getFacilitiesByOwnerIdAction } from '@/app/actions';
-import { MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX, Building2 } from 'lucide-react';
+import { Users, MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format, parseISO } from 'date-fns';
