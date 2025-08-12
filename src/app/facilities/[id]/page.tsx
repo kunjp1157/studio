@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -211,6 +212,7 @@ export default function FacilityDetailPage() {
       
       return {
           ...priceResult,
+          pricingModel: sportPriceInfo.pricingModel,
           finalPrice: priceResult.finalPrice + equipmentRentalCost
       };
     }
@@ -282,6 +284,7 @@ export default function FacilityDetailPage() {
       status: 'Confirmed' as const,
       userId: currentUser.id,
       rentedEquipment: rentedItems,
+      pricingModel: dynamicPrice.pricingModel,
     };
     
     router.push(`/facilities/${facility.id}/book?data=${encodeURIComponent(JSON.stringify(bookingData))}`);

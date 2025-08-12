@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
@@ -16,7 +17,7 @@ import { addBookingAction, addNotificationAction } from '@/app/actions';
 import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo, RentedItemInfo, UserProfile } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode, PackageSearch, HandCoins } from 'lucide-react';
+import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode, PackageSearch, HandCoins, Users } from 'lucide-react';
 
 const UpiIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5">
@@ -31,7 +32,7 @@ function BookingConfirmationContent() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [bookingData, setBookingData] = useState<Omit<Booking, 'id' | 'bookedAt'> | null>(null);
+  const [bookingData, setBookingData] = useState<Omit<Booking, 'id' | 'bookedAt'> & { pricingModel?: 'per_hour_flat' | 'per_hour_per_person' } | null>(null);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   
@@ -43,6 +44,7 @@ function BookingConfirmationContent() {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'qr' | 'pay_at_venue'>('card');
   const [upiId, setUpiId] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [numberOfGuests, setNumberOfGuests] = useState(1);
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
@@ -69,20 +71,36 @@ function BookingConfirmationContent() {
     setCurrency(settings.defaultCurrency);
   }, [searchParams, router, toast]);
 
+  const finalPrice = useMemo(() => {
+    if (!bookingData) return 0;
+    
+    let basePrice = bookingData.baseFacilityPrice || bookingData.totalPrice;
+    if(bookingData.pricingModel === 'per_hour_per_person') {
+        basePrice = basePrice * numberOfGuests;
+    }
+    const rentalCost = bookingData.equipmentRentalCost || 0;
+    const discount = appliedPromotion?.discountAmount || 0;
+    
+    return basePrice + rentalCost - discount;
+
+  }, [bookingData, numberOfGuests, appliedPromotion]);
+
+
   const handleApplyPromo = async () => {
-    if (!promoCode.trim()) return;
+    if (!promoCode.trim() || !bookingData) return;
     setIsApplyingPromo(true);
     setPromoError(null);
     try {
         const promo = await getPromotionRuleByCode(promoCode);
-        if (promo && bookingData) {
+        if (promo) {
+            let initialPrice = bookingData.totalPrice; // Price before discount
             let discountAmount = 0;
             if (promo.discountType === 'percentage') {
-                discountAmount = bookingData.totalPrice * (promo.discountValue / 100);
+                discountAmount = initialPrice * (promo.discountValue / 100);
             } else {
                 discountAmount = promo.discountValue;
             }
-            discountAmount = Math.min(discountAmount, bookingData.totalPrice);
+            discountAmount = Math.min(discountAmount, initialPrice);
             setAppliedPromotion({ code: promo.code!, discountAmount, description: promo.name });
             toast({ title: "Promotion Applied!", description: `You've received a discount of ${formatCurrency(discountAmount, currency!)}.`});
         } else {
@@ -105,10 +123,8 @@ function BookingConfirmationContent() {
         return;
     }
 
-    const finalPrice = bookingData.totalPrice - (appliedPromotion?.discountAmount || 0);
-
     // Simulate payment processing unless it's pay at venue
-    if (paymentMethod !== 'pay_at_venue') {
+    if (paymentMethod !== 'pay_at_venue' && finalPrice > 0) {
       await new Promise(res => setTimeout(res, 2000));
     }
     
@@ -117,6 +133,7 @@ function BookingConfirmationContent() {
       totalPrice: finalPrice,
       status: paymentMethod === 'pay_at_venue' ? 'Pending' : 'Confirmed',
       appliedPromotion: appliedPromotion || undefined,
+      numberOfGuests: bookingData.pricingModel === 'per_hour_per_person' ? numberOfGuests : undefined,
     });
 
     window.dispatchEvent(new CustomEvent('dataChanged'));
@@ -144,7 +161,6 @@ function BookingConfirmationContent() {
     );
   }
 
-  const finalPrice = bookingData.totalPrice - (appliedPromotion?.discountAmount || 0);
   const showPaymentForm = finalPrice > 0;
 
   return (
@@ -158,8 +174,16 @@ function BookingConfirmationContent() {
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Sport</span><span className="font-semibold">{bookingData.sportName}</span></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Date</span><span className="font-semibold">{format(parseISO(bookingData.date), 'EEEE, MMM d, yyyy')}</span></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Time</span><span className="font-semibold">{bookingData.startTime} - {bookingData.endTime}</span></div>
+                
+                {bookingData.pricingModel === 'per_hour_per_person' && (
+                    <div className="py-2">
+                        <Label htmlFor="numberOfGuests">Number of Guests/Players</Label>
+                        <Input id="numberOfGuests" type="number" min="1" value={numberOfGuests} onChange={(e) => setNumberOfGuests(Number(e.target.value) || 1)} />
+                    </div>
+                )}
+                
                 <hr/>
-                <div className="flex justify-between items-center"><span className="text-muted-foreground">Base Price</span><span className="font-semibold">{formatCurrency(bookingData.baseFacilityPrice!, currency)}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Base Price</span><span className="font-semibold">{formatCurrency(bookingData.baseFacilityPrice!, currency)} {bookingData.pricingModel === 'per_hour_per_person' && `x ${numberOfGuests}`}</span></div>
                 
                 {bookingData.rentedEquipment && bookingData.rentedEquipment.length > 0 && (
                   <>
