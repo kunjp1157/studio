@@ -41,32 +41,35 @@ export default function OwnerBookingsPage() {
     return () => window.removeEventListener('userChanged', handleUserChange);
   }, []);
 
+  const fetchBookings = async () => {
+      if (!currentUser) return;
+      setIsLoading(true);
+      try {
+          const [ownerFacilities, allBookings] = await Promise.all([
+              getFacilitiesByOwnerIdAction(currentUser.id),
+              getAllBookingsAction()
+          ]);
+          const facilityIds = ownerFacilities.map(f => f.id);
+          const ownerBookings = allBookings
+              .filter(b => facilityIds.includes(b.facilityId))
+              .sort((a,b) => parseISO(b.bookedAt).getTime() - parseISO(a.bookedAt).getTime());
+          
+          setBookings(ownerBookings);
+      } catch (error) {
+          toast({
+              title: "Error",
+              description: "Could not load bookings for your facilities.",
+              variant: "destructive"
+          });
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
   useEffect(() => {
-    const fetchBookings = async () => {
-        if (!currentUser) return;
-        setIsLoading(true);
-        try {
-            const [ownerFacilities, allBookings] = await Promise.all([
-                getFacilitiesByOwnerIdAction(currentUser.id),
-                getAllBookingsAction()
-            ]);
-            const facilityIds = ownerFacilities.map(f => f.id);
-            const ownerBookings = allBookings
-                .filter(b => facilityIds.includes(b.facilityId))
-                .sort((a,b) => parseISO(b.bookedAt).getTime() - parseISO(a.bookedAt).getTime());
-            
-            setBookings(ownerBookings);
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "Could not load bookings for your facilities.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
     fetchBookings();
+    window.addEventListener('dataChanged', fetchBookings);
+    return () => window.removeEventListener('dataChanged', fetchBookings);
   }, [currentUser, toast]);
 
 

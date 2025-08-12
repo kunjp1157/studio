@@ -118,6 +118,8 @@ function BookingConfirmationContent() {
       status: paymentMethod === 'pay_at_venue' ? 'Pending' : 'Confirmed',
       appliedPromotion: appliedPromotion || undefined,
     });
+
+    window.dispatchEvent(new CustomEvent('dataChanged'));
     
     await addNotificationAction(currentUser.id, {
         type: 'booking_confirmed',

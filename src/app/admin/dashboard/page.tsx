@@ -115,6 +115,10 @@ export default function AdminDashboardPage() {
     
   useEffect(() => {
     fetchData();
+    window.addEventListener('dataChanged', fetchData);
+    return () => {
+        window.removeEventListener('dataChanged', fetchData);
+    };
   }, []);
 
   const { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed } = useMemo(() => {
