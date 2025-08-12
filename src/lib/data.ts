@@ -146,7 +146,47 @@ let mockBlogPosts: BlogPost[] = [
     tags: ['Sports', 'Cricket', 'Local'],
   }
 ];
-let mockEvents: SportEvent[] = [];
+let mockEvents: SportEvent[] = [
+  {
+    id: 'event-1',
+    name: 'Monsoon Soccer League',
+    facilityId: 'facility-1',
+    facilityName: 'Pune Sports Complex',
+    sport: getMockSports().find(s => s.id === 'sport-1')!,
+    startDate: '2024-08-01T09:00:00Z',
+    endDate: '2024-08-31T18:00:00Z',
+    description: 'The biggest 5-a-side soccer tournament of the season. Gather your team and compete for the championship title and exciting cash prizes.',
+    entryFee: 5000,
+    maxParticipants: 32,
+    registeredParticipants: 18,
+  },
+  {
+    id: 'event-2',
+    name: 'Club Tennis Open',
+    facilityId: 'facility-2',
+    facilityName: 'Deccan Gymkhana Tennis Club',
+    sport: getMockSports().find(s => s.id === 'sport-3')!,
+    startDate: '2024-09-05T10:00:00Z',
+    endDate: '2024-09-10T17:00:00Z',
+    description: 'An open tennis tournament for all skill levels. Singles and doubles categories available. Show off your skills on our premium clay courts.',
+    entryFee: 1500,
+    maxParticipants: 64,
+    registeredParticipants: 45,
+  },
+  {
+    id: 'event-3',
+    name: 'Sunrise Yoga Workshop',
+    facilityId: 'facility-6',
+    facilityName: 'Zenith Yoga & Dance Studio',
+    sport: getMockSports().find(s => s.id === 'sport-6')!,
+    startDate: '2024-08-10T06:00:00Z',
+    endDate: '2024-08-10T08:00:00Z',
+    description: 'A rejuvenating two-hour yoga workshop focusing on mindfulness and Vinyasa flow. Start your weekend with peace and energy. All levels welcome.',
+    entryFee: 750,
+    maxParticipants: 20,
+    registeredParticipants: 12,
+  },
+];
 let mockPricingRules: PricingRule[] = [];
 let mockPromotionRules: PromotionRule[] = [];
 let mockSiteSettings: SiteSettings = { siteName: 'Sports Arena', defaultCurrency: 'INR', timezone: 'Asia/Kolkata', maintenanceMode: false, notificationTemplates: [] };
