@@ -7,9 +7,9 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice, UserRole, MaintenanceSchedule } from '@/lib/types';
+import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice, UserRole, MaintenanceSchedule, UserProfile } from '@/lib/types';
 import { mockSports, mockAmenities } from '@/lib/mock-data';
-import { getSiteSettingsAction, addFacilityAction, updateFacilityAction } from '@/app/actions';
+import { getSiteSettingsAction, addFacilityAction, updateFacilityAction, getUsersAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -106,14 +106,20 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageGenPrompt, setImageGenPrompt] = useState('');
+  const [facilityOwners, setFacilityOwners] = useState<UserProfile[]>([]);
+
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchInitialData = async () => {
         const settings = await getSiteSettingsAction();
         setCurrency(settings.defaultCurrency);
+        if (currentUserRole === 'Admin') {
+            const users = await getUsersAction();
+            setFacilityOwners(users.filter(u => u.role === 'FacilityOwner'));
+        }
     };
-    fetchSettings();
-  }, []);
+    fetchInitialData();
+  }, [currentUserRole]);
 
   const form = useForm<FacilityFormValues>({
     resolver: zodResolver(facilityFormSchema),
@@ -256,6 +262,33 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
                 </FormItem>
               )} />
             </div>
+            {!isOwner && (
+                <FormField
+                    control={form.control}
+                    name="ownerId"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center"><Users className="mr-2 h-4 w-4 text-muted-foreground" />Facility Owner</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Assign an owner (optional)" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="">None</SelectItem>
+                                    {facilityOwners.map(owner => (
+                                        <SelectItem key={owner.id} value={owner.id}>
+                                            {owner.name} ({owner.email})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
             <FormField control={form.control} name="address" render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center"><MapPinIcon className="mr-2 h-4 w-4 text-muted-foreground"/>Full Address</FormLabel>
