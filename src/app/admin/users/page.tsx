@@ -315,8 +315,8 @@ export default function AdminUsersPage() {
                 <p><strong>Full Name:</strong> {selectedUser.name}</p>
                 <p><strong>Email:</strong> {selectedUser.email}</p>
                 <p><strong>Phone:</strong> {selectedUser.phone || 'N/A'}</p>
-                <p><strong>Role:</strong> <Badge variant={getRoleBadgeVariant(selectedUser.role)}>{selectedUser.role}</Badge></p>
-                <p><strong>Status:</strong> <Badge variant={getStatusBadgeVariant(selectedUser.status)} className={selectedUser.status === 'Active' ? 'bg-green-500 text-white' : ''}>{selectedUser.status}</Badge></p>
+                <div><strong>Role:</strong> <Badge variant={getRoleBadgeVariant(selectedUser.role)}>{selectedUser.role}</Badge></div>
+                <div><strong>Status:</strong> <Badge variant={getStatusBadgeVariant(selectedUser.status)} className={selectedUser.status === 'Active' ? 'bg-green-500 text-white' : ''}>{selectedUser.status}</Badge></div>
                 <p><strong>Membership:</strong> {selectedUser.membershipLevel || 'None'}</p>
                 <p><strong>Joined:</strong> {format(parseISO(selectedUser.joinedAt), 'MMMM d, yyyy, p')}</p>
                 <p><strong>Loyalty Points:</strong> {selectedUser.loyaltyPoints || 0}</p>
