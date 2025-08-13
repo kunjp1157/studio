@@ -9,109 +9,91 @@ body {
 
 @layer base {
   :root {
-    --background: 240 50% 12%; /* Dark Blue/Purple */
+    --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
-    --card: 240 50% 15%; /* Slightly lighter than background */
+    --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
-    --popover: 240 50% 10%;
+    --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    
-    --primary: 326 100% 65%; /* Bright Pink */
+    --primary: 21.7 91.2% 59.8%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 226 100% 70%; /* Light Blue */
-    --secondary-foreground: 240 50% 12%;
-
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    
-    --accent: 226 100% 70%; /* Light Blue for accents */
-    --accent-foreground: 240 50% 12%;
-
-    --destructive: 0 62.8% 50.6%; /* Vivid Red */
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 240 50% 25%; /* Lighter border */
-    --input: 240 50% 20%;
-    --ring: 326 100% 65%; /* Pink ring */
-
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 21.7 91.2% 59.8%;
     --radius: 0.75rem;
 
-    --chart-1: 326 100% 65%; /* Pink */
-    --chart-2: 226 100% 70%; /* Blue */
-    --chart-3: 162 88% 50%;
-    --chart-4: 37 92% 56%;
-    --chart-5: 282 88% 50%;
+    --chart-1: 22 90% 50%; /* Orange */
+    --chart-2: 198 90% 50%; /* Cyan */
+    --chart-3: 120 70% 45%; /* Green */
+    --chart-4: 45 90% 50%; /* Yellow */
+    --chart-5: 260 85% 60%; /* Purple */
 
     /* Sidebar specific colors */
-    --sidebar-background: 240 50% 10%; /* Slightly different from main bg */
+    --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 326 100% 65%; /* Pink for active items */
+    --sidebar-primary: 21.7 91.2% 59.8%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 240 50% 20%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 240 50% 20%;
-    --sidebar-ring: 326 100% 65%;
-
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 21.7 91.2% 59.8%;
+    
     /* Auth Form Specific Colors */
-    --auth-form-bg-dark: #2d2d39;
-    --auth-form-border-dark: #25252b;
-    --auth-form-accent-pink: #ff2770;
-    --auth-form-accent-blue: #45f3ff;
+    --auth-form-bg-dark: #1f1f23;
+    --auth-form-border-dark: #18181a;
+    --auth-form-accent-pink: #f97316; /* Replaced with orange */
+    --auth-form-accent-blue: #38bdf8; /* A light blue */
   }
 
   .dark {
-    --background: 240 50% 12%; /* Dark Blue/Purple */
+    --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
-    --card: 240 50% 15%; /* Slightly lighter than background */
+    --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
-    --popover: 240 50% 10%;
+    --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 326 100% 65%; /* Bright Pink */
+    --primary: 21.7 91.2% 59.8%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 226 100% 70%; /* Light Blue */
-    --secondary-foreground: 240 50% 12%;
-
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 226 100% 70%; /* Light Blue for accents */
-    --accent-foreground: 240 50% 12%;
-
-    --destructive: 0 62.8% 50.6%; /* Vivid Red */
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 21.7 91.2% 59.8%;
+    --radius: 0.75rem;
 
-    --border: 240 50% 25%; /* Lighter border */
-    --input: 240 50% 20%;
-    --ring: 326 100% 65%;
-    
-    --chart-1: 326 100% 65%; /* Pink */
-    --chart-2: 226 100% 70%; /* Blue */
-    --chart-3: 162 88% 50%;
-    --chart-4: 37 92% 56%;
-    --chart-5: 282 88% 50%;
+    --chart-1: 22 90% 50%;
+    --chart-2: 198 90% 50%;
+    --chart-3: 120 70% 45%;
+    --chart-4: 45 90% 50%;
+    --chart-5: 260 85% 60%;
 
-    /* Sidebar specific colors */
-    --sidebar-background: 240 50% 10%; /* Slightly different from main bg */
+    --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 326 100% 65%; /* Pink for active items */
+    --sidebar-primary: 21.7 91.2% 59.8%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 240 50% 20%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 240 50% 20%;
-    --sidebar-ring: 326 100% 65%;
-
-    /* Auth Form Specific Colors */
-    --auth-form-bg-dark: #2d2d39;
-    --auth-form-border-dark: #25252b;
-    --auth-form-accent-pink: #ff2770;
-    --auth-form-accent-blue: #45f3ff;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 21.7 91.2% 59.8%;
+    
+    --auth-form-bg-dark: #1f1f23;
+    --auth-form-border-dark: #18181a;
+    --auth-form-accent-pink: #f97316;
+    --auth-form-accent-blue: #38bdf8;
   }
 }
 
@@ -433,3 +415,5 @@ body {
         height: calc(20vw - 2px);
     }
 }
+
+    
