@@ -24,8 +24,8 @@ export default function RootLayout({
   const pathname = usePathname();
   
   const isAdminOrOwnerPath = pathname.startsWith('/admin') || pathname.startsWith('/owner');
-  const isAuthPage = pathname.startsWith('/account');
-  const isSpecialBg = (isAuthPage && !pathname.startsWith('/account/profile') && !pathname.startsWith('/account/bookings') && !pathname.startsWith('/account/favorites') && !pathname.startsWith('/account/teams') && !pathname.startsWith('/account/payment-methods'));
+  const isAuthPage = pathname.startsWith('/account/login') || pathname.startsWith('/account/signup') || pathname.startsWith('/account/forgot-password');
+  const isHomePage = pathname === '/';
 
 
   return (
@@ -37,15 +37,16 @@ export default function RootLayout({
       <body className={cn(
           "font-sans antialiased min-h-screen flex flex-col",
           inter.variable,
-          isSpecialBg ? 'bg-black' : ''
+          isHomePage && 'bg-brand-dark',
+          isAuthPage && 'auth-page'
       )}>
-        {!isAdminOrOwnerPath && !isSpecialBg && <Header />}
+        {!isAdminOrOwnerPath && !isAuthPage && !isHomePage && <Header />}
         <main className="flex-grow">
           <PageTransitionWrapper>
             {children}
           </PageTransitionWrapper>
         </main>
-        {!isAdminOrOwnerPath && !isSpecialBg && <Footer />}
+        {!isAdminOrOwnerPath && !isAuthPage && !isHomePage && <Footer />}
         <Toaster />
       </body>
     </html>

@@ -92,10 +92,7 @@ body {
   .animation-delay-200 { animation-delay: 200ms; }
   .animation-delay-400 { animation-delay: 400ms; }
   .animation-delay-600 { animation-delay: 600ms; }
-  .animated { 
-    opacity: 0; 
-    animation-fill-mode: forwards;
-  }
+  .animated { opacity: 0; }
 }
 
 @keyframes fall {
@@ -151,4 +148,33 @@ body {
 
 .animate-fadeInUp {
   animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.auth-page #background-section {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: black;
+  z-index: 10;
+}
+
+.auth-page #background-section span {
+  width: 4vmin;
+  height: 4vmin;
+  background: #101010;
+  position: absolute;
+  animation: sparkle 5s linear infinite;
+}
+
+.auth-box {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
 }
