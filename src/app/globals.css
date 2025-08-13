@@ -115,8 +115,24 @@ body {
   }
 }
 
+/* Custom class for the gradient text effect */
+.text-gradient {
+  background: linear-gradient(to right, #C72C7D, #5B75E6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+/* Animation delay utilities */
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+.animation-delay-600 { animation-delay: 600ms; }
+.animated { 
+    opacity: 0;
+    animation-fill-mode: forwards; /* Keep the state of the last keyframe */
+}
 
-/* Keyframes for homepage animations */
+
 @keyframes fall {
   0% { transform: translateY(-50px) rotateX(90deg); opacity: 0; }
   100% { transform: translateY(0) rotateX(0deg); opacity: 1; }
