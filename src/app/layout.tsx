@@ -25,7 +25,8 @@ export default function RootLayout({
   
   const isAdminOrOwnerPath = pathname.startsWith('/admin') || pathname.startsWith('/owner');
   const isAuthPage = pathname.startsWith('/account');
-  const isSpecialBg = isAuthPage && !pathname.startsWith('/account/profile') && !pathname.startsWith('/account/bookings') && !pathname.startsWith('/account/favorites') && !pathname.startsWith('/account/teams') && !pathname.startsWith('/account/payment-methods');
+  const isHomePage = pathname === '/';
+  const isSpecialBg = (isAuthPage && !pathname.startsWith('/account/profile') && !pathname.startsWith('/account/bookings') && !pathname.startsWith('/account/favorites') && !pathname.startsWith('/account/teams') && !pathname.startsWith('/account/payment-methods')) || isHomePage;
 
 
   return (
