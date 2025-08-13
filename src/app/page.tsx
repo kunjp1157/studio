@@ -4,9 +4,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PageTitle } from '@/components/shared/PageTitle';
 import type { UserProfile } from '@/lib/types';
 import { Menu, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const ParallaxElement = ({ speed, children, className }: { speed: number; children: React.ReactNode; className?: string }) => {
     const ref = useRef<HTMLDivElement>(null);
@@ -35,6 +35,7 @@ export default function HomePage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const activeUser = sessionStorage.getItem('activeUser');
@@ -42,19 +43,12 @@ export default function HomePage() {
         setCurrentUser(JSON.parse(activeUser));
     }
     
-    // Simulate window.load
-    const handleLoad = () => {
-        setTimeout(() => {
-            setIsPreloading(false);
-        }, 500); // Give it a moment to fade out
-    };
+    // Correctly handle preloader hiding in a React environment
+    const timer = setTimeout(() => {
+        setIsPreloading(false);
+    }, 500); 
 
-    if (document.readyState === 'complete') {
-        handleLoad();
-    } else {
-        window.addEventListener('load', handleLoad);
-        return () => window.removeEventListener('load', handleLoad);
-    }
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -122,4 +116,3 @@ export default function HomePage() {
     </div>
   );
 }
-
