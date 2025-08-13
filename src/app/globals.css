@@ -5,6 +5,8 @@
 
 body {
   font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer base {
@@ -35,22 +37,6 @@ body {
     --chart-3: 120 70% 45%; /* Green */
     --chart-4: 45 90% 50%; /* Yellow */
     --chart-5: 260 85% 60%; /* Purple */
-
-    /* Sidebar specific colors */
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 21.7 91.2% 59.8%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 21.7 91.2% 59.8%;
-    
-    /* Auth Form Specific Colors */
-    --auth-form-bg-dark: #1f1f23;
-    --auth-form-border-dark: #18181a;
-    --auth-form-accent-pink: #f97316; /* Replaced with orange */
-    --auth-form-accent-blue: #38bdf8; /* A light blue */
   }
 
   .dark {
@@ -80,20 +66,6 @@ body {
     --chart-3: 120 70% 45%;
     --chart-4: 45 90% 50%;
     --chart-5: 260 85% 60%;
-
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 21.7 91.2% 59.8%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 21.7 91.2% 59.8%;
-    
-    --auth-form-bg-dark: #1f1f23;
-    --auth-form-border-dark: #18181a;
-    --auth-form-accent-pink: #f97316;
-    --auth-form-accent-blue: #38bdf8;
   }
 }
 
@@ -109,6 +81,20 @@ body {
 @layer utilities {
   .preserve-3d {
     transform-style: preserve-3d;
+  }
+  .text-gradient {
+    background: linear-gradient(to right, #C72C7D, #5B75E6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-600 { animation-delay: 600ms; }
+  .animated { 
+    opacity: 0; 
+    animation-fill-mode: forwards;
   }
 }
 
@@ -151,7 +137,6 @@ body {
 .animate-pop {
   animation: pop 0.3s ease-out;
 }
-
 
 @keyframes fadeInUp {
   from {
