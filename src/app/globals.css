@@ -9,51 +9,51 @@ body {
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
+    --background: 240 50% 12%; /* Dark Blue/Purple */
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 8%; /* Slightly lighter than background for depth */
+    --card: 240 50% 15%; /* Slightly lighter than background */
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 240 50% 10%;
     --popover-foreground: 210 40% 98%;
     
-    --primary: 22 91% 65%; /* Bright Orange */
-    --primary-foreground: 222.2 84% 4.9%; /* Dark Blue for text on orange */
+    --primary: 326 100% 65%; /* Bright Pink */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 226 100% 70%; /* Light Blue */
+    --secondary-foreground: 240 50% 12%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
     
-    --accent: 210 90% 55%; /* Bright Blue */
-    --accent-foreground: 210 40% 98%;
+    --accent: 226 100% 70%; /* Light Blue for accents */
+    --accent-foreground: 240 50% 12%;
 
     --destructive: 0 62.8% 50.6%; /* Vivid Red */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 25%; /* Lighter border */
-    --input: 217.2 32.6% 17.5%;
-    --ring: 22 91% 65%; /* Orange ring */
+    --border: 240 50% 25%; /* Lighter border */
+    --input: 240 50% 20%;
+    --ring: 326 100% 65%; /* Pink ring */
 
     --radius: 0.75rem;
 
-    --chart-1: 22 91% 65%; /* Orange */
-    --chart-2: 210 90% 55%; /* Blue */
+    --chart-1: 326 100% 65%; /* Pink */
+    --chart-2: 226 100% 70%; /* Blue */
     --chart-3: 162 88% 50%;
     --chart-4: 37 92% 56%;
     --chart-5: 282 88% 50%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 222.2 84% 6%; /* Slightly different from main bg */
+    --sidebar-background: 240 50% 10%; /* Slightly different from main bg */
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 22 91% 65%; /* Orange for active items */
+    --sidebar-primary: 326 100% 65%; /* Pink for active items */
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217.2 32.6% 20%;
+    --sidebar-accent: 240 50% 20%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 20%;
-    --sidebar-ring: 22 91% 65%;
+    --sidebar-border: 240 50% 20%;
+    --sidebar-ring: 326 100% 65%;
 
     /* Auth Form Specific Colors */
     --auth-form-bg-dark: #2d2d39;
@@ -63,49 +63,49 @@ body {
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 240 50% 12%; /* Dark Blue/Purple */
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 8%; /* Slightly lighter than background for depth */
+    --card: 240 50% 15%; /* Slightly lighter than background */
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 240 50% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 22 91% 65%; /* Bright Orange */
-    --primary-foreground: 222.2 84% 4.9%; /* Dark Blue for text on orange */
+    --primary: 326 100% 65%; /* Bright Pink */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 226 100% 70%; /* Light Blue */
+    --secondary-foreground: 240 50% 12%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 210 90% 55%; /* Bright Blue */
-    --accent-foreground: 210 40% 98%;
+    --accent: 226 100% 70%; /* Light Blue for accents */
+    --accent-foreground: 240 50% 12%;
 
     --destructive: 0 62.8% 50.6%; /* Vivid Red */
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 25%; /* Lighter border */
-    --input: 217.2 32.6% 17.5%;
-    --ring: 22 91% 65%;
+    --border: 240 50% 25%; /* Lighter border */
+    --input: 240 50% 20%;
+    --ring: 326 100% 65%;
     
-    --chart-1: 22 91% 65%; /* Orange */
-    --chart-2: 210 90% 55%; /* Blue */
+    --chart-1: 326 100% 65%; /* Pink */
+    --chart-2: 226 100% 70%; /* Blue */
     --chart-3: 162 88% 50%;
     --chart-4: 37 92% 56%;
     --chart-5: 282 88% 50%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 222.2 84% 6%; /* Slightly different from main bg */
+    --sidebar-background: 240 50% 10%; /* Slightly different from main bg */
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 22 91% 65%; /* Orange for active items */
+    --sidebar-primary: 326 100% 65%; /* Pink for active items */
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217.2 32.6% 20%;
+    --sidebar-accent: 240 50% 20%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 20%;
-    --sidebar-ring: 22 91% 65%;
+    --sidebar-border: 240 50% 20%;
+    --sidebar-ring: 326 100% 65%;
 
     /* Auth Form Specific Colors */
     --auth-form-bg-dark: #2d2d39;
