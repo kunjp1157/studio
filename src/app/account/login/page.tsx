@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
 import { getAllUsers } from '@/lib/data';
 import type { UserProfile } from '@/lib/types';
 import { Heart, LogIn } from 'lucide-react';
@@ -55,7 +54,6 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
-      <AnimatedGridBackground />
       <div className="auth-box">
         <div className="auth-container">
           <div className="auth-form-wrapper">
