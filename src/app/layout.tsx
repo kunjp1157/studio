@@ -37,8 +37,7 @@ export default function RootLayout({
       <body className={cn(
           "font-sans antialiased min-h-screen flex flex-col",
           inter.variable,
-          isHomePage ? 'bg-brand-dark' : 'bg-background',
-          isAuthPage && 'auth-page' // This line ensures the class is applied correctly.
+          isAuthPage ? 'auth-page' : 'bg-background'
       )}>
         {!isAdminOrOwnerPath && !isAuthPage && !isHomePage && <Header />}
         <main className="flex-grow">
