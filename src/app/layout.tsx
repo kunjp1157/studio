@@ -37,11 +37,10 @@ export default function RootLayout({
       <body className={cn(
           "font-sans antialiased min-h-screen flex flex-col",
           inter.variable,
-          isHomePage && 'bg-brand-dark',
-          isAuthPage && 'auth-page'
+          isHomePage && 'bg-brand-dark'
       )}>
         {!isAdminOrOwnerPath && !isAuthPage && !isHomePage && <Header />}
-        <main className="flex-grow">
+        <main className={cn("flex-grow", isAuthPage && 'auth-page')}>
           <PageTransitionWrapper>
             {children}
           </PageTransitionWrapper>
