@@ -37,10 +37,11 @@ export default function ProfilePage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setTimeout(() => {
-      setUser(mockUser);
-      setIsLoading(false);
-    }, 500);
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+        setUser(JSON.parse(activeUserStr));
+    }
+    setIsLoading(false);
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -97,16 +98,13 @@ export default function ProfilePage() {
     setTimeout(() => {
       setIsEditing(false);
       setIsLoading(false);
-      // In a real app, mockUser would be updated in lib/data.ts if persistence was mocked there
-      // For now, the local user state is what's "saved" for this session
-      mockUser.bio = user?.bio;
-      mockUser.preferredPlayingTimes = user?.preferredPlayingTimes;
-      mockUser.skillLevels = user?.skillLevels;
-      mockUser.name = user?.name || mockUser.name;
-      mockUser.email = user?.email || mockUser.email;
-      mockUser.phone = user?.phone || mockUser.phone;
-      mockUser.preferredSports = user?.preferredSports || mockUser.preferredSports;
-      mockUser.isProfilePublic = user?.isProfilePublic;
+      
+      if (user) {
+        // In a real app, this would be an API call. Here we update session storage
+        sessionStorage.setItem('activeUser', JSON.stringify(user));
+        // And notify other components
+        window.dispatchEvent(new Event('userChanged'));
+      }
 
       toast({
         title: "Profile Updated",
@@ -115,7 +113,7 @@ export default function ProfilePage() {
     }, 1000);
   };
 
-  if (isLoading && !user) {
+  if (isLoading) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
   }
 
@@ -315,7 +313,7 @@ export default function ProfilePage() {
 
               {isEditing && (
                 <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); setUser(mockUser); /* Reset changes */ }}>
+                  <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); setUser(user); /* Reset changes */ }}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isLoading} size="lg">
