@@ -74,11 +74,12 @@
 
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(to right, #C72C7D, #5B75E6);
+    background: linear-gradient(90deg, #C72C7D 0%, #894bbf 50%, #5B75E6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-fill-color: transparent;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   .animated {
       opacity: 0;

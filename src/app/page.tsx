@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import type { UserProfile } from '@/lib/types';
 import { Menu, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
 
 const ParallaxElement = ({ speed, children, className }: { speed: number; children: React.ReactNode; className?: string }) => {
     const ref = useRef<HTMLDivElement>(null);
@@ -43,12 +45,10 @@ export default function HomePage() {
         setCurrentUser(JSON.parse(activeUser));
     }
     
-    // Use a timer to hide the preloader
     const timer = setTimeout(() => {
         setIsPreloading(false);
-    }, 500); // Adjust time as needed
+    }, 500);
 
-    // Clean up the timer
     return () => clearTimeout(timer);
   }, []);
   
@@ -61,13 +61,19 @@ export default function HomePage() {
   }
 
   return (
-    <div className="text-white font-sans antialiased relative overflow-x-hidden min-h-screen">
+    <div className={cn(
+        "text-white font-sans antialiased relative overflow-x-hidden min-h-screen",
+        "bg-brand-dark"
+    )}>
       {isPreloading && (
         <div id="preloader" className="fixed inset-0 bg-brand-dark z-50 flex justify-center items-center transition-opacity duration-500">
           <div className="w-16 h-16 border-4 border-brand-pink border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 
+      {/* This component will handle the animated grid */}
+      <AnimatedGridBackground />
+      
       {/* Background Decorative Elements */}
       <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
         <ParallaxElement speed={0.3} className="absolute top-[-10vh] left-[-15vw] w-[45vw] h-[70vh]">
@@ -84,7 +90,6 @@ export default function HomePage() {
         </ParallaxElement>
       </div>
       
-      {/* Main Content Container */}
       <div className="relative z-10 flex flex-col min-h-screen">
         <main className="flex-grow flex items-center justify-center text-center px-4">
           <div className="max-w-2xl">
