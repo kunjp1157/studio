@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
-import type { Facility, SiteSettings } from '@/lib/types';
-import { mockUser, getFacilitiesByIds, getSiteSettings } from '@/lib/data';
+import type { Facility, SiteSettings, UserProfile } from '@/lib/types';
+import { getFacilitiesByIds, getSiteSettings } from '@/lib/data';
 import { Heart } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
@@ -25,16 +25,34 @@ export default function FavoritesPage() {
   const [favoriteFacilities, setFavoriteFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+        setCurrentUser(JSON.parse(activeUserStr));
+    } else {
+        // If no user is logged in, we can stop loading.
+        setIsLoading(false);
+    }
+  }, []);
+
 
   useEffect(() => {
     const fetchFavorites = async () => {
+      if (!currentUser) {
+        setFavoriteFacilities([]);
+        setIsLoading(false);
+        return;
+      }
+      
       setIsLoading(true);
       const settings = getSiteSettings();
       setCurrency(settings.defaultCurrency);
 
       try {
-        if (mockUser.favoriteFacilities && mockUser.favoriteFacilities.length > 0) {
-          const favs = await getFacilitiesByIds(mockUser.favoriteFacilities);
+        if (currentUser.favoriteFacilities && currentUser.favoriteFacilities.length > 0) {
+          const favs = await getFacilitiesByIds(currentUser.favoriteFacilities);
           setFavoriteFacilities(favs);
         } else {
           setFavoriteFacilities([]);
@@ -48,7 +66,7 @@ export default function FavoritesPage() {
     };
 
     fetchFavorites();
-  }, []);
+  }, [currentUser]);
 
   if (isLoading) {
     return (
