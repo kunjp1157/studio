@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import type { Booking, Facility, SiteSettings } from '@/lib/types';
-import { getBookingById, getFacilityById, getSiteSettings } from '@/lib/data';
+import { getBookingByIdAction, getFacilityByIdAction, getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,13 +46,13 @@ export default function BookingReceiptPage() {
   useEffect(() => {
     const fetchBookingData = async () => {
       if (bookingId) {
-        const foundBooking = await getBookingById(bookingId);
+        const foundBooking = await getBookingByIdAction(bookingId);
         setBooking(foundBooking || null);
         if (foundBooking) {
-          const foundFacility = await getFacilityById(foundBooking.facilityId);
+          const foundFacility = await getFacilityByIdAction(foundBooking.facilityId);
           setFacility(foundFacility || null);
         }
-        const settings = await getSiteSettings();
+        const settings = await getSiteSettingsAction();
         setCurrency(settings.defaultCurrency);
       }
     };
