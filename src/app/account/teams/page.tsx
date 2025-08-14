@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Team, UserProfile } from '@/lib/types';
-import { mockUser, getTeamsByUserId, getUserById, leaveTeam as mockLeaveTeam } from '@/lib/data';
+import { getTeamsByUserId, getUserById, leaveTeam as mockLeaveTeam } from '@/lib/data';
 import { Users, PlusCircle, Crown, User, LogOut, Settings, AlertCircle, Zap } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -33,26 +33,42 @@ export default function MyTeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
-  const fetchTeams = () => {
-    const userTeams = getTeamsByUserId(mockUser.id);
-    setTeams(userTeams);
-  };
-
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      fetchTeams();
-      setIsLoading(false);
-    }, 500);
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+        setCurrentUser(JSON.parse(activeUserStr));
+    } else {
+        setIsLoading(false); // No user, stop loading
+    }
   }, []);
 
+  const fetchTeams = useCallback(() => {
+    if (!currentUser) return;
+    const userTeams = getTeamsByUserId(currentUser.id);
+    setTeams(userTeams);
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser) {
+        setIsLoading(true);
+        fetchTeams();
+        setIsLoading(false);
+    }
+  }, [currentUser, fetchTeams]);
+
   const handleLeaveTeam = (teamId: string, teamName: string) => {
+    if (!currentUser) {
+        toast({ title: "Error", description: "You must be logged in to leave a team.", variant: "destructive" });
+        return;
+    }
+
     setIsActionLoading(true);
     setTimeout(() => {
         try {
-            const success = mockLeaveTeam(teamId, mockUser.id);
+            const success = mockLeaveTeam(teamId, currentUser.id);
             if (success) {
                 toast({
                     title: "You have left the team",
@@ -87,8 +103,10 @@ export default function MyTeamsPage() {
   );
 
   const TeamCard = ({ team }: { team: Team }) => {
+    if (!currentUser) return null;
+
     const members = team.memberIds.map(id => getUserById(id)).filter(Boolean) as UserProfile[];
-    const isCaptain = mockUser.id === team.captainId;
+    const isCaptain = currentUser.id === team.captainId;
     const SportIcon = getIconComponent(team.sport.iconName) || Zap;
 
     return (
@@ -153,7 +171,7 @@ export default function MyTeamsPage() {
     );
   };
 
-  if (isLoading) {
+  if (isLoading || !currentUser) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
   }
 
