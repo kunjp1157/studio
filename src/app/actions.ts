@@ -34,6 +34,7 @@ import {
     getBookingsForFacilityOnDate as dbGetBookingsForFacilityOnDate,
     addBooking as dbAddBooking,
     addReview as dbAddReview,
+    getBookingById as dbGetBookingById,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -51,6 +52,11 @@ export async function getFacilitiesAction(): Promise<Facility[]> {
 export async function getFacilityByIdAction(id: string): Promise<Facility | undefined> {
     const facility = await dbGetFacilityById(id);
     return facility;
+}
+
+export async function getBookingByIdAction(id: string): Promise<Booking | undefined> {
+    const booking = await dbGetBookingById(id);
+    return booking;
 }
 
 // Action to add a facility. It takes form data, processes it, and calls the DB function.
