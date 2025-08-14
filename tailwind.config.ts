@@ -66,6 +66,9 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        'brand-dark': '#1A1A2E',
+        'brand-pink': '#C72C7D',
+        'brand-blue': '#5B75E6',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -93,12 +96,27 @@ export default {
           '0%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(1.3)' },
           '100%': { transform: 'scale(1)' },
-        }
+        },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        zoomIn: {
+          '0%': { opacity: '0', transform: 'scale(0.9)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'pop': 'pop 0.3s ease-out',
+        'fade-in-up': 'fadeInUp 0.8s ease-out',
+        'zoom-in': 'zoomIn 0.3s ease-out',
+        'shimmer': 'shimmer 2s infinite linear',
       },
     },
   },

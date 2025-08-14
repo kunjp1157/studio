@@ -43,16 +43,23 @@ export default function HomePage() {
         setCurrentUser(JSON.parse(activeUser));
     }
     
-    // Correctly handle preloader hiding in a React environment
     const timer = setTimeout(() => {
         setIsPreloading(false);
     }, 500); 
 
     return () => clearTimeout(timer);
   }, []);
+  
+  const handleGetStartedClick = () => {
+      if(currentUser) {
+          router.push('/facilities');
+      } else {
+          router.push('/account/login');
+      }
+  }
 
   return (
-    <div className="bg-brand-dark text-white font-sans antialiased relative overflow-x-hidden min-h-screen">
+    <div className="text-white font-sans antialiased relative overflow-x-hidden min-h-screen">
       {isPreloading && (
         <div id="preloader" className="fixed inset-0 bg-brand-dark z-50 flex justify-center items-center transition-opacity duration-500">
           <div className="w-16 h-16 border-4 border-brand-pink border-t-transparent rounded-full animate-spin"></div>
@@ -85,7 +92,7 @@ export default function HomePage() {
                 id="get-started-btn"
                 className="mt-8 bg-white text-brand-dark font-bold py-4 px-10 rounded-full text-sm tracking-wider transition-all duration-300 shadow-lg shadow-brand-pink/20 animated animate-fade-in-up animation-delay-600 relative overflow-hidden group hover:scale-105"
                 size="lg"
-                onClick={() => currentUser ? router.push('/facilities') : setIsModalOpen(true)}
+                onClick={handleGetStartedClick}
               >
                   <span className="relative z-10">{currentUser ? 'BROWSE FACILITIES' : 'GET STARTED'}</span>
                   <span className="absolute inset-0 bg-gradient-to-r from-white to-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-shimmer" style={{ backgroundSize: '200% 100%' }}></span>

@@ -79,9 +79,6 @@ body {
 }
 
 @layer utilities {
-  .preserve-3d {
-    transform-style: preserve-3d;
-  }
   .text-gradient {
     background: linear-gradient(to right, #C72C7D, #5B75E6);
     -webkit-background-clip: text;
@@ -89,65 +86,13 @@ body {
     background-clip: text;
     text-fill-color: transparent;
   }
+  .animated {
+      opacity: 0;
+      animation-fill-mode: forwards;
+  }
   .animation-delay-200 { animation-delay: 200ms; }
   .animation-delay-400 { animation-delay: 400ms; }
   .animation-delay-600 { animation-delay: 600ms; }
-  .animated { opacity: 0; }
-}
-
-@keyframes fall {
-  0% { transform: translateY(-50px) rotateX(90deg); opacity: 0; }
-  100% { transform: translateY(0) rotateX(0deg); opacity: 1; }
-}
-.letter {
-  display: inline-block;
-  transform-origin: bottom;
-  opacity: 0;
-}
-.letter.fall {
-  animation: fall 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-}
-
-@keyframes float-3d {
-  0% { transform: translateY(0px) rotateX(0deg); }
-  50% { transform: translateY(-10px) rotateX(5deg); }
-  100% { transform: translateY(0px) rotateX(0deg); }
-}
-.animate-float-3d {
-  animation: float-3d 6s ease-in-out infinite;
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee 30s linear infinite;
-}
-
-@keyframes pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-.animate-pop {
-  animation: pop 0.3s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fadeInUp {
-  animation: fadeInUp 0.5s ease-out forwards;
 }
 
 .auth-page #background-section {
