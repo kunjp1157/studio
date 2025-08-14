@@ -212,11 +212,6 @@
   justify-content: center;
 }
 
-.auth-submit:hover {
-  filter: brightness(1.2);
-  box-shadow: 0 4px 15px rgba(199, 44, 125, 0.4);
-}
-
 .auth-submit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
