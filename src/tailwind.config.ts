@@ -99,7 +99,11 @@ export default {
           '0%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(1.3)' },
           '100%': { transform: 'scale(1)' },
-        }
+        },
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -108,6 +112,7 @@ export default {
         'zoom-in': 'zoomIn 0.3s ease-out',
         'shimmer': 'shimmer 2s infinite linear',
         'pop': 'pop 0.3s ease-out',
+        'marquee-slow': 'marquee 30s linear infinite',
       },
     },
   },

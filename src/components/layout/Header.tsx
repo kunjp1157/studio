@@ -163,7 +163,7 @@ export function Header() {
         
         {currentUser && (
           <div className="hidden md:flex flex-1 items-center overflow-hidden [perspective:500px]">
-            <div className="flex animate-marquee hover:[animation-play-state:paused] whitespace-nowrap">
+            <div className="flex animate-marquee motion-safe:animate-marquee-slow hover:[animation-play-state:paused] whitespace-nowrap">
               {navItems.map((item, index) => (
                 <Link 
                   href={item.href} 
