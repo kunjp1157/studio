@@ -89,6 +89,10 @@
   .animation-delay-600 { animation-delay: 600ms; }
 }
 
+.auth-page {
+  background-color: #1A1A2E; /* This sets the dark background for auth pages */
+}
+
 .auth-page #background-section {
   position: fixed;
   top: 0;
