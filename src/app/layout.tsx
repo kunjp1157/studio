@@ -37,7 +37,7 @@ export default function RootLayout({
       <body className={cn(
           "font-sans antialiased min-h-screen flex flex-col",
           inter.variable,
-          isHomePage && 'bg-brand-dark'
+          isHomePage ? 'bg-brand-dark' : 'bg-background'
       )}>
         {!isAdminOrOwnerPath && !isAuthPage && !isHomePage && <Header />}
         <main className={cn("flex-grow", isAuthPage && 'auth-page')}>
