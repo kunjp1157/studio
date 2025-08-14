@@ -43,10 +43,12 @@ export default function HomePage() {
         setCurrentUser(JSON.parse(activeUser));
     }
     
+    // Use a timer to hide the preloader
     const timer = setTimeout(() => {
         setIsPreloading(false);
-    }, 500); 
+    }, 500); // Adjust time as needed
 
+    // Clean up the timer
     return () => clearTimeout(timer);
   }, []);
   
@@ -87,7 +89,7 @@ export default function HomePage() {
         <main className="flex-grow flex items-center justify-center text-center px-4">
           <div className="max-w-2xl">
             <h1 className="text-5xl md:text-7xl font-black tracking-wider leading-tight animated animate-fade-in-up animation-delay-200 text-gradient">SPORTS ARENA</h1>
-            <p className="mt-4 max-w-lg mx-auto text-gray-300 leading-relaxed animated animate-fade-in-up animation-delay-400">Your ultimate destination for booking sports facilities, joining events, and connecting with players. Your next game is just a click away.</p>
+            <p className="mt-4 max-w-lg mx-auto text-gray-300 leading-relaxed animated animate-fade-in-up animation-delay-400" style={{textShadow: '1px 1px 3px rgba(0,0,0,0.5)'}}>Your ultimate destination for booking sports facilities, joining events, and connecting with players. Your next game is just a click away.</p>
             <Button
                 id="get-started-btn"
                 className="mt-8 bg-white text-brand-dark font-bold py-4 px-10 rounded-full text-sm tracking-wider transition-all duration-300 shadow-lg shadow-brand-pink/20 animated animate-fade-in-up animation-delay-600 relative overflow-hidden group hover:scale-105"
