@@ -104,6 +104,11 @@ export default {
           '0%': { transform: 'translateX(0%)' },
           '100%': { transform: 'translateX(-50%)' },
         },
+        'float-3d': {
+          '0%': { transform: 'translateZ(0px)' },
+          '50%': { transform: 'translateZ(20px)' },
+          '100%': { transform: 'translateZ(0px)' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -113,6 +118,7 @@ export default {
         'shimmer': 'shimmer 2s infinite linear',
         'pop': 'pop 0.3s ease-out',
         'marquee-slow': 'marquee 30s linear infinite',
+        'float-3d': 'float-3d 5s ease-in-out infinite',
       },
     },
   },
