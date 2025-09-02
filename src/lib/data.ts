@@ -1,4 +1,5 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { getStaticUsers, getStaticFacilities, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -276,7 +277,7 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
         
         const sportsPromise = query(`
             SELECT s.* FROM sports s
-            JOIN facility_sports fs ON s.id = fs.sport_id
+            JOIN facility_sports fs ON s.id = fs.sports_id
             WHERE fs.facility_id = $1
         `, [facilityId]);
 
@@ -351,7 +352,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
 
     const sportsPromise = query(`
         SELECT s.* FROM sports s
-        JOIN facility_sports fs ON s.id = fs.sport_id
+        JOIN facility_sports fs ON s.id = fs.sports_id
         WHERE fs.facility_id = $1
     `, [id]);
 
@@ -401,7 +402,7 @@ export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<F
     // Concurrently handle relations
     await Promise.all([
         // Sports
-        ...sports.map(sport => query('INSERT INTO facility_sports (facility_id, sport_id) VALUES ($1, $2)', [newFacilityId, sport.id])),
+        ...sports.map(sport => query('INSERT INTO facility_sports (facility_id, sports_id) VALUES ($1, $2)', [newFacilityId, sport.id])),
         // Amenities
         ...amenities.map(amenity => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [newFacilityId, amenity.id])),
         // Prices
@@ -431,7 +432,7 @@ export const updateFacility = async (facilityData: Facility): Promise<Facility> 
     ]);
 
     await Promise.all([
-        ...sports.map(sport => query('INSERT INTO facility_sports (facility_id, sport_id) VALUES ($1, $2)', [id, sport.id])),
+        ...sports.map(sport => query('INSERT INTO facility_sports (facility_id, sports_id) VALUES ($1, $2)', [id, sport.id])),
         ...amenities.map(amenity => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [id, amenity.id])),
         ...sportPrices.map(sp => query('INSERT INTO facility_sport_prices (facility_id, sport_id, price, pricing_model) VALUES ($1, $2, $3, $4)', [id, sp.sportId, sp.price, sp.pricingModel])),
         ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [id, oh.day, oh.open, oh.close])),
@@ -663,7 +664,7 @@ export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'u
 };
 
 export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds' | 'facilityName'>): LfgRequest[] => {
-    const facility = mockFacilities.find(f => f.id === requestData.facilityId);
+    const facility = getStaticFacilities().find(f => f.id === requestData.facilityId);
     if (!facility) {
         throw new Error("Facility not found");
     }
@@ -695,7 +696,7 @@ export const getOpenChallenges = (): Challenge[] => {
 export const createChallenge = (data: { challengerId: string; sportId: string; facilityId: string; proposedDate: string; notes: string }): Challenge[] => {
     const challenger = getUserById(data.challengerId);
     const sport = getSportById(data.sportId);
-    const facility = mockFacilities.find(f => f.id === data.facilityId);
+    const facility = getStaticFacilities().find(f => f.id === data.facilityId);
 
     if (!challenger || !sport || !facility) {
         throw new Error("Invalid challenger, sport, or facility ID");
@@ -799,7 +800,7 @@ export async function listenToOwnerBookings(ownerId: string, callback: (bookings
     return () => {};
 }
 export const blockTimeSlot = async (facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> => {
-   const facility = mockFacilities.find(f => f.id === facilityId && f.ownerId === ownerId);
+   const facility = getStaticFacilities().find(f => f.id === facilityId && f.ownerId === ownerId);
    if (facility) {
        if (!facility.blockedSlots) {
            facility.blockedSlots = [];
@@ -815,7 +816,7 @@ export const blockTimeSlot = async (facilityId: string, ownerId: string, newBloc
 };
 
 export const unblockTimeSlot = async (facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> => {
-    const facility = mockFacilities.find(f => f.id === facilityId && f.ownerId === ownerId);
+    const facility = getStaticFacilities().find(f => f.id === facilityId && f.ownerId === ownerId);
     if (facility && facility.blockedSlots) {
         const initialLength = facility.blockedSlots.length;
         facility.blockedSlots = facility.blockedSlots.filter(s => !(s.date === date && s.startTime === startTime));
@@ -958,6 +959,7 @@ export const toggleFavoriteFacility = async (userId: string, facilityId: string)
 };
 
 export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] => {
-    const facility = mockFacilities.find(f => f.id === facilityId);
+    const facility = getStaticFacilities().find(f => f.id === facilityId);
     return facility?.availableEquipment || [];
 };
+
