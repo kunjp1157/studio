@@ -12,8 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { getPromotionRuleByCode, getSiteSettings } from '@/lib/data';
-import { addBookingAction, addNotificationAction } from '@/app/actions';
+import { getSiteSettingsAction, addBookingAction, addNotificationAction, getPromotionRuleByCodeAction } from '@/app/actions';
 import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo, RentedItemInfo, UserProfile } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -67,8 +66,11 @@ function BookingConfirmationContent() {
         router.push('/facilities');
       }
     }
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
+    const fetchSettings = async () => {
+        const settings = await getSiteSettingsAction();
+        setCurrency(settings.defaultCurrency);
+    };
+    fetchSettings();
   }, [searchParams, router, toast]);
 
   const finalPrice = useMemo(() => {
@@ -91,7 +93,7 @@ function BookingConfirmationContent() {
     setIsApplyingPromo(true);
     setPromoError(null);
     try {
-        const promo = await getPromotionRuleByCode(promoCode);
+        const promo = await getPromotionRuleByCodeAction(promoCode);
         if (promo) {
             let initialPrice = bookingData.totalPrice; // Price before discount
             let discountAmount = 0;

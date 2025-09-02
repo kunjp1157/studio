@@ -36,6 +36,7 @@ import {
     addReview as dbAddReview,
     getBookingById as dbGetBookingById,
     addUser as dbAddUser,
+    getPromotionRuleByCode,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -145,6 +146,10 @@ export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
 
 export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
     return dbGetAllPromotionRules();
+}
+
+export async function getPromotionRuleByCodeAction(code: string): Promise<PromotionRule | undefined> {
+    return getPromotionRuleByCode(code);
 }
 
 export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
