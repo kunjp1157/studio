@@ -507,13 +507,52 @@ export const getBookingById = async (id: string): Promise<Booking | undefined> =
 };
 
 export const addBooking = async (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> => {
-    const newBooking: Booking = {
-        ...bookingData,
-        id: `booking-${Date.now()}`,
-        bookedAt: new Date().toISOString()
-    };
-    mockBookings.push(newBooking);
-    return Promise.resolve(newBooking);
+    const {
+        userId,
+        facilityId,
+        facilityName,
+        sportId,
+        sportName,
+        date,
+        startTime,
+        endTime,
+        durationHours,
+        totalPrice,
+        status,
+    } = bookingData;
+
+    try {
+        const res = await query(
+            `INSERT INTO bookings (user_id, facility_id, facility_name, sport_id, sport_name, date, start_time, end_time, duration_hours, total_price, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             RETURNING *, created_at AS "bookedAt"`,
+            [userId, facilityId, facilityName, sportId, sportName, date, startTime, endTime, durationHours, totalPrice, status]
+        );
+        const newBookingRow = res.rows[0];
+        
+        // Map the database row to the Booking type
+        const newBooking: Booking = {
+            id: newBookingRow.id,
+            userId: newBookingRow.user_id,
+            facilityId: newBookingRow.facility_id,
+            facilityName: newBookingRow.facility_name,
+            sportId: newBookingRow.sport_id,
+            sportName: newBookingRow.sport_name,
+            date: formatDateFns(new Date(newBookingRow.date), 'yyyy-MM-dd'),
+            startTime: newBookingRow.start_time,
+            endTime: newBookingRow.end_time,
+            durationHours: newBookingRow.duration_hours,
+            totalPrice: parseFloat(newBookingRow.total_price),
+            status: newBookingRow.status,
+            bookedAt: new Date(newBookingRow.bookedAt).toISOString(),
+            reviewed: newBookingRow.reviewed,
+        };
+
+        return newBooking;
+    } catch (error) {
+        console.error('Error adding booking to database:', error);
+        throw new Error('Failed to create booking.');
+    }
 };
 
 export const updateBooking = async (bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> => {
@@ -1018,3 +1057,4 @@ export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] =
     const facility = getStaticFacilities().find(f => f.id === facilityId);
     return facility?.availableEquipment || [];
 };
+
