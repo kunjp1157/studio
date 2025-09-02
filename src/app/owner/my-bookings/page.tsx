@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Ticket } from 'lucide-react';
@@ -41,7 +41,7 @@ export default function OwnerBookingsPage() {
     return () => window.removeEventListener('userChanged', handleUserChange);
   }, []);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
       if (!currentUser) return;
       setIsLoading(true);
       try {
@@ -64,13 +64,19 @@ export default function OwnerBookingsPage() {
       } finally {
           setIsLoading(false);
       }
-  };
+  }, [currentUser, toast]);
 
   useEffect(() => {
-    fetchBookings();
+    if (currentUser) {
+        fetchBookings();
+    }
+    
+    // Listen for the global dataChanged event to refetch data
     window.addEventListener('dataChanged', fetchBookings);
-    return () => window.removeEventListener('dataChanged', fetchBookings);
-  }, [currentUser, toast]);
+    return () => {
+        window.removeEventListener('dataChanged', fetchBookings);
+    };
+  }, [currentUser, fetchBookings]);
 
 
   return (
