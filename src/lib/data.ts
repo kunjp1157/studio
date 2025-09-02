@@ -252,7 +252,7 @@ export function listenToUserBookings(
 }
 
 
-const mapDbRowToFacility = (row: any): Omit<Facility, 'sports' | 'amenities' | 'sportPrices' | 'operatingHours' | 'blockedSlots' | 'availableEquipment' | 'reviews'> => ({
+const mapDbRowToFacility = (row: any): Omit<Facility, 'sports' | 'amenities' | 'sportPrices' | 'operatingHours' | 'blockedSlots' | 'availableEquipment' | 'reviews' | 'maintenanceSchedules'> => ({
     id: row.id,
     name: row.name,
     type: row.type,
@@ -270,42 +270,100 @@ const mapDbRowToFacility = (row: any): Omit<Facility, 'sports' | 'amenities' | '
 
 
 export const getAllFacilities = async (): Promise<Facility[]> => {
-    const facilityRows = (await query('SELECT * FROM facilities')).rows;
     const allSports = getMockSports();
     const allAmenities = mockAmenities;
 
-    const facilities: Facility[] = await Promise.all(facilityRows.map(async (row) => {
-        const facilityId = row.id;
-        
-        const sportIdsRes = await query('SELECT sports_id FROM facility_sports WHERE facility_id = $1', [facilityId]);
-        const amenityIdsRes = await query('SELECT amenity_id FROM facility_amenities WHERE facility_id = $1', [facilityId]);
-        
-        const sportPricesPromise = query('SELECT sport_id, price, pricing_model FROM facility_sport_prices WHERE facility_id = $1', [facilityId]);
-        const operatingHoursPromise = query('SELECT day, open_time, close_time FROM facility_operating_hours WHERE facility_id = $1', [facilityId]);
-        const reviewsPromise = query('SELECT * FROM reviews WHERE facility_id = $1', [facilityId]);
+    // Fetch all data in parallel
+    const [
+        facilitiesRes,
+        facilitySportsRes,
+        facilityAmenitiesRes,
+        sportPricesRes,
+        operatingHoursRes,
+        reviewsRes,
+    ] = await Promise.all([
+        query('SELECT * FROM facilities'),
+        query('SELECT facility_id, sports_id FROM facility_sports'),
+        query('SELECT facility_id, amenity_id FROM facility_amenities'),
+        query('SELECT facility_id, sport_id, price, pricing_model FROM facility_sport_prices'),
+        query('SELECT facility_id, day, open_time, close_time FROM facility_operating_hours'),
+        query('SELECT * FROM reviews'),
+    ]);
 
-        const [sportPricesRes, operatingHoursRes, reviewsRes] = await Promise.all([
-            sportPricesPromise, operatingHoursPromise, reviewsPromise
-        ]);
-        
-        const sportIds = sportIdsRes.rows.map(r => r.sports_id);
-        const amenityIds = amenityIdsRes.rows.map(r => r.amenity_id);
+    // Create maps for efficient lookups
+    const facilitySportsMap = new Map<string, string[]>();
+    for (const row of facilitySportsRes.rows) {
+        if (!facilitySportsMap.has(row.facility_id)) {
+            facilitySportsMap.set(row.facility_id, []);
+        }
+        facilitySportsMap.get(row.facility_id)!.push(row.sports_id);
+    }
+
+    const facilityAmenitiesMap = new Map<string, string[]>();
+    for (const row of facilityAmenitiesRes.rows) {
+        if (!facilityAmenitiesMap.has(row.facility_id)) {
+            facilityAmenitiesMap.set(row.facility_id, []);
+        }
+        facilityAmenitiesMap.get(row.facility_id)!.push(row.amenity_id);
+    }
+    
+    const sportPricesMap = new Map<string, SportPrice[]>();
+    for (const row of sportPricesRes.rows) {
+        if (!sportPricesMap.has(row.facility_id)) {
+            sportPricesMap.set(row.facility_id, []);
+        }
+        sportPricesMap.get(row.facility_id)!.push({ sportId: row.sport_id, price: parseFloat(row.price), pricingModel: row.pricing_model });
+    }
+    
+    const operatingHoursMap = new Map<string, FacilityOperatingHours[]>();
+    for (const row of operatingHoursRes.rows) {
+        if (!operatingHoursMap.has(row.facility_id)) {
+            operatingHoursMap.set(row.facility_id, []);
+        }
+        operatingHoursMap.get(row.facility_id)!.push({ day: row.day, open: row.open_time, close: row.close_time });
+    }
+
+    const reviewsMap = new Map<string, Review[]>();
+    for (const row of reviewsRes.rows) {
+        if (!reviewsMap.has(row.facility_id)) {
+            reviewsMap.set(row.facility_id, []);
+        }
+        reviewsMap.get(row.facility_id)!.push({
+            id: row.id,
+            facilityId: row.facility_id,
+            userId: row.user_id,
+            userName: row.user_name,
+            userAvatar: row.user_avatar,
+            isPublicProfile: row.is_public_profile,
+            rating: row.rating,
+            comment: row.comment,
+            createdAt: new Date(row.created_at).toISOString(),
+            bookingId: row.booking_id,
+        });
+    }
+
+    // Assemble the final facility objects
+    const facilities: Facility[] = facilitiesRes.rows.map(row => {
+        const facilityId = row.id;
+        const sportIds = facilitySportsMap.get(facilityId) || [];
+        const amenityIds = facilityAmenitiesMap.get(facilityId) || [];
 
         return {
             ...mapDbRowToFacility(row),
             sports: allSports.filter(s => sportIds.includes(s.id)),
             amenities: allAmenities.filter(a => amenityIds.includes(a.id)),
-            sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
-            operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
-            reviews: reviewsRes.rows.map(r => ({...r, createdAt: new Date(r.created_at).toISOString(), userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile})),
-            // The following are not yet in the DB, so we provide defaults
+            sportPrices: sportPricesMap.get(facilityId) || [],
+            operatingHours: operatingHoursMap.get(facilityId) || [],
+            reviews: reviewsMap.get(facilityId) || [],
             blockedSlots: [],
             availableEquipment: [],
+            maintenanceSchedules: [],
         };
-    }));
+    });
 
     return facilities;
 };
+
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
     const { rows } = await query('SELECT * FROM users');
@@ -363,7 +421,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
     const reviewsPromise = query('SELECT * FROM reviews WHERE facility_id = $1', [id]);
     
     const [sportsRes, amenitiesRes, sportPricesRes, operatingHoursRes, reviewsRes] = await Promise.all([
-        sportsPromise, amenitiesPromise, sportPricesPromise, operatingHoursPromise, reviewsRes
+        sportsPromise, amenitiesPromise, sportPricesPromise, operatingHoursPromise, reviewsPromise
     ]);
 
     return {
@@ -372,9 +430,10 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
         amenities: amenitiesRes.rows.map(a => ({ ...a, iconName: a.icon_name })),
         sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
         operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
-        reviews: reviewsRes.rows.map(r => ({ ...r, createdAt: new Date(r.created_at).toISOString(), userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile })),
+        reviews: reviewsRes.rows.map(r => ({ ...r, id: r.id, facilityId: r.facility_id, userId: r.user_id, userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile, rating: r.rating, comment: r.comment, createdAt: new Date(r.created_at).toISOString(), bookingId: r.booking_id })),
         blockedSlots: [],
         availableEquipment: [],
+        maintenanceSchedules: [],
     };
 };
 
