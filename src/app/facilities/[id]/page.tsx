@@ -14,7 +14,7 @@ import { StarDisplay } from '@/components/shared/StarDisplay';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ReviewItem } from '@/components/reviews/ReviewItem';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, calculateDynamicPrice } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO, startOfDay, differenceInHours, parse } from 'date-fns';
 import {
@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import type { Facility, Review, Sport, TimeSlot, SiteSettings, UserProfile, Booking, RentedItemInfo, RentalEquipment } from '@/lib/types';
 import { getSiteSettingsAction, getFacilityByIdAction, toggleFavoriteFacilityAction, getBookingsForFacilityOnDateAction } from '@/app/actions';
-import { calculateDynamicPrice } from '@/lib/data';
 import { getIconComponent } from '@/components/shared/Icon';
 import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summarize-reviews';
 import { Skeleton } from '@/components/ui/skeleton';
