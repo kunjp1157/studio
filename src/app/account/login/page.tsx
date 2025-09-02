@@ -25,6 +25,8 @@ export default function LoginPage() {
       const allUsers = await getUsersAction();
       const foundUser = allUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
 
+      // In a real app, you would use a secure password hashing and comparison library (e.g., bcrypt)
+      // For this project, we are doing a plain text comparison which is NOT secure.
       if (foundUser && (!foundUser.password || foundUser.password === password)) {
         sessionStorage.setItem('activeUser', JSON.stringify(foundUser));
         window.dispatchEvent(new Event('userChanged'));
@@ -33,7 +35,15 @@ export default function LoginPage() {
           title: 'Logged In Successfully!',
           description: `Welcome back, ${foundUser.name}!`,
         });
-        router.push('/dashboard');
+        
+        // Redirect based on role
+        if (foundUser.role === 'Admin') {
+          router.push('/admin/dashboard');
+        } else if (foundUser.role === 'FacilityOwner') {
+            router.push('/owner/dashboard');
+        } else {
+            router.push('/dashboard');
+        }
       } else {
          toast({
           title: 'Login Failed',

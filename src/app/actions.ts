@@ -35,6 +35,7 @@ import {
     addBooking as dbAddBooking,
     addReview as dbAddReview,
     getBookingById as dbGetBookingById,
+    addUser as dbAddUser,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -106,6 +107,12 @@ export async function deleteFacilityAction(facilityId: string): Promise<void> {
 
 export async function getUsersAction(): Promise<UserProfile[]> {
   return dbGetAllUsers();
+}
+
+export async function addUserAction(userData: { name: string; email: string; password?: string }): Promise<UserProfile> {
+    const newUser = await dbAddUser(userData);
+    revalidatePath('/admin/users');
+    return newUser;
 }
 
 export async function getAllBookingsAction(): Promise<Booking[]> {

@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
 import { Heart, UserPlus } from 'lucide-react';
-import { addUser } from '@/lib/data';
+import { addUserAction } from '@/app/actions';
 
 export default function SignupPage() {
   const [username, setUsername] = useState('');
@@ -31,7 +31,7 @@ export default function SignupPage() {
     setIsLoading(true);
     
     try {
-      await addUser({ name: username, email });
+      await addUserAction({ name: username, email, password });
       
       toast({
         title: 'Account Created!',

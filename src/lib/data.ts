@@ -525,7 +525,7 @@ export const updateBooking = async (bookingId: string, updates: Partial<Booking>
     return Promise.resolve(undefined);
 };
 
-export const updateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
+export const updateUser = async (userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> => {
     const userIndex = mockUsers.findIndex(u => u.id === userId);
     
     if (userIndex !== -1) {
@@ -539,34 +539,35 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
     return undefined;
 };
 
-export const addUser = async (userData: { name: string, email: string }): Promise<UserProfile> => {
-  return new Promise((resolve, reject) => {
-    if (mockUsers.some(u => u.email.toLowerCase() === userData.email.toLowerCase())) {
-      reject(new Error("A user with this email already exists."));
-      return;
-    }
+export async function addUser(userData: { name: string; email: string, password?: string }): Promise<UserProfile> {
+  const { name, email, password } = userData;
 
-    const newUser: UserProfile = {
-      id: `user-${Date.now()}`,
-      name: userData.name,
-      email: userData.email,
-      role: 'User',
-      status: 'Active',
-      joinedAt: new Date().toISOString(),
-      membershipLevel: 'Basic',
-      isProfilePublic: true,
-      loyaltyPoints: 0,
-      achievements: [],
-      skillLevels: [],
-      preferredSports: [],
-      favoriteFacilities: [],
-      teamIds: [],
-    };
+  const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
+  if (existingUser.rows.length > 0) {
+    throw new Error('A user with this email already exists.');
+  }
 
-    mockUsers.push(newUser);
-    resolve(newUser);
-  });
-};
+  // In a real app, you would hash the password here before storing.
+  // For this project, we'll store it as is (which is NOT secure for production).
+  const res = await query(
+    `INSERT INTO users (name, email, password, role, status, is_profile_public)
+     VALUES ($1, $2, $3, 'User', 'Active', true) RETURNING *`,
+    [name, email, password]
+  );
+  
+  const newUserRow = res.rows[0];
+  
+  const newUser: UserProfile = {
+    id: newUserRow.id,
+    name: newUserRow.name,
+    email: newUserRow.email,
+    role: newUserRow.role,
+    status: newUserRow.status,
+    joinedAt: new Date(newUserRow.joined_at).toISOString(),
+    isProfilePublic: newUserRow.is_profile_public,
+  };
+  return newUser;
+}
 
 
 export const getBookingsForFacilityOnDate = async (facilityId: string, date: string): Promise<Booking[]> => {
@@ -1010,7 +1011,7 @@ export const toggleFavoriteFacility = async (userId: string, facilityId: string)
         ? currentFavorites.filter(id => id !== facilityId)
         : [...currentFavorites, facilityId];
     
-    return updateUser(userId, { favoriteFacilities: newFavorites });
+    return updateUser(userId, { favoriteFavorites: newFavorites });
 };
 
 export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] => {
