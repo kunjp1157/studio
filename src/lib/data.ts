@@ -3,6 +3,7 @@
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { getStaticUsers, getStaticFacilities, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
+import { query } from './db';
 
 // --- IN-MEMORY MOCK DATABASE ---
 let mockUsers: UserProfile[] = getStaticUsers();
@@ -257,7 +258,31 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
 };
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
-    return Promise.resolve(mockUsers);
+    const { rows } = await query('SELECT * FROM users');
+    // A simple conversion from snake_case (in DB) to camelCase (in JS/TS)
+    return rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        password: row.password,
+        phone: row.phone,
+        profilePictureUrl: row.profile_picture_url,
+        dataAiHint: row.data_ai_hint,
+        membershipLevel: row.membership_level,
+        loyaltyPoints: row.loyalty_points,
+        role: row.role,
+        status: row.status,
+        joinedAt: new Date(row.joined_at).toISOString(),
+        isProfilePublic: row.is_profile_public,
+        // The following properties are not yet in the DB schema, so we provide defaults
+        achievements: [],
+        skillLevels: [],
+        preferredSports: [],
+        favoriteFacilities: [],
+        teamIds: [],
+        bio: row.bio,
+        preferredPlayingTimes: row.preferred_playing_times,
+    }));
 };
 
 export const getUserById = (userId: string): UserProfile | undefined => {
