@@ -19,7 +19,7 @@ import {
     getNotificationsForUser as dbGetNotificationsForUser,
     markNotificationAsRead,
     markAllNotificationsAsRead,
-    getBookingsByUserId,
+    getBookingsByUserId as dbGetBookingsByUserId,
     blockTimeSlot as dbBlockTimeSlot,
     unblockTimeSlot as dbUnblockTimeSlot,
     updateUser as dbUpdateUser,
@@ -36,11 +36,11 @@ import {
     addReview as dbAddReview,
     getBookingById as dbGetBookingById,
     addUser as dbAddUser,
-    getPromotionRuleByCode,
+    getPromotionRuleByCode as dbGetPromotionRuleByCode,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
-import { mockAmenities } from '@/lib/mock-data';
+import { mockAmenities, getMockSports } from '@/lib/mock-data';
 
 export async function getSports() {
     return dbGetAllSports();
@@ -63,8 +63,8 @@ export async function getBookingByIdAction(id: string): Promise<Booking | undefi
 
 // Action to add a facility. It takes form data, processes it, and calls the DB function.
 export async function addFacilityAction(facilityData: any): Promise<Facility> {
-    const mockSports = await getSports();
-    const sportData = (facilityData.sports || []).map((sportId: string) => mockSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
+    const allSports = await getSports();
+    const sportData = (facilityData.sports || []).map((sportId: string) => allSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
     const payload = {
       ...facilityData,
       sports: sportData,
@@ -81,9 +81,9 @@ export async function addFacilityAction(facilityData: any): Promise<Facility> {
 
 // Action to update a facility. It takes form data, processes it, and calls the DB function.
 export async function updateFacilityAction(facilityData: any): Promise<Facility> {
-    const mockSports = await getSports();
+    const allSports = await getSports();
     const existingFacility = await dbGetFacilityById(facilityData.id);
-    const sportData = (facilityData.sports || []).map((sportId: string) => mockSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
+    const sportData = (facilityData.sports || []).map((sportId: string) => allSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
     const payload = {
       ...existingFacility, // Start with existing data to preserve reviews, etc.
       ...facilityData,
@@ -149,7 +149,7 @@ export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
 }
 
 export async function getPromotionRuleByCodeAction(code: string): Promise<PromotionRule | undefined> {
-    return getPromotionRuleByCode(code);
+    return dbGetPromotionRuleByCode(code);
 }
 
 export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
@@ -165,7 +165,7 @@ export async function markAllNotificationsAsReadAction(userId: string): Promise<
 }
 
 export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
-    return getBookingsByUserId(userId);
+    return dbGetBookingsByUserId(userId);
 }
 
 export async function getBookingsForFacilityOnDateAction(facilityId: string, date: string): Promise<Booking[]> {

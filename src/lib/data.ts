@@ -7,76 +7,7 @@ import { query } from './db';
 
 // --- IN-MEMORY MOCK DATABASE ---
 let mockUsers: UserProfile[] = getStaticUsers();
-let mockBookings: Booking[] = [
-  {
-    id: 'booking-1',
-    userId: 'user-admin-kunj',
-    facilityId: 'facility-1',
-    facilityName: 'Pune Sports Complex',
-    dataAiHint: 'soccer stadium',
-    sportId: 'sport-1',
-    sportName: 'Soccer',
-    date: '2024-08-10',
-    startTime: '18:00',
-    endTime: '19:00',
-    durationHours: 1,
-    totalPrice: 2500,
-    status: 'Confirmed',
-    bookedAt: '2024-07-20T10:00:00Z',
-    reviewed: false,
-  },
-  {
-    id: 'booking-2',
-    userId: 'user-regular-charlie',
-    facilityId: 'facility-2',
-    facilityName: 'Deccan Gymkhana Tennis Club',
-    dataAiHint: 'tennis court',
-    sportId: 'sport-3',
-    sportName: 'Tennis',
-    date: '2024-08-12',
-    startTime: '09:00',
-    endTime: '11:00',
-    durationHours: 2,
-    totalPrice: 3600,
-    status: 'Confirmed',
-    bookedAt: '2024-07-18T14:30:00Z',
-    reviewed: false,
-  },
-  {
-    id: 'booking-3',
-    userId: 'user-admin-kunj',
-    facilityId: 'facility-4',
-    facilityName: 'The Aundh Swim & Gym Hub',
-    dataAiHint: 'swimming pool gym',
-    sportId: 'sport-5',
-    sportName: 'Swimming',
-    date: '2024-06-15',
-    startTime: '07:00',
-    endTime: '08:00',
-    durationHours: 1,
-    totalPrice: 400,
-    status: 'Confirmed',
-    bookedAt: '2024-06-10T11:00:00Z',
-    reviewed: true,
-  },
-  {
-    id: 'booking-4',
-    userId: 'user-regular-charlie',
-    facilityId: 'facility-3',
-    facilityName: 'Kothrud Cricket Ground',
-    dataAiHint: 'cricket stadium',
-    sportId: 'sport-13',
-    sportName: 'Cricket',
-    date: '2024-07-28',
-    startTime: '14:00',
-    endTime: '17:00',
-    durationHours: 3,
-    totalPrice: 9000,
-    status: 'Cancelled',
-    bookedAt: '2024-07-15T16:00:00Z',
-    reviewed: false,
-  },
-];
+let mockBookings: Booking[] = [];
 let mockReviews: Review[] = [];
 let mockTeams: Team[] = [];
 let mockAppNotifications: AppNotification[] = [];
@@ -229,7 +160,7 @@ export function listenToUserBookings(
     const fetchAndPoll = async () => {
         if (isCancelled) return;
         try {
-            const bookings = await getBookingsByUserId(userId);
+            const bookings = await dbGetBookingsByUserId(userId);
             if (!isCancelled) {
                 callback(bookings);
             }
@@ -270,7 +201,7 @@ const mapDbRowToFacility = (row: any): Omit<Facility, 'sports' | 'amenities' | '
 
 
 export const getAllFacilities = async (): Promise<Facility[]> => {
-    const allSports = getMockSports();
+    const allSports = await getAllSports();
     const allAmenities = mockAmenities;
 
     // Fetch all data in parallel
@@ -403,6 +334,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
         return undefined;
     }
     const facilityRow = facilityRes.rows[0];
+    const allSports = await getAllSports();
 
     const sportsPromise = query(`
         SELECT s.* FROM sports s
@@ -427,7 +359,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
     return {
         ...mapDbRowToFacility(facilityRow),
         sports: sportsRes.rows.map(s => ({ ...s, iconName: s.icon_name })),
-        amenities: amenitiesRes.rows.map(a => ({ ...a, iconName: a.icon_name })),
+        amenities: mockAmenities.filter(amenity => amenitiesRes.rows.some(a => a.id === amenity.id)),
         sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
         operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
         reviews: reviewsRes.rows.map(r => ({ ...r, id: r.id, facilityId: r.facility_id, userId: r.user_id, userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile, rating: r.rating, comment: r.comment, createdAt: new Date(r.created_at).toISOString(), bookingId: r.booking_id })),
@@ -466,7 +398,9 @@ export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<F
         ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [newFacilityId, oh.day, oh.open, oh.close])),
     ]);
 
-    return (await getFacilityById(newFacilityId))!;
+    const newFacility = await getFacilityById(newFacilityId);
+    if (!newFacility) throw new Error("Failed to retrieve newly created facility");
+    return newFacility;
 };
 
 export const updateFacility = async (facilityData: Facility): Promise<Facility> => {
@@ -493,7 +427,9 @@ export const updateFacility = async (facilityData: Facility): Promise<Facility> 
         ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [id, oh.day, oh.open, oh.close])),
     ]);
 
-    return (await getFacilityById(id))!;
+    const updatedFacility = await getFacilityById(id);
+    if (!updatedFacility) throw new Error("Failed to retrieve updated facility");
+    return updatedFacility;
 };
 
 export const deleteFacility = async (facilityId: string): Promise<void> => {
@@ -503,7 +439,25 @@ export const deleteFacility = async (facilityId: string): Promise<void> => {
 };
 
 export const getBookingById = async (id: string): Promise<Booking | undefined> => {
-    return Promise.resolve(mockBookings.find(b => b.id === id));
+    const { rows } = await query('SELECT *, created_at AS "bookedAt" FROM bookings WHERE id = $1', [id]);
+    if (rows.length === 0) return undefined;
+    const row = rows[0];
+    return {
+        id: row.id,
+        userId: row.user_id,
+        facilityId: row.facility_id,
+        facilityName: row.facility_name,
+        sportId: row.sport_id,
+        sportName: row.sport_name,
+        date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
+        startTime: row.start_time,
+        endTime: row.end_time,
+        durationHours: row.duration_hours,
+        totalPrice: parseFloat(row.total_price),
+        status: row.status,
+        bookedAt: new Date(row.bookedAt).toISOString(),
+        reviewed: row.reviewed,
+    };
 };
 
 export const addBooking = async (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> => {
@@ -556,12 +510,19 @@ export const addBooking = async (bookingData: Omit<Booking, 'id' | 'bookedAt'>):
 };
 
 export const updateBooking = async (bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> => {
-    const bookingIndex = mockBookings.findIndex(b => b.id === bookingId);
-    if (bookingIndex > -1) {
-        mockBookings[bookingIndex] = { ...mockBookings[bookingIndex], ...updates };
-        return Promise.resolve(mockBookings[bookingIndex]);
+    const booking = await getBookingById(bookingId);
+    if (!booking) {
+        return undefined;
     }
-    return Promise.resolve(undefined);
+    const updatedBooking = { ...booking, ...updates };
+    const { date, startTime, endTime, totalPrice, status } = updatedBooking;
+
+    const res = await query(
+        `UPDATE bookings SET date = $1, start_time = $2, end_time = $3, total_price = $4, status = $5
+         WHERE id = $6 RETURNING *`,
+        [date, startTime, endTime, totalPrice, status, bookingId]
+    );
+    return getBookingById(res.rows[0].id);
 };
 
 export const updateUser = async (userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> => {
@@ -610,13 +571,46 @@ export async function addUser(userData: { name: string; email: string, password?
 
 
 export const getBookingsForFacilityOnDate = async (facilityId: string, date: string): Promise<Booking[]> => {
-    const bookings = mockBookings.filter(b => b.facilityId === facilityId && b.date === date && (b.status === 'Confirmed' || b.status === 'Pending'));
-    return Promise.resolve(bookings);
+    const { rows } = await query(
+        `SELECT * FROM bookings WHERE facility_id = $1 AND date = $2 AND status IN ('Confirmed', 'Pending')`,
+        [facilityId, date]
+    );
+    return rows.map(row => ({
+        id: row.id,
+        userId: row.user_id,
+        facilityId: row.facility_id,
+        facilityName: row.facility_name,
+        sportId: row.sport_id,
+        sportName: row.sport_name,
+        date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
+        startTime: row.start_time,
+        endTime: row.end_time,
+        durationHours: row.duration_hours,
+        totalPrice: parseFloat(row.total_price),
+        status: row.status,
+        bookedAt: new Date(row.created_at).toISOString(),
+        reviewed: row.reviewed,
+    }));
 };
 
-export const getBookingsByUserId = async (userId: string): Promise<Booking[]> => {
-    const bookings = mockBookings.filter(b => b.userId === userId);
-    return Promise.resolve(bookings);
+export const dbGetBookingsByUserId = async (userId: string): Promise<Booking[]> => {
+    const { rows } = await query('SELECT * FROM bookings WHERE user_id = $1 ORDER BY date DESC, start_time DESC', [userId]);
+    return rows.map(row => ({
+        id: row.id,
+        userId: row.user_id,
+        facilityId: row.facility_id,
+        facilityName: row.facility_name,
+        sportId: row.sport_id,
+        sportName: row.sport_name,
+        date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
+        startTime: row.start_time,
+        endTime: row.end_time,
+        durationHours: row.duration_hours,
+        totalPrice: parseFloat(row.total_price),
+        status: row.status,
+        bookedAt: new Date(row.created_at).toISOString(),
+        reviewed: row.reviewed,
+    }));
 };
 
 // --- STATIC/MOCK GETTERS ---
@@ -642,8 +636,37 @@ export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(tea
 export const getNotificationsForUser = async (userId: string): Promise<AppNotification[]> => Promise.resolve(mockAppNotifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
 export const getAllBlogPosts = (): BlogPost[] => mockBlogPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 export const getBlogPostBySlug = (slug: string): BlogPost | undefined => mockBlogPosts.find(post => post.slug === slug);
-export const getAllEvents = async (): Promise<SportEvent[]> => Promise.resolve(mockEvents);
-export const getEventById = async (id: string): Promise<SportEvent | undefined> => Promise.resolve(mockEvents.find(e => e.id === id));
+
+export const getAllEvents = async (): Promise<SportEvent[]> => {
+    const { rows } = await query('SELECT * FROM events');
+    const allSports = await getAllSports();
+    return rows.map(row => ({
+        ...row,
+        startDate: new Date(row.start_date).toISOString(),
+        endDate: new Date(row.end_date).toISOString(),
+        sport: allSports.find(s => s.id === row.sport_id)!,
+        facilityName: row.facility_name,
+        entryFee: parseFloat(row.entry_fee),
+        maxParticipants: row.max_participants,
+        registeredParticipants: row.registered_participants
+    }));
+};
+export const getEventById = async (id: string): Promise<SportEvent | undefined> => {
+    const { rows } = await query('SELECT * FROM events WHERE id = $1', [id]);
+    if (rows.length === 0) return undefined;
+    const row = rows[0];
+    const allSports = await getAllSports();
+    return {
+        ...row,
+        startDate: new Date(row.start_date).toISOString(),
+        endDate: new Date(row.end_date).toISOString(),
+        sport: allSports.find(s => s.id === row.sport_id)!,
+        facilityName: row.facility_name,
+        entryFee: parseFloat(row.entry_fee),
+        maxParticipants: row.max_participants,
+        registeredParticipants: row.registered_participants
+    };
+};
 export const getAllPricingRules = (): PricingRule[] => [...mockPricingRules];
 export const getPricingRuleById = (id: string): PricingRule | undefined => mockPricingRules.find(rule => rule.id === rule.id);
 export const getAllPromotionRules = (): PromotionRule[] => [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
@@ -653,7 +676,26 @@ export const isUserOnWaitlist = (userId: string, facilityId: string, date: strin
     return mockWaitlist.some(entry => entry.userId === userId && entry.facilityId === facilityId && entry.date === date && entry.startTime === startTime);
 }
 export const getOpenLfgRequests = (): LfgRequest[] => mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-export const getAllBookings = async (): Promise<Booking[]> => Promise.resolve(mockBookings);
+
+export const getAllBookings = async (): Promise<Booking[]> => {
+    const { rows } = await query('SELECT *, created_at AS "bookedAt" FROM bookings');
+    return rows.map(row => ({
+        id: row.id,
+        userId: row.user_id,
+        facilityId: row.facility_id,
+        facilityName: row.facility_name,
+        sportId: row.sport_id,
+        sportName: row.sport_name,
+        date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
+        startTime: row.start_time,
+        endTime: row.end_time,
+        durationHours: row.duration_hours,
+        totalPrice: parseFloat(row.total_price),
+        status: row.status,
+        bookedAt: new Date(row.bookedAt).toISOString(),
+        reviewed: row.reviewed,
+    }));
+};
 export const getEventsByFacilityIds = async (facilityIds: string[]): Promise<SportEvent[]> => Promise.resolve(mockEvents.filter(e => facilityIds.includes(e.facilityId)));
 export const getLfgRequestsByFacilityIds = async (facilityIds: string[]): Promise<LfgRequest[]> => Promise.resolve(mockLfgRequests.filter(lfg => facilityIds.includes(lfg.facilityId)));
 export const getChallengesByFacilityIds = async (facilityIds: string[]): Promise<Challenge[]> => Promise.resolve(mockChallenges.filter(c => facilityIds.includes(c.facilityId)));
@@ -846,7 +888,7 @@ export const deleteMembershipPlan = (id: string): void => {
     console.log("Deleting mock membership plan. This is not persisted.", id);
 };
 export const addEvent = async (event: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): Promise<void> => { 
-    const sport = getSportById(event.sportId); 
+    const sport = await getSportById(event.sportId); 
     const facility = await getFacilityById(event.facilityId);
     if(sport && facility) {
         const newEvent: SportEvent = { 
@@ -864,7 +906,7 @@ export const addEvent = async (event: Omit<SportEvent, 'id' | 'sport' | 'registe
 export const updateEvent = async (eventData: Omit<SportEvent, 'sport'> & { sportId: string }): Promise<void> => {
     const index = mockEvents.findIndex(e => e.id === eventData.id);
     if (index !== -1) {
-        const sport = getSportById(eventData.sportId);
+        const sport = await getSportById(eventData.sportId);
         if (!sport) {
             console.error(`Could not update event: Sport with id ${eventData.sportId} not found.`);
             return;
@@ -879,7 +921,7 @@ export const updatePricingRule = (rule: PricingRule): void => { const index = mo
 export const deletePricingRule = (id: string): void => { mockPricingRules = mockPricingRules.filter(r => r.id !== id); };
 export const addPromotionRule = (rule: Omit<PromotionRule, 'id'>): void => { mockPromotionRules.push({ ...rule, id: `promo-${Date.now()}` }); };
 export const updatePromotionRule = (rule: PromotionRule): void => { const index = mockPromotionRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPromotionRules[index] = rule; };
-export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => Promise.resolve(mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive));
+export const dbGetPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => Promise.resolve(mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive));
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
 export async function listenToOwnerBookings(ownerId: string, callback: (bookings: Booking[]) => void, onError: (error: Error) => void): Promise<() => void> {
     const facilities = await getFacilitiesByOwnerId(ownerId);
@@ -932,16 +974,17 @@ export const listenToAllEvents = (
   callback: (events: SportEvent[]) => void,
   onError: (error: Error) => void
 ): (() => void) => {
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
         try {
-            callback(mockEvents);
+            const events = await getAllEvents();
+            callback(events);
         } catch(e) {
             onError(e as Error);
         }
     }, 5000); // Poll every 5 seconds
     
     // initial call
-    callback(mockEvents);
+    getAllEvents().then(callback).catch(onError);
 
     return () => clearInterval(interval);
 };
@@ -1007,34 +1050,24 @@ export const listenToAllPromotionRules = (
 };
 
 export const getAllSports = async (): Promise<Sport[]> => {
-    return Promise.resolve(getMockSports());
+    const { rows } = await query('SELECT * from sports');
+    return rows.map(r => ({...r, iconName: r.icon_name}));
 };
 
 export const addSport = async (sportData: Omit<Sport, 'id'>): Promise<Sport> => {
-    const newSport: Sport = {
-        ...sportData,
-        id: `sport-${Date.now()}`
-    };
-    getMockSports().push(newSport);
-    return Promise.resolve(newSport);
+    const { rows } = await query('INSERT INTO sports (name, icon_name, image_url, image_data_ai_hint) VALUES ($1, $2, $3, $4) RETURNING *', [sportData.name, sportData.iconName, sportData.imageUrl, sportData.imageDataAiHint]);
+    const newSport = rows[0];
+    return { ...newSport, iconName: newSport.icon_name };
 };
 
 export const updateSport = async (sportId: string, sportData: Partial<Sport>): Promise<Sport> => {
-    const sports = getMockSports();
-    const index = sports.findIndex(s => s.id === sportId);
-    if (index !== -1) {
-        sports[index] = { ...sports[index], ...sportData };
-        return Promise.resolve(sports[index]);
-    }
-    throw new Error("Sport not found for update.");
+    const { rows } = await query('UPDATE sports SET name = $1, icon_name = $2, image_url = $3, image_data_ai_hint = $4 WHERE id = $5 RETURNING *', [sportData.name, sportData.iconName, sportData.imageUrl, sportData.imageDataAiHint, sportId]);
+    const updatedSport = rows[0];
+    return { ...updatedSport, iconName: updatedSport.icon_name };
 };
 
 export const deleteSport = async (sportId: string): Promise<void> => {
-    const sports = getMockSports();
-    const index = sports.findIndex(s => s.id === sportId);
-    if (index > -1) {
-        sports.splice(index, 1);
-    }
+    await query('DELETE FROM sports WHERE id = $1', [sportId]);
     return Promise.resolve();
 };
 
@@ -1050,7 +1083,7 @@ export const toggleFavoriteFacility = async (userId: string, facilityId: string)
         ? currentFavorites.filter(id => id !== facilityId)
         : [...currentFavorites, facilityId];
     
-    return updateUser(userId, { favoriteFavorites: newFavorites });
+    return updateUser(userId, { favoriteFacilities: newFavorites });
 };
 
 export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] => {
@@ -1058,3 +1091,6 @@ export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] =
     return facility?.availableEquipment || [];
 };
 
+export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => {
+    return dbGetPromotionRuleByCode(code);
+}
