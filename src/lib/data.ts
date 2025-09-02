@@ -1,5 +1,4 @@
 
-
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { getStaticUsers, getStaticFacilities, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -7,7 +6,6 @@ import { query } from './db';
 
 // --- IN-MEMORY MOCK DATABASE ---
 let mockUsers: UserProfile[] = getStaticUsers();
-let mockFacilities: Facility[] = getStaticFacilities();
 let mockBookings: Booking[] = [
   {
     id: 'booking-1',
@@ -253,13 +251,67 @@ export function listenToUserBookings(
 }
 
 
+const mapDbRowToFacility = (row: any): Omit<Facility, 'sports' | 'amenities' | 'sportPrices' | 'operatingHours' | 'blockedSlots' | 'availableEquipment' | 'reviews'> => ({
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    address: row.address,
+    city: row.city,
+    location: row.location,
+    description: row.description,
+    rating: parseFloat(row.rating) || 0,
+    capacity: row.capacity,
+    isPopular: row.is_popular,
+    isIndoor: row.is_indoor,
+    dataAiHint: row.data_ai_hint,
+    ownerId: row.owner_id,
+});
+
+
 export const getAllFacilities = async (): Promise<Facility[]> => {
-    return Promise.resolve(mockFacilities);
+    const facilityRows = (await query('SELECT * FROM facilities')).rows;
+
+    const facilities: Facility[] = await Promise.all(facilityRows.map(async (row) => {
+        const facilityId = row.id;
+        
+        const sportsPromise = query(`
+            SELECT s.* FROM sports s
+            JOIN facility_sports fs ON s.id = fs.sport_id
+            WHERE fs.facility_id = $1
+        `, [facilityId]);
+
+        const amenitiesPromise = query(`
+            SELECT a.* FROM amenities a
+            JOIN facility_amenities fa ON a.id = fa.amenity_id
+            WHERE fa.facility_id = $1
+        `, [facilityId]);
+        
+        const sportPricesPromise = query('SELECT sport_id, price, pricing_model FROM facility_sport_prices WHERE facility_id = $1', [facilityId]);
+        const operatingHoursPromise = query('SELECT day, open_time, close_time FROM facility_operating_hours WHERE facility_id = $1', [facilityId]);
+        const reviewsPromise = query('SELECT * FROM reviews WHERE facility_id = $1', [facilityId]);
+
+        const [sportsRes, amenitiesRes, sportPricesRes, operatingHoursRes, reviewsRes] = await Promise.all([
+            sportsPromise, amenitiesPromise, sportPricesPromise, operatingHoursPromise, reviewsPromise
+        ]);
+
+        return {
+            ...mapDbRowToFacility(row),
+            sports: sportsRes.rows.map(s => ({...s, iconName: s.icon_name})),
+            amenities: amenitiesRes.rows.map(a => ({...a, iconName: a.icon_name})),
+            sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
+            operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
+            reviews: reviewsRes.rows.map(r => ({...r, createdAt: new Date(r.created_at).toISOString(), userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile})),
+            // The following are not yet in the DB, so we provide defaults
+            blockedSlots: [],
+            availableEquipment: [],
+        };
+    }));
+
+    return facilities;
 };
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
     const { rows } = await query('SELECT * FROM users');
-    // A simple conversion from snake_case (in DB) to camelCase (in JS/TS)
     return rows.map(row => ({
         id: row.id,
         name: row.name,
@@ -274,7 +326,6 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
         status: row.status,
         joinedAt: new Date(row.joined_at).toISOString(),
         isProfilePublic: row.is_profile_public,
-        // The following properties are not yet in the DB schema, so we provide defaults
         achievements: [],
         skillLevels: [],
         preferredSports: [],
@@ -292,38 +343,106 @@ export const getUserById = (userId: string): UserProfile | undefined => {
 
 
 export const getFacilityById = async (id: string): Promise<Facility | undefined> => {
-    return Promise.resolve(mockFacilities.find(f => f.id === id));
+    const facilityRes = await query('SELECT * FROM facilities WHERE id = $1', [id]);
+    if (facilityRes.rows.length === 0) {
+        return undefined;
+    }
+    const facilityRow = facilityRes.rows[0];
+
+    const sportsPromise = query(`
+        SELECT s.* FROM sports s
+        JOIN facility_sports fs ON s.id = fs.sport_id
+        WHERE fs.facility_id = $1
+    `, [id]);
+
+    const amenitiesPromise = query(`
+        SELECT a.* FROM amenities a
+        JOIN facility_amenities fa ON a.id = fa.amenity_id
+        WHERE fa.facility_id = $1
+    `, [id]);
+
+    const sportPricesPromise = query('SELECT sport_id, price, pricing_model FROM facility_sport_prices WHERE facility_id = $1', [id]);
+    const operatingHoursPromise = query('SELECT day, open_time, close_time FROM facility_operating_hours WHERE facility_id = $1', [id]);
+    const reviewsPromise = query('SELECT * FROM reviews WHERE facility_id = $1', [id]);
+    
+    const [sportsRes, amenitiesRes, sportPricesRes, operatingHoursRes, reviewsRes] = await Promise.all([
+        sportsPromise, amenitiesPromise, sportPricesPromise, operatingHoursPromise, reviewsPromise
+    ]);
+
+    return {
+        ...mapDbRowToFacility(facilityRow),
+        sports: sportsRes.rows.map(s => ({ ...s, iconName: s.icon_name })),
+        amenities: amenitiesRes.rows.map(a => ({ ...a, iconName: a.icon_name })),
+        sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
+        operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
+        reviews: reviewsRes.rows.map(r => ({ ...r, createdAt: new Date(r.created_at).toISOString(), userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile })),
+        blockedSlots: [],
+        availableEquipment: [],
+    };
 };
 
 export const getFacilitiesByIds = async (ids: string[]): Promise<Facility[]> => {
-    if (!ids || ids.length === 0) return Promise.resolve([]);
-    const facilities = mockFacilities.filter(f => ids.includes(f.id));
-    return Promise.resolve(facilities);
+    if (!ids || ids.length === 0) return [];
+    const facilities = await getAllFacilities();
+    return facilities.filter(f => ids.includes(f.id));
 };
 
 export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<Facility> => {
-    const newFacility: Facility = {
-        ...facilityData,
-        id: `facility-${Date.now()}-${Math.random()}`
-    };
-    mockFacilities.push(newFacility);
-    return Promise.resolve(newFacility);
+     const { name, type, address, city, location, description, isPopular, isIndoor, ownerId, sports, amenities, sportPrices, operatingHours } = facilityData;
+     
+     const res = await query(
+        `INSERT INTO facilities (name, type, address, city, location, description, is_popular, is_indoor, owner_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [name, type, address, city, location, description, isPopular, isIndoor, ownerId]
+    );
+    const newFacilityRow = res.rows[0];
+    const newFacilityId = newFacilityRow.id;
+
+    // Concurrently handle relations
+    await Promise.all([
+        // Sports
+        ...sports.map(sport => query('INSERT INTO facility_sports (facility_id, sport_id) VALUES ($1, $2)', [newFacilityId, sport.id])),
+        // Amenities
+        ...amenities.map(amenity => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [newFacilityId, amenity.id])),
+        // Prices
+        ...sportPrices.map(sp => query('INSERT INTO facility_sport_prices (facility_id, sport_id, price, pricing_model) VALUES ($1, $2, $3, $4)', [newFacilityId, sp.sportId, sp.price, sp.pricingModel])),
+        // Hours
+        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [newFacilityId, oh.day, oh.open, oh.close])),
+    ]);
+
+    return (await getFacilityById(newFacilityId))!;
 };
 
 export const updateFacility = async (facilityData: Facility): Promise<Facility> => {
-    const index = mockFacilities.findIndex(f => f.id === facilityData.id);
-    if (index !== -1) {
-        mockFacilities[index] = facilityData;
-        return Promise.resolve(mockFacilities[index]);
-    }
-    throw new Error("Facility not found for update");
+    const { id, name, type, address, city, location, description, isPopular, isIndoor, ownerId, sports, amenities, sportPrices, operatingHours } = facilityData;
+    
+    await query(
+        `UPDATE facilities SET name = $1, type = $2, address = $3, city = $4, location = $5, description = $6, is_popular = $7, is_indoor = $8, owner_id = $9
+         WHERE id = $10`,
+        [name, type, address, city, location, description, isPopular, isIndoor, ownerId, id]
+    );
+    
+    // Clear and re-insert relational data
+    await Promise.all([
+        query('DELETE FROM facility_sports WHERE facility_id = $1', [id]),
+        query('DELETE FROM facility_amenities WHERE facility_id = $1', [id]),
+        query('DELETE FROM facility_sport_prices WHERE facility_id = $1', [id]),
+        query('DELETE FROM facility_operating_hours WHERE facility_id = $1', [id]),
+    ]);
+
+    await Promise.all([
+        ...sports.map(sport => query('INSERT INTO facility_sports (facility_id, sport_id) VALUES ($1, $2)', [id, sport.id])),
+        ...amenities.map(amenity => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [id, amenity.id])),
+        ...sportPrices.map(sp => query('INSERT INTO facility_sport_prices (facility_id, sport_id, price, pricing_model) VALUES ($1, $2, $3, $4)', [id, sp.sportId, sp.price, sp.pricingModel])),
+        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [id, oh.day, oh.open, oh.close])),
+    ]);
+
+    return (await getFacilityById(id))!;
 };
 
 export const deleteFacility = async (facilityId: string): Promise<void> => {
-    const index = mockFacilities.findIndex(f => f.id === facilityId);
-    if (index > -1) {
-        mockFacilities.splice(index, 1);
-    }
+    // The CASCADE option in the schema will handle deleting related entries in junction tables
+    await query('DELETE FROM facilities WHERE id = $1', [facilityId]);
     return Promise.resolve();
 };
 
@@ -356,7 +475,6 @@ export const updateUser = (userId: string, updates: Partial<UserProfile>): UserP
     if (userIndex !== -1) {
         mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates };
         
-        // Also update the active user if it's the one being changed
         if (mockUser?.id === userId) {
             mockUser = mockUsers[userIndex];
         }
@@ -410,8 +528,8 @@ export const getSportById = (id: string): Sport | undefined => getMockSports().f
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
 export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {
-    const facilities = mockFacilities.filter(f => f.ownerId === ownerId);
-    return Promise.resolve(facilities);
+    const facilities = await getAllFacilities();
+    return facilities.filter(f => f.ownerId === ownerId);
 };
 
 export const calculateAverageRating = (reviews: Review[] | undefined): number => {
@@ -843,4 +961,3 @@ export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] =
     const facility = mockFacilities.find(f => f.id === facilityId);
     return facility?.availableEquipment || [];
 };
-
