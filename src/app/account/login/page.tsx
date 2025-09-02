@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { getAllUsers } from '@/lib/data';
+import { getUsersAction } from '@/app/actions';
 import type { UserProfile } from '@/lib/types';
 import { Heart, LogIn } from 'lucide-react';
 
@@ -22,7 +22,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const allUsers = await getAllUsers();
+      const allUsers = await getUsersAction();
       const foundUser = allUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
 
       if (foundUser && (!foundUser.password || foundUser.password === password)) {
