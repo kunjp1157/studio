@@ -109,7 +109,7 @@ export function getStaticUsers(): UserProfile[] {
         ],
         skillLevels: [
             { sportId: 'sport-2', sportName: 'Basketball', level: 'Advanced' },
-            { sportId: 'sport-13', name: 'Cricket', level: 'Intermediate' },
+            { sportId: 'sport-13', sportName: 'Cricket', level: 'Intermediate' },
         ],
         preferredSports: [
             getMockSports().find(s => s.id === 'sport-2')!,
