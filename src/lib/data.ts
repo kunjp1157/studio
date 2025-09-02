@@ -271,34 +271,30 @@ const mapDbRowToFacility = (row: any): Omit<Facility, 'sports' | 'amenities' | '
 
 export const getAllFacilities = async (): Promise<Facility[]> => {
     const facilityRows = (await query('SELECT * FROM facilities')).rows;
+    const allSports = getMockSports();
+    const allAmenities = mockAmenities;
 
     const facilities: Facility[] = await Promise.all(facilityRows.map(async (row) => {
         const facilityId = row.id;
         
-        const sportsPromise = query(`
-            SELECT s.* FROM sports s
-            JOIN facility_sports fs ON s.id = fs.sports_id
-            WHERE fs.facility_id = $1
-        `, [facilityId]);
-
-        const amenitiesPromise = query(`
-            SELECT a.* FROM amenities a
-            JOIN facility_amenities fa ON a.id = fa.amenity_id
-            WHERE fa.facility_id = $1
-        `, [facilityId]);
+        const sportIdsRes = await query('SELECT sports_id FROM facility_sports WHERE facility_id = $1', [facilityId]);
+        const amenityIdsRes = await query('SELECT amenity_id FROM facility_amenities WHERE facility_id = $1', [facilityId]);
         
         const sportPricesPromise = query('SELECT sport_id, price, pricing_model FROM facility_sport_prices WHERE facility_id = $1', [facilityId]);
         const operatingHoursPromise = query('SELECT day, open_time, close_time FROM facility_operating_hours WHERE facility_id = $1', [facilityId]);
         const reviewsPromise = query('SELECT * FROM reviews WHERE facility_id = $1', [facilityId]);
 
-        const [sportsRes, amenitiesRes, sportPricesRes, operatingHoursRes, reviewsRes] = await Promise.all([
-            sportsPromise, amenitiesPromise, sportPricesPromise, operatingHoursPromise, reviewsPromise
+        const [sportPricesRes, operatingHoursRes, reviewsRes] = await Promise.all([
+            sportPricesPromise, operatingHoursPromise, reviewsPromise
         ]);
+        
+        const sportIds = sportIdsRes.rows.map(r => r.sports_id);
+        const amenityIds = amenityIdsRes.rows.map(r => r.amenity_id);
 
         return {
             ...mapDbRowToFacility(row),
-            sports: sportsRes.rows.map(s => ({...s, iconName: s.icon_name})),
-            amenities: amenitiesRes.rows.map(a => ({...a, iconName: a.icon_name})),
+            sports: allSports.filter(s => sportIds.includes(s.id)),
+            amenities: allAmenities.filter(a => amenityIds.includes(a.id)),
             sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
             operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
             reviews: reviewsRes.rows.map(r => ({...r, createdAt: new Date(r.created_at).toISOString(), userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile})),
@@ -367,7 +363,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
     const reviewsPromise = query('SELECT * FROM reviews WHERE facility_id = $1', [id]);
     
     const [sportsRes, amenitiesRes, sportPricesRes, operatingHoursRes, reviewsRes] = await Promise.all([
-        sportsPromise, amenitiesPromise, sportPricesPromise, operatingHoursPromise, reviewsPromise
+        sportsPromise, amenitiesPromise, sportPricesPromise, operatingHoursPromise, reviewsRes
     ]);
 
     return {
@@ -962,4 +958,3 @@ export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] =
     const facility = getStaticFacilities().find(f => f.id === facilityId);
     return facility?.availableEquipment || [];
 };
-
