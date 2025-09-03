@@ -1,4 +1,5 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { query } from './db';
@@ -226,7 +227,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
 
     return {
         ...mapDbRowToFacility(facilityRow),
-        sports: sportsRes.rows.map(s => ({ ...s, id: s.id, name: s.name, iconName: s.icon_name, image_data_ai_hint: s.image_data_ai_hint, image_url: s.image_url })),
+        sports: sportsRes.rows.map(s => ({ ...s, id: s.id, name: s.name, iconName: s.icon_name, imageUrl: s.image_url, imageDataAiHint: s.image_data_ai_hint })),
         amenities: amenitiesRes.rows.map(a => ({...a, iconName: a.icon_name})),
         sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
         operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
@@ -578,7 +579,7 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<void> 
 };
 
 export const getAllSports = async (): Promise<Sport[]> => {
-    const { rows } = await query('SELECT *, icon_name, image_url, image_data_ai_hint from sports');
+    const { rows } = await query('SELECT id, name, icon_name, image_url, image_data_ai_hint from sports');
     return rows.map(r => ({...r, id: r.id, name: r.name, iconName: r.icon_name, imageUrl: r.image_url, imageDataAiHint: r.image_data_ai_hint }));
 };
 
@@ -779,4 +780,3 @@ export const getAllBlogPosts = async (): Promise<BlogPost[]> => {
     const { rows } = await query('SELECT * FROM blog_posts ORDER BY published_at DESC');
     return rows;
 };
-export const getAllDataForSeeding = async (): Promise<any> => { return {}; };
