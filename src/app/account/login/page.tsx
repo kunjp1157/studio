@@ -27,7 +27,7 @@ export default function LoginPage() {
 
       // In a real app, you would use a secure password hashing and comparison library (e.g., bcrypt)
       // For this project, we are doing a plain text comparison which is NOT secure.
-      if (foundUser && (!foundUser.password || foundUser.password === password)) {
+      if (foundUser && foundUser.password === password) {
         sessionStorage.setItem('activeUser', JSON.stringify(foundUser));
         window.dispatchEvent(new Event('userChanged'));
 
