@@ -1,5 +1,4 @@
 
-
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -228,7 +227,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
 
     return {
         ...mapDbRowToFacility(facilityRow),
-        sports: sportsRes.rows.map(s => ({ ...s, iconName: s.icon_name, imageDataAiHint: s.image_data_ai_hint, imageUrl: s.image_url })),
+        sports: sportsRes.rows.map(s => ({ ...s, id: s.id, name: s.name, iconName: s.icon_name, imageDataAiHint: s.image_data_ai_hint, imageUrl: s.image_url })),
         amenities: amenitiesRes.rows.map(a => ({...a, iconName: a.icon_name})),
         sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
         operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
@@ -442,7 +441,7 @@ export async function addUser(userData: { name: string; email: string, password?
   
   const res = await query(
     `INSERT INTO users (id, name, email, password, role, status, is_profile_public, profile_picture_url, membership_level, loyalty_points)
-     VALUES ($1, $2, $3, $4, 'User', 'Active', true, $5, 'Basic', 0)`,
+     VALUES ($1, $2, $3, $4, 'User', 'Active', true, $5, 'Basic', 0) RETURNING *`,
     [newId, name, email, password, defaultProfilePic]
   );
   
@@ -471,7 +470,7 @@ export const getSportById = async (id: string): Promise<Sport | undefined> => {
     const { rows } = await query('SELECT * FROM sports WHERE id = $1', [id]);
     if (rows.length === 0) return undefined;
     const sport = rows[0];
-    return { ...sport, id: sport.id, name: sport.name, icon_name: sport.icon_name, image_url: sport.image_url, image_data_ai_hint: sport.image_data_ai_hint };
+    return { ...sport, id: sport.id, name: sport.name, iconName: sport.icon_name, imageUrl: sport.image_url, imageDataAiHint: sport.image_data_ai_hint };
 }
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
@@ -636,7 +635,7 @@ export const getNotificationsForUser = async (userId: string): Promise<AppNotifi
         createdAt: new Date(r.created_at).toISOString(), isRead: r.is_read, link: r.link, iconName: r.icon_name
     }));
 };
-export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === team.id);
+export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === teamId);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
 export const createTeam = (teamData: { name: string; sportId: string; captainId: string }): Team => {
     const sport = {id: 'sport-1', name: 'Soccer', iconName: 'Goal'}; // This needs real data
@@ -762,3 +761,10 @@ export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[
 export const getOpenChallenges = (): Challenge[] => { return []; };
 export const createChallenge = (data: { challengerId: string; sportId: string; facilityId: string; proposedDate: string; notes: string }): Challenge[] => { return []; };
 export const acceptChallenge = (challengeId: string, opponentId: string): Challenge[] => { return []; };
+
+export const getPricingRuleById = (id: string): PricingRule | undefined => { return mockPricingRules.find(p => p.id === id); };
+
+export const getPromotionRuleById = (id: string): PromotionRule | undefined => { return mockPromotionRules.find(p => p.id === id);};
+
+export const getStaticUsers = (): UserProfile[] => { return []; };
+export const getStaticFacilities = (): Facility[] => { return []; };
