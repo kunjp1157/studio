@@ -434,22 +434,24 @@ export async function addUser(userData: { name: string; email: string, password?
   const { name, email, password } = userData;
 
   const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
-  if (existingUser.rows.length > 0) throw new Error('A user with this email already exists.');
+  if (existingUser.rows.length > 0) {
+      throw new Error('A user with this email already exists.');
+  }
   
   const defaultProfilePic = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`;
   const newId = uuidv4();
   
   const res = await query(
     `INSERT INTO users (id, name, email, password, role, status, is_profile_public, profile_picture_url, membership_level, loyalty_points)
-     VALUES ($1, $2, $3, $4, 'User', 'Active', true, $5, 'Basic', 0) RETURNING *`,
+     VALUES ($1, $2, $3, $4, 'User', 'Active', true, $5, 'Basic', 0) RETURNING id`,
     [newId, name, email, password, defaultProfilePic]
   );
   
-  const newUserRow = res.rows[0];
-  if (!newUserRow) {
+  if (!res.rows[0]) {
       throw new Error("Failed to create user in database.");
   }
-  const newUser = await getUserById(newUserRow.id);
+  
+  const newUser = await getUserById(res.rows[0].id);
   if (!newUser) throw new Error("Failed to retrieve newly created user");
   return newUser;
 }
@@ -579,7 +581,7 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<void> 
 };
 
 export const getAllSports = async (): Promise<Sport[]> => {
-    const { rows } = await query('SELECT id, name, icon_name, image_url, image_data_ai_hint from sports');
+    const { rows } = await query('SELECT *, icon_name, image_url, image_data_ai_hint from sports');
     return rows.map(r => ({...r, id: r.id, name: r.name, iconName: r.icon_name, imageUrl: r.image_url, imageDataAiHint: r.image_data_ai_hint }));
 };
 
@@ -780,3 +782,4 @@ export const getAllBlogPosts = async (): Promise<BlogPost[]> => {
     const { rows } = await query('SELECT * FROM blog_posts ORDER BY published_at DESC');
     return rows;
 };
+
