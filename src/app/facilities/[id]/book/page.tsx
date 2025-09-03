@@ -139,8 +139,11 @@ function BookingConfirmationContent() {
       await new Promise(res => setTimeout(res, 2000));
     }
     
+    // Create a new object for the action, excluding the dataAiHint field
+    const { dataAiHint, ...bookingPayload } = bookingData;
+
     const newBooking = await addBookingAction({
-      ...bookingData,
+      ...bookingPayload,
       totalPrice: finalPrice,
       status: paymentMethod === 'pay_at_venue' ? 'Pending' : 'Confirmed',
       appliedPromotion: appliedPromotion || undefined,
