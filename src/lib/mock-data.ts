@@ -251,6 +251,7 @@ export function getStaticFacilities(): Facility[] {
         isIndoor: false,
         dataAiHint: 'cricket stadium',
         ownerId: 'user-owner-dana',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-13')),
         maintenanceSchedules: [],
       },
       {
@@ -278,6 +279,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: true,
         dataAiHint: 'swimming pool gym',
+        availableEquipment: [],
         maintenanceSchedules: [],
       },
       {
@@ -353,6 +355,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: true,
         dataAiHint: 'gaming lounge',
+        availableEquipment: [],
         maintenanceSchedules: [],
       },
       {
@@ -375,6 +378,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: false,
         isIndoor: false,
         dataAiHint: 'community center',
+        availableEquipment: [],
         maintenanceSchedules: [],
       },
       {
@@ -394,6 +398,7 @@ export function getStaticFacilities(): Facility[] {
         isIndoor: true,
         dataAiHint: 'sports complex stadium',
         ownerId: 'user-owner-dana',
+        availableEquipment: [],
         maintenanceSchedules: [],
       },
       // --- NEW CITIES START HERE ---
@@ -413,6 +418,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: false,
         dataAiHint: 'mumbai cricket stadium',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-13')),
         maintenanceSchedules: [],
       },
       {
@@ -431,6 +437,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: false,
         dataAiHint: 'rooftop soccer',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-1')),
         maintenanceSchedules: [],
       },
       {
@@ -452,6 +459,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: true,
         dataAiHint: 'indoor basketball court',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-2') || e.sportIds.includes('sport-4')),
         maintenanceSchedules: [],
       },
       {
@@ -474,6 +482,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: true,
         dataAiHint: 'modern sports complex',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-3')),
         maintenanceSchedules: [],
       },
       {
@@ -492,6 +501,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: false,
         isIndoor: false,
         dataAiHint: 'cricket practice nets',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-13')),
         maintenanceSchedules: [],
       },
       {
@@ -510,6 +520,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: true,
         dataAiHint: 'badminton arena',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-4')),
         maintenanceSchedules: [],
       },
       {
@@ -528,6 +539,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: false,
         isIndoor: false,
         dataAiHint: 'beach soccer',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-1')),
         maintenanceSchedules: [],
       },
       {
@@ -549,6 +561,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: true,
         isIndoor: false,
         dataAiHint: 'riverfront park cycling',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-6') || e.sportIds.includes('sport-7')),
         maintenanceSchedules: [],
       },
       {
@@ -568,6 +581,7 @@ export function getStaticFacilities(): Facility[] {
         isIndoor: false,
         dataAiHint: 'cricket academy',
         ownerId: 'user-owner-dana',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-13')),
         maintenanceSchedules: [],
       },
       {
@@ -589,6 +603,7 @@ export function getStaticFacilities(): Facility[] {
         isPopular: false,
         isIndoor: false,
         dataAiHint: 'lake club sports',
+        availableEquipment: standardEquipment.filter(e => e.sportIds.includes('sport-3') || e.sportIds.includes('sport-4')),
         maintenanceSchedules: [],
       }
     ];
