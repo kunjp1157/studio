@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,8 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Booking, Facility, Review, SiteSettings } from '@/lib/types';
-import { mockUser, getFacilityById, addReview as addMockReview, addNotification, updateBooking } from '@/lib/data';
-import { getBookingsByUserIdAction, getSiteSettingsAction } from '@/app/actions';
+import { getSiteSettingsAction, getBookingsByUserIdAction, getFacilityByIdAction, addReviewAction, addNotificationAction, updateBookingAction } from '@/app/actions';
 import { CalendarDays, Clock, DollarSign, Eye, Edit3, XCircle, MapPin, AlertCircle, MessageSquarePlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -32,8 +32,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
@@ -77,7 +75,7 @@ export default function BookingsPage() {
           setIsLoading(true);
           try {
               const [userBookings, settings] = await Promise.all([
-                  getBookingsByUserIdAction(mockUser.id),
+                  getBookingsByUserIdAction(),
                   getSiteSettingsAction()
               ]);
               
@@ -114,18 +112,21 @@ export default function BookingsPage() {
     const fetchRelatedFacilities = async () => {
         if (bookings.length > 0) {
             const facilityIds = [...new Set(bookings.map(b => b.facilityId))];
-            const facilityPromises = facilityIds.map(async id => {
-                if (facilities[id]) return null;
-                const facility = await getFacilityById(id);
-                return {id, data: facility};
-            });
-            const facilitiesData = (await Promise.all(facilityPromises)).filter(Boolean);
+            const neededIds = facilityIds.filter(id => !facilities[id]);
 
-            if(facilitiesData.length > 0) {
-              setFacilities(prev => facilitiesData.reduce((acc, {id, data}) => {
-                  if (data) acc[id] = data;
-                  return acc;
-              }, {...prev}));
+            if (neededIds.length > 0) {
+                const facilityPromises = neededIds.map(async id => {
+                    const facility = await getFacilityByIdAction(id);
+                    return {id, data: facility};
+                });
+                const facilitiesData = (await Promise.all(facilityPromises)).filter(Boolean);
+
+                if(facilitiesData.length > 0) {
+                  setFacilities(prev => facilitiesData.reduce((acc, {id, data}) => {
+                      if (data) acc[id] = data;
+                      return acc;
+                  }, {...prev}));
+                }
             }
         }
     };
@@ -137,14 +138,14 @@ export default function BookingsPage() {
     const bookingToCancel = bookings.find(b => b.id === bookingId);
 
     try {
-        await updateBooking(bookingId, { status: 'Cancelled' });
+        await updateBookingAction(bookingId, { status: 'Cancelled' });
         toast({
           title: "Booking Cancelled",
           description: "Your booking has been successfully cancelled.",
         });
         
         if (bookingToCancel) {
-          addNotification(mockUser.id, {
+          await addNotificationAction({
               type: 'booking_cancelled',
               title: 'Booking Cancelled',
               message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} has been cancelled.`,
@@ -171,9 +172,8 @@ export default function BookingsPage() {
     if (!selectedBookingForReview) return;
 
     try {
-      await addMockReview({
+      await addReviewAction({
         facilityId: selectedBookingForReview.facilityId,
-        userId: mockUser.id,
         rating,
         comment,
         bookingId,
@@ -185,7 +185,7 @@ export default function BookingsPage() {
         className: "bg-green-500 text-white",
       });
       
-      addNotification(mockUser.id, {
+      await addNotificationAction({
         type: 'review_submitted',
         title: 'Review Submitted!',
         message: `Your review for ${selectedBookingForReview.facilityName} has been posted.`,
@@ -231,7 +231,7 @@ export default function BookingsPage() {
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg hover:-translate-y-2">
         <CardHeader className="p-0 relative">
         <Image
-            src={booking.facilityImage || `https://placehold.co/400x200.png?text=${encodeURIComponent(booking.facilityName)}`}
+            src={`https://picsum.photos/400/200?random=${booking.id}`}
             alt={booking.facilityName}
             width={400}
             height={200}

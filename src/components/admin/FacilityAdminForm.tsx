@@ -8,8 +8,7 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice, UserRole, MaintenanceSchedule, UserProfile } from '@/lib/types';
-import { mockSports, mockAmenities } from '@/lib/mock-data';
-import { getSiteSettingsAction, addFacilityAction, updateFacilityAction, getUsersAction } from '@/app/actions';
+import { getSiteSettingsAction, addFacilityAction, updateFacilityAction, getUsersAction, getAllSportsAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -107,6 +106,8 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageGenPrompt, setImageGenPrompt] = useState('');
   const [facilityOwners, setFacilityOwners] = useState<UserProfile[]>([]);
+  const [sports, setSports] = useState<Sport[]>([]);
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
 
 
   useEffect(() => {
@@ -117,6 +118,8 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
             const users = await getUsersAction();
             setFacilityOwners(users.filter(u => u.role === 'FacilityOwner'));
         }
+        const sportsData = await getAllSportsAction();
+        setSports(sportsData);
     };
     fetchInitialData();
   }, [currentUserRole]);
@@ -324,7 +327,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
               <FormItem>
                 <FormLabel className="flex items-center"><Zap className="mr-2 h-4 w-4 text-muted-foreground"/>Sports Offered</FormLabel>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 border rounded-md">
-                  {mockSports.map((sport) => (
+                  {sports.map((sport) => (
                     <FormField
                       key={sport.id}
                       control={form.control}
@@ -358,7 +361,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
               </CardHeader>
               <CardContent className="space-y-4">
                   {sportPrices.map((price, index) => {
-                    const sport = mockSports.find(s => s.id === price.sportId);
+                    const sport = sports.find(s => s.id === price.sportId);
                     if (!sport) return null;
                     return(
                       <div key={price.sportId} className="p-3 border rounded-md grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
@@ -402,7 +405,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
               <FormItem>
                 <FormLabel className="flex items-center"><Dices className="mr-2 h-4 w-4 text-muted-foreground"/>Amenities</FormLabel>
                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 border rounded-md">
-                  {mockAmenities.map((amenity) => (
+                  {amenities.map((amenity) => (
                     <FormField
                       key={amenity.id}
                       control={form.control}
@@ -551,7 +554,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
                                 <FormItem>
                                     <FormLabel>Applicable Sports</FormLabel>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                    {mockSports.map((sport) => (
+                                    {sports.map((sport) => (
                                         <FormField
                                         key={sport.id}
                                         control={form.control}
