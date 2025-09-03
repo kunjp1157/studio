@@ -52,7 +52,7 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
         query('SELECT facility_id, sports_id FROM facility_sports'),
         query('SELECT facility_id, amenity_id FROM facility_amenities'),
         query('SELECT facility_id, sport_id, price, pricing_model FROM facility_sport_prices'),
-        query('SELECT facility_id, day, open, close FROM facility_operating_hours'),
+        query('SELECT facility_id, day, open_time, close_time FROM facility_operating_hours'),
         query('SELECT * FROM reviews'),
         query('SELECT * FROM rental_equipment'),
         query('SELECT * FROM blocked_slots'),
@@ -82,7 +82,7 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
     const operatingHoursMap = new Map<string, FacilityOperatingHours[]>();
     operatingHoursRes.rows.forEach(row => {
         if (!operatingHoursMap.has(row.facility_id)) operatingHoursMap.set(row.facility_id, []);
-        operatingHoursMap.get(row.facility_id)!.push({ day: row.day, open: row.open, close: row.close });
+        operatingHoursMap.get(row.facility_id)!.push({ day: row.day, open: row.open_time, close: row.close_time });
     });
 
     const reviewsMap = new Map<string, Review[]>();
@@ -219,7 +219,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
         query('SELECT s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sports_id WHERE fs.facility_id = $1', [id]),
         query('SELECT a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id WHERE fa.facility_id = $1', [id]),
         query('SELECT sport_id, price, pricing_model FROM facility_sport_prices WHERE facility_id = $1', [id]),
-        query('SELECT day, open, close FROM facility_operating_hours WHERE facility_id = $1', [id]),
+        query('SELECT day, open_time, close_time FROM facility_operating_hours WHERE facility_id = $1', [id]),
         query('SELECT * FROM reviews WHERE facility_id = $1', [id]),
         query('SELECT * FROM rental_equipment WHERE facility_id = $1', [id]),
         query('SELECT * FROM blocked_slots WHERE facility_id = $1', [id]),
@@ -231,7 +231,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
         sports: sportsRes.rows.map(s => ({ ...s, iconName: s.icon_name })),
         amenities: amenitiesRes.rows.map(a => ({...a, iconName: a.icon_name})),
         sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
-        operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open, close: h.close })),
+        operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
         reviews: reviewsRes.rows.map(r => ({ ...r, id: r.id, facilityId: r.facility_id, userId: r.user_id, userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile, rating: parseFloat(r.rating), comment: r.comment, createdAt: new Date(r.created_at).toISOString(), bookingId: r.booking_id })),
         availableEquipment: equipmentRes.rows.map(e => ({ id: e.id, name: e.name, pricePerItem: parseFloat(e.price_per_item), priceType: e.price_type, stock: e.stock, sportIds: e.sport_ids })),
         blockedSlots: blockedSlotsRes.rows.map(b => ({ date: formatDateFns(new Date(b.date), 'yyyy-MM-dd'), startTime: b.start_time, endTime: b.end_time, reason: b.reason })),
@@ -260,7 +260,7 @@ export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<F
         ...sports.map(sportId => query('INSERT INTO facility_sports (facility_id, sports_id) VALUES ($1, $2)', [newFacilityId, sportId])),
         ...amenities.map(amenityId => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [newFacilityId, amenityId])),
         ...sportPrices.map(sp => query('INSERT INTO facility_sport_prices (facility_id, sport_id, price, pricing_model) VALUES ($1, $2, $3, $4)', [newFacilityId, sp.sportId, sp.price, sp.pricingModel])),
-        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open, close) VALUES ($1, $2, $3, $4)', [newFacilityId, oh.day, oh.open, oh.close])),
+        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [newFacilityId, oh.day, oh.open, oh.close])),
         ...(availableEquipment || []).map(eq => query('INSERT INTO rental_equipment (facility_id, name, price_per_item, price_type, stock, sport_ids) VALUES ($1, $2, $3, $4, $5, $6)', [newFacilityId, eq.name, eq.pricePerItem, eq.priceType, eq.stock, eq.sportIds])),
         ...(maintenanceSchedules || []).map(ms => query('INSERT INTO maintenance_schedules (facility_id, task_name, recurrence_in_days, last_performed_date) VALUES ($1, $2, $3, $4)', [newFacilityId, ms.taskName, ms.recurrenceInDays, ms.lastPerformedDate]))
     ]);
@@ -293,7 +293,7 @@ export const updateFacility = async (facilityData: Facility): Promise<Facility> 
         ...sports.map(sportId => query('INSERT INTO facility_sports (facility_id, sports_id) VALUES ($1, $2)', [id, sportId])),
         ...amenities.map(amenityId => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [id, amenityId])),
         ...sportPrices.map(sp => query('INSERT INTO facility_sport_prices (facility_id, sport_id, price, pricing_model) VALUES ($1, $2, $3, $4)', [id, sp.sportId, sp.price, sp.pricingModel])),
-        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open, close) VALUES ($1, $2, $3, $4)', [id, oh.day, oh.open, oh.close])),
+        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [id, oh.day, oh.open, oh.close])),
         ...(availableEquipment || []).map(eq => query('INSERT INTO rental_equipment (facility_id, name, price_per_item, price_type, stock, sport_ids) VALUES ($1, $2, $3, $4, $5, $6)', [id, eq.name, eq.pricePerItem, eq.priceType, eq.stock, eq.sportIds])),
         ...(maintenanceSchedules || []).map(ms => query('INSERT INTO maintenance_schedules (facility_id, task_name, recurrence_in_days, last_performed_date) VALUES ($1, $2, $3, $4)', [id, ms.taskName, ms.recurrenceInDays, ms.lastPerformedDate])),
     ]);
