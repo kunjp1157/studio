@@ -62,9 +62,10 @@ export const getBookingById = (id: string): Booking | undefined => {
     return mockBookings.find(b => b.id === id);
 };
 
-export const addBooking = (bookingData: Omit<Booking, 'bookedAt'>): Booking => {
+export const addBooking = (bookingData: Omit<Booking, 'bookedAt' | 'id'>): Booking => {
     const newBooking: Booking = {
         ...bookingData,
+        id: uuidv4(),
         bookedAt: new Date().toISOString(),
     };
     mockBookings.push(newBooking);
@@ -316,11 +317,63 @@ export const listenToAllPromotionRules = (callback: (rules: PromotionRule[]) => 
 export const getLfgRequestsByFacilityIds = (facilityIds: string[]): LfgRequest[] => { return []; };
 export const getChallengesByFacilityIds = (facilityIds: string[]): Challenge[] => { return []; };
 export const getOpenLfgRequests = (): LfgRequest[] => mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds' | 'facilityName'>): LfgRequest[] => { return []; };
-export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[] => { return []; };
-export const getOpenChallenges = (): Challenge[] => { return []; };
-export const createChallenge = (data: { challengerId: string; sportId: string; facilityId: string; proposedDate: string; notes: string }): Challenge[] => { return []; };
-export const acceptChallenge = (challengeId: string, opponentId: string): Challenge[] => { return []; };
+export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds' | 'facilityName'>): LfgRequest[] => {
+    const facility = getFacilityById(requestData.facilityId);
+    if (!facility) return mockLfgRequests;
+
+    const newRequest: LfgRequest = {
+        id: `lfg-${Date.now()}`,
+        ...requestData,
+        facilityName: facility.name,
+        createdAt: new Date().toISOString(),
+        status: 'open',
+        interestedUserIds: [],
+    };
+    mockLfgRequests.unshift(newRequest);
+    return getOpenLfgRequests();
+};
+export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[] => {
+    const request = mockLfgRequests.find(r => r.id === lfgId);
+    if (request && !request.interestedUserIds.includes(userId)) {
+        request.interestedUserIds.push(userId);
+    }
+    return getOpenLfgRequests();
+};
+export const getOpenChallenges = (): Challenge[] => { 
+    return mockChallenges.filter(c => c.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+export const createChallenge = (data: { challengerId: string; sportId: string; facilityId: string; proposedDate: string; notes: string }): Challenge[] => {
+    const challenger = getUserById(data.challengerId);
+    const sport = getSportById(data.sportId);
+    const facility = getFacilityById(data.facilityId);
+
+    if (!challenger || !sport || !facility) return mockChallenges;
+    
+    const newChallenge: Challenge = {
+        id: `challenge-${Date.now()}`,
+        challengerId: data.challengerId,
+        challenger,
+        sport,
+        facilityId: data.facilityId,
+        facilityName: facility.name,
+        proposedDate: data.proposedDate,
+        notes: data.notes,
+        status: 'open',
+        createdAt: new Date().toISOString(),
+    };
+    mockChallenges.unshift(newChallenge);
+    return getOpenChallenges();
+};
+export const acceptChallenge = (challengeId: string, opponentId: string): Challenge[] => {
+    const challenge = mockChallenges.find(c => c.id === challengeId);
+    const opponent = getUserById(opponentId);
+    if (challenge && opponent && challenge.status === 'open') {
+        challenge.status = 'accepted';
+        challenge.opponentId = opponentId;
+        challenge.opponent = opponent;
+    }
+    return getOpenChallenges();
+};
 
 export const getPricingRuleById = (id: string): PricingRule | undefined => { return mockPricingRules.find(p => p.id === id); };
 
@@ -332,9 +385,8 @@ export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
 export const getAllBlogPosts = (): BlogPost[] => { 
     return [];
 };
-export const dbGetFacilityById = (id: string): Facility | undefined => {
-    const facilities = getStaticFacilities();
-    return facilities.find(f => f.id === id);
+export const dbGetFacilityById = (id: string): Promise<Facility | undefined> => {
+    return Promise.resolve(getFacilityById(id));
 };
 export const dbGetAllUsers = (): Promise<UserProfile[]> => {
     return Promise.resolve(getStaticUsers());
@@ -348,7 +400,7 @@ export const dbGetBookingsByUserId = (userId: string): Promise<Booking[]> => {
 export const dbUpdateBooking = (bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> => {
     return Promise.resolve(updateBooking(bookingId, updates));
 }
-export const dbAddBooking = (bookingData: Omit<Booking, 'bookedAt'>): Promise<Booking> => {
+export const dbAddBooking = (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> => {
     return Promise.resolve(addBooking(bookingData));
 }
 export const dbAddReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> => {
