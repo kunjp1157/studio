@@ -37,14 +37,14 @@ const lfgFormSchema = z.object({
 
 type LfgFormValues = z.infer<typeof lfgFormSchema>;
 
-const LfgRequestCard = ({ request, onInterest }: { request: LfgRequest, onInterest: (lfgId: string) => void }) => {
+const LfgRequestCard = ({ request, onInterest, currentUser }: { request: LfgRequest, onInterest: (lfgId: string) => void, currentUser: UserProfile | null }) => {
     const user = getUserById(request.userId);
     const sport = getSportById(request.sportId);
-    const isMyPost = request.userId === mockUser.id;
-    const alreadyInterested = request.interestedUserIds.includes(mockUser.id);
-    
-    if (!user || !sport) return null;
+    if (!currentUser || !user || !sport) return null;
 
+    const isMyPost = request.userId === currentUser.id;
+    const alreadyInterested = request.interestedUserIds.includes(currentUser.id);
+    
     const SportIcon = getIconComponent(sport.iconName) || Dices;
     
     const UserHeader = () => (
@@ -142,6 +142,7 @@ export default function MatchmakingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
   const form = useForm<LfgFormValues>({
@@ -150,6 +151,11 @@ export default function MatchmakingPage() {
   });
 
   useEffect(() => {
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+        setCurrentUser(JSON.parse(activeUserStr));
+    }
+    
     setIsLoading(true);
     const fetchFacilities = async () => {
         const facilitiesData = await getFacilitiesAction();
@@ -163,9 +169,17 @@ export default function MatchmakingPage() {
   }, []);
   
   const onSubmit = async (data: LfgFormValues) => {
+    if (!currentUser) {
+        toast({
+            title: "Login Required",
+            description: "You must be logged in to create a post.",
+            variant: "destructive",
+        });
+        return;
+    }
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 700));
-    const updatedRequests = createLfgRequest({ ...data, userId: mockUser.id });
+    const updatedRequests = createLfgRequest({ ...data, userId: currentUser.id });
     setRequests(updatedRequests);
     toast({
         title: "Post Created!",
@@ -176,7 +190,15 @@ export default function MatchmakingPage() {
   };
 
   const handleInterest = (lfgId: string) => {
-    const updatedRequests = expressInterestInLfg(lfgId, mockUser.id);
+    if (!currentUser) {
+        toast({
+            title: "Login Required",
+            description: "You must be logged in to show interest.",
+            variant: "destructive",
+        });
+        return;
+    }
+    const updatedRequests = expressInterestInLfg(lfgId, currentUser.id);
     setRequests(updatedRequests);
     toast({
         title: "Interest Expressed!",
@@ -328,7 +350,7 @@ export default function MatchmakingPage() {
                 </Alert>
             ) : (
                 <div className="grid md:grid-cols-2 gap-6">
-                    {filteredRequests.map(req => <LfgRequestCard key={req.id} request={req} onInterest={handleInterest}/>)}
+                    {filteredRequests.map(req => <LfgRequestCard key={req.id} request={req} onInterest={handleInterest} currentUser={currentUser} />)}
                 </div>
             )}
         </div>
