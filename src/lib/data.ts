@@ -1,6 +1,5 @@
 
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
-import { mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { query } from './db';
 import { v4 as uuidv4 } from 'uuid';
@@ -446,6 +445,9 @@ export async function addUser(userData: { name: string; email: string, password?
   );
   
   const newUserRow = res.rows[0];
+  if (!newUserRow) {
+      throw new Error("Failed to create user in database.");
+  }
   const newUser = await getUserById(newUserRow.id);
   if (!newUser) throw new Error("Failed to retrieve newly created user");
   return newUser;
@@ -719,10 +721,13 @@ export const addPromotionRule = (rule: Omit<PromotionRule, 'id'>): void => { moc
 export const updatePromotionRule = (rule: PromotionRule): void => { const index = mockPromotionRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPromotionRules[index] = rule; };
 export const deletePromotionRule = (id: string): void => { mockPromotionRules = mockPromotionRules.filter(p => p.id !== id); };
 export const getMembershipPlanById = async (id: string): Promise<MembershipPlan | undefined> => {
-    return Promise.resolve(mockStaticMembershipPlans.find(p => p.id === id));
+    const { rows } = await query('SELECT * FROM membership_plans WHERE id = $1', [id]);
+    if (rows.length > 0) return { ...rows[0], pricePerMonth: parseFloat(rows[0].price_per_month) };
+    return undefined;
 };
 export const getAllMembershipPlans = async (): Promise<MembershipPlan[]> => {
-    return Promise.resolve(mockStaticMembershipPlans);
+    const { rows } = await query('SELECT * FROM membership_plans ORDER BY price_per_month');
+    return rows.map(r => ({...r, pricePerMonth: parseFloat(r.price_per_month) }));
 };
 export const listenToAllEvents = (callback: (events: SportEvent[]) => void, onError: (error: Error) => void): (() => void) => {
     const interval = setInterval(async () => {
@@ -732,10 +737,10 @@ export const listenToAllEvents = (callback: (events: SportEvent[]) => void, onEr
     return () => clearInterval(interval);
 };
 export const listenToAllMembershipPlans = (callback: (plans: MembershipPlan[]) => void, onError: (error: Error) => void): (() => void) => {
-    const interval = setInterval(() => {
-        try { callback(mockStaticMembershipPlans); } catch(e) { onError(e as Error); }
+    const interval = setInterval(async () => {
+        try { const plans = await getAllMembershipPlans(); callback(plans); } catch(e) { onError(e as Error); }
     }, 5000);
-    callback(mockStaticMembershipPlans);
+    getAllMembershipPlans().then(callback).catch(onError);
     return () => clearInterval(interval);
 };
 export const listenToAllPricingRules = (callback: (rules: PricingRule[]) => void, onError: (error: Error) => void): (() => void) => {
@@ -766,8 +771,12 @@ export const getPricingRuleById = (id: string): PricingRule | undefined => { ret
 
 export const getPromotionRuleById = (id: string): PromotionRule | undefined => { return mockPromotionRules.find(p => p.id === id);};
 
-export const getStaticUsers = (): UserProfile[] => { return []; };
-export const getStaticFacilities = (): Facility[] => { return []; };
-export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => { return undefined; };
-export const getAllBlogPosts = async (): Promise<BlogPost[]> => { return []; };
+export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => { 
+    const { rows } = await query('SELECT * FROM blog_posts WHERE slug = $1', [slug]);
+    return rows.length > 0 ? rows[0] : undefined;
+ };
+export const getAllBlogPosts = async (): Promise<BlogPost[]> => { 
+    const { rows } = await query('SELECT * FROM blog_posts ORDER BY published_at DESC');
+    return rows;
+};
 export const getAllDataForSeeding = async (): Promise<any> => { return {}; };

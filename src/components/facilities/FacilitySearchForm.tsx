@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { SearchFilters, Amenity as AmenityType, SiteSettings, Facility } from '@/lib/types';
+import type { SearchFilters, Amenity as AmenityType, SiteSettings, Facility, Sport } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,7 +13,7 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks, Clock, Building } from 'lucide-react';
-import { getMockSports, mockAmenities } from '@/lib/mock-data'; 
+import { getAllSportsAction, getFacilitiesAction } from '@/app/actions'; 
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { formatCurrency } from '@/lib/utils';
@@ -54,8 +54,20 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
 
   const [filteredLocations, setFilteredLocations] = useState<string[]>(allLocations);
+  
+  const [mockSports, setMockSports] = useState<Sport[]>([]);
+  const [mockAmenities, setMockAmenities] = useState<AmenityType[]>([]);
 
-  const mockSports = getMockSports();
+  useEffect(() => {
+    const fetchSportsAndAmenities = async () => {
+        const sports = await getAllSportsAction();
+        setMockSports(sports);
+        // Assuming amenities are static for now, but could be an action too
+        // const amenities = await getAllAmenitiesAction(); 
+        // setMockAmenities(amenities);
+    };
+    fetchSportsAndAmenities();
+  }, []);
 
   useEffect(() => {
       setPriceRange([minPrice, maxPrice]);
