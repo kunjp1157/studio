@@ -18,6 +18,12 @@ export const getMockSports = (): Sport[] => [
   { id: 'sport-10', name: 'Table Tennis', iconName: 'Dices', imageUrl: '/sports/table-tennis.jpg', imageDataAiHint: 'table tennis' },
   { id: 'sport-11', name: 'Squash', iconName: 'Drama', imageUrl: '/sports/squash.jpg', imageDataAiHint: 'squash court' },
   { id: 'sport-12', name: 'Boxing', iconName: 'Dumbbell', imageUrl: '/sports/boxing.jpg', imageDataAiHint: 'boxing ring' },
+  { id: 'sport-13', name: 'Handball', iconName: 'Hand', imageUrl: '/sports/handball.jpg', imageDataAiHint: 'handball court' },
+  { id: 'sport-14', name: 'Archery', iconName: 'Target', imageUrl: '/sports/archery.jpg', imageDataAiHint: 'archery range' },
+  { id: 'sport-15', name: 'Fencing', iconName: 'Swords', imageUrl: '/sports/fencing.jpg', imageDataAiHint: 'fencing duel' },
+  { id: 'sport-16', name: 'Martial Arts', iconName: 'PersonStanding', imageUrl: '/sports/martial-arts.jpg', imageDataAiHint: 'martial arts dojo' },
+  { id: 'sport-17', name: 'Golf', iconName: 'Target', imageUrl: '/sports/golf.jpg', imageDataAiHint: 'golf course' },
+  { id: 'sport-18', name: 'Hockey', iconName: 'Goal', imageUrl: '/sports/hockey.jpg', imageDataAiHint: 'hockey field' },
 ];
 
 export const getStaticSports = (): Sport[] => getMockSports();
