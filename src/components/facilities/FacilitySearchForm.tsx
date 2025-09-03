@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { formatCurrency } from '@/lib/utils';
 import { getIconComponent } from '@/components/shared/Icon';
-import { getStaticSports, getStaticAmenities } from '@/lib/data';
+import { getStaticSports } from '@/lib/data';
 import { mockAmenities } from '@/lib/mock-data';
 
 

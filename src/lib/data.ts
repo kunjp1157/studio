@@ -1,8 +1,9 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import { getStaticSports, getStaticAmenities, getStaticUsers, getStaticFacilities } from './mock-data';
+import { getStaticSports as getMockSportsStatic, getStaticAmenities, getStaticUsers, getStaticFacilities as getMockFacilities } from './mock-data';
 
 // --- IN-MEMORY MOCK DATABASE (to be phased out) ---
 let mockTeams: Team[] = [];
@@ -13,29 +14,12 @@ let mockWaitlist: WaitlistEntry[] = [];
 let mockLfgRequests: LfgRequest[] = [];
 let mockChallenges: Challenge[] = [];
 
-// --- DATA ACCESS FUNCTIONS ---
+// --- DATA ACCESS FUNCTIONS (MOCK IMPLEMENTATION) ---
 
-const mapDbRowToFacility = (row: any): Omit<Facility, 'sports' | 'amenities' | 'sportPrices' | 'operatingHours' | 'blockedSlots' | 'availableEquipment' | 'reviews' | 'maintenanceSchedules'> => ({
-    id: row.id,
-    name: row.name,
-    type: row.type,
-    address: row.address,
-    city: row.city,
-    location: row.location,
-    description: row.description,
-    rating: parseFloat(row.rating) || 0,
-    capacity: row.capacity,
-    isPopular: row.is_popular,
-    isIndoor: row.is_indoor,
-    dataAiHint: row.data_ai_hint,
-    ownerId: row.owner_id,
-});
-
-
-export const getAllFacilities = (): Facility[] => {
-    return getStaticFacilities();
-};
-
+// These functions simulate fetching data. They are safe to use on the client.
+export const getStaticFacilities = (): Facility[] => getMockFacilities();
+export const getStaticSports = (): Sport[] => getMockSportsStatic();
+export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
 export const getAllUsers = (): UserProfile[] => {
     return getStaticUsers();
@@ -123,7 +107,6 @@ export const getBookingsByUserId = (userId: string): Booking[] => {
 export const getSportById = (id: string): Sport | undefined => {
     return getStaticSports().find(s => s.id === id);
 }
-export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
 export const getFacilitiesByOwnerId = (ownerId: string): Facility[] => {
     const facilities = getStaticFacilities();
@@ -197,7 +180,6 @@ export const updateSport = (sportId: string, sportData: Partial<Sport>): Sport =
 
 export const deleteSport = (sportId: string): void => {
     console.log("Mock deleting sport", sportId);
-    return Promise.resolve();
 };
 
 export const toggleFavoriteFacility = (userId: string, facilityId: string): UserProfile | undefined => {
@@ -283,10 +265,7 @@ export const updateEvent = (eventData: Omit<SportEvent, 'sport'> & { sportId: st
     console.log("Mock updating event", eventData);
 };
 export const deleteEvent = (id: string): void => { console.log("Mock deleting event", id); };
-export const registerForEvent = (eventId: string): boolean => { 
-    // Needs DB implementation
-    return false; 
-};
+
 export const addPricingRule = (rule: Omit<PricingRule, 'id'>): void => { mockPricingRules.push({ ...rule, id: `pr-${Date.now()}` }); };
 export const updatePricingRule = (rule: PricingRule): void => { const index = mockPricingRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPricingRules[index] = rule; };
 export const deletePricingRule = (id: string): void => { mockPricingRules = mockPricingRules.filter(r => r.id !== id); };
@@ -348,3 +327,121 @@ export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
 export const getAllBlogPosts = (): BlogPost[] => { 
     return [];
 };
+export const dbGetFacilityById = (id: string): Facility | undefined => {
+    const facilities = getStaticFacilities();
+    return facilities.find(f => f.id === id);
+};
+export const dbGetAllUsers = (): UserProfile[] => {
+    return getStaticUsers();
+};
+export const dbAddUser = (userData: { name: string; email: string, password?: string }): UserProfile => {
+    return addUser(userData);
+}
+export const dbGetBookingsByUserId = (userId: string): Booking[] => {
+    return []; // Mocked
+};
+export const dbUpdateBooking = (bookingId: string, updates: Partial<Booking>): Booking | undefined => {
+    return undefined; // Mocked
+}
+export const dbAddBooking = (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Booking => {
+    return addBooking(bookingData);
+}
+export const dbAddReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Review => {
+    return addReview(reviewData);
+}
+export const dbGetBookingById = (id: string): Booking | undefined => {
+    return undefined; // Mocked
+}
+export const dbGetBookingsForFacilityOnDate = (facilityId: string, date: string): Booking[] => {
+    return []; // Mocked
+}
+export const dbAddFacility = (facilityData: Omit<Facility, 'id'>): Facility => {
+    return addFacility(facilityData);
+};
+export const dbUpdateFacility = (facilityData: Facility): Facility => {
+    return updateFacility(facilityData);
+};
+export const dbDeleteFacility = (facilityId: string): void => {
+    deleteFacility(facilityId);
+};
+export const dbGetAllBookings = (): Booking[] => {
+    return []; // Mocked
+};
+export const dbGetSiteSettings = (): SiteSettings => {
+    return getSiteSettings();
+};
+export const dbGetFacilitiesByOwnerId = (ownerId: string): Facility[] => {
+    return getFacilitiesByOwnerId(ownerId);
+};
+export const dbGetEventById = (id: string): SportEvent | undefined => {
+    return undefined; // Mocked
+};
+export const dbGetAllEvents = (): SportEvent[] => {
+    return []; // Mocked
+};
+export const dbGetAllMembershipPlans = (): MembershipPlan[] => {
+    return getAllMembershipPlans();
+};
+export const dbGetAllPricingRules = (): PricingRule[] => {
+    return getAllPricingRules();
+};
+export const dbGetAllPromotionRules = (): PromotionRule[] => {
+    return getAllPromotionRules();
+};
+export const dbGetNotificationsForUser = (userId: string): AppNotification[] => {
+    return []; // Mocked
+};
+export const dbMarkNotificationAsRead = (userId: string, notificationId: string): void => {
+    markNotificationAsRead(userId, notificationId);
+};
+export const dbMarkAllNotificationsAsRead = (userId: string): void => {
+    markAllNotificationsAsRead(userId);
+};
+export const dbBlockTimeSlot = (facilityId: string, ownerId: string, newBlock: BlockedSlot): boolean => {
+    return blockTimeSlot(facilityId, ownerId, newBlock);
+};
+export const dbUnblockTimeSlot = (facilityId: string, ownerId: string, date: string, startTime: string): boolean => {
+    return unblockTimeSlot(facilityId, ownerId, date, startTime);
+};
+export const dbUpdateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
+    return updateUser(userId, updates);
+};
+export const dbGetSportById = (id: string): Sport | undefined => {
+    return getSportById(id);
+};
+export const dbAddNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
+    return addNotification(userId, notificationData);
+};
+export const dbGetAllSports = (): Sport[] => {
+    return getAllSports();
+};
+export const dbAddSport = (sportData: Omit<Sport, 'id'>): Sport => {
+    return addSport(sportData);
+};
+export const dbUpdateSport = (sportId: string, sportData: Partial<Sport>): Sport => {
+    return updateSport(sportId, sportData);
+};
+export const dbDeleteSport = (sportId: string): void => {
+    deleteSport(sportId);
+};
+export const dbToggleFavoriteFacility = (userId: string, facilityId: string): UserProfile | undefined => {
+    return toggleFavoriteFacility(userId, facilityId);
+};
+export const dbGetPromotionRuleByCode = (code: string): PromotionRule | undefined => {
+    return getPromotionRuleByCode(code);
+};
+export const dbGetAllBlogPosts = (): BlogPost[] => {
+    return getAllBlogPosts();
+};
+export const dbGetBlogPostBySlug = (slug: string): BlogPost | undefined => {
+    return getBlogPostBySlug(slug);
+};
+export const dbRegisterForEvent = (eventId: string): boolean => {
+    return registerForEvent(eventId);
+};
+
+export const registerForEvent = (eventId: string): boolean => {
+    return false; // Mocked
+};
+
+```
