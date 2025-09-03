@@ -1,4 +1,5 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { getStaticUsers, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -6,76 +7,8 @@ import { query } from './db';
 import { v4 as uuidv4 } from 'uuid';
 
 // --- IN-MEMORY MOCK DATABASE ---
-let mockUsers: UserProfile[] = getStaticUsers();
 let mockTeams: Team[] = [];
 let mockAppNotifications: AppNotification[] = [];
-let mockBlogPosts: BlogPost[] = [
-  {
-    id: 'blog-1',
-    slug: 'benefits-of-sports',
-    title: 'Top 5 Health Benefits of Playing Sports Regularly',
-    excerpt: 'Discover how incorporating regular sports activities into your routine can drastically improve your physical and mental well-being.',
-    content: `
-      <p>Engaging in sports is more than just a hobby; it's a powerful tool for enhancing your overall health. Here are five key benefits:</p>
-      <ol>
-        <li><strong>Improved Cardiovascular Health:</strong> Regular physical activity strengthens your heart, improves blood circulation, and reduces the risk of heart disease.</li>
-        <li><strong>Weight Management:</strong> Sports are a fantastic way to burn calories and maintain a healthy weight, which is crucial for preventing a range of health issues.</li>
-        <li><strong>Stress Reduction:</strong> Physical exertion is a natural stress-reliever. It releases endorphins, which act as mood elevators and can help combat anxiety and depression.</li>
-        <li><strong>Enhanced Social Skills:</strong> Team sports, in particular, foster communication, teamwork, and leadership skills. They provide a great opportunity to connect with like-minded individuals.</li>
-        <li><strong>Increased Bone Density:</strong> Weight-bearing activities like running, tennis, and basketball help in building and maintaining strong bones, reducing the risk of osteoporosis later in life.</li>
-      </ol>
-      <p>Ready to get started? <a href="/facilities">Browse our facilities</a> and book your next game today!</p>
-    `,
-    authorName: 'Dr. Eva Rostova',
-    authorAvatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
-    publishedAt: '2024-05-15T10:00:00Z',
-    tags: ['Health', 'Fitness', 'Wellness'],
-    isFeatured: true,
-  },
-  {
-    id: 'blog-2',
-    slug: 'choosing-the-right-facility',
-    title: 'How to Choose the Perfect Sports Facility for Your Needs',
-    excerpt: 'Finding the right place to play can make all the difference. Here are some tips to help you select the best facility for your game.',
-    content: `
-      <p>Choosing a sports facility involves more than just finding an open slot. Consider these factors to ensure a great experience:</p>
-      <ul>
-        <li><strong>Location & Accessibility:</strong> Is it easy to get to? Is there adequate parking or public transport access?</li>
-        <li><strong>Court/Field Quality:</strong> Check reviews for comments on the maintenance of the playing surface. A well-kept area prevents injuries and improves the game.</li>
-        <li><strong>Amenities:</strong> Do you need lockers, showers, or a place to buy refreshments? Use our platform's amenity filters to find facilities that have what you need.</li>
-        <li><strong>Cost:</strong> Compare prices, but also consider the value. A slightly more expensive facility might offer better quality and amenities that are worth the price.</li>
-        <li><strong>Booking Policy:</strong> Understand the cancellation and refund policies before you book to avoid any surprises.</li>
-      </ul>
-      <p>Using the advanced search filters on Sports Arena can help you narrow down your options and find the perfect match in minutes!</p>
-    `,
-    authorName: 'Mark Chen',
-    authorAvatarUrl: 'https://randomuser.me/api/portraits/men/35.jpg',
-    publishedAt: '2024-05-10T14:30:00Z',
-    tags: ['Tips', 'Facilities', 'Booking'],
-  },
-  {
-    id: 'blog-3',
-    slug: 'intro-to-box-cricket',
-    title: 'Get into the Game: An Introduction to Box Cricket',
-    excerpt: 'Heard of Box Cricket but not sure what it is? This fast-paced version of the classic sport is taking the city by storm.',
-    content: `
-      <p>Box cricket is a high-energy, condensed version of cricket played in a netted enclosure. It's perfect for smaller groups and offers a more intense, action-packed experience.</p>
-      <h3>Why Try Box Cricket?</h3>
-      <ul>
-        <li><strong>Fast-Paced:</strong> With a smaller playing area, every ball is an event. There's no downtime waiting for the ball to be retrieved from the boundary.</li>
-        <li><strong>Accessible:</strong> You don't need a full team of 11 players. Games are often played with 6-8 players per side.</li>
-        <li><strong>All-Weather Play:</strong> Many of our listed facilities are covered or indoors, meaning you can play rain or shine.</li>
-        <li><strong>Great for All Skill Levels:</strong> It's a fun way for beginners to learn the basics and for experienced players to sharpen their reflexes.</li>
-      </ul>
-      <p>Many of our listed facilities, like The Box Yard, offer excellent box cricket arenas. It's a fantastic way to get a great workout and have fun with friends. Give it a try!</p>
-    `,
-    authorName: 'Priya Sharma',
-    authorAvatarUrl: 'https://randomuser.me/api/portraits/women/33.jpg',
-    publishedAt: '2024-05-05T09:00:00Z',
-    tags: ['Sports', 'Cricket', 'Local'],
-  }
-];
-let mockEvents: SportEvent[] = [];
 let mockPricingRules: PricingRule[] = [];
 let mockPromotionRules: PromotionRule[] = [];
 let mockSiteSettings: SiteSettings = { siteName: 'Sports Arena', defaultCurrency: 'INR', timezone: 'Asia/Kolkata', maintenanceMode: false, notificationTemplates: [] };
@@ -117,7 +50,7 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
         query('SELECT facility_id, sports_id FROM facility_sports'),
         query('SELECT facility_id, amenity_id FROM facility_amenities'),
         query('SELECT facility_id, sport_id, price, pricing_model FROM facility_sport_prices'),
-        query('SELECT facility_id, day, open_time, close_time FROM facility_operating_hours'),
+        query('SELECT facility_id, day, open, close FROM facility_operating_hours'),
         query('SELECT * FROM reviews'),
     ]);
 
@@ -150,7 +83,7 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
         if (!operatingHoursMap.has(row.facility_id)) {
             operatingHoursMap.set(row.facility_id, []);
         }
-        operatingHoursMap.get(row.facility_id)!.push({ day: row.day, open: row.open_time, close: row.close_time });
+        operatingHoursMap.get(row.facility_id)!.push({ day: row.day, open: row.open, close: row.close });
     }
 
     const reviewsMap = new Map<string, Review[]>();
@@ -269,7 +202,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
     `, [id]);
 
     const sportPricesPromise = query('SELECT sport_id, price, pricing_model FROM facility_sport_prices WHERE facility_id = $1', [id]);
-    const operatingHoursPromise = query('SELECT day, open_time, close_time FROM facility_operating_hours WHERE facility_id = $1', [id]);
+    const operatingHoursPromise = query('SELECT day, open, close FROM facility_operating_hours WHERE facility_id = $1', [id]);
     const reviewsPromise = query('SELECT * FROM reviews WHERE facility_id = $1', [id]);
     
     const [sportsRes, amenitiesRes, sportPricesRes, operatingHoursRes, reviewsRes] = await Promise.all([
@@ -281,7 +214,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
         sports: sportsRes.rows.map(s => ({ ...s, iconName: s.icon_name })),
         amenities: mockAmenities.filter(amenity => amenitiesRes.rows.some(a => a.id === amenity.id)),
         sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
-        operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
+        operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open, close: h.close })),
         reviews: reviewsRes.rows.map(r => ({ ...r, id: r.id, facilityId: r.facility_id, userId: r.user_id, userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile, rating: r.rating, comment: r.comment, createdAt: new Date(r.created_at).toISOString(), bookingId: r.booking_id })),
         blockedSlots: [],
         availableEquipment: [],
@@ -310,7 +243,7 @@ export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<F
         ...sports.map(sport => query('INSERT INTO facility_sports (facility_id, sports_id) VALUES ($1, $2)', [newFacilityId, sport.id])),
         ...amenities.map(amenity => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [newFacilityId, amenity.id])),
         ...sportPrices.map(sp => query('INSERT INTO facility_sport_prices (facility_id, sport_id, price, pricing_model) VALUES ($1, $2, $3, $4)', [newFacilityId, sp.sportId, sp.price, sp.pricingModel])),
-        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [newFacilityId, oh.day, oh.open, oh.close])),
+        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open, close) VALUES ($1, $2, $3, $4)', [newFacilityId, oh.day, oh.open, oh.close])),
     ]);
 
     const newFacility = await getFacilityById(newFacilityId);
@@ -338,7 +271,7 @@ export const updateFacility = async (facilityData: Facility): Promise<Facility> 
         ...sports.map(sport => query('INSERT INTO facility_sports (facility_id, sports_id) VALUES ($1, $2)', [id, sport.id])),
         ...amenities.map(amenity => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [id, amenity.id])),
         ...sportPrices.map(sp => query('INSERT INTO facility_sport_prices (facility_id, sport_id, price, pricing_model) VALUES ($1, $2, $3, $4)', [id, sp.sportId, sp.price, sp.pricingModel])),
-        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [id, oh.day, oh.open, oh.close])),
+        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open, close) VALUES ($1, $2, $3, $4)', [id, oh.day, oh.open, oh.close])),
     ]);
 
     const updatedFacility = await getFacilityById(id);
@@ -474,17 +407,18 @@ export const updateUser = async (userId: string, updates: Partial<UserProfile>):
 
 export async function addUser(userData: { name: string; email: string, password?: string }): Promise<UserProfile> {
   const { name, email, password } = userData;
-  const id = uuidv4();
 
   const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
   if (existingUser.rows.length > 0) {
     throw new Error('A user with this email already exists.');
   }
+  
+  const defaultProfilePic = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`;
 
   const res = await query(
-    `INSERT INTO users (id, name, email, password, role, status, is_profile_public)
-     VALUES ($1, $2, $3, $4, 'User', 'Active', true) RETURNING *`,
-    [id, name, email, password]
+    `INSERT INTO users (name, email, password, role, status, is_profile_public, profile_picture_url, membership_level, loyalty_points)
+     VALUES ($1, $2, $3, 'User', 'Active', true, $4, 'Basic', 0) RETURNING *`,
+    [name, email, password, defaultProfilePic]
   );
   
   const newUserRow = res.rows[0];
@@ -585,8 +519,42 @@ export const getReviewsByFacilityId = (facilityId: string): Review[] => {
 export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === team.id);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
 export const getNotificationsForUser = async (userId: string): Promise<AppNotification[]> => Promise.resolve(mockAppNotifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-export const getAllBlogPosts = (): BlogPost[] => mockBlogPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-export const getBlogPostBySlug = (slug: string): BlogPost | undefined => mockBlogPosts.find(post => post.slug === slug);
+
+export const getAllBlogPosts = async (): Promise<BlogPost[]> => {
+    const { rows } = await query('SELECT * FROM blog_posts ORDER BY published_at DESC');
+    return rows.map(row => ({
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        excerpt: row.excerpt,
+        content: row.content,
+        authorName: row.author_name,
+        authorAvatarUrl: row.author_avatar_url,
+        publishedAt: new Date(row.published_at).toISOString(),
+        tags: row.tags,
+        isFeatured: row.is_featured,
+        dataAiHint: row.data_ai_hint,
+    }));
+};
+
+export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => {
+    const { rows } = await query('SELECT * FROM blog_posts WHERE slug = $1', [slug]);
+    if (rows.length === 0) return undefined;
+    const row = rows[0];
+    return {
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        excerpt: row.excerpt,
+        content: row.content,
+        authorName: row.author_name,
+        authorAvatarUrl: row.author_avatar_url,
+        publishedAt: new Date(row.published_at).toISOString(),
+        tags: row.tags,
+        isFeatured: row.is_featured,
+        dataAiHint: row.data_ai_hint,
+    };
+};
 
 export const getAllEvents = async (): Promise<SportEvent[]> => {
     const { rows } = await query('SELECT * FROM events');
@@ -994,11 +962,8 @@ export const toggleFavoriteFacility = async (userId: string, facilityId: string)
 
 // This is a mock implementation for client-side updates while DB is not fully relational for this.
 export const mockUpdateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
-    const userIndex = mockUsers.findIndex(u => u.id === userId);
-    if (userIndex !== -1) {
-        mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates };
-        return mockUsers[userIndex];
-    }
+    // This function should be removed once the favorites are moved to a proper DB table.
+    // For now, it doesn't interact with the DB and is not used by the main data flow.
     return undefined;
 }
 

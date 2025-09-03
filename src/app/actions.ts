@@ -37,8 +37,11 @@ import {
     getBookingById as dbGetBookingById,
     addUser as dbAddUser,
     getPromotionRuleByCode as dbGetPromotionRuleByCode,
+    getAllBlogPosts as dbGetAllBlogPosts,
+    getBlogPostBySlug as dbGetBlogPostBySlug,
+    registerForEvent,
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review } from '@/lib/types';
+import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import { mockAmenities, getMockSports } from '@/lib/mock-data';
 
@@ -261,4 +264,16 @@ export async function addReviewAction(reviewData: Omit<Review, 'id' | 'createdAt
     revalidatePath(`/facilities/${reviewData.facilityId}`);
     revalidatePath('/account/bookings'); // Revalidate bookings to show "Reviewed" status
     return newReview;
+}
+
+export async function getAllBlogPostsAction(): Promise<BlogPost[]> {
+    return dbGetAllBlogPosts();
+}
+
+export async function getBlogPostBySlugAction(slug: string): Promise<BlogPost | undefined> {
+    return dbGetBlogPostBySlug(slug);
+}
+
+export async function registerForEventAction(eventId: string): Promise<boolean> {
+    return registerForEvent(eventId);
 }
