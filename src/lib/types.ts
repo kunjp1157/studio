@@ -157,13 +157,13 @@ export interface Booking {
   endTime: string; 
   durationHours?: number; 
   numberOfGuests?: number; 
-  baseFacilityPrice?: number; 
-  equipmentRentalCost?: number; 
+  baseFacilityPrice: number; 
+  equipmentRentalCost: number; 
   appliedPromotion?: AppliedPromotionInfo; 
   totalPrice: number; 
   status: 'Confirmed' | 'Pending' | 'Cancelled';
   bookedAt: string; 
-  reviewed?: boolean; 
+  reviewed: boolean; 
   rentedEquipment?: RentedItemInfo[];
 }
 

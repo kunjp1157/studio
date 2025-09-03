@@ -443,13 +443,18 @@ export const getBookingById = async (id: string): Promise<Booking | undefined> =
     const { rows } = await query('SELECT *, created_at AS "bookedAt" FROM bookings WHERE id = $1', [id]);
     if (rows.length === 0) return undefined;
     const row = rows[0];
+    const facility = await getFacilityById(row.facility_id);
+    const sport = await getSportById(row.sport_id);
+
+    if (!facility || !sport) return undefined;
+
     return {
         id: row.id,
         userId: row.user_id,
         facilityId: row.facility_id,
-        facilityName: row.facility_name,
+        facilityName: facility.name,
         sportId: row.sport_id,
-        sportName: row.sport_name,
+        sportName: sport.name,
         date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
         startTime: row.start_time,
         endTime: row.end_time,
@@ -458,6 +463,8 @@ export const getBookingById = async (id: string): Promise<Booking | undefined> =
         status: row.status,
         bookedAt: new Date(row.bookedAt).toISOString(),
         reviewed: row.reviewed,
+        baseFacilityPrice: parseFloat(row.base_facility_price),
+        equipmentRentalCost: parseFloat(row.equipment_rental_cost),
     };
 };
 
@@ -465,44 +472,46 @@ export const addBooking = async (bookingData: Omit<Booking, 'id' | 'bookedAt'>):
     const {
         userId,
         facilityId,
-        facilityName,
         sportId,
-        sportName,
         date,
         startTime,
         endTime,
         durationHours,
         totalPrice,
         status,
+        baseFacilityPrice,
+        equipmentRentalCost,
+        appliedPromotion,
+        numberOfGuests,
     } = bookingData;
 
     try {
         const res = await query(
-            `INSERT INTO bookings (user_id, facility_id, facility_name, sport_id, sport_name, date, start_time, end_time, duration_hours, total_price, status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-             RETURNING *, created_at AS "bookedAt"`,
-            [userId, facilityId, facilityName, sportId, sportName, date, startTime, endTime, durationHours, totalPrice, status]
+            `INSERT INTO bookings (user_id, facility_id, sport_id, date, start_time, end_time, duration_hours, total_price, status, reviewed, base_facility_price, equipment_rental_cost, applied_promotion_code, applied_promotion_discount, number_of_guests)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, $10, $11, $12, $13, $14)
+             RETURNING id`,
+            [
+                userId,
+                facilityId,
+                sportId,
+                date,
+                startTime,
+                endTime,
+                durationHours,
+                totalPrice,
+                status,
+                baseFacilityPrice,
+                equipmentRentalCost,
+                appliedPromotion?.code,
+                appliedPromotion?.discountAmount,
+                numberOfGuests
+            ]
         );
-        const newBookingRow = res.rows[0];
-        
-        // Map the database row to the Booking type
-        const newBooking: Booking = {
-            id: newBookingRow.id,
-            userId: newBookingRow.user_id,
-            facilityId: newBookingRow.facility_id,
-            facilityName: newBookingRow.facility_name,
-            sportId: newBookingRow.sport_id,
-            sportName: newBookingRow.sport_name,
-            date: formatDateFns(new Date(newBookingRow.date), 'yyyy-MM-dd'),
-            startTime: newBookingRow.start_time,
-            endTime: newBookingRow.end_time,
-            durationHours: newBookingRow.duration_hours,
-            totalPrice: parseFloat(newBookingRow.total_price),
-            status: newBookingRow.status,
-            bookedAt: new Date(newBookingRow.bookedAt).toISOString(),
-            reviewed: newBookingRow.reviewed,
-        };
-
+        const newBookingId = res.rows[0].id;
+        const newBooking = await getBookingById(newBookingId);
+        if (!newBooking) {
+            throw new Error("Could not retrieve newly created booking.");
+        }
         return newBooking;
     } catch (error) {
         console.error('Error adding booking to database:', error);
@@ -549,8 +558,6 @@ export async function addUser(userData: { name: string; email: string, password?
     throw new Error('A user with this email already exists.');
   }
 
-  // In a real app, you would hash the password here before storing.
-  // For this project, we'll store it as is (which is NOT secure for production).
   const res = await query(
     `INSERT INTO users (id, name, email, password, role, status, is_profile_public)
      VALUES ($1, $2, $3, $4, 'User', 'Active', true) RETURNING *`,
@@ -577,46 +584,71 @@ export const getBookingsForFacilityOnDate = async (facilityId: string, date: str
         `SELECT * FROM bookings WHERE facility_id = $1 AND date = $2 AND status IN ('Confirmed', 'Pending')`,
         [facilityId, date]
     );
-    return rows.map(row => ({
-        id: row.id,
-        userId: row.user_id,
-        facilityId: row.facility_id,
-        facilityName: row.facility_name,
-        sportId: row.sport_id,
-        sportName: row.sport_name,
-        date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
-        startTime: row.start_time,
-        endTime: row.end_time,
-        durationHours: row.duration_hours,
-        totalPrice: parseFloat(row.total_price),
-        status: row.status,
-        bookedAt: new Date(row.created_at).toISOString(),
-        reviewed: row.reviewed,
-    }));
+
+    const bookings: Booking[] = [];
+    for (const row of rows) {
+        const facility = await getFacilityById(row.facility_id);
+        const sport = await getSportById(row.sport_id);
+
+        if (facility && sport) {
+            bookings.push({
+                id: row.id,
+                userId: row.user_id,
+                facilityId: row.facility_id,
+                facilityName: facility.name,
+                sportId: row.sport_id,
+                sportName: sport.name,
+                date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
+                startTime: row.start_time,
+                endTime: row.end_time,
+                durationHours: row.duration_hours,
+                totalPrice: parseFloat(row.total_price),
+                status: row.status,
+                bookedAt: new Date(row.created_at).toISOString(),
+                reviewed: row.reviewed,
+            });
+        }
+    }
+    return bookings;
 };
 
 export const dbGetBookingsByUserId = async (userId: string): Promise<Booking[]> => {
     const { rows } = await query('SELECT * FROM bookings WHERE user_id = $1 ORDER BY date DESC, start_time DESC', [userId]);
-    return rows.map(row => ({
-        id: row.id,
-        userId: row.user_id,
-        facilityId: row.facility_id,
-        facilityName: row.facility_name,
-        sportId: row.sport_id,
-        sportName: row.sport_name,
-        date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
-        startTime: row.start_time,
-        endTime: row.end_time,
-        durationHours: row.duration_hours,
-        totalPrice: parseFloat(row.total_price),
-        status: row.status,
-        bookedAt: new Date(row.created_at).toISOString(),
-        reviewed: row.reviewed,
-    }));
+    
+    const bookings: Booking[] = [];
+    for (const row of rows) {
+        const facility = await getFacilityById(row.facility_id);
+        const sport = await getSportById(row.sport_id);
+
+        if (facility && sport) {
+            bookings.push({
+                id: row.id,
+                userId: row.user_id,
+                facilityId: row.facility_id,
+                facilityName: facility.name,
+                sportId: row.sport_id,
+                sportName: sport.name,
+                date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
+                startTime: row.start_time,
+                endTime: row.end_time,
+                durationHours: row.duration_hours,
+                totalPrice: parseFloat(row.total_price),
+                status: row.status,
+                bookedAt: new Date(row.created_at).toISOString(),
+                reviewed: row.reviewed,
+            });
+        }
+    }
+    return bookings;
 };
 
 // --- STATIC/MOCK GETTERS ---
-export const getSportById = (id: string): Sport | undefined => getMockSports().find(s => s.id === id);
+export const getSportById = async (id: string): Promise<Sport | undefined> => {
+    const { rows } = await query('SELECT * FROM sports WHERE id = $1', [id]);
+    if (rows.length === 0) return undefined;
+    const sport = rows[0];
+    return { ...sport, iconName: sport.icon_name };
+}
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
 export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {
@@ -681,22 +713,31 @@ export const getOpenLfgRequests = (): LfgRequest[] => mockLfgRequests.filter(req
 
 export const getAllBookings = async (): Promise<Booking[]> => {
     const { rows } = await query('SELECT *, created_at AS "bookedAt" FROM bookings');
-    return rows.map(row => ({
-        id: row.id,
-        userId: row.user_id,
-        facilityId: row.facility_id,
-        facilityName: row.facility_name,
-        sportId: row.sport_id,
-        sportName: row.sport_name,
-        date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
-        startTime: row.start_time,
-        endTime: row.end_time,
-        durationHours: row.duration_hours,
-        totalPrice: parseFloat(row.total_price),
-        status: row.status,
-        bookedAt: new Date(row.bookedAt).toISOString(),
-        reviewed: row.reviewed,
-    }));
+    const bookings: Booking[] = [];
+    for (const row of rows) {
+        const facility = await getFacilityById(row.facility_id);
+        const sport = await getSportById(row.sport_id);
+
+        if (facility && sport) {
+            bookings.push({
+                id: row.id,
+                userId: row.user_id,
+                facilityId: row.facility_id,
+                facilityName: facility.name,
+                sportId: row.sport_id,
+                sportName: sport.name,
+                date: formatDateFns(new Date(row.date), 'yyyy-MM-dd'),
+                startTime: row.start_time,
+                endTime: row.end_time,
+                durationHours: row.duration_hours,
+                totalPrice: parseFloat(row.total_price),
+                status: row.status,
+                bookedAt: new Date(row.bookedAt).toISOString(),
+                reviewed: row.reviewed,
+            });
+        }
+    }
+    return bookings;
 };
 export const getEventsByFacilityIds = async (facilityIds: string[]): Promise<SportEvent[]> => Promise.resolve(mockEvents.filter(e => facilityIds.includes(e.facilityId)));
 export const getLfgRequestsByFacilityIds = async (facilityIds: string[]): Promise<LfgRequest[]> => Promise.resolve(mockLfgRequests.filter(lfg => facilityIds.includes(lfg.facilityId)));
@@ -1117,6 +1158,7 @@ export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] =
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => {
     return dbGetPromotionRuleByCode(code);
 }
+
 
 
 
