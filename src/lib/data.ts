@@ -1,5 +1,4 @@
 
-
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
 import { getStaticUsers, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -8,8 +7,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 // --- IN-MEMORY MOCK DATABASE ---
 let mockUsers: UserProfile[] = getStaticUsers();
-let mockBookings: Booking[] = [];
-let mockReviews: Review[] = [];
 let mockTeams: Team[] = [];
 let mockAppNotifications: AppNotification[] = [];
 let mockBlogPosts: BlogPost[] = [
@@ -78,47 +75,7 @@ let mockBlogPosts: BlogPost[] = [
     tags: ['Sports', 'Cricket', 'Local'],
   }
 ];
-let mockEvents: SportEvent[] = [
-  {
-    id: 'event-1',
-    name: 'Monsoon Soccer League',
-    facilityId: 'facility-1',
-    facilityName: 'Pune Sports Complex',
-    sport: getMockSports().find(s => s.id === 'sport-1')!,
-    startDate: '2024-08-01T09:00:00Z',
-    endDate: '2024-08-31T18:00:00Z',
-    description: 'The biggest 5-a-side soccer tournament of the season. Gather your team and compete for the championship title and exciting cash prizes.',
-    entryFee: 5000,
-    maxParticipants: 32,
-    registeredParticipants: 18,
-  },
-  {
-    id: 'event-2',
-    name: 'Club Tennis Open',
-    facilityId: 'facility-2',
-    facilityName: 'Deccan Gymkhana Tennis Club',
-    sport: getMockSports().find(s => s.id === 'sport-3')!,
-    startDate: '2024-09-05T10:00:00Z',
-    endDate: '2024-09-10T17:00:00Z',
-    description: 'An open tennis tournament for all skill levels. Singles and doubles categories available. Show off your skills on our premium clay courts.',
-    entryFee: 1500,
-    maxParticipants: 64,
-    registeredParticipants: 45,
-  },
-  {
-    id: 'event-3',
-    name: 'Sunrise Yoga Workshop',
-    facilityId: 'facility-6',
-    facilityName: 'Zenith Yoga & Dance Studio',
-    sport: getMockSports().find(s => s.id === 'sport-6')!,
-    startDate: '2024-08-10T06:00:00Z',
-    endDate: '2024-08-10T08:00:00Z',
-    description: 'A rejuvenating two-hour yoga workshop focusing on mindfulness and Vinyasa flow. Start your weekend with peace and energy. All levels welcome.',
-    entryFee: 750,
-    maxParticipants: 20,
-    registeredParticipants: 12,
-  },
-];
+let mockEvents: SportEvent[] = [];
 let mockPricingRules: PricingRule[] = [];
 let mockPromotionRules: PromotionRule[] = [];
 let mockSiteSettings: SiteSettings = { siteName: 'Sports Arena', defaultCurrency: 'INR', timezone: 'Asia/Kolkata', maintenanceMode: false, notificationTemplates: [] };
@@ -126,63 +83,7 @@ let mockWaitlist: WaitlistEntry[] = [];
 let mockLfgRequests: LfgRequest[] = [];
 let mockChallenges: Challenge[] = [];
 
-
-// This variable is now mainly for client-side state management, initialized by components.
-export let mockUser: UserProfile | undefined = undefined;
-
-// This function allows other components (like the UserSwitcher) to change the active user.
-export const setActiveMockUser = (role: 'admin' | 'owner' | 'user') => {
-  const newUser = mockUsers.find(u => u.role.toLowerCase() === role);
-  if (newUser) {
-    mockUser = newUser;
-  }
-};
-
-
-// --- DATA ACCESS FUNCTIONS (MOCK IMPLEMENTATION) ---
-
-// NO-OP since we are not using database listeners anymore
-export function listenToCollection<T>(
-  collectionName: string,
-  callback: (data: T[]) => void,
-  onError: (error: Error) => void
-) {
-  return () => {};
-}
-
-// Polling for user bookings to simulate real-time updates
-export function listenToUserBookings(
-    userId: string, 
-    callback: (bookings: Booking[]) => void, 
-    onError: (error: Error) => void
-): () => void {
-    let isCancelled = false;
-
-    const fetchAndPoll = async () => {
-        if (isCancelled) return;
-        try {
-            const bookings = await dbGetBookingsByUserId(userId);
-            if (!isCancelled) {
-                callback(bookings);
-            }
-        } catch (err) {
-            if (!isCancelled) {
-                onError(err as Error);
-            }
-        } finally {
-            if (!isCancelled) {
-                setTimeout(fetchAndPoll, 5000); // Poll every 5 seconds
-            }
-        }
-    };
-
-    fetchAndPoll(); // Initial fetch
-
-    return () => {
-        isCancelled = true;
-    };
-}
-
+// --- DATA ACCESS FUNCTIONS ---
 
 const mapDbRowToFacility = (row: any): Omit<Facility, 'sports' | 'amenities' | 'sportPrices' | 'operatingHours' | 'blockedSlots' | 'availableEquipment' | 'reviews' | 'maintenanceSchedules'> => ({
     id: row.id,
@@ -200,12 +101,10 @@ const mapDbRowToFacility = (row: any): Omit<Facility, 'sports' | 'amenities' | '
     ownerId: row.owner_id,
 });
 
-
 export const getAllFacilities = async (): Promise<Facility[]> => {
     const allSports = await getAllSports();
     const allAmenities = mockAmenities;
 
-    // Fetch all data in parallel
     const [
         facilitiesRes,
         facilitySportsRes,
@@ -222,7 +121,6 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
         query('SELECT * FROM reviews'),
     ]);
 
-    // Create maps for efficient lookups
     const facilitySportsMap = new Map<string, string[]>();
     for (const row of facilitySportsRes.rows) {
         if (!facilitySportsMap.has(row.facility_id)) {
@@ -274,7 +172,6 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
         });
     }
 
-    // Assemble the final facility objects
     const facilities: Facility[] = facilitiesRes.rows.map(row => {
         const facilityId = row.id;
         const sportIds = facilitySportsMap.get(facilityId) || [];
@@ -323,11 +220,34 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
     }));
 };
 
-export const getUserById = (userId: string): UserProfile | undefined => {
+export const getUserById = async (userId: string): Promise<UserProfile | undefined> => {
     if (!userId) return undefined;
-    return mockUsers.find(user => user.id === userId);
+    const { rows } = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (rows.length === 0) return undefined;
+    const row = rows[0];
+    return {
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        password: row.password,
+        phone: row.phone,
+        profilePictureUrl: row.profile_picture_url,
+        dataAiHint: row.data_ai_hint,
+        membershipLevel: row.membership_level,
+        loyaltyPoints: row.loyalty_points,
+        role: row.role,
+        status: row.status,
+        joinedAt: row.joined_at ? new Date(row.joined_at).toISOString() : new Date().toISOString(),
+        isProfilePublic: row.is_profile_public,
+        achievements: [],
+        skillLevels: [],
+        preferredSports: [],
+        favoriteFacilities: [],
+        teamIds: [],
+        bio: row.bio,
+        preferredPlayingTimes: row.preferred_playing_times,
+    };
 };
-
 
 export const getFacilityById = async (id: string): Promise<Facility | undefined> => {
     const facilityRes = await query('SELECT * FROM facilities WHERE id = $1', [id]);
@@ -335,7 +255,6 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
         return undefined;
     }
     const facilityRow = facilityRes.rows[0];
-    const allSports = await getAllSports();
 
     const sportsPromise = query(`
         SELECT s.* FROM sports s
@@ -387,15 +306,10 @@ export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<F
     const newFacilityRow = res.rows[0];
     const newFacilityId = newFacilityRow.id;
 
-    // Concurrently handle relations
     await Promise.all([
-        // Sports
         ...sports.map(sport => query('INSERT INTO facility_sports (facility_id, sports_id) VALUES ($1, $2)', [newFacilityId, sport.id])),
-        // Amenities
         ...amenities.map(amenity => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [newFacilityId, amenity.id])),
-        // Prices
         ...sportPrices.map(sp => query('INSERT INTO facility_sport_prices (facility_id, sport_id, price, pricing_model) VALUES ($1, $2, $3, $4)', [newFacilityId, sp.sportId, sp.price, sp.pricingModel])),
-        // Hours
         ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [newFacilityId, oh.day, oh.open, oh.close])),
     ]);
 
@@ -413,7 +327,6 @@ export const updateFacility = async (facilityData: Facility): Promise<Facility> 
         [name, type, address, city, location, description, isPopular, isIndoor, ownerId, id]
     );
     
-    // Clear and re-insert relational data
     await Promise.all([
         query('DELETE FROM facility_sports WHERE facility_id = $1', [id]),
         query('DELETE FROM facility_amenities WHERE facility_id = $1', [id]),
@@ -434,7 +347,6 @@ export const updateFacility = async (facilityData: Facility): Promise<Facility> 
 };
 
 export const deleteFacility = async (facilityId: string): Promise<void> => {
-    // The CASCADE option in the schema will handle deleting related entries in junction tables
     await query('DELETE FROM facilities WHERE id = $1', [facilityId]);
     return Promise.resolve();
 };
@@ -536,18 +448,29 @@ export const updateBooking = async (bookingId: string, updates: Partial<Booking>
 };
 
 export const updateUser = async (userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> => {
-    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    const { name, email, role, status, membershipLevel, favoriteFacilities } = updates;
+
+    // This is a simplified update. A real app would handle each field separately.
+    // For now, we'll focus on a few key updatable fields.
+    const res = await query(
+        `UPDATE users 
+         SET name = COALESCE($1, name), 
+             email = COALESCE($2, email), 
+             role = COALESCE($3, role), 
+             status = COALESCE($4, status), 
+             membership_level = COALESCE($5, membership_level)
+         WHERE id = $6 RETURNING *`,
+        [name, email, role, status, membershipLevel, userId]
+    );
+
+    if (res.rows.length === 0) return undefined;
     
-    if (userIndex !== -1) {
-        mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates };
-        
-        if (mockUser?.id === userId) {
-            mockUser = mockUsers[userIndex];
-        }
-        return mockUsers[userIndex];
-    }
-    return undefined;
+    // Note: favoriteFacilities would need a separate table in a real relational DB.
+    // We are skipping its update here as it's not in the schema.
+    
+    return getUserById(res.rows[0].id);
 };
+
 
 export async function addUser(userData: { name: string; email: string, password?: string }): Promise<UserProfile> {
   const { name, email, password } = userData;
@@ -565,16 +488,8 @@ export async function addUser(userData: { name: string; email: string, password?
   );
   
   const newUserRow = res.rows[0];
-  
-  const newUser: UserProfile = {
-    id: newUserRow.id,
-    name: newUserRow.name,
-    email: newUserRow.email,
-    role: newUserRow.role,
-    status: newUserRow.status,
-    joinedAt: new Date(newUserRow.joined_at).toISOString(),
-    isProfilePublic: newUserRow.is_profile_public,
-  };
+  const newUser = await getUserById(newUserRow.id);
+  if (!newUser) throw new Error("Failed to retrieve newly created user");
   return newUser;
 }
 
@@ -612,7 +527,7 @@ export const getBookingsForFacilityOnDate = async (facilityId: string, date: str
     return bookings;
 };
 
-export const dbGetBookingsByUserId = async (userId: string): Promise<Booking[]> => {
+export const getBookingsByUserId = async (userId: string): Promise<Booking[]> => {
     const { rows } = await query('SELECT * FROM bookings WHERE user_id = $1 ORDER BY date DESC, start_time DESC', [userId]);
     
     const bookings: Booking[] = [];
@@ -642,7 +557,6 @@ export const dbGetBookingsByUserId = async (userId: string): Promise<Booking[]> 
     return bookings;
 };
 
-// --- STATIC/MOCK GETTERS ---
 export const getSportById = async (id: string): Promise<Sport | undefined> => {
     const { rows } = await query('SELECT * FROM sports WHERE id = $1', [id]);
     if (rows.length === 0) return undefined;
@@ -664,7 +578,10 @@ export const calculateAverageRating = (reviews: Review[] | undefined): number =>
   return parseFloat((totalRating / reviews.length).toFixed(1));
 };
 
-export const getReviewsByFacilityId = (facilityId: string): Review[] => mockReviews.filter(review => review.facilityId === facilityId);
+export const getReviewsByFacilityId = (facilityId: string): Review[] => {
+    // This should ideally be a DB query
+    return [];
+}
 export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === team.id);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
 export const getNotificationsForUser = async (userId: string): Promise<AppNotification[]> => Promise.resolve(mockAppNotifications.filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
@@ -706,7 +623,6 @@ export const getPricingRuleById = (id: string): PricingRule | undefined => mockP
 export const getAllPromotionRules = (): PromotionRule[] => [...mockPromotionRules].sort((a, b) => a.name.localeCompare(b.name));
 export const getPromotionRuleById = (id: string): PromotionRule | undefined => mockPromotionRules.find(r => r.id === r.id);
 export const isUserOnWaitlist = (userId: string, facilityId: string, date: string, startTime: string): boolean => {
-    if(!mockUser) return false;
     return mockWaitlist.some(entry => entry.userId === userId && entry.facilityId === facilityId && entry.date === date && entry.startTime === startTime);
 }
 export const getOpenLfgRequests = (): LfgRequest[] => mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -739,7 +655,11 @@ export const getAllBookings = async (): Promise<Booking[]> => {
     }
     return bookings;
 };
-export const getEventsByFacilityIds = async (facilityIds: string[]): Promise<SportEvent[]> => Promise.resolve(mockEvents.filter(e => facilityIds.includes(e.facilityId)));
+export const getEventsByFacilityIds = async (facilityIds: string[]): Promise<SportEvent[]> => {
+    if (facilityIds.length === 0) return [];
+    const events = await getAllEvents();
+    return events.filter(e => facilityIds.includes(e.facilityId));
+};
 export const getLfgRequestsByFacilityIds = async (facilityIds: string[]): Promise<LfgRequest[]> => Promise.resolve(mockLfgRequests.filter(lfg => facilityIds.includes(lfg.facilityId)));
 export const getChallengesByFacilityIds = async (facilityIds: string[]): Promise<Challenge[]> => Promise.resolve(mockChallenges.filter(c => facilityIds.includes(c.facilityId)));
 
@@ -778,14 +698,12 @@ export const updateSiteSettings = (updates: Partial<SiteSettings>): SiteSettings
     return mockSiteSettings;
 };
 export const createTeam = (teamData: { name: string; sportId: string; captainId: string }): Team => {
-  const sport = getSportById(teamData.sportId);
-  if (!sport) throw new Error('Sport not found');
-  const newTeam: Team = { id: `team-${Date.now()}`, name: teamData.name, sport, captainId: teamData.captainId, memberIds: [teamData.captainId] };
-  mockTeams.push(newTeam);
-  if (mockUser) {
-    updateUser(teamData.captainId, { teamIds: [...(mockUser.teamIds || []), newTeam.id] });
-  }
-  return newTeam;
+    // This function needs to be converted to async and use DB
+    const sport = getMockSports().find(s => s.id === teamData.sportId);
+    if (!sport) throw new Error('Sport not found');
+    const newTeam: Team = { id: `team-${Date.now()}`, name: teamData.name, sport, captainId: teamData.captainId, memberIds: [teamData.captainId] };
+    mockTeams.push(newTeam);
+    return newTeam;
 };
 export const leaveTeam = (teamId: string, userId: string): boolean => {
   const teamIndex = mockTeams.findIndex(t => t.id === teamId);
@@ -801,10 +719,6 @@ export const leaveTeam = (teamId: string, userId: string): boolean => {
   } else {
       team.memberIds = team.memberIds.filter(id => id !== userId);
   }
-  
-  if (mockUser) {
-    updateUser(userId, { teamIds: mockUser.teamIds?.filter(id => id !== teamId) });
-  }
   return true;
 };
 
@@ -813,12 +727,7 @@ export const removeUserFromTeam = (teamId: string, memberIdToRemove: string, cap
     if (!team) throw new Error("Team not found.");
     if (team.captainId !== captainId) throw new Error("Only the team captain can remove members.");
     if (memberIdToRemove === captainId) throw new Error("Captain cannot remove themselves.");
-    
     team.memberIds = team.memberIds.filter(id => id !== memberIdToRemove);
-    const userToRemove = getUserById(memberIdToRemove);
-    if (userToRemove) {
-      updateUser(memberIdToRemove, { teamIds: userToRemove.teamIds?.filter(id => id !== teamId) });
-    }
 };
 
 export const transferCaptaincy = (teamId: string, newCaptainId: string, oldCaptainId: string): void => {
@@ -826,119 +735,79 @@ export const transferCaptaincy = (teamId: string, newCaptainId: string, oldCapta
     if (!team) throw new Error("Team not found.");
     if (team.captainId !== oldCaptainId) throw new Error("Only the current captain can transfer captaincy.");
     if (!team.memberIds.includes(newCaptainId)) throw new Error("The new captain must be a member of the team.");
-    
     team.captainId = newCaptainId;
 };
 
 export const deleteTeam = (teamId: string, captainId: string): void => {
     const teamIndex = mockTeams.findIndex(t => t.id === teamId);
     if (teamIndex === -1) throw new Error("Team not found.");
-    const team = mockTeams[teamIndex];
-    if (team.captainId !== captainId) throw new Error("Only the team captain can disband the team.");
-    
-    team.memberIds.forEach(memberId => {
-        const user = getUserById(memberId);
-        if (user) {
-          updateUser(memberId, { teamIds: user.teamIds?.filter(id => id !== teamId) });
-        }
-    });
-
+    if (mockTeams[teamIndex].captainId !== captainId) throw new Error("Only the team captain can disband the team.");
     mockTeams.splice(teamIndex, 1);
 };
 
 
-export const markNotificationAsRead = async (userId: string, notificationId: string): Promise<void> => { const notification = mockAppNotifications.find(n => n.id === notificationId && n.userId === userId); if (notification) notification.isRead = true; };
-export const markAllNotificationsAsRead = async (userId: string): Promise<void> => { mockAppNotifications.forEach(n => { if (n.userId === userId) n.isRead = true; }); };
+export const markNotificationAsRead = async (userId: string, notificationId: string): Promise<void> => { 
+    await query('UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2', [notificationId, userId]);
+};
+export const markAllNotificationsAsRead = async (userId: string): Promise<void> => { 
+    await query('UPDATE notifications SET is_read = true WHERE user_id = $1', [userId]);
+};
 
-export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Promise<Review> => {
-  const currentUser = getUserById(reviewData.userId);
-  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
-  mockReviews.push(newReview);
-  
-  const facility = await getFacilityById(reviewData.facilityId);
-  if (facility) {
-    const reviews = [...(facility.reviews || []), newReview];
-    const newRating = calculateAverageRating(reviews);
-    await updateFacility({ ...facility, reviews, rating: newRating });
-  }
-  return newReview;
+export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> => {
+    const currentUser = await getUserById(reviewData.userId);
+    if (!currentUser) throw new Error("User not found to post review.");
+
+    const { facilityId, userId, rating, comment, bookingId } = reviewData;
+    const res = await query(
+        `INSERT INTO reviews (facility_id, user_id, user_name, user_avatar, is_public_profile, rating, comment, booking_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [facilityId, userId, currentUser.name, currentUser.profilePictureUrl, currentUser.isProfilePublic, rating, comment, bookingId]
+    );
+    await query('UPDATE bookings SET reviewed = true WHERE id = $1', [bookingId]);
+
+    // Recalculate and update facility's average rating
+    const ratingRes = await query('SELECT AVG(rating) as avg_rating FROM reviews WHERE facility_id = $1', [facilityId]);
+    const newAvgRating = parseFloat(ratingRes.rows[0].avg_rating).toFixed(1);
+    await query('UPDATE facilities SET rating = $1 WHERE id = $2', [newAvgRating, facilityId]);
+
+    const newReview = res.rows[0];
+    return {
+        id: newReview.id,
+        facilityId: newReview.facility_id,
+        userId: newReview.user_id,
+        userName: newReview.user_name,
+        userAvatar: newReview.user_avatar,
+        isPublicProfile: newReview.is_public_profile,
+        rating: newReview.rating,
+        comment: newReview.comment,
+        createdAt: new Date(newReview.created_at).toISOString(),
+        bookingId: newReview.booking_id,
+    };
 };
 
 export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds' | 'facilityName'>): LfgRequest[] => {
-    const facility = getStaticFacilities().find(f => f.id === requestData.facilityId);
-    if (!facility) {
-        throw new Error("Facility not found");
-    }
-
-    const newRequest: LfgRequest = {
-        ...requestData,
-        id: `lfg-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        status: 'open',
-        interestedUserIds: [],
-        facilityName: facility.name
-    };
-    mockLfgRequests.unshift(newRequest);
-    return getOpenLfgRequests();
+    // Needs DB implementation
+    return [];
 };
 
 export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[] => {
-    const request = mockLfgRequests.find(r => r.id === lfgId);
-    if (request && !request.interestedUserIds.includes(userId) && request.userId !== userId) {
-        request.interestedUserIds.push(userId);
-    }
-    return getOpenLfgRequests();
+    // Needs DB implementation
+    return [];
 };
 
 export const getOpenChallenges = (): Challenge[] => {
-    return mockChallenges.filter(c => c.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Needs DB implementation
+    return [];
 };
 
 export const createChallenge = (data: { challengerId: string; sportId: string; facilityId: string; proposedDate: string; notes: string }): Challenge[] => {
-    const challenger = getUserById(data.challengerId);
-    const sport = getSportById(data.sportId);
-    const facility = getStaticFacilities().find(f => f.id === data.facilityId);
-
-    if (!challenger || !sport || !facility) {
-        throw new Error("Invalid challenger, sport, or facility ID");
-    }
-
-    const newChallenge: Challenge = {
-        id: `challenge-${Date.now()}`,
-        challengerId: data.challengerId,
-        challenger,
-        sport,
-        facilityId: data.facilityId,
-        facilityName: facility.name,
-        proposedDate: new Date(data.proposedDate).toISOString(),
-        notes: data.notes,
-        status: 'open',
-        createdAt: new Date().toISOString(),
-    };
-    mockChallenges.unshift(newChallenge);
-    return getOpenChallenges();
+   // Needs DB implementation
+    return [];
 };
 
 export const acceptChallenge = (challengeId: string, opponentId: string): Challenge[] => {
-    const challenge = mockChallenges.find(c => c.id === challengeId);
-    const opponent = getUserById(opponentId);
-
-    if (challenge && opponent && challenge.status === 'open' && challenge.challengerId !== opponentId) {
-        challenge.status = 'accepted';
-        challenge.opponentId = opponentId;
-        challenge.opponent = opponent;
-        
-        addNotification(challenge.challengerId, {
-            type: 'general',
-            title: 'Challenge Accepted!',
-            message: `${opponent.name} has accepted your ${challenge.sport.name} challenge.`,
-            link: '/challenges',
-            iconName: 'Swords'
-        });
-    } else {
-        throw new Error("Failed to accept challenge. It might already be taken or you cannot accept your own challenge.");
-    }
-    return getOpenChallenges();
+    // Needs DB implementation
+    return [];
 };
 
 
@@ -955,31 +824,26 @@ export const addEvent = async (event: Omit<SportEvent, 'id' | 'sport' | 'registe
     const sport = await getSportById(event.sportId); 
     const facility = await getFacilityById(event.facilityId);
     if(sport && facility) {
-        const newEvent: SportEvent = { 
-            ...event, 
-            id: `evt-${Date.now()}`, 
-            sport, 
-            registeredParticipants: 0, 
-            facilityName: facility.name 
-        };
-        mockEvents.push(newEvent);
+        await query(
+            `INSERT INTO events (name, facility_id, facility_name, sport_id, start_date, end_date, description, entry_fee, max_participants, registered_participants)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0)`,
+            [event.name, event.facilityId, facility.name, sport.id, event.startDate, event.endDate, event.description, event.entryFee, event.maxParticipants]
+        );
     } else {
         console.error("Could not create event: Sport or Facility not found.");
     }
 };
 export const updateEvent = async (eventData: Omit<SportEvent, 'sport'> & { sportId: string }): Promise<void> => {
-    const index = mockEvents.findIndex(e => e.id === eventData.id);
-    if (index !== -1) {
-        const sport = await getSportById(eventData.sportId);
-        if (!sport) {
-            console.error(`Could not update event: Sport with id ${eventData.sportId} not found.`);
-            return;
-        }
-        mockEvents[index] = { ...mockEvents[index], ...eventData, sport: sport };
-    }
+    await query(
+        `UPDATE events SET name = $1, facility_id = $2, sport_id = $3, start_date = $4, end_date = $5, description = $6, entry_fee = $7, max_participants = $8 WHERE id = $9`,
+        [eventData.name, eventData.facilityId, eventData.sportId, eventData.startDate, eventData.endDate, eventData.description, eventData.entryFee, eventData.maxParticipants, eventData.id]
+    );
 };
-export const deleteEvent = (id: string): void => { mockEvents = mockEvents.filter(e => e.id !== id); };
-export const registerForEvent = (eventId: string): boolean => { const event = mockEvents.find(e => e.id === eventId); if (event && (!event.maxParticipants || event.registeredParticipants < event.maxParticipants)) { event.registeredParticipants++; return true; } return false; };
+export const deleteEvent = async (id: string): Promise<void> => { await query('DELETE FROM events WHERE id = $1', [id]); };
+export const registerForEvent = (eventId: string): boolean => { 
+    // Needs DB implementation
+    return false; 
+};
 export const addPricingRule = (rule: Omit<PricingRule, 'id'>): void => { mockPricingRules.push({ ...rule, id: `pr-${Date.now()}` }); };
 export const updatePricingRule = (rule: PricingRule): void => { const index = mockPricingRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPricingRules[index] = rule; };
 export const deletePricingRule = (id: string): void => { mockPricingRules = mockPricingRules.filter(r => r.id !== id); };
@@ -988,41 +852,16 @@ export const updatePromotionRule = (rule: PromotionRule): void => { const index 
 export const dbGetPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => Promise.resolve(mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive));
 export const addToWaitlist = async (userId: string, facilityId: string, date: string, startTime: string): Promise<void> => { const entry: WaitlistEntry = { id: `wait-${Date.now()}`, userId, facilityId, date, startTime, createdAt: new Date().toISOString() }; mockWaitlist.push(entry); };
 export async function listenToOwnerBookings(ownerId: string, callback: (bookings: Booking[]) => void, onError: (error: Error) => void): Promise<() => void> {
-    const facilities = await getFacilitiesByOwnerId(ownerId);
-    const facilityIds = facilities.map(f => f.id);
-
-    if (facilityIds.length === 0) {
-        callback([]);
-        return () => {};
-    }
-    const ownerBookings = mockBookings.filter(b => facilityIds.includes(b.facilityId));
-    callback(ownerBookings);
-
+    // Needs DB implementation
     return () => {};
 }
 export const blockTimeSlot = async (facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> => {
-   const facility = getStaticFacilities().find(f => f.id === facilityId && f.ownerId === ownerId);
-   if (facility) {
-       if (!facility.blockedSlots) {
-           facility.blockedSlots = [];
-       }
-       // Ensure no duplicates
-       const alreadyExists = facility.blockedSlots.some(s => s.date === newBlock.date && s.startTime === newBlock.startTime);
-       if(alreadyExists) return false;
-       
-       facility.blockedSlots.push(newBlock);
-       return true;
-   }
+    // Needs DB implementation
    return false;
 };
 
 export const unblockTimeSlot = async (facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> => {
-    const facility = getStaticFacilities().find(f => f.id === facilityId && f.ownerId === ownerId);
-    if (facility && facility.blockedSlots) {
-        const initialLength = facility.blockedSlots.length;
-        facility.blockedSlots = facility.blockedSlots.filter(s => !(s.date === date && s.startTime === startTime));
-        return facility.blockedSlots.length < initialLength;
-    }
+    // Needs DB implementation
     return false;
 };
 
@@ -1136,7 +975,8 @@ export const deleteSport = async (sportId: string): Promise<void> => {
 };
 
 export const toggleFavoriteFacility = async (userId: string, facilityId: string): Promise<UserProfile | undefined> => {
-    const user = getUserById(userId);
+    // This is a complex operation in SQL. For now, we keep it as a mock.
+    const user = await getUserById(userId);
     if (!user) {
         throw new Error("User not found.");
     }
@@ -1147,18 +987,27 @@ export const toggleFavoriteFacility = async (userId: string, facilityId: string)
         ? currentFavorites.filter(id => id !== facilityId)
         : [...currentFavorites, facilityId];
     
-    return updateUser(userId, { favoriteFacilities: newFavorites });
+    // This would need a proper SQL update to a user_favorites junction table.
+    // The mock updateUser will simulate this for now.
+    return mockUpdateUser(userId, { favoriteFacilities: newFavorites });
 };
 
+// This is a mock implementation for client-side updates while DB is not fully relational for this.
+export const mockUpdateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
+    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+        mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates };
+        return mockUsers[userIndex];
+    }
+    return undefined;
+}
+
+
 export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] => {
-    const facility = getStaticFacilities().find(f => f.id === facilityId);
-    return facility?.availableEquipment || [];
+    // Needs DB implementation
+    return [];
 };
 
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => {
     return dbGetPromotionRuleByCode(code);
 }
-
-
-
-

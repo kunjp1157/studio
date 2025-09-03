@@ -30,7 +30,7 @@ import {
     addSport as dbAddSport,
     updateSport as dbUpdateSport,
     deleteSport as dbDeleteSport,
-    toggleFavoriteFacility,
+    toggleFavoriteFacility as dbToggleFavoriteFacility,
     getBookingsForFacilityOnDate as dbGetBookingsForFacilityOnDate,
     addBooking as dbAddBooking,
     addReview as dbAddReview,
@@ -248,7 +248,7 @@ export async function deleteSportAction(sportId: string): Promise<void> {
 }
 
 export async function toggleFavoriteFacilityAction(userId: string, facilityId: string): Promise<UserProfile | undefined> {
-    const updatedUser = await toggleFavoriteFacility(userId, facilityId);
+    const updatedUser = await dbToggleFavoriteFacility(userId, facilityId);
     if(updatedUser) {
         revalidatePath('/account/favorites');
         revalidatePath(`/facilities/${facilityId}`);
