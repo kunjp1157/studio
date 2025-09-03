@@ -217,7 +217,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
 
     const [sportsRes, amenitiesRes, sportPricesRes, operatingHoursRes, reviewsRes, equipmentRes, blockedSlotsRes, maintenanceRes] = await Promise.all([
         query('SELECT s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sports_id WHERE fs.facility_id = $1', [id]),
-        query('SELECT a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id WHERE fa.facility_id = $1', [id]),
+        query('SELECT a.*, a.icon_name FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id WHERE fa.facility_id = $1', [id]),
         query('SELECT sport_id, price, pricing_model FROM facility_sport_prices WHERE facility_id = $1', [id]),
         query('SELECT day, open_time, close_time FROM facility_operating_hours WHERE facility_id = $1', [id]),
         query('SELECT * FROM reviews WHERE facility_id = $1', [id]),
@@ -442,7 +442,7 @@ export async function addUser(userData: { name: string; email: string, password?
   
   const res = await query(
     `INSERT INTO users (id, name, email, password, role, status, is_profile_public, profile_picture_url, membership_level, loyalty_points)
-     VALUES ($1, $2, $3, $4, 'User', 'Active', true, $5, 'Basic', 0) RETURNING *`,
+     VALUES ($1, $2, $3, $4, 'User', 'Active', true, $5, 'Basic', 0)`,
     [newId, name, email, password, defaultProfilePic]
   );
   
@@ -471,7 +471,7 @@ export const getSportById = async (id: string): Promise<Sport | undefined> => {
     const { rows } = await query('SELECT * FROM sports WHERE id = $1', [id]);
     if (rows.length === 0) return undefined;
     const sport = rows[0];
-    return { ...sport, id: sport.id, name: sport.name, iconName: sport.icon_name, imageUrl: sport.image_url, imageDataAiHint: sport.image_data_ai_hint };
+    return { ...sport, id: sport.id, name: sport.name, icon_name: sport.icon_name, image_url: sport.image_url, image_data_ai_hint: sport.image_data_ai_hint };
 }
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
@@ -762,4 +762,3 @@ export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[
 export const getOpenChallenges = (): Challenge[] => { return []; };
 export const createChallenge = (data: { challengerId: string; sportId: string; facilityId: string; proposedDate: string; notes: string }): Challenge[] => { return []; };
 export const acceptChallenge = (challengeId: string, opponentId: string): Challenge[] => { return []; };
-

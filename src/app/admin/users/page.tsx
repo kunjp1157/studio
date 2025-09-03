@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -46,7 +47,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { UserProfile, UserRole, UserStatus, Facility } from '@/lib/types';
 import { updateUser as updateMockUser, addNotification } from '@/lib/data';
-import { getUsersAction, getFacilitiesByOwnerIdAction } from '@/app/actions';
+import { getUsersAction, getFacilitiesByOwnerIdAction, updateUserAction } from '@/app/actions';
 import { Users, MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -84,18 +85,19 @@ export default function AdminUsersPage() {
     resolver: zodResolver(userFormSchema),
   });
 
+  const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+          const usersData = await getUsersAction();
+          setAllUsers(usersData);
+      } catch (error) {
+           toast({ title: "Error", description: "Could not load user data.", variant: "destructive" });
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-        setIsLoading(true);
-        try {
-            const usersData = await getUsersAction();
-            setAllUsers(usersData);
-        } catch (error) {
-             toast({ title: "Error", description: "Could not load user data.", variant: "destructive" });
-        } finally {
-            setIsLoading(false);
-        }
-    };
     fetchUsers();
   }, [toast]);
 
@@ -139,7 +141,7 @@ export default function AdminUsersPage() {
     const newStatus: UserStatus = user.status === 'Active' ? 'Suspended' : 'Active';
     
     try {
-        await updateMockUser(user.id, { status: newStatus });
+        await updateUserAction(user.id, { status: newStatus });
         toast({
             title: `User ${newStatus === 'Active' ? 'Activated' : 'Suspended'}`,
             description: `${user.name}'s status has been changed to ${newStatus}.`,
@@ -150,6 +152,7 @@ export default function AdminUsersPage() {
             message: `Your account status has been updated to ${newStatus} by an administrator.`,
             link: '/account/profile',
         });
+        fetchUsers();
     } catch (error) {
         toast({ title: "Error", description: "Failed to update user status.", variant: "destructive" });
     }
@@ -159,7 +162,7 @@ export default function AdminUsersPage() {
     if (!selectedUser) return;
     
     try {
-        await updateMockUser(selectedUser.id, {
+        await updateUserAction(selectedUser.id, {
             name: data.name,
             email: data.email,
             role: data.role,
@@ -178,6 +181,7 @@ export default function AdminUsersPage() {
             link: '/account/profile',
         });
         setIsEditModalOpen(false);
+        fetchUsers();
     } catch (error) {
          toast({ title: "Error", description: "Failed to update user.", variant: "destructive"});
     }
@@ -419,12 +423,12 @@ export default function AdminUsersPage() {
                                 </FormItem>
                             )} />
                         </div>
-                        <DialogClose asChild>
-                            <Button type="button" variant="outline">Cancel</Button>
-                        </DialogClose>
-                        <Button type="submit">
-                        'Save Changes'
-                        </Button>
+                         <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <Button type="submit">Save Changes</Button>
+                        </DialogFooter>
                     </form>
                 </Form>
             </DialogContent>
