@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { mockUser, mockMembershipPlans } from '@/lib/data';
-import { mockSports } from '@/lib/mock-data';
+import { getMockSports } from '@/lib/mock-data';
 import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement, UserSkill, SkillLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell, Shield } from 'lucide-react';
@@ -35,12 +35,14 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [mockSports, setMockSports] = useState<Sport[]>([]);
 
   useEffect(() => {
     const activeUserStr = sessionStorage.getItem('activeUser');
     if (activeUserStr) {
         setUser(JSON.parse(activeUserStr));
     }
+    setMockSports(getMockSports());
     setIsLoading(false);
   }, []);
 
@@ -381,3 +383,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
