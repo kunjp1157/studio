@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -71,6 +72,8 @@ export default function BookingsPage() {
     const activeUserStr = sessionStorage.getItem('activeUser');
     if (activeUserStr) {
       setCurrentUser(JSON.parse(activeUserStr));
+    } else {
+      setIsLoading(false);
     }
   }, []);
 

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { 
@@ -12,7 +13,7 @@ import {
     dbDeleteFacility,
     dbGetAllUsers, 
     dbGetAllBookings, 
-    dbGetSiteSettings,
+    getSiteSettings,
     dbGetFacilitiesByOwnerId,
     dbGetEventById,
     dbGetAllEvents,
@@ -42,7 +43,7 @@ import {
     dbGetPromotionRuleByCode,
     dbGetAllBlogPosts,
     dbGetBlogPostBySlug,
-    dbRegisterForEvent,
+    registerForEvent,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -128,7 +129,7 @@ export async function getAllBookingsAction(): Promise<Booking[]> {
 }
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
-    return await dbGetSiteSettings();
+    return getSiteSettings();
 }
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
@@ -217,9 +218,11 @@ export async function updateBookingAction(bookingId: string, updates: Partial<Bo
 }
 
 export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
-    const bookingWithId = { ...bookingData, id: uuidv4() };
+    const bookingWithId = { ...bookingData, id: uuidv4(), bookedAt: new Date().toISOString() };
     const newBooking = await dbAddBooking(bookingWithId);
-    revalidatePath('/account/bookings');
+    if (bookingData.userId) { // Only revalidate if it's not a guest booking
+      revalidatePath('/account/bookings');
+    }
     revalidatePath(`/facilities/${bookingData.facilityId}`);
     revalidatePath('/admin/bookings');
     return newBooking;
@@ -280,5 +283,5 @@ export async function getBlogPostBySlugAction(slug: string): Promise<BlogPost | 
 }
 
 export async function registerForEventAction(eventId: string): Promise<boolean> {
-    return await dbRegisterForEvent(eventId);
+    return await registerForEvent(eventId);
 }

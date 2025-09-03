@@ -282,6 +282,7 @@ export default function FacilityDetailPage() {
       status: 'Confirmed' as const,
       userId: currentUser?.id, // Will be undefined if not logged in
       rentedEquipment: rentedItems,
+      reviewed: false,
       pricingModel: dynamicPrice.pricingModel,
     };
     
