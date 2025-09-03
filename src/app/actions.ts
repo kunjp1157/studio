@@ -10,7 +10,7 @@ import {
     dbDeleteFacility,
     dbGetAllUsers, 
     dbGetAllBookings, 
-    dbGetSiteSettings,
+    getSiteSettings,
     dbGetFacilitiesByOwnerId,
     dbGetEventById,
     dbGetAllEvents,
@@ -125,7 +125,7 @@ export async function getAllBookingsAction(): Promise<Booking[]> {
 }
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
-    return dbGetSiteSettings();
+    return getSiteSettings();
 }
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
