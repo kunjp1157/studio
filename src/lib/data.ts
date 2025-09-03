@@ -1,5 +1,4 @@
 
-
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,7 +10,10 @@ let mockPricingRules: PricingRule[] = [];
 let mockPromotionRules: PromotionRule[] = [];
 let mockSiteSettings: SiteSettings = { siteName: 'Sports Arena', defaultCurrency: 'INR', timezone: 'Asia/Kolkata', maintenanceMode: false, notificationTemplates: [] };
 let mockWaitlist: WaitlistEntry[] = [];
-let mockLfgRequests: LfgRequest[] = [];
+let mockLfgRequests: LfgRequest[] = [
+    { id: `lfg-1`, userId: 'user-2', sportId: 'sport-1', facilityId: 'facility-pune-2', facilityName: 'HotFut Turf', notes: 'Looking for a competitive 5-a-side game. We have 3 people already, need 2 more.', createdAt: new Date().toISOString(), status: 'open', interestedUserIds: ['user-3'], playersNeeded: 2, skillLevel: 'Intermediate', preferredTime: 'Weekend evenings' },
+    { id: `lfg-2`, userId: 'user-3', sportId: 'sport-3', facilityId: 'facility-pune-1', facilityName: 'Deccan Gymkhana', notes: 'Friendly tennis match, anyone is welcome to join for a few sets!', createdAt: new Date().toISOString(), status: 'open', interestedUserIds: [], playersNeeded: 1, skillLevel: 'Beginner', preferredTime: 'Weekday mornings' },
+];
 let mockChallenges: Challenge[] = [];
 let mockBookings: Booking[] = [];
 
@@ -104,7 +106,7 @@ export function addUser(userData: { name: string; email: string, password?: stri
 }
 
 export const getBookingsForFacilityOnDate = (facilityId: string, date: string): Booking[] => {
-    return mockBookings.filter(b => b.facilityId === facilityId && b.date === date);
+    return mockBookings.filter(b => b.facilityId === facilityId && b.date === date && b.status === 'Confirmed');
 };
 
 export const getBookingsByUserId = (userId: string): Booking[] => {
@@ -130,7 +132,7 @@ export const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userNam
         createdAt: new Date().toISOString(),
         userName: currentUser.name,
         userAvatar: currentUser.profilePictureUrl,
-        isPublicProfile: currentUser.isProfilePublic,
+        isPublicProfile: currentUser.isPublicProfile,
     }
     return newReview;
 };
@@ -148,19 +150,6 @@ export const getAllBookings = (): Booking[] => {
 
 export const getEventsByFacilityIds = (facilityIds: string[]): SportEvent[] => {
     return []; // Mocked
-};
-
-export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
-    console.log("Mock add notification", userId, notificationData);
-    // This is a mock implementation
-    const newNotification: AppNotification = {
-      id: `notif-${Date.now()}`,
-      userId,
-      ...notificationData,
-      createdAt: new Date().toISOString(),
-      isRead: false,
-    };
-    return newNotification;
 };
 
 export const markNotificationAsRead = (userId: string, notificationId: string): void => { 
@@ -470,7 +459,15 @@ export const dbGetSportById = (id: string): Promise<Sport | undefined> => {
     return Promise.resolve(getSportById(id));
 };
 export const dbAddNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<AppNotification> => {
-    return Promise.resolve(addNotification(userId, notificationData));
+    // This is a mock function, it doesn't really add a notification.
+    const newNotification: AppNotification = {
+      id: `notif-${Date.now()}`,
+      userId,
+      ...notificationData,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    };
+    return Promise.resolve(newNotification);
 };
 export const dbGetAllSports = (): Promise<Sport[]> => {
     return Promise.resolve(getAllSports());
@@ -510,3 +507,5 @@ export function updateSiteSettings(settings: SiteSettings): SiteSettings {
   mockSiteSettings = { ...mockSiteSettings, ...settings };
   return mockSiteSettings;
 }
+
+    
