@@ -13,11 +13,12 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Search, MapPin, CalendarDays, Filter, Dices,LayoutPanelLeft, SunMoon, DollarSign, ListChecks, Clock, Building } from 'lucide-react';
-import { getStaticSports, getStaticAmenities } from '@/lib/data';
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { formatCurrency } from '@/lib/utils';
 import { getIconComponent } from '@/components/shared/Icon';
+import { getAllSportsAction } from '@/app/actions';
+import { mockAmenities } from '@/lib/mock-data';
 
 
 interface FacilitySearchFormProps {
@@ -56,14 +57,11 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
   const [filteredLocations, setFilteredLocations] = useState<string[]>(allLocations);
   
   const [mockSports, setMockSports] = useState<Sport[]>([]);
-  const [mockAmenities, setMockAmenities] = useState<AmenityType[]>([]);
 
   useEffect(() => {
-    const fetchSportsAndAmenities = () => {
-        const sports = getStaticSports();
+    const fetchSportsAndAmenities = async () => {
+        const sports = await getAllSportsAction();
         setMockSports(sports);
-        const amenities = getStaticAmenities(); 
-        setMockAmenities(amenities);
     };
     fetchSportsAndAmenities();
   }, []);

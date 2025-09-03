@@ -1,17 +1,16 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Facility, SearchFilters, SiteSettings } from '@/lib/types';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import { FacilitySearchForm } from '@/components/facilities/FacilitySearchForm';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { MapPin, Search } from 'lucide-react';
-import { getSiteSettings, getStaticFacilities } from '@/lib/data';
+import { Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
 
 export default function FacilitiesPage() {
   const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
@@ -22,11 +21,13 @@ export default function FacilitiesPage() {
   const [locations, setLocations] = useState<string[]>([]);
   const { toast } = useToast();
 
-  const fetchInitialData = useCallback(() => {
+  const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
     try {
-        const facilitiesData = getStaticFacilities();
-        const settingsData = getSiteSettings();
+        const [facilitiesData, settingsData] = await Promise.all([
+            getFacilitiesAction(),
+            getSiteSettingsAction(),
+        ]);
 
         setAllFacilities(facilitiesData);
         setFilteredFacilities(facilitiesData);
