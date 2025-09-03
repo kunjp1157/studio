@@ -9,6 +9,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { AnimatedGridBackground } from '@/components/layout/AnimatedGridBackground';
 import { Heart, UserPlus } from 'lucide-react';
 import { addUserAction } from '@/app/actions';
+import { Button } from '@/components/ui/button';
 
 export default function SignupPage() {
   const [username, setUsername] = useState('');
@@ -41,11 +42,27 @@ export default function SignupPage() {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
-      toast({
-        title: 'Signup Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      if (errorMessage.includes('A user with this email already exists')) {
+        toast({
+            title: 'Signup Failed',
+            description: (
+              <div>
+                <p>A user with this email already exists.</p>
+                <Button variant="link" className="p-0 h-auto" asChild>
+                  <Link href="/account/login">Click here to log in instead.</Link>
+                </Button>
+              </div>
+            ),
+            variant: 'destructive',
+            duration: 5000,
+        });
+      } else {
+        toast({
+          title: 'Signup Failed',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
     } finally {
         setIsLoading(false);
     }
