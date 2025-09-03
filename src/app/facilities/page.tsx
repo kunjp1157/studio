@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
+import { getStaticFacilities, getSiteSettings } from '@/lib/data';
 
 export default function FacilitiesPage() {
   const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
@@ -21,13 +21,11 @@ export default function FacilitiesPage() {
   const [locations, setLocations] = useState<string[]>([]);
   const { toast } = useToast();
 
-  const fetchInitialData = useCallback(async () => {
+  const fetchInitialData = useCallback(() => {
     setIsLoading(true);
     try {
-        const [facilitiesData, settingsData] = await Promise.all([
-            getFacilitiesAction(),
-            getSiteSettingsAction(),
-        ]);
+        const facilitiesData = getStaticFacilities();
+        const settingsData = getSiteSettings();
 
         setAllFacilities(facilitiesData);
         setFilteredFacilities(facilitiesData);

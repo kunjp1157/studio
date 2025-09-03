@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { formatCurrency } from '@/lib/utils';
 import { getIconComponent } from '@/components/shared/Icon';
-import { getAllSportsAction } from '@/app/actions';
+import { getStaticSports, getStaticAmenities } from '@/lib/data';
 import { mockAmenities } from '@/lib/mock-data';
 
 
@@ -59,11 +59,8 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
   const [mockSports, setMockSports] = useState<Sport[]>([]);
 
   useEffect(() => {
-    const fetchSportsAndAmenities = async () => {
-        const sports = await getAllSportsAction();
-        setMockSports(sports);
-    };
-    fetchSportsAndAmenities();
+    const sports = getStaticSports();
+    setMockSports(sports);
   }, []);
 
   useEffect(() => {

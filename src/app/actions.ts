@@ -2,6 +2,8 @@
 'use server';
 
 import { 
+    // IMPORTANT: Functions from here are NOT direct server actions.
+    // They are helpers for the actual actions below.
     getStaticFacilities,
     getStaticSports,
     dbGetFacilityById,
@@ -10,7 +12,7 @@ import {
     dbDeleteFacility,
     dbGetAllUsers, 
     dbGetAllBookings, 
-    getSiteSettings,
+    getSiteSettings as dbGetSiteSettings,
     dbGetFacilitiesByOwnerId,
     dbGetEventById,
     dbGetAllEvents,
@@ -61,7 +63,7 @@ export async function getFacilityByIdAction(id: string): Promise<Facility | unde
 }
 
 export async function getBookingByIdAction(id: string): Promise<Booking | undefined> {
-    const booking = dbGetBookingById(id);
+    const booking = await dbGetBookingById(id);
     return booking;
 }
 
@@ -86,7 +88,7 @@ export async function addFacilityAction(facilityData: any): Promise<Facility> {
 // Action to update a facility. It takes form data, processes it, and calls the DB function.
 export async function updateFacilityAction(facilityData: any): Promise<Facility> {
     const allSports = await getSports();
-    const existingFacility = dbGetFacilityById(facilityData.id);
+    const existingFacility = await dbGetFacilityById(facilityData.id);
     const sportData = (facilityData.sports || []).map((sportId: string) => allSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
     const payload = {
       ...existingFacility, // Start with existing data to preserve reviews, etc.
@@ -94,7 +96,7 @@ export async function updateFacilityAction(facilityData: any): Promise<Facility>
       sports: sportData,
       amenities: mockAmenities.filter(amenity => (facilityData.amenities || []).includes(amenity.id)),
     };
-    const updatedFacility = dbUpdateFacility(payload);
+    const updatedFacility = await dbUpdateFacility(payload);
     revalidatePath(`/admin/facilities/${facilityData.id}/edit`);
     revalidatePath(`/owner/my-facilities/${facilityData.id}/edit`);
     revalidatePath('/admin/facilities');
@@ -104,7 +106,7 @@ export async function updateFacilityAction(facilityData: any): Promise<Facility>
 }
 
 export async function deleteFacilityAction(facilityId: string): Promise<void> {
-  dbDeleteFacility(facilityId);
+  await dbDeleteFacility(facilityId);
   revalidatePath('/admin/facilities');
   revalidatePath('/owner/my-facilities');
   revalidatePath('/facilities');
@@ -125,7 +127,7 @@ export async function getAllBookingsAction(): Promise<Booking[]> {
 }
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
-    return getSiteSettings();
+    return dbGetSiteSettings();
 }
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
@@ -177,7 +179,7 @@ export async function getBookingsForFacilityOnDateAction(facilityId: string, dat
 }
 
 export async function blockTimeSlotAction(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
-    const success = dbBlockTimeSlot(facilityId, ownerId, newBlock);
+    const success = await dbBlockTimeSlot(facilityId, ownerId, newBlock);
     if(success) {
         revalidatePath(`/owner/availability`);
         revalidatePath(`/facilities/${facilityId}`);
@@ -186,7 +188,7 @@ export async function blockTimeSlotAction(facilityId: string, ownerId: string, n
 }
 
 export async function unblockTimeSlotAction(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
-    const success = dbUnblockTimeSlot(facilityId, ownerId, date, startTime);
+    const success = await dbUnblockTimeSlot(facilityId, ownerId, date, startTime);
     if (success) {
         revalidatePath(`/owner/availability`);
         revalidatePath(`/facilities/${facilityId}`);
@@ -195,7 +197,7 @@ export async function unblockTimeSlotAction(facilityId: string, ownerId: string,
 }
 
 export async function updateUserAction(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
-    const user = dbUpdateUser(userId, updates);
+    const user = await dbUpdateUser(userId, updates);
     if (user) {
         revalidatePath(`/account/profile`);
         revalidatePath(`/admin/users`);
@@ -252,7 +254,7 @@ export async function deleteSportAction(sportId: string): Promise<void> {
 }
 
 export async function toggleFavoriteFacilityAction(userId: string, facilityId: string): Promise<UserProfile | undefined> {
-    const updatedUser = dbToggleFavoriteFacility(userId, facilityId);
+    const updatedUser = await dbToggleFavoriteFacility(userId, facilityId);
     if(updatedUser) {
         revalidatePath('/account/favorites');
         revalidatePath(`/facilities/${facilityId}`);
