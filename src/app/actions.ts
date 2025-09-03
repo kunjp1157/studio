@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import { 
@@ -44,6 +45,7 @@ import {
     dbGetAllBlogPosts,
     dbGetBlogPostBySlug,
     registerForEvent,
+    sendBookingConfirmationSms,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -218,11 +220,22 @@ export async function updateBookingAction(bookingId: string, updates: Partial<Bo
 }
 
 export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
-    const bookingWithId = { ...bookingData, id: uuidv4(), bookedAt: new Date().toISOString() };
+    const bookingWithId: Booking = { ...bookingData, id: uuidv4(), bookedAt: new Date().toISOString() };
     const newBooking = await dbAddBooking(bookingWithId);
-    if (bookingData.userId) { // Only revalidate if it's not a guest booking
-      revalidatePath('/account/bookings');
+    
+    // Fire off notifications but don't wait for them
+    if (newBooking.userId) {
+        addNotificationAction(newBooking.userId, {
+            type: 'booking_confirmed',
+            title: 'Booking Confirmed!',
+            message: `Your booking for ${newBooking.facilityName} is confirmed.`,
+            link: `/account/bookings/${newBooking.id}/receipt`,
+            iconName: 'CheckCircle',
+        });
+        sendBookingConfirmationSms(newBooking);
     }
+    
+    revalidatePath('/account/bookings');
     revalidatePath(`/facilities/${bookingData.facilityId}`);
     revalidatePath('/admin/bookings');
     return newBooking;

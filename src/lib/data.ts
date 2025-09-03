@@ -1,4 +1,5 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
@@ -161,6 +162,19 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
     };
     return newNotification;
 };
+
+export const sendBookingConfirmationSms = (booking: Booking): void => {
+    const user = booking.userId ? getUserById(booking.userId) : null;
+    const phone = user?.phone;
+    if (!phone) {
+        console.log(`[SMS SIMULATION] Could not send SMS for booking ${booking.id}: User has no phone number.`);
+        return;
+    }
+    const message = `Hi ${user.name}, your booking for ${booking.sportName} at ${booking.facilityName} on ${formatDateFns(parseISO(booking.date), 'MMM d')} at ${booking.startTime} is confirmed. Booking ID: ${booking.id.substring(0,8)}.`;
+    console.log(`[SMS SIMULATION] Sending to ${phone}: "${message}"`);
+    // In a real app, you would use an SMS provider's SDK here, e.g.:
+    // await twilio.messages.create({ to: phone, from: process.env.TWILIO_PHONE_NUMBER, body: message });
+}
 
 export const markNotificationAsRead = (userId: string, notificationId: string): void => { 
     console.log("Mock marking notification as read", userId, notificationId);
@@ -340,7 +354,8 @@ export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[
     return getOpenLfgRequests();
 };
 export const getOpenChallenges = (): Challenge[] => { 
-    return mockChallenges.filter(c => c.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const openChallenges = mockChallenges.filter(c => c.status === 'open');
+    return openChallenges.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 export const createChallenge = (data: { challengerId: string; sportId: string; facilityId: string; proposedDate: string; notes: string }): Challenge[] => {
     const challenger = getUserById(data.challengerId);
@@ -400,8 +415,9 @@ export const dbGetBookingsByUserId = (userId: string): Promise<Booking[]> => {
 export const dbUpdateBooking = (bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> => {
     return Promise.resolve(updateBooking(bookingId, updates));
 }
-export const dbAddBooking = (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> => {
-    return Promise.resolve(addBooking(bookingData));
+export const dbAddBooking = (bookingData: Booking): Promise<Booking> => {
+    mockBookings.push(bookingData);
+    return Promise.resolve(bookingData);
 }
 export const dbAddReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> => {
     return Promise.resolve(addReview(reviewData));
@@ -502,3 +518,8 @@ export const registerForEvent = (eventId: string): boolean => {
 };
 
 export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
+
+export function updateSiteSettings(settings: SiteSettings): SiteSettings {
+  mockSiteSettings = { ...mockSiteSettings, ...settings };
+  return mockSiteSettings;
+}

@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { Suspense, useEffect, useState, useMemo } from 'react';
@@ -116,7 +117,7 @@ function BookingConfirmationContent() {
   };
 
   const handleConfirmBooking = async () => {
-    if (!bookingData || !currentUser) return;
+    if (!bookingData) return;
     setIsConfirming(true);
 
     if (paymentMethod === 'upi' && !upiId.trim()) {
@@ -136,18 +137,11 @@ function BookingConfirmationContent() {
       status: paymentMethod === 'pay_at_venue' ? 'Pending' : 'Confirmed',
       appliedPromotion: appliedPromotion || undefined,
       numberOfGuests: bookingData.pricingModel === 'per_hour_per_person' ? numberOfGuests : undefined,
+      userId: currentUser?.id, // Attach user ID if logged in
     });
 
     window.dispatchEvent(new CustomEvent('dataChanged'));
     
-    await addNotificationAction(currentUser.id, {
-        type: 'booking_confirmed',
-        title: 'Booking Confirmed!',
-        message: `Your booking for ${newBooking.facilityName} is confirmed.`,
-        link: `/account/bookings/${newBooking.id}/receipt`,
-        iconName: 'CheckCircle',
-    });
-
     toast({
       title: "Booking Confirmed!",
       description: `Your reservation at ${newBooking.facilityName} is complete.`,
