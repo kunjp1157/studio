@@ -44,12 +44,44 @@ import {
     dbGetAllBlogPosts,
     dbGetBlogPostBySlug,
     registerForEvent,
-    sendBookingConfirmationSms,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import { mockAmenities } from '@/lib/mock-data';
 import { v4 as uuidv4 } from 'uuid';
+import { parseISO, format as formatDateFns } from 'date-fns';
+import twilio from 'twilio';
+
+export async function sendBookingConfirmationSms(booking: Booking): Promise<void> {
+  const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env;
+  
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    console.warn("[SMS] Twilio credentials are not set in .env. Skipping SMS.");
+    return;
+  }
+  
+  const phone = booking.phoneNumber;
+  if (!phone) {
+    console.log(`[SMS] Could not send SMS for booking ${booking.id}: No phone number provided.`);
+    return;
+  }
+
+  const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  const user = booking.userId ? await dbGetAllUsers().then(users => users.find(u => u.id === booking.userId)) : null;
+  const userName = user ? user.name : 'Guest';
+  const message = `Hi ${userName}, your booking for ${booking.sportName} at ${booking.facilityName} on ${formatDateFns(parseISO(booking.date), 'MMM d')} at ${booking.startTime} is confirmed. Booking ID: ${booking.id.substring(0,8)}.`;
+
+  try {
+    const response = await client.messages.create({
+      body: message,
+      from: TWILIO_PHONE_NUMBER,
+      to: phone, // Make sure the phone number includes the country code, e.g., +91...
+    });
+    console.log(`[SMS] Message sent to ${phone}. SID: ${response.sid}`);
+  } catch (error) {
+    console.error("[SMS] Failed to send message:", error);
+  }
+}
 
 export async function getSports(): Promise<Sport[]> {
     return getStaticSports();
