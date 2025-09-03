@@ -1,7 +1,7 @@
 
 
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge } from './types';
-import { getStaticUsers, getStaticFacilities, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
+import { getStaticUsers, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { query } from './db';
 
@@ -310,7 +310,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
         loyaltyPoints: row.loyalty_points,
         role: row.role,
         status: row.status,
-        joinedAt: new Date(row.joined_at).toISOString(),
+        joinedAt: row.joined_at ? new Date(row.joined_at).toISOString() : new Date().toISOString(),
         isProfilePublic: row.is_profile_public,
         achievements: [],
         skillLevels: [],
@@ -701,13 +701,34 @@ export const getLfgRequestsByFacilityIds = async (facilityIds: string[]): Promis
 export const getChallengesByFacilityIds = async (facilityIds: string[]): Promise<Challenge[]> => Promise.resolve(mockChallenges.filter(c => facilityIds.includes(c.facilityId)));
 
 
-export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
-  let iconName = 'Info';
-  switch (notificationData.type) { case 'booking_confirmed': iconName = 'CheckCircle'; break; case 'booking_cancelled': iconName = 'XCircle'; break; case 'review_submitted': iconName = 'MessageSquareText'; break; case 'reminder': iconName = 'CalendarDays'; break; case 'promotion': iconName = 'Gift'; break; case 'waitlist_opening': iconName = 'BellRing'; break; case 'user_status_changed': iconName = 'Edit3'; break; case 'matchmaking_interest': iconName = 'Swords'; break; }
-  const newNotification: AppNotification = { ...notificationData, id: `notif-${Date.now()}`, userId, createdAt: new Date().toISOString(), isRead: false, iconName: notificationData.iconName || iconName, };
-  mockAppNotifications.unshift(newNotification);
-  return newNotification;
+export const addNotification = async (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<AppNotification> => {
+    let iconName = 'Info';
+    switch (notificationData.type) { case 'booking_confirmed': iconName = 'CheckCircle'; break; case 'booking_cancelled': iconName = 'XCircle'; break; case 'review_submitted': iconName = 'MessageSquareText'; break; case 'reminder': iconName = 'CalendarDays'; break; case 'promotion': iconName = 'Gift'; break; case 'waitlist_opening': iconName = 'BellRing'; break; case 'user_status_changed': iconName = 'Edit3'; break; case 'matchmaking_interest': iconName = 'Swords'; break; }
+    
+    const { type, title, message, link } = notificationData;
+    const finalIconName = notificationData.iconName || iconName;
+
+    const res = await query(
+        `INSERT INTO notifications (user_id, type, title, message, link, icon_name)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [userId, type, title, message, link, finalIconName]
+    );
+
+    const newNotification = res.rows[0];
+
+    return {
+        id: newNotification.id,
+        userId: newNotification.user_id,
+        type: newNotification.type,
+        title: newNotification.title,
+        message: newNotification.message,
+        createdAt: new Date(newNotification.created_at).toISOString(),
+        isRead: newNotification.is_read,
+        link: newNotification.link,
+        iconName: newNotification.icon_name
+    };
 };
+
 
 export const updateSiteSettings = (updates: Partial<SiteSettings>): SiteSettings => {
     mockSiteSettings = { ...mockSiteSettings, ...updates };
@@ -788,7 +809,7 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<void> 
 
 export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Promise<Review> => {
   const currentUser = getUserById(reviewData.userId);
-  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
+  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isPublicProfile || false, createdAt: new Date().toISOString() };
   mockReviews.push(newReview);
   
   const facility = await getFacilityById(reviewData.facilityId);
@@ -1094,3 +1115,4 @@ export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] =
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => {
     return dbGetPromotionRuleByCode(code);
 }
+
