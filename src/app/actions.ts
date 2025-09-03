@@ -1,6 +1,5 @@
 
 
-
 'use server';
 
 import { 
@@ -225,14 +224,23 @@ export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'booked
     
     // Fire off notifications but don't wait for them
     if (newBooking.userId) {
-        addNotificationAction(newBooking.userId, {
+        // Update user's phone number if it's new
+        const user = await dbGetAllUsers().then(users => users.find(u => u.id === newBooking.userId));
+        if (user && user.phone !== newBooking.phoneNumber) {
+            await dbUpdateUser(newBooking.userId, { phone: newBooking.phoneNumber });
+        }
+        
+        await addNotificationAction(newBooking.userId, {
             type: 'booking_confirmed',
             title: 'Booking Confirmed!',
             message: `Your booking for ${newBooking.facilityName} is confirmed.`,
             link: `/account/bookings/${newBooking.id}/receipt`,
             iconName: 'CheckCircle',
         });
-        sendBookingConfirmationSms(newBooking);
+    }
+
+    if (newBooking.phoneNumber) {
+      await sendBookingConfirmationSms(newBooking);
     }
     
     revalidatePath('/account/bookings');

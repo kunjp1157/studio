@@ -1,6 +1,5 @@
 
 
-
 'use client';
 
 import { Suspense, useEffect, useState, useMemo } from 'react';
@@ -17,7 +16,7 @@ import { getSiteSettingsAction, addBookingAction, addNotificationAction, getProm
 import type { Booking, SiteSettings, PromotionRule, AppliedPromotionInfo, RentedItemInfo, UserProfile } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode, PackageSearch, HandCoins, Users } from 'lucide-react';
+import { Ticket, CalendarDays, Clock, Home, BadgePercent, Tag, AlertCircle, ArrowLeft, CreditCard, QrCode, PackageSearch, HandCoins, Users, Phone } from 'lucide-react';
 
 const UpiIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5">
@@ -45,13 +44,18 @@ function BookingConfirmationContent() {
   const [upiId, setUpiId] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [numberOfGuests, setNumberOfGuests] = useState(1);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     const activeUser = sessionStorage.getItem('activeUser');
     if (activeUser) {
-      setCurrentUser(JSON.parse(activeUser));
+      const user = JSON.parse(activeUser);
+      setCurrentUser(user);
+      if (user.phone) {
+        setPhoneNumber(user.phone);
+      }
     }
   }, []);
 
@@ -118,6 +122,10 @@ function BookingConfirmationContent() {
 
   const handleConfirmBooking = async () => {
     if (!bookingData) return;
+    if (!phoneNumber.trim()) {
+        toast({ title: 'Phone Number Required', description: 'Please enter a phone number to receive booking updates.', variant: 'destructive' });
+        return;
+    }
     setIsConfirming(true);
 
     if (paymentMethod === 'upi' && !upiId.trim()) {
@@ -137,7 +145,8 @@ function BookingConfirmationContent() {
       status: paymentMethod === 'pay_at_venue' ? 'Pending' : 'Confirmed',
       appliedPromotion: appliedPromotion || undefined,
       numberOfGuests: bookingData.pricingModel === 'per_hour_per_person' ? numberOfGuests : undefined,
-      userId: currentUser?.id, // Attach user ID if logged in
+      userId: currentUser?.id,
+      phoneNumber: phoneNumber,
     });
 
     window.dispatchEvent(new CustomEvent('dataChanged'));
@@ -217,8 +226,13 @@ function BookingConfirmationContent() {
         </Card>
         
         <Card className="shadow-lg">
-            <CardHeader><CardTitle>Payment Method</CardTitle><CardDescription>This is a mock payment screen.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Payment & Contact</CardTitle><CardDescription>This is a mock payment screen.</CardDescription></CardHeader>
             <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="phone-number" className="flex items-center"><Phone className="mr-2 h-4 w-4 text-muted-foreground"/> Phone Number for SMS Confirmation</Label>
+                    <Input id="phone-number" type="tel" placeholder="Enter your mobile number" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} required />
+                </div>
+                <hr/>
                 {showPaymentForm ? (
                 <>
                   <div className="flex items-center space-x-2 border p-4 rounded-md">

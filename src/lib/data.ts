@@ -3,7 +3,7 @@
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import { getStaticSports as getMockSportsStatic, getStaticAmenities, getStaticUsers, getStaticFacilities as getMockFacilities } from './mock-data';
+import { getMockSports as getMockSportsStatic, getStaticAmenities, getStaticUsers, getStaticFacilities as getMockFacilities } from './mock-data';
 
 // --- IN-MEMORY MOCK DATABASE (to be phased out) ---
 let mockTeams: Team[] = [];
@@ -163,14 +163,15 @@ export const addNotification = (userId: string, notificationData: Omit<AppNotifi
     return newNotification;
 };
 
-export const sendBookingConfirmationSms = (booking: Booking): void => {
-    const user = booking.userId ? getUserById(booking.userId) : null;
-    const phone = user?.phone;
+export const sendBookingConfirmationSms = async (booking: Booking): Promise<void> => {
+    const phone = booking.phoneNumber;
     if (!phone) {
-        console.log(`[SMS SIMULATION] Could not send SMS for booking ${booking.id}: User has no phone number.`);
+        console.log(`[SMS SIMULATION] Could not send SMS for booking ${booking.id}: No phone number provided with booking.`);
         return;
     }
-    const message = `Hi ${user.name}, your booking for ${booking.sportName} at ${booking.facilityName} on ${formatDateFns(parseISO(booking.date), 'MMM d')} at ${booking.startTime} is confirmed. Booking ID: ${booking.id.substring(0,8)}.`;
+    const user = booking.userId ? await getUserById(booking.userId) : null;
+    const userName = user ? user.name : 'Guest';
+    const message = `Hi ${userName}, your booking for ${booking.sportName} at ${booking.facilityName} on ${formatDateFns(parseISO(booking.date), 'MMM d')} at ${booking.startTime} is confirmed. Booking ID: ${booking.id.substring(0,8)}.`;
     console.log(`[SMS SIMULATION] Sending to ${phone}: "${message}"`);
     // In a real app, you would use an SMS provider's SDK here, e.g.:
     // await twilio.messages.create({ to: phone, from: process.env.TWILIO_PHONE_NUMBER, body: message });
