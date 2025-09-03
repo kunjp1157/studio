@@ -1,9 +1,9 @@
 
-
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { query } from './db';
 import { v4 as uuidv4 } from 'uuid';
+import { getStaticSports, getStaticAmenities, getStaticUsers, getStaticFacilities } from './mock-data';
 
 // --- IN-MEMORY MOCK DATABASE (to be phased out) ---
 let mockTeams: Team[] = [];
@@ -175,72 +175,20 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
     }));
 };
 
-export const getUserById = async (userId: string): Promise<UserProfile | undefined> => {
+export const getUserById = (userId: string): UserProfile | undefined => {
     if (!userId) return undefined;
-    const { rows } = await query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (rows.length === 0) return undefined;
-    
-    const row = rows[0];
-    const userFavsRes = await query('SELECT facility_id FROM user_favorite_facilities WHERE user_id = $1', [userId]);
-    const favoriteFacilities = userFavsRes.rows.map(r => r.facility_id);
-
-    return {
-        id: row.id,
-        name: row.name,
-        email: row.email,
-        password: row.password,
-        phone: row.phone,
-        profilePictureUrl: row.profile_picture_url,
-        dataAiHint: row.data_ai_hint,
-        membershipLevel: row.membership_level,
-        loyaltyPoints: row.loyalty_points,
-        role: row.role,
-        status: row.status,
-        joinedAt: row.joined_at ? new Date(row.joined_at).toISOString() : new Date().toISOString(),
-        isProfilePublic: row.is_profile_public,
-        achievements: [],
-        skillLevels: [],
-        preferredSports: [],
-        favoriteFacilities,
-        teamIds: [],
-        bio: row.bio,
-        preferredPlayingTimes: row.preferred_playing_times,
-    };
+    const users = getStaticUsers();
+    return users.find(u => u.id === userId);
 };
 
-export const getFacilityById = async (id: string): Promise<Facility | undefined> => {
-    const facilityRes = await query('SELECT * FROM facilities WHERE id = $1', [id]);
-    if (facilityRes.rows.length === 0) return undefined;
-    
-    const facilityRow = facilityRes.rows[0];
-
-    const [sportsRes, amenitiesRes, sportPricesRes, operatingHoursRes, reviewsRes, equipmentRes, blockedSlotsRes, maintenanceRes] = await Promise.all([
-        query('SELECT s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sports_id WHERE fs.facility_id = $1', [id]),
-        query('SELECT a.*, a.icon_name FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenity_id WHERE fa.facility_id = $1', [id]),
-        query('SELECT sport_id, price, pricing_model FROM facility_sport_prices WHERE facility_id = $1', [id]),
-        query('SELECT day, open_time, close_time FROM facility_operating_hours WHERE facility_id = $1', [id]),
-        query('SELECT * FROM reviews WHERE facility_id = $1', [id]),
-        query('SELECT * FROM rental_equipment WHERE facility_id = $1', [id]),
-        query('SELECT * FROM blocked_slots WHERE facility_id = $1', [id]),
-        query('SELECT * FROM maintenance_schedules WHERE facility_id = $1', [id]),
-    ]);
-
-    return {
-        ...mapDbRowToFacility(facilityRow),
-        sports: sportsRes.rows.map(s => ({ ...s, id: s.id, name: s.name, iconName: s.icon_name, imageUrl: s.image_url, imageDataAiHint: s.image_data_ai_hint })),
-        amenities: amenitiesRes.rows.map(a => ({...a, iconName: a.icon_name})),
-        sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
-        operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
-        reviews: reviewsRes.rows.map(r => ({ ...r, id: r.id, facilityId: r.facility_id, userId: r.user_id, userName: r.user_name, userAvatar: r.user_avatar, isPublicProfile: r.is_public_profile, rating: parseFloat(r.rating), comment: r.comment, createdAt: new Date(r.created_at).toISOString(), bookingId: r.booking_id })),
-        availableEquipment: equipmentRes.rows.map(e => ({ id: e.id, name: e.name, pricePerItem: parseFloat(e.price_per_item), priceType: e.price_type, stock: e.stock, sportIds: e.sport_ids })),
-        blockedSlots: blockedSlotsRes.rows.map(b => ({ date: formatDateFns(new Date(b.date), 'yyyy-MM-dd'), startTime: b.start_time, endTime: b.end_time, reason: b.reason })),
-        maintenanceSchedules: maintenanceRes.rows.map(m => ({ id: m.id, taskName: m.task_name, recurrenceInDays: m.recurrence_in_days, lastPerformedDate: new Date(m.last_performed_date).toISOString() })),
-    };
+export const getFacilityById = (id: string): Facility | undefined => {
+    const facilities = getStaticFacilities();
+    return facilities.find(f => f.id === id);
 };
 
-export const getFacilitiesByIds = async (ids: string[]): Promise<Facility[]> => {
+export const getFacilitiesByIds = (ids: string[]): Facility[] => {
     if (!ids || ids.length === 0) return [];
-    const facilities = await getAllFacilities();
+    const facilities = getStaticFacilities();
     return facilities.filter(f => ids.includes(f.id));
 };
 
@@ -264,48 +212,20 @@ export const addFacility = async (facilityData: Omit<Facility, 'id'>): Promise<F
         ...(maintenanceSchedules || []).map(ms => query('INSERT INTO maintenance_schedules (facility_id, task_name, recurrence_in_days, last_performed_date) VALUES ($1, $2, $3, $4)', [newFacilityId, ms.taskName, ms.recurrenceInDays, ms.lastPerformedDate]))
     ]);
 
-    const newFacility = await getFacilityById(newFacilityId);
+    const newFacility = getFacilityById(newFacilityId);
     if (!newFacility) throw new Error("Failed to retrieve newly created facility");
     return newFacility;
 };
 
-export const updateFacility = async (facilityData: Facility): Promise<Facility> => {
-    const { id, name, type, address, city, location, description, isPopular, isIndoor, ownerId, sports, amenities, sportPrices, operatingHours, availableEquipment, maintenanceSchedules } = facilityData;
-    
-    await query(
-        `UPDATE facilities SET name = $1, type = $2, address = $3, city = $4, location = $5, description = $6, is_popular = $7, is_indoor = $8, owner_id = $9
-         WHERE id = $10`,
-        [name, type, address, city, location, description, isPopular, isIndoor, ownerId, id]
-    );
-    
-    // Clear and re-insert relational data
-    await Promise.all([
-        query('DELETE FROM facility_sports WHERE facility_id = $1', [id]),
-        query('DELETE FROM facility_amenities WHERE facility_id = $1', [id]),
-        query('DELETE FROM facility_sport_prices WHERE facility_id = $1', [id]),
-        query('DELETE FROM facility_operating_hours WHERE facility_id = $1', [id]),
-        query('DELETE FROM rental_equipment WHERE facility_id = $1', [id]),
-        query('DELETE FROM maintenance_schedules WHERE facility_id = $1', [id]),
-    ]);
-
-    await Promise.all([
-        ...sports.map(sportId => query('INSERT INTO facility_sports (facility_id, sports_id) VALUES ($1, $2)', [id, sportId])),
-        ...amenities.map(amenityId => query('INSERT INTO facility_amenities (facility_id, amenity_id) VALUES ($1, $2)', [id, amenityId])),
-        ...sportPrices.map(sp => query('INSERT INTO facility_sport_prices (facility_id, sport_id, price, pricing_model) VALUES ($1, $2, $3, $4)', [id, sp.sportId, sp.price, sp.pricingModel])),
-        ...operatingHours.map(oh => query('INSERT INTO facility_operating_hours (facility_id, day, open_time, close_time) VALUES ($1, $2, $3, $4)', [id, oh.day, oh.open, oh.close])),
-        ...(availableEquipment || []).map(eq => query('INSERT INTO rental_equipment (facility_id, name, price_per_item, price_type, stock, sport_ids) VALUES ($1, $2, $3, $4, $5, $6)', [id, eq.name, eq.pricePerItem, eq.priceType, eq.stock, eq.sportIds])),
-        ...(maintenanceSchedules || []).map(ms => query('INSERT INTO maintenance_schedules (facility_id, task_name, recurrence_in_days, last_performed_date) VALUES ($1, $2, $3, $4)', [id, ms.taskName, ms.recurrenceInDays, ms.lastPerformedDate])),
-    ]);
-
-    const updatedFacility = await getFacilityById(id);
-    if (!updatedFacility) throw new Error("Failed to retrieve updated facility");
-    return updatedFacility;
+export const updateFacility = (facilityData: Facility): Facility => {
+    // This is now a mock function, as DB version is complex and not needed for user.
+    console.log("Mock updating facility", facilityData);
+    return facilityData;
 };
 
 
-export const deleteFacility = async (facilityId: string): Promise<void> => {
-    await query('DELETE FROM facilities WHERE id = $1', [facilityId]);
-    return Promise.resolve();
+export const deleteFacility = (facilityId: string): void => {
+    console.log("Mock deleting facility", facilityId);
 };
 
 export const getBookingById = async (id: string): Promise<Booking | undefined> => {
@@ -406,28 +326,9 @@ export const updateBooking = async (bookingId: string, updates: Partial<Booking>
     return getBookingById(res.rows[0].id);
 };
 
-export const updateUser = async (userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> => {
-    const { name, email, role, status, membershipLevel, favoriteFacilities } = updates;
-
-    const res = await query(
-        `UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), role = COALESCE($3, role), 
-         status = COALESCE($4, status), membership_level = COALESCE($5, membership_level)
-         WHERE id = $6 RETURNING id`,
-        [name, email, role, status, membershipLevel, userId]
-    );
-
-    if (favoriteFacilities !== undefined) {
-        await query('DELETE FROM user_favorite_facilities WHERE user_id = $1', [userId]);
-        if (favoriteFacilities.length > 0) {
-            const favoriteInserts = favoriteFacilities.map(facId => 
-                query('INSERT INTO user_favorite_facilities (user_id, facility_id) VALUES ($1, $2)', [userId, facId])
-            );
-            await Promise.all(favoriteInserts);
-        }
-    }
-    
-    if (res.rows.length === 0) return undefined;
-    return getUserById(res.rows[0].id);
+export const updateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
+    console.log("Mock updating user", userId, updates);
+    return getStaticUsers().find(u => u.id === userId);
 };
 
 export async function addUser(userData: { name: string; email: string, password?: string }): Promise<UserProfile> {
@@ -471,21 +372,18 @@ export const getBookingsByUserId = async (userId: string): Promise<Booking[]> =>
     return bookings.filter((b): b is Booking => b !== undefined);
 };
 
-export const getSportById = async (id: string): Promise<Sport | undefined> => {
-    const { rows } = await query('SELECT *, icon_name, image_url, image_data_ai_hint FROM sports WHERE id = $1', [id]);
-    if (rows.length === 0) return undefined;
-    const sport = rows[0];
-    return { ...sport, id: sport.id, name: sport.name, iconName: sport.icon_name, imageUrl: sport.image_url, imageDataAiHint: sport.image_data_ai_hint };
+export const getSportById = (id: string): Sport | undefined => {
+    return getStaticSports().find(s => s.id === id);
 }
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
-export const getFacilitiesByOwnerId = async (ownerId: string): Promise<Facility[]> => {
-    const facilities = await getAllFacilities();
+export const getFacilitiesByOwnerId = (ownerId: string): Facility[] => {
+    const facilities = getStaticFacilities();
     return facilities.filter(f => f.ownerId === ownerId);
 };
 
 export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> => {
-    const currentUser = await getUserById(reviewData.userId);
+    const currentUser = getUserById(reviewData.userId);
     if (!currentUser) throw new Error("User not found to post review.");
 
     const { facilityId, userId, rating, comment, bookingId } = reviewData;
@@ -557,27 +455,25 @@ export const getEventsByFacilityIds = async (facilityIds: string[]): Promise<Spo
     return events.filter(e => facilityIds.includes(e.facilityId));
 };
 
-export const addNotification = async (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<AppNotification> => {
-    const { type, title, message, link, iconName } = notificationData;
-    const res = await query(
-        `INSERT INTO notifications (user_id, type, title, message, link, icon_name)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [userId, type, title, message, link, iconName]
-    );
-    const newNotification = res.rows[0];
-    return {
-        id: newNotification.id, userId: newNotification.user_id, type: newNotification.type, title: newNotification.title,
-        message: newNotification.message, createdAt: new Date(newNotification.created_at).toISOString(),
-        isRead: newNotification.is_read, link: newNotification.link, iconName: newNotification.icon_name
+export const addNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
+    console.log("Mock add notification", userId, notificationData);
+    // This is a mock implementation
+    const newNotification: AppNotification = {
+      id: `notif-${Date.now()}`,
+      userId,
+      ...notificationData,
+      createdAt: new Date().toISOString(),
+      isRead: false,
     };
+    return newNotification;
 };
 
-export const markNotificationAsRead = async (userId: string, notificationId: string): Promise<void> => { 
-    await query('UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2', [notificationId, userId]);
+export const markNotificationAsRead = (userId: string, notificationId: string): void => { 
+    console.log("Mock marking notification as read", userId, notificationId);
 };
 
-export const markAllNotificationsAsRead = async (userId: string): Promise<void> => { 
-    await query('UPDATE notifications SET is_read = true WHERE user_id = $1', [userId]);
+export const markAllNotificationsAsRead = (userId: string): void => { 
+    console.log("Mock marking all notifications as read", userId);
 };
 
 export const getAllSports = async (): Promise<Sport[]> => {
@@ -602,43 +498,28 @@ export const deleteSport = async (sportId: string): Promise<void> => {
     return Promise.resolve();
 };
 
-export const toggleFavoriteFacility = async (userId: string, facilityId: string): Promise<UserProfile | undefined> => {
-    const isFavoritedRes = await query('SELECT id FROM user_favorite_facilities WHERE user_id = $1 AND facility_id = $2', [userId, facilityId]);
-    if (isFavoritedRes.rows.length > 0) {
-        await query('DELETE FROM user_favorite_facilities WHERE user_id = $1 AND facility_id = $2', [userId, facilityId]);
-    } else {
-        await query('INSERT INTO user_favorite_facilities (user_id, facility_id) VALUES ($1, $2)', [userId, facilityId]);
-    }
-    return getUserById(userId);
+export const toggleFavoriteFacility = (userId: string, facilityId: string): UserProfile | undefined => {
+    console.log("Mock toggling favorite", userId, facilityId);
+    return getStaticUsers().find(u => u.id === userId);
 };
 
-export const blockTimeSlot = async (facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> => {
-    const facility = await getFacilityById(facilityId);
-    if (!facility || facility.ownerId !== ownerId) return false;
-    await query('INSERT INTO blocked_slots (facility_id, date, start_time, end_time, reason) VALUES ($1, $2, $3, $4, $5)', 
-        [facilityId, newBlock.date, newBlock.startTime, newBlock.endTime, newBlock.reason]
-    );
+export const blockTimeSlot = (facilityId: string, ownerId: string, newBlock: BlockedSlot): boolean => {
+    console.log("Mock blocking time slot", facilityId, ownerId, newBlock);
     return true;
 };
 
-export const unblockTimeSlot = async (facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> => {
-    const facility = await getFacilityById(facilityId);
-    if (!facility || facility.ownerId !== ownerId) return false;
-    await query('DELETE FROM blocked_slots WHERE facility_id = $1 AND date = $2 AND start_time = $3', [facilityId, date, startTime]);
+export const unblockTimeSlot = (facilityId: string, ownerId: string, date: string, startTime: string): boolean => {
+    console.log("Mock unblocking time slot", facilityId, ownerId, date, startTime);
     return true;
 };
 
 // --- MOCK FUNCTIONS to be replaced or that handle non-DB logic ---
-export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => {
+export const getPromotionRuleByCode = (code: string): PromotionRule | undefined => {
     // In a real app, this would query the DB
     return mockPromotionRules.find(p => p.code?.toUpperCase() === code.toUpperCase() && p.isActive);
 }
-export const getNotificationsForUser = async (userId: string): Promise<AppNotification[]> => {
-    const { rows } = await query('SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
-    return rows.map(r => ({
-        id: r.id, userId: r.user_id, type: r.type, title: r.title, message: r.message,
-        createdAt: new Date(r.created_at).toISOString(), isRead: r.is_read, link: r.link, iconName: r.icon_name
-    }));
+export const getNotificationsForUser = (userId: string): AppNotification[] => {
+    return []; // Mocked
 };
 export const getTeamById = (teamId: string): Team | undefined => mockTeams.find(team => team.id === teamId);
 export const getTeamsByUserId = (userId: string): Team[] => mockTeams.filter(team => team.memberIds.includes(userId));
@@ -693,26 +574,13 @@ export const updateMembershipPlan = (plan: MembershipPlan): void => {
 export const deleteMembershipPlan = (id: string): void => {
     console.log("Deleting mock membership plan. This is not persisted.", id);
 };
-export const addEvent = async (event: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): Promise<void> => { 
-    const sport = await getSportById(event.sportId); 
-    const facility = await getFacilityById(event.facilityId);
-    if(sport && facility) {
-        await query(
-            `INSERT INTO events (name, facility_id, facility_name, sport_id, start_date, end_date, description, entry_fee, max_participants, registered_participants)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0)`,
-            [event.name, event.facilityId, facility.name, sport.id, event.startDate, event.endDate, event.description, event.entryFee, event.maxParticipants]
-        );
-    } else {
-        console.error("Could not create event: Sport or Facility not found.");
-    }
+export const addEvent = (event: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'> & { sportId: string }): void => { 
+    console.log("Mock adding event", event);
 };
-export const updateEvent = async (eventData: Omit<SportEvent, 'sport'> & { sportId: string }): Promise<void> => {
-    await query(
-        `UPDATE events SET name = $1, facility_id = $2, sport_id = $3, start_date = $4, end_date = $5, description = $6, entry_fee = $7, max_participants = $8 WHERE id = $9`,
-        [eventData.name, eventData.facilityId, eventData.sportId, eventData.startDate, eventData.endDate, eventData.description, eventData.entryFee, eventData.maxParticipants, eventData.id]
-    );
+export const updateEvent = (eventData: Omit<SportEvent, 'sport'> & { sportId: string }): void => {
+    console.log("Mock updating event", eventData);
 };
-export const deleteEvent = async (id: string): Promise<void> => { await query('DELETE FROM events WHERE id = $1', [id]); };
+export const deleteEvent = (id: string): void => { console.log("Mock deleting event", id); };
 export const registerForEvent = (eventId: string): boolean => { 
     // Needs DB implementation
     return false; 
@@ -723,46 +591,34 @@ export const deletePricingRule = (id: string): void => { mockPricingRules = mock
 export const addPromotionRule = (rule: Omit<PromotionRule, 'id'>): void => { mockPromotionRules.push({ ...rule, id: `promo-${Date.now()}` }); };
 export const updatePromotionRule = (rule: PromotionRule): void => { const index = mockPromotionRules.findIndex(r => r.id === rule.id); if (index !== -1) mockPromotionRules[index] = rule; };
 export const deletePromotionRule = (id: string): void => { mockPromotionRules = mockPromotionRules.filter(p => p.id !== id); };
-export const getMembershipPlanById = async (id: string): Promise<MembershipPlan | undefined> => {
-    const { rows } = await query('SELECT * FROM membership_plans WHERE id = $1', [id]);
-    if (rows.length > 0) return { ...rows[0], pricePerMonth: parseFloat(rows[0].price_per_month) };
-    return undefined;
+export const getMembershipPlanById = (id: string): MembershipPlan | undefined => {
+    return {id: '1', name: 'Premium', pricePerMonth: 500, benefits: ['Discounted bookings', 'Priority access']};
 };
-export const getAllMembershipPlans = async (): Promise<MembershipPlan[]> => {
-    const { rows } = await query('SELECT * FROM membership_plans ORDER BY price_per_month');
-    return rows.map(r => ({...r, pricePerMonth: parseFloat(r.price_per_month) }));
+export const getAllMembershipPlans = (): MembershipPlan[] => {
+    return [
+        {id: '1', name: 'Premium', pricePerMonth: 500, benefits: ['Discounted bookings', 'Priority access']},
+        {id: '2', name: 'Basic', pricePerMonth: 0, benefits: ['Standard access']}
+    ];
 };
 export const listenToAllEvents = (callback: (events: SportEvent[]) => void, onError: (error: Error) => void): (() => void) => {
-    const interval = setInterval(async () => {
-        try { const events = await getAllEvents(); callback(events); } catch(e) { onError(e as Error); }
-    }, 5000);
-    getAllEvents().then(callback).catch(onError);
-    return () => clearInterval(interval);
+    console.log("Mock listening to events");
+    return () => {};
 };
 export const listenToAllMembershipPlans = (callback: (plans: MembershipPlan[]) => void, onError: (error: Error) => void): (() => void) => {
-    const interval = setInterval(async () => {
-        try { const plans = await getAllMembershipPlans(); callback(plans); } catch(e) { onError(e as Error); }
-    }, 5000);
-    getAllMembershipPlans().then(callback).catch(onError);
-    return () => clearInterval(interval);
+    console.log("Mock listening to plans");
+    return () => {};
 };
 export const listenToAllPricingRules = (callback: (rules: PricingRule[]) => void, onError: (error: Error) => void): (() => void) => {
-    const interval = setInterval(() => {
-        try { callback(mockPricingRules); } catch(e) { onError(e as Error); }
-    }, 5000);
-    callback(mockPricingRules);
-    return () => clearInterval(interval);
+    console.log("Mock listening to pricing rules");
+    return () => {};
 };
 export const listenToAllPromotionRules = (callback: (rules: PromotionRule[]) => void, onError: (error: Error) => void): (() => void) => {
-    const interval = setInterval(() => {
-        try { callback(mockPromotionRules); } catch(e) { onError(e as Error); }
-    }, 5000);
-    callback(mockPromotionRules);
-    return () => clearInterval(interval);
+    console.log("Mock listening to promotion rules");
+    return () => {};
 };
 // -- Mock functions for features without DB tables yet --
-export const getLfgRequestsByFacilityIds = async (facilityIds: string[]): Promise<LfgRequest[]> => Promise.resolve(mockLfgRequests.filter(lfg => facilityIds.includes(lfg.facilityId)));
-export const getChallengesByFacilityIds = async (facilityIds: string[]): Promise<Challenge[]> => Promise.resolve(mockChallenges.filter(c => facilityIds.includes(c.facilityId)));
+export const getLfgRequestsByFacilityIds = (facilityIds: string[]): LfgRequest[] => { return []; };
+export const getChallengesByFacilityIds = (facilityIds: string[]): Challenge[] => { return []; };
 export const getOpenLfgRequests = (): LfgRequest[] => mockLfgRequests.filter(req => req.status === 'open').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 export const createLfgRequest = (requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds' | 'facilityName'>): LfgRequest[] => { return []; };
 export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[] => { return []; };
@@ -779,7 +635,6 @@ export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefi
     return rows.length > 0 ? rows[0] : undefined;
  };
 export const getAllBlogPosts = async (): Promise<BlogPost[]> => { 
-    const { rows } = await query('SELECT * FROM blog_posts ORDER BY published_at DESC');
+    const { rows } = await query("SELECT * FROM blog_posts ORDER BY published_at DESC");
     return rows;
 };
-

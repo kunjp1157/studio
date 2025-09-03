@@ -40,33 +40,35 @@ import {
     getAllBlogPosts as dbGetAllBlogPosts,
     getBlogPostBySlug as dbGetBlogPostBySlug,
     registerForEvent,
+    getStaticFacilities,
+    getStaticSports,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
-import { mockAmenities, getMockSports } from '@/lib/mock-data';
+import { mockAmenities } from '@/lib/mock-data';
 
-export async function getSports() {
-    return dbGetAllSports();
+export function getSports() {
+    return getStaticSports();
 }
 
-export async function getFacilitiesAction(): Promise<Facility[]> {
-  const facilities = await dbGetAllFacilities();
+export function getFacilitiesAction(): Facility[] {
+  const facilities = getStaticFacilities();
   return facilities;
 }
 
-export async function getFacilityByIdAction(id: string): Promise<Facility | undefined> {
-    const facility = await dbGetFacilityById(id);
+export function getFacilityByIdAction(id: string): Facility | undefined {
+    const facility = dbGetFacilityById(id);
     return facility;
 }
 
-export async function getBookingByIdAction(id: string): Promise<Booking | undefined> {
-    const booking = await dbGetBookingById(id);
+export function getBookingByIdAction(id: string): Promise<Booking | undefined> {
+    const booking = dbGetBookingById(id);
     return booking;
 }
 
 // Action to add a facility. It takes form data, processes it, and calls the DB function.
 export async function addFacilityAction(facilityData: any): Promise<Facility> {
-    const allSports = await getSports();
+    const allSports = getSports();
     const sportData = (facilityData.sports || []).map((sportId: string) => allSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
     const payload = {
       ...facilityData,
@@ -83,9 +85,9 @@ export async function addFacilityAction(facilityData: any): Promise<Facility> {
 }
 
 // Action to update a facility. It takes form data, processes it, and calls the DB function.
-export async function updateFacilityAction(facilityData: any): Promise<Facility> {
-    const allSports = await getSports();
-    const existingFacility = await dbGetFacilityById(facilityData.id);
+export function updateFacilityAction(facilityData: any): Facility {
+    const allSports = getSports();
+    const existingFacility = dbGetFacilityById(facilityData.id);
     const sportData = (facilityData.sports || []).map((sportId: string) => allSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
     const payload = {
       ...existingFacility, // Start with existing data to preserve reviews, etc.
@@ -93,7 +95,7 @@ export async function updateFacilityAction(facilityData: any): Promise<Facility>
       sports: sportData,
       amenities: mockAmenities.filter(amenity => (facilityData.amenities || []).includes(amenity.id)),
     };
-    const updatedFacility = await dbUpdateFacility(payload);
+    const updatedFacility = dbUpdateFacility(payload);
     revalidatePath(`/admin/facilities/${facilityData.id}/edit`);
     revalidatePath(`/owner/my-facilities/${facilityData.id}/edit`);
     revalidatePath('/admin/facilities');
@@ -102,14 +104,14 @@ export async function updateFacilityAction(facilityData: any): Promise<Facility>
     return updatedFacility;
 }
 
-export async function deleteFacilityAction(facilityId: string): Promise<void> {
-  await dbDeleteFacility(facilityId);
+export function deleteFacilityAction(facilityId: string): void {
+  dbDeleteFacility(facilityId);
   revalidatePath('/admin/facilities');
   revalidatePath('/owner/my-facilities');
   revalidatePath('/facilities');
 }
 
-export async function getUsersAction(): Promise<UserProfile[]> {
+export function getUsersAction(): Promise<UserProfile[]> {
   return dbGetAllUsers();
 }
 
@@ -119,64 +121,64 @@ export async function addUserAction(userData: { name: string; email: string; pas
     return newUser;
 }
 
-export async function getAllBookingsAction(): Promise<Booking[]> {
+export function getAllBookingsAction(): Promise<Booking[]> {
   return dbGetAllBookings();
 }
 
-export async function getSiteSettingsAction(): Promise<SiteSettings> {
+export function getSiteSettingsAction(): SiteSettings {
     return dbGetSiteSettings();
 }
 
-export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
+export function getFacilitiesByOwnerIdAction(ownerId: string): Facility[] {
     return dbGetFacilitiesByOwnerId(ownerId);
 }
 
-export async function getAllEventsAction(): Promise<SportEvent[]> {
+export function getAllEventsAction(): Promise<SportEvent[]> {
     return dbGetAllEvents();
 }
 
-export async function getEventByIdAction(id: string): Promise<SportEvent | undefined> {
+export function getEventByIdAction(id: string): Promise<SportEvent | undefined> {
     return dbGetEventById(id);
 }
 
-export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
+export function getAllMembershipPlansAction(): MembershipPlan[] {
     return dbGetAllMembershipPlans();
 }
 
-export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
+export function getAllPricingRulesAction(): PricingRule[] {
     return dbGetAllPricingRules();
 }
 
-export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
+export function getAllPromotionRulesAction(): PromotionRule[] {
     return dbGetAllPromotionRules();
 }
 
-export async function getPromotionRuleByCodeAction(code: string): Promise<PromotionRule | undefined> {
+export function getPromotionRuleByCodeAction(code: string): PromotionRule | undefined {
     return dbGetPromotionRuleByCode(code);
 }
 
-export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
+export function getNotificationsForUserAction(userId: string): AppNotification[] {
     return dbGetNotificationsForUser(userId);
 }
 
-export async function markNotificationAsReadAction(userId: string, notificationId: string): Promise<void> {
+export function markNotificationAsReadAction(userId: string, notificationId: string): void {
     return markNotificationAsRead(userId, notificationId);
 }
 
-export async function markAllNotificationsAsReadAction(userId: string): Promise<void> {
+export function markAllNotificationsAsReadAction(userId: string): void {
     return markAllNotificationsAsRead(userId);
 }
 
-export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
+export function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
     return dbGetBookingsByUserId(userId);
 }
 
-export async function getBookingsForFacilityOnDateAction(facilityId: string, date: string): Promise<Booking[]> {
+export function getBookingsForFacilityOnDateAction(facilityId: string, date: string): Promise<Booking[]> {
     return dbGetBookingsForFacilityOnDate(facilityId, date);
 }
 
-export async function blockTimeSlotAction(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
-    const success = await dbBlockTimeSlot(facilityId, ownerId, newBlock);
+export function blockTimeSlotAction(facilityId: string, ownerId: string, newBlock: BlockedSlot): boolean {
+    const success = dbBlockTimeSlot(facilityId, ownerId, newBlock);
     if(success) {
         revalidatePath(`/owner/availability`);
         revalidatePath(`/facilities/${facilityId}`);
@@ -184,8 +186,8 @@ export async function blockTimeSlotAction(facilityId: string, ownerId: string, n
     return success;
 }
 
-export async function unblockTimeSlotAction(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
-    const success = await dbUnblockTimeSlot(facilityId, ownerId, date, startTime);
+export function unblockTimeSlotAction(facilityId: string, ownerId: string, date: string, startTime: string): boolean {
+    const success = dbUnblockTimeSlot(facilityId, ownerId, date, startTime);
     if (success) {
         revalidatePath(`/owner/availability`);
         revalidatePath(`/facilities/${facilityId}`);
@@ -193,8 +195,8 @@ export async function unblockTimeSlotAction(facilityId: string, ownerId: string,
     return success;
 }
 
-export async function updateUserAction(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
-    const user = await dbUpdateUser(userId, updates);
+export function updateUserAction(userId: string, updates: Partial<UserProfile>): UserProfile | undefined {
+    const user = dbUpdateUser(userId, updates);
     if (user) {
         revalidatePath(`/account/profile`);
         revalidatePath(`/admin/users`);
@@ -202,8 +204,8 @@ export async function updateUserAction(userId: string, updates: Partial<UserProf
     return user;
 }
 
-export async function updateBookingAction(bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> {
-    const booking = await dbUpdateBooking(bookingId, updates);
+export function updateBookingAction(bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> {
+    const booking = dbUpdateBooking(bookingId, updates);
     if (booking) {
         revalidatePath(`/account/bookings`);
         revalidatePath(`/account/bookings/${bookingId}/edit`);
@@ -212,8 +214,8 @@ export async function updateBookingAction(bookingId: string, updates: Partial<Bo
     return booking;
 }
 
-export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
-    const newBooking = await dbAddBooking(bookingData);
+export function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
+    const newBooking = dbAddBooking(bookingData);
     revalidatePath('/account/bookings');
     revalidatePath(`/facilities/${bookingData.facilityId}`);
     revalidatePath('/admin/bookings');
@@ -221,37 +223,38 @@ export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'booked
 }
 
 
-export async function addNotificationAction(
+export function addNotificationAction(
   userId: string,
   notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>
-): Promise<AppNotification> {
+): AppNotification {
   return dbAddNotification(userId, notificationData);
 }
 
-export async function getAllSportsAction(): Promise<Sport[]> {
+export function getAllSportsAction(): Sport[] {
   return dbGetAllSports();
 }
 
-export async function addSportAction(sportData: Omit<Sport, 'id'>): Promise<Sport> {
-  const newSport = await dbAddSport(sportData);
+export function addSportAction(sportData: Omit<Sport, 'id'>): Promise<Sport> {
+  const newSport = dbAddSport(sportData);
   revalidatePath('/admin/sports');
   return newSport;
 }
 
-export async function updateSportAction(sportId: string, sportData: Partial<Sport>): Promise<Sport> {
-  const updatedSport = await dbUpdateSport(sportId, sportData);
+export function updateSportAction(sportId: string, sportData: Partial<Sport>): Promise<Sport> {
+  const updatedSport = dbUpdateSport(sportId, sportData);
   revalidatePath('/admin/sports');
   revalidatePath(`/admin/sports/${sportId}/edit`);
   return updatedSport;
 }
 
-export async function deleteSportAction(sportId: string): Promise<void> {
-  await dbDeleteSport(sportId);
+export function deleteSportAction(sportId: string): Promise<void> {
+  dbDeleteSport(sportId);
   revalidatePath('/admin/sports');
+  return Promise.resolve();
 }
 
-export async function toggleFavoriteFacilityAction(userId: string, facilityId: string): Promise<UserProfile | undefined> {
-    const updatedUser = await dbToggleFavoriteFacility(userId, facilityId);
+export function toggleFavoriteFacilityAction(userId: string, facilityId: string): UserProfile | undefined {
+    const updatedUser = dbToggleFavoriteFacility(userId, facilityId);
     if(updatedUser) {
         revalidatePath('/account/favorites');
         revalidatePath(`/facilities/${facilityId}`);
@@ -259,21 +262,21 @@ export async function toggleFavoriteFacilityAction(userId: string, facilityId: s
     return updatedUser;
 }
 
-export async function addReviewAction(reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> {
-    const newReview = await dbAddReview(reviewData);
+export function addReviewAction(reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> {
+    const newReview = dbAddReview(reviewData);
     revalidatePath(`/facilities/${reviewData.facilityId}`);
     revalidatePath('/account/bookings'); // Revalidate bookings to show "Reviewed" status
     return newReview;
 }
 
-export async function getAllBlogPostsAction(): Promise<BlogPost[]> {
+export function getAllBlogPostsAction(): Promise<BlogPost[]> {
     return dbGetAllBlogPosts();
 }
 
-export async function getBlogPostBySlugAction(slug: string): Promise<BlogPost | undefined> {
+export function getBlogPostBySlugAction(slug: string): Promise<BlogPost | undefined> {
     return dbGetBlogPostBySlug(slug);
 }
 
-export async function registerForEventAction(eventId: string): Promise<boolean> {
+export function registerForEventAction(eventId: string): boolean {
     return registerForEvent(eventId);
 }

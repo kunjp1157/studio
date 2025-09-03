@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { MapPin, Search } from 'lucide-react';
-import { getFacilitiesAction, getSiteSettingsAction } from '@/app/actions';
+import { getSiteSettings, getStaticFacilities } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
 export default function FacilitiesPage() {
@@ -22,13 +22,12 @@ export default function FacilitiesPage() {
   const [locations, setLocations] = useState<string[]>([]);
   const { toast } = useToast();
 
-  const fetchInitialData = useCallback(async () => {
+  const fetchInitialData = useCallback(() => {
     setIsLoading(true);
     try {
-        const [facilitiesData, settingsData] = await Promise.all([
-            getFacilitiesAction(),
-            getSiteSettingsAction()
-        ]);
+        const facilitiesData = getStaticFacilities();
+        const settingsData = getSiteSettings();
+
         setAllFacilities(facilitiesData);
         setFilteredFacilities(facilitiesData);
         setCurrency(settingsData.defaultCurrency);
@@ -43,12 +42,6 @@ export default function FacilitiesPage() {
   
   useEffect(() => {
     fetchInitialData();
-    // Add event listener for real-time updates
-    window.addEventListener('dataChanged', fetchInitialData);
-
-    return () => {
-      window.removeEventListener('dataChanged', fetchInitialData);
-    };
   }, [fetchInitialData]);
 
   const handleSearch = useCallback((filters: SearchFilters) => {
