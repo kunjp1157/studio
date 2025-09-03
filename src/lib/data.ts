@@ -4,6 +4,7 @@ import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booki
 import { getStaticUsers, getMockSports, mockAmenities, mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { query } from './db';
+import { v4 as uuidv4 } from 'uuid';
 
 // --- IN-MEMORY MOCK DATABASE ---
 let mockUsers: UserProfile[] = getStaticUsers();
@@ -541,6 +542,7 @@ export const updateUser = async (userId: string, updates: Partial<UserProfile>):
 
 export async function addUser(userData: { name: string; email: string, password?: string }): Promise<UserProfile> {
   const { name, email, password } = userData;
+  const id = uuidv4();
 
   const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
   if (existingUser.rows.length > 0) {
@@ -550,9 +552,9 @@ export async function addUser(userData: { name: string; email: string, password?
   // In a real app, you would hash the password here before storing.
   // For this project, we'll store it as is (which is NOT secure for production).
   const res = await query(
-    `INSERT INTO users (name, email, password, role, status, is_profile_public)
-     VALUES ($1, $2, $3, 'User', 'Active', true) RETURNING *`,
-    [name, email, password]
+    `INSERT INTO users (id, name, email, password, role, status, is_profile_public)
+     VALUES ($1, $2, $3, $4, 'User', 'Active', true) RETURNING *`,
+    [id, name, email, password]
   );
   
   const newUserRow = res.rows[0];
@@ -809,7 +811,7 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<void> 
 
 export const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar'>): Promise<Review> => {
   const currentUser = getUserById(reviewData.userId);
-  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isPublicProfile || false, createdAt: new Date().toISOString() };
+  const newReview: Review = { ...reviewData, id: `review-${Date.now()}`, userName: currentUser?.name || 'Anonymous User', userAvatar: currentUser?.profilePictureUrl, isPublicProfile: currentUser?.isProfilePublic || false, createdAt: new Date().toISOString() };
   mockReviews.push(newReview);
   
   const facility = await getFacilityById(reviewData.facilityId);
@@ -1115,4 +1117,5 @@ export const getEquipmentForFacility = (facilityId: string): RentalEquipment[] =
 export const getPromotionRuleByCode = async (code: string): Promise<PromotionRule | undefined> => {
     return dbGetPromotionRuleByCode(code);
 }
+
 
