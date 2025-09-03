@@ -42,7 +42,6 @@ import {
     dbAddUser,
     dbGetPromotionRuleByCode,
     dbGetAllBlogPosts,
-    dbGetBlogPostBySlug,
     registerForEvent,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
@@ -152,6 +151,13 @@ export async function getUsersAction(): Promise<UserProfile[]> {
 }
 
 export async function addUserAction(userData: { name: string; email: string; password?: string }): Promise<UserProfile> {
+    const allUsers = await dbGetAllUsers();
+    const existingUser = allUsers.find(user => user.email.toLowerCase() === userData.email.toLowerCase());
+
+    if (existingUser) {
+        throw new Error('A user with this email already exists.');
+    }
+
     const newUser = await dbAddUser(userData);
     revalidatePath('/admin/users');
     return newUser;
