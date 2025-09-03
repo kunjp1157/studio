@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -25,8 +25,6 @@ export default function LoginPage() {
       const allUsers = await getUsersAction();
       const foundUser = allUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
 
-      // In a real app, you would use a secure password hashing and comparison library (e.g., bcrypt)
-      // For this project, we are doing a plain text comparison which is NOT secure.
       if (foundUser && foundUser.password === password) {
         sessionStorage.setItem('activeUser', JSON.stringify(foundUser));
         window.dispatchEvent(new Event('userChanged'));
@@ -35,14 +33,21 @@ export default function LoginPage() {
           title: 'Logged In Successfully!',
           description: `Welcome back, ${foundUser.name}!`,
         });
-        
-        // Redirect based on role
-        if (foundUser.role === 'Admin') {
-          router.push('/admin/dashboard');
-        } else if (foundUser.role === 'FacilityOwner') {
-            router.push('/owner/dashboard');
+
+        const pendingBooking = sessionStorage.getItem('pendingBooking');
+        if (pendingBooking) {
+            sessionStorage.removeItem('pendingBooking');
+            const bookingData = JSON.parse(pendingBooking);
+            router.push(`/facilities/${bookingData.facilityId}/book?data=${encodeURIComponent(JSON.stringify(bookingData))}`);
         } else {
-            router.push('/dashboard');
+             // Redirect based on role
+            if (foundUser.role === 'Admin') {
+            router.push('/admin/dashboard');
+            } else if (foundUser.role === 'FacilityOwner') {
+                router.push('/owner/dashboard');
+            } else {
+                router.push('/dashboard');
+            }
         }
       } else {
          toast({

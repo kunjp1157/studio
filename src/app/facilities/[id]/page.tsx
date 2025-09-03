@@ -58,7 +58,7 @@ const generateTimeSlots = (
 
     if(isAvailable) {
         for (const blocked of dateSpecificBlockedSlots) {
-            if (startTime < blocked.endTime && endTime > blocked.startTime) {
+            if (startTime < blocked.endTime && endTime > startTime) {
                 isAvailable = false;
                 break; 
             }
@@ -243,7 +243,7 @@ export default function FacilityDetailPage() {
   };
   
   const handleBooking = () => {
-    if (!facility || !selectedSport || !selectedDate || !selectedSlot || !dynamicPrice || !currentUser) {
+    if (!facility || !selectedSport || !selectedDate || !selectedSlot || !dynamicPrice) {
         toast({ title: "Incomplete Selection", description: "Please select a sport, date, and available time slot.", variant: "destructive"});
         return;
     }
@@ -267,7 +267,6 @@ export default function FacilityDetailPage() {
       })
       .filter((item): item is RentedItemInfo => item !== null);
 
-
     const bookingData = {
       facilityId: facility.id,
       facilityName: facility.name,
@@ -281,10 +280,20 @@ export default function FacilityDetailPage() {
       baseFacilityPrice: dynamicPrice.finalPrice - equipmentRentalCost,
       equipmentRentalCost: equipmentRentalCost,
       status: 'Confirmed' as const,
-      userId: currentUser.id,
+      userId: currentUser?.id, // Will be undefined if not logged in
       rentedEquipment: rentedItems,
       pricingModel: dynamicPrice.pricingModel,
     };
+    
+    if (!currentUser) {
+        toast({
+            title: "Login Required",
+            description: "Please log in or create an account to complete your booking.",
+        });
+        sessionStorage.setItem('pendingBooking', JSON.stringify(bookingData));
+        router.push('/account/login');
+        return;
+    }
     
     router.push(`/facilities/${facility.id}/book?data=${encodeURIComponent(JSON.stringify(bookingData))}`);
   };
