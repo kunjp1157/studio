@@ -129,7 +129,7 @@ export const getAllFacilities = async (): Promise<Facility[]> => {
         return {
             ...mapDbRowToFacility(row),
             sports: allSports.filter(s => sportIds.includes(s.id)),
-            amenities: allAmenities.filter(a => amenityIds.includes(a.id)),
+            amenities: allAmenities.map(a => ({...a, iconName: a.icon_name})).filter(a => amenityIds.includes(a.id)),
             sportPrices: sportPricesMap.get(facilityId) || [],
             operatingHours: operatingHoursMap.get(facilityId) || [],
             reviews: reviewsMap.get(facilityId) || [],
@@ -228,7 +228,7 @@ export const getFacilityById = async (id: string): Promise<Facility | undefined>
 
     return {
         ...mapDbRowToFacility(facilityRow),
-        sports: sportsRes.rows.map(s => ({ ...s, iconName: s.icon_name })),
+        sports: sportsRes.rows.map(s => ({ ...s, iconName: s.icon_name, imageDataAiHint: s.image_data_ai_hint, imageUrl: s.image_url })),
         amenities: amenitiesRes.rows.map(a => ({...a, iconName: a.icon_name})),
         sportPrices: sportPricesRes.rows.map(p => ({ sportId: p.sport_id, price: parseFloat(p.price), pricingModel: p.pricing_model })),
         operatingHours: operatingHoursRes.rows.map(h => ({ day: h.day, open: h.open_time, close: h.close_time })),
@@ -457,19 +457,21 @@ export const getBookingsForFacilityOnDate = async (facilityId: string, date: str
         `SELECT id FROM bookings WHERE facility_id = $1 AND date = $2 AND status IN ('Confirmed', 'Pending')`,
         [facilityId, date]
     );
-    return Promise.all(rows.map(row => getBookingById(row.id)).filter(Boolean) as Promise<Booking>[]);
+    const bookings = await Promise.all(rows.map(row => getBookingById(row.id)));
+    return bookings.filter((b): b is Booking => b !== undefined);
 };
 
 export const getBookingsByUserId = async (userId: string): Promise<Booking[]> => {
     const { rows } = await query('SELECT id FROM bookings WHERE user_id = $1 ORDER BY date DESC, start_time DESC', [userId]);
-    return Promise.all(rows.map(row => getBookingById(row.id)).filter(Boolean) as Promise<Booking>[]);
+    const bookings = await Promise.all(rows.map(row => getBookingById(row.id)));
+    return bookings.filter((b): b is Booking => b !== undefined);
 };
 
 export const getSportById = async (id: string): Promise<Sport | undefined> => {
     const { rows } = await query('SELECT * FROM sports WHERE id = $1', [id]);
     if (rows.length === 0) return undefined;
     const sport = rows[0];
-    return { ...sport, iconName: sport.icon_name };
+    return { ...sport, id: sport.id, name: sport.name, iconName: sport.icon_name, imageUrl: sport.image_url, imageDataAiHint: sport.image_data_ai_hint };
 }
 export const getSiteSettings = (): SiteSettings => mockSiteSettings;
 
@@ -507,6 +509,9 @@ export const getAllEvents = async (): Promise<SportEvent[]> => {
     const allSports = await getAllSports();
     return rows.map(row => ({
         ...row,
+        id: row.id,
+        name: row.name,
+        facilityId: row.facility_id,
         startDate: new Date(row.start_date).toISOString(),
         endDate: new Date(row.end_date).toISOString(),
         sport: allSports.find(s => s.id === row.sport_id)!,
@@ -523,6 +528,9 @@ export const getEventById = async (id: string): Promise<SportEvent | undefined> 
     const allSports = await getAllSports();
     return {
         ...row,
+        id: row.id,
+        name: row.name,
+        facilityId: row.facility_id,
         startDate: new Date(row.start_date).toISOString(),
         endDate: new Date(row.end_date).toISOString(),
         sport: allSports.find(s => s.id === row.sport_id)!,
@@ -535,7 +543,8 @@ export const getEventById = async (id: string): Promise<SportEvent | undefined> 
 
 export const getAllBookings = async (): Promise<Booking[]> => {
     const { rows } = await query('SELECT id FROM bookings ORDER BY created_at DESC');
-    return Promise.all(rows.map(row => getBookingById(row.id)).filter(Boolean) as Promise<Booking>[]);
+    const bookings = await Promise.all(rows.map(row => getBookingById(row.id)));
+    return bookings.filter((b): b is Booking => b !== undefined);
 };
 
 export const getEventsByFacilityIds = async (facilityIds: string[]): Promise<SportEvent[]> => {
@@ -569,19 +578,19 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<void> 
 
 export const getAllSports = async (): Promise<Sport[]> => {
     const { rows } = await query('SELECT * from sports');
-    return rows.map(r => ({...r, iconName: r.icon_name}));
+    return rows.map(r => ({...r, id: r.id, name: r.name, iconName: r.icon_name, imageUrl: r.image_url, imageDataAiHint: r.image_data_ai_hint }));
 };
 
 export const addSport = async (sportData: Omit<Sport, 'id'>): Promise<Sport> => {
     const { rows } = await query('INSERT INTO sports (name, icon_name, image_url, image_data_ai_hint) VALUES ($1, $2, $3, $4) RETURNING *', [sportData.name, sportData.iconName, sportData.imageUrl, sportData.imageDataAiHint]);
     const newSport = rows[0];
-    return { ...newSport, iconName: newSport.icon_name };
+    return { ...newSport, id: newSport.id, name: newSport.name, iconName: newSport.icon_name, imageUrl: newSport.image_url, imageDataAiHint: newSport.image_data_ai_hint };
 };
 
 export const updateSport = async (sportId: string, sportData: Partial<Sport>): Promise<Sport> => {
     const { rows } = await query('UPDATE sports SET name = $1, icon_name = $2, image_url = $3, image_data_ai_hint = $4 WHERE id = $5 RETURNING *', [sportData.name, sportData.iconName, sportData.imageUrl, sportData.imageDataAiHint, sportId]);
     const updatedSport = rows[0];
-    return { ...updatedSport, iconName: updatedSport.icon_name };
+    return { ...updatedSport, id: updatedSport.id, name: updatedSport.name, iconName: updatedSport.icon_name, imageUrl: updatedSport.image_url, imageDataAiHint: updatedSport.image_data_ai_hint };
 };
 
 export const deleteSport = async (sportId: string): Promise<void> => {
