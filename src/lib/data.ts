@@ -1,4 +1,5 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { mockStaticMembershipPlans } from './mock-data';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
@@ -441,7 +442,7 @@ export async function addUser(userData: { name: string; email: string, password?
   
   const res = await query(
     `INSERT INTO users (id, name, email, password, role, status, is_profile_public, profile_picture_url, membership_level, loyalty_points)
-     VALUES ($1, $2, $3, 'User', 'Active', true, $4, 'Basic', 0) RETURNING *`,
+     VALUES ($1, $2, $3, $4, 'User', 'Active', true, $5, 'Basic', 0) RETURNING *`,
     [newId, name, email, password, defaultProfilePic]
   );
   
@@ -752,3 +753,4 @@ export const expressInterestInLfg = (lfgId: string, userId: string): LfgRequest[
 export const getOpenChallenges = (): Challenge[] => { return []; };
 export const createChallenge = (data: { challengerId: string; sportId: string; facilityId: string; proposedDate: string; notes: string }): Challenge[] => { return []; };
 export const acceptChallenge = (challengeId: string, opponentId: string): Challenge[] => { return []; };
+
