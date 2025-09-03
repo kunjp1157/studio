@@ -1,5 +1,4 @@
 
-
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { parseISO, isWithinInterval, isAfter, isBefore, startOfDay, endOfDay, getDay, subDays, getMonth, getYear, format as formatDateFns } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
@@ -436,12 +435,12 @@ export const dbGetAllBlogPosts = (): BlogPost[] => {
 export const dbGetBlogPostBySlug = (slug: string): BlogPost | undefined => {
     return getBlogPostBySlug(slug);
 };
-export const dbRegisterForEvent = (eventId: string): boolean => {
-    return registerForEvent(eventId);
-};
-
 export const registerForEvent = (eventId: string): boolean => {
     return false; // Mocked
 };
 
-```
+export const dbRegisterForEvent = (eventId: string): boolean => {
+    return registerForEvent(eventId);
+};
+
+export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
