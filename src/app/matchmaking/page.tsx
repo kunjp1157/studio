@@ -16,7 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, getOpenLfgRequests, createLfgRequest, expressInterestInLfg, getUserById, getSportById, getAllFacilities } from '@/lib/data';
+import { getOpenLfgRequests, createLfgRequest, expressInterestInLfg, getUserById, getSportById } from '@/lib/data';
+import { getFacilitiesAction } from '@/app/actions';
 import { getMockSports } from '@/lib/mock-data';
 import type { LfgRequest, UserProfile, Sport, SkillLevel, Facility } from '@/lib/types';
 import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, BarChart, Clock, Users2, Building } from 'lucide-react';
@@ -151,7 +152,7 @@ export default function MatchmakingPage() {
   useEffect(() => {
     setIsLoading(true);
     const fetchFacilities = async () => {
-        const facilitiesData = await getAllFacilities();
+        const facilitiesData = await getFacilitiesAction();
         setAllFacilities(facilitiesData);
     };
     fetchFacilities();
