@@ -2,52 +2,51 @@
 'use server';
 
 import { 
-    getAllFacilities as dbGetAllFacilities,
-    getFacilityById as dbGetFacilityById,
-    addFacility as dbAddFacility,
-    updateFacility as dbUpdateFacility,
-    deleteFacility as dbDeleteFacility,
-    getAllUsers as dbGetAllUsers, 
-    getAllBookings as dbGetAllBookings, 
-    getSiteSettings as dbGetSiteSettings,
-    getFacilitiesByOwnerId as dbGetFacilitiesByOwnerId,
-    getEventById as dbGetEventById,
-    getAllEvents as dbGetAllEvents,
-    getAllMembershipPlans as dbGetAllMembershipPlans,
-    getAllPricingRules as dbGetAllPricingRules,
-    getAllPromotionRules as dbGetAllPromotionRules,
-    getNotificationsForUser as dbGetNotificationsForUser,
-    markNotificationAsRead,
-    markAllNotificationsAsRead,
-    getBookingsByUserId as dbGetBookingsByUserId,
-    blockTimeSlot as dbBlockTimeSlot,
-    unblockTimeSlot as dbUnblockTimeSlot,
-    updateUser as dbUpdateUser,
-    getSportById,
-    updateBooking as dbUpdateBooking,
-    addNotification as dbAddNotification,
-    getAllSports as dbGetAllSports,
-    addSport as dbAddSport,
-    updateSport as dbUpdateSport,
-    deleteSport as dbDeleteSport,
-    toggleFavoriteFacility as dbToggleFavoriteFacility,
-    getBookingsForFacilityOnDate as dbGetBookingsForFacilityOnDate,
-    addBooking as dbAddBooking,
-    addReview as dbAddReview,
-    getBookingById as dbGetBookingById,
-    addUser as dbAddUser,
-    getPromotionRuleByCode as dbGetPromotionRuleByCode,
-    getAllBlogPosts as dbGetAllBlogPosts,
-    getBlogPostBySlug as dbGetBlogPostBySlug,
-    registerForEvent,
     getStaticFacilities,
     getStaticSports,
+    dbGetFacilityById,
+    dbAddFacility,
+    dbUpdateFacility,
+    dbDeleteFacility,
+    dbGetAllUsers, 
+    dbGetAllBookings, 
+    dbGetSiteSettings,
+    dbGetFacilitiesByOwnerId,
+    dbGetEventById,
+    dbGetAllEvents,
+    dbGetAllMembershipPlans,
+    dbGetAllPricingRules,
+    dbGetAllPromotionRules,
+    dbGetNotificationsForUser,
+    markNotificationAsRead as dbMarkNotificationAsRead,
+    markAllNotificationsAsRead as dbMarkAllNotificationsAsRead,
+    dbGetBookingsByUserId,
+    dbBlockTimeSlot,
+    dbUnblockTimeSlot,
+    dbUpdateUser,
+    getSportById as dbGetSportById,
+    dbUpdateBooking,
+    dbAddNotification,
+    dbGetAllSports,
+    dbAddSport,
+    dbUpdateSport,
+    dbDeleteSport,
+    dbToggleFavoriteFacility,
+    dbGetBookingsForFacilityOnDate,
+    dbAddBooking,
+    dbAddReview,
+    dbGetBookingById,
+    dbAddUser,
+    dbGetPromotionRuleByCode,
+    dbGetAllBlogPosts,
+    dbGetBlogPostBySlug,
+    registerForEvent as dbRegisterForEvent,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import { mockAmenities } from '@/lib/mock-data';
 
-export async function getSports() {
+export async function getSports(): Promise<Sport[]> {
     return getStaticSports();
 }
 
@@ -162,11 +161,11 @@ export async function getNotificationsForUserAction(userId: string): Promise<App
 }
 
 export async function markNotificationAsReadAction(userId: string, notificationId: string): Promise<void> {
-    return markNotificationAsRead(userId, notificationId);
+    return dbMarkNotificationAsRead(userId, notificationId);
 }
 
 export async function markAllNotificationsAsReadAction(userId: string): Promise<void> {
-    return markAllNotificationsAsRead(userId);
+    return dbMarkAllNotificationsAsRead(userId);
 }
 
 export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
@@ -250,7 +249,6 @@ export async function updateSportAction(sportId: string, sportData: Partial<Spor
 export async function deleteSportAction(sportId: string): Promise<void> {
   await dbDeleteSport(sportId);
   revalidatePath('/admin/sports');
-  return Promise.resolve();
 }
 
 export async function toggleFavoriteFacilityAction(userId: string, facilityId: string): Promise<UserProfile | undefined> {
@@ -278,5 +276,5 @@ export async function getBlogPostBySlugAction(slug: string): Promise<BlogPost | 
 }
 
 export async function registerForEventAction(eventId: string): Promise<boolean> {
-    return registerForEvent(eventId);
+    return dbRegisterForEvent(eventId);
 }
