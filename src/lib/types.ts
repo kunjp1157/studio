@@ -25,6 +25,8 @@ export interface Sport {
   id: string;
   name: string;
   iconName?: string; 
+  imageUrl?: string;
+  imageDataAiHint?: string;
 }
 
 export interface Review {
@@ -146,7 +148,7 @@ export interface AppliedPromotionInfo {
 
 export interface Booking {
   id: string;
-  userId: string;
+  userId?: string;
   facilityId: string;
   facilityName: string; 
   dataAiHint?: string;
@@ -242,6 +244,8 @@ export interface SportEvent {
   entryFee?: number;
   maxParticipants?: number;
   registeredParticipants: number;
+  imageUrl?: string;
+  imageDataAiHint?: string;
 }
 
 export interface SearchFilters {

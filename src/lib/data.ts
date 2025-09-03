@@ -12,6 +12,7 @@ let mockSiteSettings: SiteSettings = { siteName: 'Sports Arena', defaultCurrency
 let mockWaitlist: WaitlistEntry[] = [];
 let mockLfgRequests: LfgRequest[] = [];
 let mockChallenges: Challenge[] = [];
+let mockBookings: Booking[] = [];
 
 // --- DATA ACCESS FUNCTIONS (MOCK IMPLEMENTATION) ---
 
@@ -58,19 +59,24 @@ export const deleteFacility = (facilityId: string): void => {
 };
 
 export const getBookingById = (id: string): Booking | undefined => {
-    return undefined; // Needs DB
+    return mockBookings.find(b => b.id === id);
 };
 
-export const addBooking = (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Booking => {
+export const addBooking = (bookingData: Omit<Booking, 'bookedAt'>): Booking => {
     const newBooking: Booking = {
         ...bookingData,
-        id: `booking-${Date.now()}`,
         bookedAt: new Date().toISOString(),
     };
+    mockBookings.push(newBooking);
     return newBooking;
 };
 
 export const updateBooking = (bookingId: string, updates: Partial<Booking>): Booking | undefined => {
+    const index = mockBookings.findIndex(b => b.id === bookingId);
+    if (index !== -1) {
+        mockBookings[index] = { ...mockBookings[index], ...updates };
+        return mockBookings[index];
+    }
     return undefined; // Needs DB
 };
 
@@ -96,11 +102,11 @@ export function addUser(userData: { name: string; email: string, password?: stri
 }
 
 export const getBookingsForFacilityOnDate = (facilityId: string, date: string): Booking[] => {
-    return []; // Needs DB
+    return mockBookings.filter(b => b.facilityId === facilityId && b.date === date);
 };
 
 export const getBookingsByUserId = (userId: string): Booking[] => {
-    return []; // Needs DB
+    return mockBookings.filter(b => b.userId === userId);
 };
 
 export const getSportById = (id: string): Sport | undefined => {
@@ -135,7 +141,7 @@ export const getEventById = (id: string): SportEvent | undefined => {
 };
 
 export const getAllBookings = (): Booking[] => {
-    return []; // Mocked
+    return mockBookings;
 };
 
 export const getEventsByFacilityIds = (facilityIds: string[]): SportEvent[] => {
@@ -330,117 +336,117 @@ export const dbGetFacilityById = (id: string): Facility | undefined => {
     const facilities = getStaticFacilities();
     return facilities.find(f => f.id === id);
 };
-export const dbGetAllUsers = (): UserProfile[] => {
-    return getStaticUsers();
+export const dbGetAllUsers = (): Promise<UserProfile[]> => {
+    return Promise.resolve(getStaticUsers());
 };
-export const dbAddUser = (userData: { name: string; email: string, password?: string }): UserProfile => {
-    return addUser(userData);
+export const dbAddUser = (userData: { name: string; email: string, password?: string }): Promise<UserProfile> => {
+    return Promise.resolve(addUser(userData));
 }
-export const dbGetBookingsByUserId = (userId: string): Booking[] => {
-    return []; // Mocked
+export const dbGetBookingsByUserId = (userId: string): Promise<Booking[]> => {
+    return Promise.resolve(getBookingsByUserId(userId));
 };
-export const dbUpdateBooking = (bookingId: string, updates: Partial<Booking>): Booking | undefined => {
-    return undefined; // Mocked
+export const dbUpdateBooking = (bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> => {
+    return Promise.resolve(updateBooking(bookingId, updates));
 }
-export const dbAddBooking = (bookingData: Omit<Booking, 'id' | 'bookedAt'>): Booking => {
-    return addBooking(bookingData);
+export const dbAddBooking = (bookingData: Omit<Booking, 'bookedAt'>): Promise<Booking> => {
+    return Promise.resolve(addBooking(bookingData));
 }
-export const dbAddReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Review => {
-    return addReview(reviewData);
+export const dbAddReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> => {
+    return Promise.resolve(addReview(reviewData));
 }
-export const dbGetBookingById = (id: string): Booking | undefined => {
-    return undefined; // Mocked
+export const dbGetBookingById = (id: string): Promise<Booking | undefined> => {
+    return Promise.resolve(getBookingById(id));
 }
-export const dbGetBookingsForFacilityOnDate = (facilityId: string, date: string): Booking[] => {
-    return []; // Mocked
+export const dbGetBookingsForFacilityOnDate = (facilityId: string, date: string): Promise<Booking[]> => {
+    return Promise.resolve(getBookingsForFacilityOnDate(facilityId, date));
 }
-export const dbAddFacility = (facilityData: Omit<Facility, 'id'>): Facility => {
-    return addFacility(facilityData);
+export const dbAddFacility = (facilityData: Omit<Facility, 'id'>): Promise<Facility> => {
+    return Promise.resolve(addFacility(facilityData));
 };
-export const dbUpdateFacility = (facilityData: Facility): Facility => {
-    return updateFacility(facilityData);
+export const dbUpdateFacility = (facilityData: Facility): Promise<Facility> => {
+    return Promise.resolve(updateFacility(facilityData));
 };
-export const dbDeleteFacility = (facilityId: string): void => {
-    deleteFacility(facilityId);
+export const dbDeleteFacility = (facilityId: string): Promise<void> => {
+    return Promise.resolve(deleteFacility(facilityId));
 };
-export const dbGetAllBookings = (): Booking[] => {
-    return []; // Mocked
+export const dbGetAllBookings = (): Promise<Booking[]> => {
+    return Promise.resolve(getAllBookings());
 };
-export const dbGetSiteSettings = (): SiteSettings => {
-    return getSiteSettings();
+export const dbGetSiteSettings = (): Promise<SiteSettings> => {
+    return Promise.resolve(getSiteSettings());
 };
-export const dbGetFacilitiesByOwnerId = (ownerId: string): Facility[] => {
-    return getFacilitiesByOwnerId(ownerId);
+export const dbGetFacilitiesByOwnerId = (ownerId: string): Promise<Facility[]> => {
+    return Promise.resolve(getFacilitiesByOwnerId(ownerId));
 };
-export const dbGetEventById = (id: string): SportEvent | undefined => {
-    return undefined; // Mocked
+export const dbGetEventById = (id: string): Promise<SportEvent | undefined> => {
+    return Promise.resolve(getEventById(id));
 };
-export const dbGetAllEvents = (): SportEvent[] => {
-    return []; // Mocked
+export const dbGetAllEvents = (): Promise<SportEvent[]> => {
+    return Promise.resolve(getAllEvents());
 };
-export const dbGetAllMembershipPlans = (): MembershipPlan[] => {
-    return getAllMembershipPlans();
+export const dbGetAllMembershipPlans = (): Promise<MembershipPlan[]> => {
+    return Promise.resolve(getAllMembershipPlans());
 };
-export const dbGetAllPricingRules = (): PricingRule[] => {
-    return getAllPricingRules();
+export const dbGetAllPricingRules = (): Promise<PricingRule[]> => {
+    return Promise.resolve(getAllPricingRules());
 };
-export const dbGetAllPromotionRules = (): PromotionRule[] => {
-    return getAllPromotionRules();
+export const dbGetAllPromotionRules = (): Promise<PromotionRule[]> => {
+    return Promise.resolve(getAllPromotionRules());
 };
-export const dbGetNotificationsForUser = (userId: string): AppNotification[] => {
-    return []; // Mocked
+export const dbGetNotificationsForUser = (userId: string): Promise<AppNotification[]> => {
+    return Promise.resolve(getNotificationsForUser(userId));
 };
-export const dbMarkNotificationAsRead = (userId: string, notificationId: string): void => {
-    markNotificationAsRead(userId, notificationId);
+export const dbMarkNotificationAsRead = (userId: string, notificationId: string): Promise<void> => {
+    return Promise.resolve(markNotificationAsRead(userId, notificationId));
 };
-export const dbMarkAllNotificationsAsRead = (userId: string): void => {
-    markAllNotificationsAsRead(userId);
+export const dbMarkAllNotificationsAsRead = (userId: string): Promise<void> => {
+    return Promise.resolve(markAllNotificationsAsRead(userId));
 };
-export const dbBlockTimeSlot = (facilityId: string, ownerId: string, newBlock: BlockedSlot): boolean => {
-    return blockTimeSlot(facilityId, ownerId, newBlock);
+export const dbBlockTimeSlot = (facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> => {
+    return Promise.resolve(blockTimeSlot(facilityId, ownerId, newBlock));
 };
-export const dbUnblockTimeSlot = (facilityId: string, ownerId: string, date: string, startTime: string): boolean => {
-    return unblockTimeSlot(facilityId, ownerId, date, startTime);
+export const dbUnblockTimeSlot = (facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> => {
+    return Promise.resolve(unblockTimeSlot(facilityId, ownerId, date, startTime));
 };
-export const dbUpdateUser = (userId: string, updates: Partial<UserProfile>): UserProfile | undefined => {
-    return updateUser(userId, updates);
+export const dbUpdateUser = (userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> => {
+    return Promise.resolve(updateUser(userId, updates));
 };
-export const dbGetSportById = (id: string): Sport | undefined => {
-    return getSportById(id);
+export const dbGetSportById = (id: string): Promise<Sport | undefined> => {
+    return Promise.resolve(getSportById(id));
 };
-export const dbAddNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): AppNotification => {
-    return addNotification(userId, notificationData);
+export const dbAddNotification = (userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<AppNotification> => {
+    return Promise.resolve(addNotification(userId, notificationData));
 };
-export const dbGetAllSports = (): Sport[] => {
-    return getAllSports();
+export const dbGetAllSports = (): Promise<Sport[]> => {
+    return Promise.resolve(getAllSports());
 };
-export const dbAddSport = (sportData: Omit<Sport, 'id'>): Sport => {
-    return addSport(sportData);
+export const dbAddSport = (sportData: Omit<Sport, 'id'>): Promise<Sport> => {
+    return Promise.resolve(addSport(sportData));
 };
-export const dbUpdateSport = (sportId: string, sportData: Partial<Sport>): Sport => {
-    return updateSport(sportId, sportData);
+export const dbUpdateSport = (sportId: string, sportData: Partial<Sport>): Promise<Sport> => {
+    return Promise.resolve(updateSport(sportId, sportData));
 };
-export const dbDeleteSport = (sportId: string): void => {
-    deleteSport(sportId);
+export const dbDeleteSport = (sportId: string): Promise<void> => {
+    return Promise.resolve(deleteSport(sportId));
 };
-export const dbToggleFavoriteFacility = (userId: string, facilityId: string): UserProfile | undefined => {
-    return toggleFavoriteFacility(userId, facilityId);
+export const dbToggleFavoriteFacility = (userId: string, facilityId: string): Promise<UserProfile | undefined> => {
+    return Promise.resolve(toggleFavoriteFacility(userId, facilityId));
 };
-export const dbGetPromotionRuleByCode = (code: string): PromotionRule | undefined => {
-    return getPromotionRuleByCode(code);
+export const dbGetPromotionRuleByCode = (code: string): Promise<PromotionRule | undefined> => {
+    return Promise.resolve(getPromotionRuleByCode(code));
 };
-export const dbGetAllBlogPosts = (): BlogPost[] => {
-    return getAllBlogPosts();
+export const dbGetAllBlogPosts = (): Promise<BlogPost[]> => {
+    return Promise.resolve(getAllBlogPosts());
 };
-export const dbGetBlogPostBySlug = (slug: string): BlogPost | undefined => {
-    return getBlogPostBySlug(slug);
+export const dbGetBlogPostBySlug = (slug: string): Promise<BlogPost | undefined> => {
+    return Promise.resolve(getBlogPostBySlug(slug));
 };
-export const registerForEvent = (eventId: string): boolean => {
-    return false; // Mocked
+export const dbRegisterForEvent = (eventId: string): Promise<boolean> => {
+    return Promise.resolve(registerForEvent(eventId));
 };
 
-export const dbRegisterForEvent = (eventId: string): boolean => {
-    return registerForEvent(eventId);
+export const registerForEvent = (eventId: string): boolean => {
+    return false; // Mocked
 };
 
 export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });

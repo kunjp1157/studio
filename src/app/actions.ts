@@ -12,7 +12,7 @@ import {
     dbDeleteFacility,
     dbGetAllUsers, 
     dbGetAllBookings, 
-    getSiteSettings as dbGetSiteSettings,
+    dbGetSiteSettings,
     dbGetFacilitiesByOwnerId,
     dbGetEventById,
     dbGetAllEvents,
@@ -20,13 +20,13 @@ import {
     dbGetAllPricingRules,
     dbGetAllPromotionRules,
     dbGetNotificationsForUser,
-    markNotificationAsRead as dbMarkNotificationAsRead,
-    markAllNotificationsAsRead as dbMarkAllNotificationsAsRead,
+    dbMarkNotificationAsRead,
+    dbMarkAllNotificationsAsRead,
     dbGetBookingsByUserId,
     dbBlockTimeSlot,
     dbUnblockTimeSlot,
     dbUpdateUser,
-    getSportById as dbGetSportById,
+    dbGetSportById,
     dbUpdateBooking,
     dbAddNotification,
     dbGetAllSports,
@@ -42,11 +42,12 @@ import {
     dbGetPromotionRuleByCode,
     dbGetAllBlogPosts,
     dbGetBlogPostBySlug,
-    registerForEvent as dbRegisterForEvent,
+    dbRegisterForEvent,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import { mockAmenities } from '@/lib/mock-data';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function getSports(): Promise<Sport[]> {
     return getStaticSports();
@@ -58,7 +59,7 @@ export async function getFacilitiesAction(): Promise<Facility[]> {
 }
 
 export async function getFacilityByIdAction(id: string): Promise<Facility | undefined> {
-    const facility = dbGetFacilityById(id);
+    const facility = await dbGetFacilityById(id);
     return facility;
 }
 
@@ -113,7 +114,7 @@ export async function deleteFacilityAction(facilityId: string): Promise<void> {
 }
 
 export async function getUsersAction(): Promise<UserProfile[]> {
-  return dbGetAllUsers();
+  return await dbGetAllUsers();
 }
 
 export async function addUserAction(userData: { name: string; email: string; password?: string }): Promise<UserProfile> {
@@ -123,59 +124,59 @@ export async function addUserAction(userData: { name: string; email: string; pas
 }
 
 export async function getAllBookingsAction(): Promise<Booking[]> {
-  return dbGetAllBookings();
+  return await dbGetAllBookings();
 }
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
-    return dbGetSiteSettings();
+    return await dbGetSiteSettings();
 }
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
-    return dbGetFacilitiesByOwnerId(ownerId);
+    return await dbGetFacilitiesByOwnerId(ownerId);
 }
 
 export async function getAllEventsAction(): Promise<SportEvent[]> {
-    return dbGetAllEvents();
+    return await dbGetAllEvents();
 }
 
 export async function getEventByIdAction(id: string): Promise<SportEvent | undefined> {
-    return dbGetEventById(id);
+    return await dbGetEventById(id);
 }
 
 export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
-    return dbGetAllMembershipPlans();
+    return await dbGetAllMembershipPlans();
 }
 
 export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
-    return dbGetAllPricingRules();
+    return await dbGetAllPricingRules();
 }
 
 export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
-    return dbGetAllPromotionRules();
+    return await dbGetAllPromotionRules();
 }
 
 export async function getPromotionRuleByCodeAction(code: string): Promise<PromotionRule | undefined> {
-    return dbGetPromotionRuleByCode(code);
+    return await dbGetPromotionRuleByCode(code);
 }
 
 export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
-    return dbGetNotificationsForUser(userId);
+    return await dbGetNotificationsForUser(userId);
 }
 
 export async function markNotificationAsReadAction(userId: string, notificationId: string): Promise<void> {
-    return dbMarkNotificationAsRead(userId, notificationId);
+    return await dbMarkNotificationAsRead(userId, notificationId);
 }
 
 export async function markAllNotificationsAsReadAction(userId: string): Promise<void> {
-    return dbMarkAllNotificationsAsRead(userId);
+    return await dbMarkAllNotificationsAsRead(userId);
 }
 
 export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
-    return dbGetBookingsByUserId(userId);
+    return await dbGetBookingsByUserId(userId);
 }
 
 export async function getBookingsForFacilityOnDateAction(facilityId: string, date: string): Promise<Booking[]> {
-    return dbGetBookingsForFacilityOnDate(facilityId, date);
+    return await dbGetBookingsForFacilityOnDate(facilityId, date);
 }
 
 export async function blockTimeSlotAction(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
@@ -216,7 +217,8 @@ export async function updateBookingAction(bookingId: string, updates: Partial<Bo
 }
 
 export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
-    const newBooking = await dbAddBooking(bookingData);
+    const bookingWithId = { ...bookingData, id: uuidv4() };
+    const newBooking = await dbAddBooking(bookingWithId);
     revalidatePath('/account/bookings');
     revalidatePath(`/facilities/${bookingData.facilityId}`);
     revalidatePath('/admin/bookings');
@@ -228,11 +230,11 @@ export async function addNotificationAction(
   userId: string,
   notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>
 ): Promise<AppNotification> {
-  return dbAddNotification(userId, notificationData);
+  return await dbAddNotification(userId, notificationData);
 }
 
 export async function getAllSportsAction(): Promise<Sport[]> {
-  return dbGetAllSports();
+  return await dbGetAllSports();
 }
 
 export async function addSportAction(sportData: Omit<Sport, 'id'>): Promise<Sport> {
@@ -270,13 +272,13 @@ export async function addReviewAction(reviewData: Omit<Review, 'id' | 'createdAt
 }
 
 export async function getAllBlogPostsAction(): Promise<BlogPost[]> {
-    return dbGetAllBlogPosts();
+    return await dbGetAllBlogPosts();
 }
 
 export async function getBlogPostBySlugAction(slug: string): Promise<BlogPost | undefined> {
-    return dbGetBlogPostBySlug(slug);
+    return await dbGetBlogPostBySlug(slug);
 }
 
 export async function registerForEventAction(eventId: string): Promise<boolean> {
-    return dbRegisterForEvent(eventId);
+    return await dbRegisterForEvent(eventId);
 }
