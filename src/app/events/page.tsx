@@ -62,10 +62,10 @@ export default function EventsPage() {
 
     switch (sortOption) {
       case 'date-asc':
-        eventsToDisplay.sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+        eventsToDisplay.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
         break;
       case 'date-desc':
-        eventsToDisplay.sort((a, b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
+        eventsToDisplay.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
         break;
       case 'name-asc':
         eventsToDisplay.sort((a, b) => a.name.localeCompare(b.name));
@@ -93,7 +93,7 @@ export default function EventsPage() {
   const EventCard = ({ event }: { event: SportEvent }) => {
     const [facility, setFacility] = useState<Facility | null>(null);
     const SportIcon = getIconComponent(event.sport.iconName) || Zap;
-    const isEventPast = isPast(parseISO(event.endDate));
+    const isEventPast = isPast(new Date(event.endDate));
     const isEventFull = event.maxParticipants && event.registeredParticipants >= event.maxParticipants;
     
     useEffect(() => {
@@ -125,7 +125,7 @@ export default function EventsPage() {
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center">
                 <CalendarDays className="w-4 h-4 mr-2 text-primary shrink-0" />
-                <span>{format(parseISO(event.startDate), 'MMM d, yyyy, p')}</span>
+                <span>{format(new Date(event.startDate), 'MMM d, yyyy, p')}</span>
             </div>
             {facility && (
                 <div className="flex items-center">
@@ -228,5 +228,3 @@ export default function EventsPage() {
     </div>
   );
 }
-
-    
