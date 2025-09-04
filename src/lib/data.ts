@@ -137,6 +137,103 @@ export async function dbGetFacilitiesByOwnerId(ownerId: string): Promise<Facilit
     return facilities;
 }
 
+export async function dbAddFacility(facilityData: any): Promise<Facility> {
+    const facilityId = `facility-${uuidv4()}`;
+    const newFacility = {
+        id: facilityId,
+        name: facilityData.name,
+        type: facilityData.type,
+        address: facilityData.address,
+        city: facilityData.city,
+        location: facilityData.location,
+        description: facilityData.description,
+        rating: facilityData.rating,
+        capacity: facilityData.capacity,
+        isPopular: facilityData.isPopular,
+        isIndoor: facilityData.isIndoor,
+        dataAiHint: facilityData.dataAiHint,
+        ownerId: facilityData.ownerId,
+    };
+    await query('INSERT INTO facilities SET ?', newFacility);
+
+    for (const sportId of facilityData.sports) {
+        await query('INSERT INTO facility_sports (facilityId, sportId) VALUES (?, ?)', [facilityId, sportId]);
+    }
+    for (const amenityId of facilityData.amenities) {
+        await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES (?, ?)', [facilityId, amenityId]);
+    }
+    for (const priceInfo of facilityData.sportPrices) {
+        await query('INSERT INTO sport_prices (facilityId, sportId, price, pricingModel) VALUES (?, ?, ?, ?)', [facilityId, priceInfo.sportId, priceInfo.price, priceInfo.pricingModel]);
+    }
+    for (const hours of facilityData.operatingHours) {
+        await query('INSERT INTO operating_hours (facilityId, day, `open`, `close`) VALUES (?, ?, ?, ?)', [facilityId, hours.day, hours.open, hours.close]);
+    }
+    for (const equip of facilityData.availableEquipment) {
+        const equipId = `equip-${uuidv4()}`;
+        await query('INSERT INTO rental_equipment (id, facilityId, name, pricePerItem, priceType, stock, sportIds) VALUES (?, ?, ?, ?, ?, ?, ?)', [equipId, facilityId, equip.name, equip.pricePerItem, equip.priceType, equip.stock, JSON.stringify(equip.sportIds)]);
+    }
+    for (const maint of facilityData.maintenanceSchedules) {
+        const maintId = `maint-${uuidv4()}`;
+        await query('INSERT INTO maintenance_schedules (id, facilityId, taskName, recurrenceInDays, lastPerformedDate) VALUES (?, ?, ?, ?, ?)', [maintId, facilityId, maint.taskName, maint.recurrenceInDays, maint.lastPerformedDate]);
+    }
+
+    return (await dbGetFacilityById(facilityId))!;
+}
+
+export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
+    const facilityId = facilityData.id;
+    
+    // Update main facility table
+    const mainData = {
+        name: facilityData.name, type: facilityData.type, address: facilityData.address, city: facilityData.city, location: facilityData.location,
+        description: facilityData.description, rating: facilityData.rating, capacity: facilityData.capacity, isPopular: facilityData.isPopular,
+        isIndoor: facilityData.isIndoor, dataAiHint: facilityData.dataAiHint, ownerId: facilityData.ownerId
+    };
+    await query('UPDATE facilities SET ? WHERE id = ?', [mainData, facilityId]);
+
+    // Update related tables by deleting old and inserting new
+    await query('DELETE FROM facility_sports WHERE facilityId = ?', [facilityId]);
+    for (const sportId of facilityData.sports) {
+        await query('INSERT INTO facility_sports (facilityId, sportId) VALUES (?, ?)', [facilityId, sportId]);
+    }
+
+    await query('DELETE FROM facility_amenities WHERE facilityId = ?', [facilityId]);
+    for (const amenityId of facilityData.amenities) {
+        await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES (?, ?)', [facilityId, amenityId]);
+    }
+    
+    await query('DELETE FROM sport_prices WHERE facilityId = ?', [facilityId]);
+    for (const priceInfo of facilityData.sportPrices) {
+        await query('INSERT INTO sport_prices (facilityId, sportId, price, pricingModel) VALUES (?, ?, ?, ?)', [facilityId, priceInfo.sportId, priceInfo.price, priceInfo.pricingModel]);
+    }
+    
+    await query('DELETE FROM operating_hours WHERE facilityId = ?', [facilityId]);
+    for (const hours of facilityData.operatingHours) {
+        await query('INSERT INTO operating_hours (facilityId, day, `open`, `close`) VALUES (?, ?, ?, ?)', [facilityId, hours.day, hours.open, hours.close]);
+    }
+    
+    await query('DELETE FROM rental_equipment WHERE facilityId = ?', [facilityId]);
+    for (const equip of facilityData.availableEquipment) {
+        const equipId = equip.id.startsWith('new-') ? `equip-${uuidv4()}` : equip.id;
+        await query('INSERT INTO rental_equipment (id, facilityId, name, pricePerItem, priceType, stock, sportIds) VALUES (?, ?, ?, ?, ?, ?, ?)', [equipId, facilityId, equip.name, equip.pricePerItem, equip.priceType, equip.stock, JSON.stringify(equip.sportIds)]);
+    }
+
+    await query('DELETE FROM maintenance_schedules WHERE facilityId = ?', [facilityId]);
+    for (const maint of facilityData.maintenanceSchedules) {
+        const maintId = maint.id.startsWith('new-') ? `maint-${uuidv4()}` : maint.id;
+        await query('INSERT INTO maintenance_schedules (id, facilityId, taskName, recurrenceInDays, lastPerformedDate) VALUES (?, ?, ?, ?, ?)', [maintId, facilityId, maint.taskName, maint.recurrenceInDays, maint.lastPerformedDate]);
+    }
+
+    return (await dbGetFacilityById(facilityId))!;
+}
+
+export async function dbDeleteFacility(facilityId: string): Promise<void> {
+    const tables = ['facilities', 'facility_sports', 'facility_amenities', 'sport_prices', 'operating_hours', 'rental_equipment', 'reviews', 'bookings', 'blocked_slots', 'events', 'lfg_requests', 'challenges', 'maintenance_schedules'];
+    for (const table of tables) {
+        await query(`DELETE FROM ${table} WHERE facilityId = ?`, [facilityId]).catch(e => console.log(`Could not delete from ${table}, it might not have a facilityId column.`));
+    }
+     await query('DELETE FROM facilities WHERE id = ?', [facilityId]);
+}
 
 // =================================================================
 // BOOKING FUNCTIONS
@@ -144,24 +241,24 @@ export async function dbGetFacilitiesByOwnerId(ownerId: string): Promise<Facilit
 
 export async function dbGetAllBookings(): Promise<Booking[]> {
     const [rows] = await query('SELECT * FROM bookings');
-    return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]') }));
+    return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]'), pricingModel: row.pricingModel }));
 }
 
 export async function dbGetBookingById(id: string): Promise<Booking | undefined> {
     const [rows] = await query('SELECT * FROM bookings WHERE id = ?', [id]);
     if ((rows as any[]).length === 0) return undefined;
     const row = (rows as any)[0];
-    return {...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]') };
+    return {...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]'), pricingModel: row.pricingModel };
 }
 
 export async function dbGetBookingsByUserId(userId: string): Promise<Booking[]> {
     const [rows] = await query('SELECT * FROM bookings WHERE userId = ?', [userId]);
-    return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]') }));
+    return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]'), pricingModel: row.pricingModel }));
 }
 
 export async function dbGetBookingsForFacilityOnDate(facilityId: string, date: string): Promise<Booking[]> {
     const [rows] = await query('SELECT * FROM bookings WHERE facilityId = ? AND date = ? AND status = "Confirmed"', [facilityId, date]);
-    return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]') }));
+    return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]'), pricingModel: row.pricingModel }));
 }
 
 export async function dbAddBooking(bookingData: Booking): Promise<Booking> {
@@ -611,6 +708,9 @@ export async function deletePromotionRule(id: string): Promise<void> {
 export const getAllBlogPosts = async (): Promise<BlogPost[]> => [];
 export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => undefined;
 
-export const dbAddFacility = async (facilityData: any): Promise<Facility> => { console.log("Mock dbAddFacility", facilityData); const newFacility = { ...facilityData, id: `facility-${uuidv4()}`}; return newFacility as Facility; }
-export const dbUpdateFacility = async (facilityData: any): Promise<Facility> => { console.log("Mock dbUpdateFacility", facilityData); return facilityData as Facility; }
-export const dbDeleteFacility = async (facilityId: string): Promise<void> => { console.log("Mock dbDeleteFacility", facilityId); }
+// Mock user retrieval for components that need it without full auth
+export const getUserById = (userId: string): UserProfile | undefined => {
+  // In a real app, this would be `dbGetUserById(userId)`
+  // For now, we return a mock or undefined
+  return undefined;
+};
