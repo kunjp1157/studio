@@ -159,7 +159,7 @@ export default function BookingsPage() {
           await addNotificationAction(currentUser.id, {
               type: 'booking_cancelled',
               title: 'Booking Cancelled',
-              message: `Your booking for ${bookingToCancel.facilityName} on ${format(parseISO(bookingToCancel.date), 'MMM d, yyyy')} has been cancelled.`,
+              message: `Your booking for ${bookingToCancel.facilityName} on ${format(new Date(bookingToCancel.date), 'MMM d, yyyy')} has been cancelled.`,
               link: '/account/bookings',
           });
         }
@@ -257,7 +257,7 @@ export default function BookingsPage() {
             {facilityDetails?.location || 'Unknown Location'}
         </div>
         <div className="space-y-1 text-sm text-muted-foreground">
-            <div className="flex items-center"><CalendarDays className="w-4 h-4 mr-2 text-primary" /> {format(parseISO(booking.date), 'EEE, MMM d, yyyy')}</div>
+            <div className="flex items-center"><CalendarDays className="w-4 h-4 mr-2 text-primary" /> {format(new Date(booking.date), 'EEE, MMM d, yyyy')}</div>
             <div className="flex items-center"><Clock className="w-4 h-4 mr-2 text-primary" /> {booking.startTime} - {booking.endTime}</div>
             <div className="flex items-center"><DollarSign className="w-4 h-4 mr-2 text-primary" /> Total: {renderPrice(booking.totalPrice)}</div>
         </div>
@@ -379,5 +379,3 @@ export default function BookingsPage() {
     </div>
   );
 }
-
-    
