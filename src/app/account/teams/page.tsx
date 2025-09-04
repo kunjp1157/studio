@@ -22,8 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Team, UserProfile } from '@/lib/types';
-import { getTeamsByUserIdAction, leaveTeamAction } from '@/app/actions';
-import { dbGetUserById } from '@/lib/data';
+import { getTeamsByUserIdAction, leaveTeamAction, getUserByIdAction } from '@/app/actions';
 import { Users, PlusCircle, Crown, User, LogOut, Settings, AlertCircle, Zap } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -55,7 +54,7 @@ export default function MyTeamsPage() {
     
     // Fetch members for all teams
     const memberPromises = userTeams.map(async (team) => {
-        const members = (await Promise.all(team.memberIds.map(id => dbGetUserById(id)))).filter(Boolean) as UserProfile[];
+        const members = (await Promise.all(team.memberIds.map(id => getUserByIdAction(id)))).filter(Boolean) as UserProfile[];
         return { teamId: team.id, members };
     });
     const membersByTeam = await Promise.all(memberPromises);

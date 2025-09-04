@@ -1,12 +1,10 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getTeamByIdAction, removeUserFromTeamAction, transferCaptaincyAction, deleteTeamAction } from '@/app/actions';
-import { dbGetUserById } from '@/lib/data';
+import { getTeamByIdAction, removeUserFromTeamAction, transferCaptaincyAction, deleteTeamAction, getUserByIdAction } from '@/app/actions';
 import type { Team, UserProfile } from '@/lib/types';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -60,7 +58,7 @@ export default function ManageTeamPage() {
                 return;
             }
             setTeam(foundTeam);
-            const memberPromises = foundTeam.memberIds.map(id => dbGetUserById(id));
+            const memberPromises = foundTeam.memberIds.map(id => getUserByIdAction(id));
             const memberProfiles = (await Promise.all(memberPromises)).filter(Boolean) as UserProfile[];
             setMembers(memberProfiles);
         } else {

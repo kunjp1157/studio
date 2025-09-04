@@ -59,7 +59,7 @@ import {
     dbUpdateMembershipPlan,
     deleteMembershipPlan,
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team } from '@/lib/types';
+import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team, Amenity } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import twilio from 'twilio';
 import { v4 as uuidv4 } from 'uuid';
@@ -142,6 +142,10 @@ export async function deleteFacilityAction(facilityId: string): Promise<void> {
 
 export async function getUsersAction(): Promise<UserProfile[]> {
   return await dbGetAllUsers();
+}
+
+export async function getUserByIdAction(id: string): Promise<UserProfile | undefined> {
+  return await dbGetUserById(id);
 }
 
 export async function addUserAction(userData: { name: string; email: string; password?: string }): Promise<UserProfile> {
@@ -257,7 +261,7 @@ export async function updateBookingAction(bookingId: string, updates: Partial<Bo
     return booking;
 }
 
-export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt' | 'dataAiHint'>): Promise<Booking> {
+export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
     const bookingWithId: Booking = { ...bookingData, id: `booking-${uuidv4()}`, bookedAt: new Date().toISOString() };
     const newBooking = await dbAddBooking(bookingWithId);
     
