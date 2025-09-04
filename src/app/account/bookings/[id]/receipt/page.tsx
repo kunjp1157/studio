@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { CheckCircle, Home, Calendar, Clock, DollarSign, QrCode, Printer, Download, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -101,7 +101,7 @@ export default function BookingReceiptPage() {
                 <Calendar className="mr-3 mt-1 h-5 w-5 text-primary" />
                 <div>
                     <p className="font-semibold">Date</p>
-                    <p className="text-muted-foreground">{format(parseISO(booking.date), 'EEEE, MMMM d, yyyy')}</p>
+                    <p className="text-muted-foreground">{format(new Date(booking.date), 'EEEE, MMMM d, yyyy')}</p>
                 </div>
             </div>
             <div className="flex items-start">
