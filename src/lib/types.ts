@@ -168,6 +168,7 @@ export interface Booking {
   reviewed: boolean; 
   rentedEquipment?: RentedItemInfo[];
   phoneNumber?: string;
+  pricingModel?: PricingModel;
 }
 
 export interface Achievement {
