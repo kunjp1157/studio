@@ -73,7 +73,7 @@ const ActivityItem = ({ item, currency }: { item: ActivityFeedItemType, currency
       <div className="flex items-start gap-4 p-2 rounded-lg hover:bg-muted/50 transition-colors">
         <Avatar className="h-9 w-9 border">
           <AvatarImage src={item.user.profilePictureUrl} alt={item.user.name} />
-          <AvatarFallback>{item.user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+          <AvatarFallback>{item.user.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground truncate">
@@ -141,7 +141,7 @@ export default function AdminDashboardPage() {
     const aggregatedRevenue: Record<string, number> = {};
     bookings.forEach(booking => {
         if (booking.status === 'Confirmed') {
-            const bookingDate = parseISO(booking.bookedAt);
+            const bookingDate = typeof booking.bookedAt === 'string' ? parseISO(booking.bookedAt) : booking.bookedAt;
             const monthKey = format(bookingDate, 'yyyy-MM');
             if (last6Months.some(m => m.monthKey === monthKey)) {
                 aggregatedRevenue[monthKey] = (aggregatedRevenue[monthKey] || 0) + booking.totalPrice;
