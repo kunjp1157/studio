@@ -1,4 +1,5 @@
 
+
 import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
 import { query } from './db';
 import { v4 as uuidv4 } from 'uuid';
@@ -98,6 +99,7 @@ async function getFacilityRelations(facility: any): Promise<Facility> {
 
     return {
         ...facility,
+        rating: parseFloat(facility.rating) || 0, // Ensure rating is a number
         sports: sports as Sport[],
         amenities: amenities as Amenity[],
         sportPrices: (sportPrices as any[]).map(p => ({...p, price: parseFloat(p.price)})) as SportPrice[],
@@ -511,12 +513,12 @@ export async function getEventById(id: string): Promise<SportEvent | undefined> 
     return { ...row, sport: sport! };
 }
 
-export async function addEvent(eventData: any): Promise<void> {
+export async function addEventAction(eventData: any): Promise<void> {
     const newEvent = { ...eventData, id: `event-${uuidv4()}` };
     await query('INSERT INTO events SET ?', newEvent);
 }
 
-export async function updateEvent(eventData: any): Promise<void> {
+export async function updateEventAction(eventData: any): Promise<void> {
     await query('UPDATE events SET ? WHERE id = ?', [eventData, eventData.id]);
 }
 
@@ -545,11 +547,11 @@ export async function getMembershipPlanById(id: string): Promise<MembershipPlan 
     const row = (rows as any)[0];
     return { ...row, benefits: JSON.parse(row.benefits || '[]') };
 }
-export async function addMembershipPlan(data: Omit<MembershipPlan, 'id'>): Promise<void> {
+export async function addMembershipPlanAction(data: Omit<MembershipPlan, 'id'>): Promise<void> {
     const newPlan = { id: `plan-${uuidv4()}`, ...data, benefits: JSON.stringify(data.benefits) };
     await query('INSERT INTO membership_plans SET ?', newPlan);
 }
-export async function updateMembershipPlan(data: MembershipPlan): Promise<void> {
+export async function updateMembershipPlanAction(data: MembershipPlan): Promise<void> {
     const payload = { ...data, benefits: JSON.stringify(data.benefits) };
     await query('UPDATE membership_plans SET ? WHERE id = ?', [payload, data.id]);
 }
@@ -568,11 +570,11 @@ export async function getPricingRuleById(id: string): Promise<PricingRule | unde
     const row = (rows as any)[0];
     return { ...row, daysOfWeek: JSON.parse(row.daysOfWeek || 'null'), timeRange: JSON.parse(row.timeRange || 'null'), dateRange: JSON.parse(row.dateRange || 'null') };
 }
-export async function addPricingRule(data: Omit<PricingRule, 'id'>): Promise<void> {
+export async function addPricingRuleAction(data: Omit<PricingRule, 'id'>): Promise<void> {
     const newRule = { id: `pr-${uuidv4()}`, ...data, daysOfWeek: JSON.stringify(data.daysOfWeek || null), timeRange: JSON.stringify(data.timeRange || null), dateRange: JSON.stringify(data.dateRange || null) };
     await query('INSERT INTO pricing_rules SET ?', newRule);
 }
-export async function updatePricingRule(data: PricingRule): Promise<void> {
+export async function updatePricingRuleAction(data: PricingRule): Promise<void> {
     const payload = { ...data, daysOfWeek: JSON.stringify(data.daysOfWeek || null), timeRange: JSON.stringify(data.timeRange || null), dateRange: JSON.stringify(data.dateRange || null) };
     await query('UPDATE pricing_rules SET ? WHERE id = ?', [payload, data.id]);
 }
@@ -594,11 +596,11 @@ export async function getPromotionRuleByCode(code: string): Promise<PromotionRul
     // Add logic here to check for validity (date range, usage limits)
     return (rows as any)[0];
 }
-export async function addPromotionRule(data: Omit<PromotionRule, 'id'>): Promise<void> {
+export async function addPromotionRuleAction(data: Omit<PromotionRule, 'id'>): Promise<void> {
     const newRule = { id: `promo-${uuidv4()}`, ...data };
     await query('INSERT INTO promotion_rules SET ?', newRule);
 }
-export async function updatePromotionRule(data: PromotionRule): Promise<void> {
+export async function updatePromotionRuleAction(data: PromotionRule): Promise<void> {
     await query('UPDATE promotion_rules SET ? WHERE id = ?', [data, data.id]);
 }
 export async function deletePromotionRule(id: string): Promise<void> {

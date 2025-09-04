@@ -70,6 +70,8 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
 
   const SportIcon = getIconComponent(facility.sports[0]?.iconName) || Zap;
   const reviewCount = facility.reviews?.length || 0;
+  const ratingValue = typeof facility.rating === 'number' ? facility.rating : 0;
+
 
   let availabilityStatus: { text: string; variant: "default" | "secondary" | "destructive" | "outline" } = {
     text: "Check Availability",
@@ -129,8 +131,8 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
 
         <div className="flex items-center justify-between text-sm mb-2">
           <div className="flex items-center">
-            <StarDisplay rating={facility.rating} starSize={16} />
-            <span className="ml-1.5 text-muted-foreground">({facility.rating.toFixed(1)})</span>
+            <StarDisplay rating={ratingValue} starSize={16} />
+            <span className="ml-1.5 text-muted-foreground">({ratingValue.toFixed(1)})</span>
           </div>
           <div className="flex items-center text-muted-foreground">
             <MessageSquare className="w-4 h-4 mr-1" />
