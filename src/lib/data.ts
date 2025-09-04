@@ -547,11 +547,11 @@ export async function getMembershipPlanById(id: string): Promise<MembershipPlan 
     const row = (rows as any)[0];
     return { ...row, benefits: JSON.parse(row.benefits || '[]') };
 }
-export async function addMembershipPlanAction(data: Omit<MembershipPlan, 'id'>): Promise<void> {
+export async function dbAddMembershipPlan(data: Omit<MembershipPlan, 'id'>): Promise<void> {
     const newPlan = { id: `plan-${uuidv4()}`, ...data, benefits: JSON.stringify(data.benefits) };
     await query('INSERT INTO membership_plans SET ?', newPlan);
 }
-export async function updateMembershipPlanAction(data: MembershipPlan): Promise<void> {
+export async function dbUpdateMembershipPlan(data: MembershipPlan): Promise<void> {
     const payload = { ...data, benefits: JSON.stringify(data.benefits) };
     await query('UPDATE membership_plans SET ? WHERE id = ?', [payload, data.id]);
 }
@@ -614,4 +614,3 @@ export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefi
 export const dbAddFacility = async (facilityData: any): Promise<Facility> => { console.log("Mock dbAddFacility", facilityData); const newFacility = { ...facilityData, id: `facility-${uuidv4()}`}; return newFacility as Facility; }
 export const dbUpdateFacility = async (facilityData: any): Promise<Facility> => { console.log("Mock dbUpdateFacility", facilityData); return facilityData as Facility; }
 export const dbDeleteFacility = async (facilityId: string): Promise<void> => { console.log("Mock dbDeleteFacility", facilityId); }
-    

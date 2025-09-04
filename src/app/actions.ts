@@ -55,6 +55,9 @@ import {
     dbUpdateSport,
     dbDeleteSport,
     dbGetUserById,
+    dbAddMembershipPlan,
+    dbUpdateMembershipPlan,
+    deleteMembershipPlan,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -170,6 +173,18 @@ export async function getEventByIdAction(id: string): Promise<SportEvent | undef
 
 export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
     return await getAllMembershipPlans();
+}
+
+export async function addMembershipPlanAction(data: Omit<MembershipPlan, 'id'>): Promise<void> {
+    await dbAddMembershipPlan(data);
+    revalidatePath('/admin/memberships');
+    revalidatePath('/memberships');
+}
+
+export async function updateMembershipPlanAction(data: MembershipPlan): Promise<void> {
+    await dbUpdateMembershipPlan(data);
+    revalidatePath('/admin/memberships');
+    revalidatePath('/memberships');
 }
 
 export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
@@ -421,5 +436,3 @@ export async function acceptChallengeAction(challengeId: string, opponentId: str
     }
     return updatedChallenge;
 }
-
-    
