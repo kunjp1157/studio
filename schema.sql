@@ -1,30 +1,18 @@
+-- SQL Dump for City Sports Hub
+-- Version 1.1
+--
+-- Host: localhost
+-- Generation Time: Jul 27, 2024 at 10:00 AM
+-- Server version: 8.0.27
+-- PHP Version: 8.1.1
 
--- Main schema for the Sports Arena application
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
--- Drop tables if they exist to start fresh
-DROP TABLE IF EXISTS `waitlist_entries`;
-DROP TABLE IF EXISTS `challenges`;
-DROP TABLE IF EXISTS `lfg_requests`;
-DROP TABLE IF EXISTS `teams`;
-DROP TABLE IF EXISTS `reviews`;
-DROP TABLE IF EXISTS `notifications`;
-DROP TABLE IF EXISTS `bookings`;
-DROP TABLE IF EXISTS `promotion_rules`;
-DROP TABLE IF EXISTS `pricing_rules`;
-DROP TABLE IF EXISTS `membership_plans`;
-DROP TABLE IF EXISTS `events`;
-DROP TABLE IF EXISTS `blog_posts`;
-DROP TABLE IF EXISTS `rental_equipment`;
-DROP TABLE IF EXISTS `maintenance_schedules`;
-DROP TABLE IF EXISTS `blocked_slots`;
-DROP TABLE IF EXISTS `facility_amenities`;
-DROP TABLE IF EXISTS `amenities`;
-DROP TABLE IF EXISTS `facility_sports`;
-DROP TABLE IF EXISTS `sport_prices`;
-DROP TABLE IF EXISTS `operating_hours`;
-DROP TABLE IF EXISTS `sports`;
-DROP TABLE IF EXISTS `facilities`;
-DROP TABLE IF EXISTS `users`;
+--
+-- Database: `sports_arena`
+--
 
 -- =================================================================
 -- USERS TABLE
@@ -49,10 +37,8 @@ CREATE TABLE `users` (
   `status` enum('Active','Suspended','PendingApproval') NOT NULL DEFAULT 'Active',
   `joinedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `teamIds` json DEFAULT NULL,
-  `isProfilePublic` tinyint(1) DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `isProfilePublic` tinyint(1) DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- =================================================================
 -- FACILITIES TABLE
@@ -61,20 +47,17 @@ CREATE TABLE `facilities` (
   `id` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `type` enum('Complex','Court','Field','Studio','Pool','Box Cricket') NOT NULL,
-  `address` text NOT NULL,
+  `address` varchar(255) NOT NULL,
   `city` varchar(255) NOT NULL,
   `location` varchar(255) NOT NULL,
-  `description` text,
-  `rating` float DEFAULT '0',
-  `capacity` int DEFAULT '0',
+  `description` text NOT NULL,
+  `rating` decimal(3,2) DEFAULT '0.00',
+  `capacity` int DEFAULT NULL,
   `isPopular` tinyint(1) DEFAULT '0',
   `isIndoor` tinyint(1) DEFAULT '0',
   `dataAiHint` varchar(255) DEFAULT NULL,
-  `ownerId` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `ownerId` (`ownerId`),
-  CONSTRAINT `facilities_ibfk_1` FOREIGN KEY (`ownerId`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `ownerId` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- =================================================================
 -- SPORTS TABLE
@@ -84,10 +67,8 @@ CREATE TABLE `sports` (
   `name` varchar(255) NOT NULL,
   `iconName` varchar(255) DEFAULT NULL,
   `imageUrl` varchar(255) DEFAULT NULL,
-  `imageDataAiHint` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `imageDataAiHint` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- =================================================================
 -- AMENITIES TABLE
@@ -95,90 +76,11 @@ CREATE TABLE `sports` (
 CREATE TABLE `amenities` (
   `id` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
-  `iconName` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `iconName` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- =================================================================
--- JOIN TABLES & OTHER FACILITY-RELATED TABLES
--- =================================================================
-CREATE TABLE `facility_sports` (
-  `facilityId` varchar(255) NOT NULL,
-  `sportId` varchar(255) NOT NULL,
-  PRIMARY KEY (`facilityId`,`sportId`),
-  KEY `sportId` (`sportId`),
-  CONSTRAINT `facility_sports_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `facility_sports_ibfk_2` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `facility_amenities` (
-  `facilityId` varchar(255) NOT NULL,
-  `amenityId` varchar(255) NOT NULL,
-  PRIMARY KEY (`facilityId`,`amenityId`),
-  KEY `amenityId` (`amenityId`),
-  CONSTRAINT `facility_amenities_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `facility_amenities_ibfk_2` FOREIGN KEY (`amenityId`) REFERENCES `amenities` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `sport_prices` (
-  `facilityId` varchar(255) NOT NULL,
-  `sportId` varchar(255) NOT NULL,
-  `price` decimal(10,2) NOT NULL,
-  `pricingModel` enum('per_hour_flat','per_hour_per_person') NOT NULL DEFAULT 'per_hour_flat',
-  PRIMARY KEY (`facilityId`,`sportId`),
-  KEY `sportId` (`sportId`),
-  CONSTRAINT `sport_prices_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `sport_prices_ibfk_2` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `operating_hours` (
-  `facilityId` varchar(255) NOT NULL,
-  `day` enum('Mon','Tue','Wed','Thu','Fri','Sat','Sun') NOT NULL,
-  `open` time NOT NULL,
-  `close` time NOT NULL,
-  PRIMARY KEY (`facilityId`,`day`),
-  CONSTRAINT `operating_hours_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `blocked_slots` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `facilityId` varchar(255) NOT NULL,
-  `date` date NOT NULL,
-  `startTime` time NOT NULL,
-  `endTime` time NOT NULL,
-  `reason` varchar(255) DEFAULT NULL,
-  FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `maintenance_schedules` (
-  `id` varchar(255) NOT NULL,
-  `facilityId` varchar(255) NOT NULL,
-  `taskName` varchar(255) NOT NULL,
-  `recurrenceInDays` int NOT NULL,
-  `lastPerformedDate` date NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `facilityId` (`facilityId`),
-  CONSTRAINT `maintenance_schedules_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `rental_equipment` (
-  `id` varchar(255) NOT NULL,
-  `facilityId` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text,
-  `pricePerItem` decimal(10,2) NOT NULL,
-  `priceType` enum('per_booking','per_hour') NOT NULL,
-  `stock` int NOT NULL,
-  `sportIds` json NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `facilityId` (`facilityId`),
-  CONSTRAINT `rental_equipment_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-
--- =================================================================
--- BOOKINGS & REVIEWS
+-- BOOKINGS TABLE
 -- =================================================================
 CREATE TABLE `bookings` (
   `id` varchar(255) NOT NULL,
@@ -191,7 +93,7 @@ CREATE TABLE `bookings` (
   `date` date NOT NULL,
   `startTime` time NOT NULL,
   `endTime` time NOT NULL,
-  `durationHours` int DEFAULT NULL,
+  `durationHours` int DEFAULT '1',
   `numberOfGuests` int DEFAULT NULL,
   `baseFacilityPrice` decimal(10,2) NOT NULL,
   `equipmentRentalCost` decimal(10,2) DEFAULT '0.00',
@@ -201,16 +103,12 @@ CREATE TABLE `bookings` (
   `bookedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `reviewed` tinyint(1) DEFAULT '0',
   `rentedEquipment` json DEFAULT NULL,
-  `phoneNumber` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `userId` (`userId`),
-  KEY `facilityId` (`facilityId`),
-  KEY `sportId` (`sportId`),
-  CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `bookings_ibfk_2` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `bookings_ibfk_3` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `phoneNumber` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- =================================================================
+-- REVIEWS TABLE
+-- =================================================================
 CREATE TABLE `reviews` (
   `id` varchar(255) NOT NULL,
   `facilityId` varchar(255) NOT NULL,
@@ -218,37 +116,79 @@ CREATE TABLE `reviews` (
   `userName` varchar(255) NOT NULL,
   `userAvatar` varchar(255) DEFAULT NULL,
   `isPublicProfile` tinyint(1) DEFAULT '1',
-  `rating` float NOT NULL,
+  `rating` int NOT NULL,
   `comment` text,
   `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `bookingId` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `bookingId` (`bookingId`),
-  KEY `facilityId` (`facilityId`),
-  KEY `userId` (`userId`),
-  CONSTRAINT `reviews_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `reviews_ibfk_3` FOREIGN KEY (`bookingId`) REFERENCES `bookings` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+  `bookingId` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- =================================================================
--- APP CONTENT & SETTINGS
+-- NOTIFICATIONS TABLE
 -- =================================================================
 CREATE TABLE `notifications` (
   `id` varchar(255) NOT NULL,
   `userId` varchar(255) NOT NULL,
-  `type` varchar(255) NOT NULL,
+  `type` enum('booking_confirmed','booking_cancelled','review_submitted','reminder','promotion','general','user_status_changed','facility_approved','waitlist_opening','matchmaking_interest') NOT NULL,
   `title` varchar(255) NOT NULL,
   `message` text NOT NULL,
   `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `isRead` tinyint(1) NOT NULL DEFAULT '0',
+  `isRead` tinyint(1) DEFAULT '0',
   `link` varchar(255) DEFAULT NULL,
-  `iconName` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `userId` (`userId`),
-  CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `iconName` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- =================================================================
+-- JOIN TABLES
+-- =================================================================
+CREATE TABLE `facility_sports` (
+  `facilityId` varchar(255) NOT NULL,
+  `sportId` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `facility_amenities` (
+  `facilityId` varchar(255) NOT NULL,
+  `amenityId` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `sport_prices` (
+    `facilityId` VARCHAR(255) NOT NULL,
+    `sportId` VARCHAR(255) NOT NULL,
+    `price` DECIMAL(10, 2) NOT NULL,
+    `pricingModel` ENUM('per_hour_flat', 'per_hour_per_person') NOT NULL DEFAULT 'per_hour_flat'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+CREATE TABLE `operating_hours` (
+    `facilityId` VARCHAR(255) NOT NULL,
+    `day` ENUM('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun') NOT NULL,
+    `open` TIME NOT NULL,
+    `close` TIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `rental_equipment` (
+    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `facilityId` VARCHAR(255) NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `pricePerItem` DECIMAL(10, 2) NOT NULL,
+    `priceType` ENUM('per_booking', 'per_hour') NOT NULL,
+    `stock` INT NOT NULL,
+    `sportIds` JSON
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `blocked_slots` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `facilityId` VARCHAR(255) NOT NULL,
+    `date` DATE NOT NULL,
+    `startTime` TIME NOT NULL,
+    `endTime` TIME NOT NULL,
+    `reason` VARCHAR(255),
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- =================================================================
+-- EVENTS, MEMBERSHIPS, PRICING & PROMOTIONS
+-- =================================================================
 
 CREATE TABLE `events` (
   `id` varchar(255) NOT NULL,
@@ -256,28 +196,22 @@ CREATE TABLE `events` (
   `facilityId` varchar(255) NOT NULL,
   `facilityName` varchar(255) DEFAULT NULL,
   `sportId` varchar(255) NOT NULL,
-  `startDate` timestamp NOT NULL,
-  `endDate` timestamp NOT NULL,
-  `description` text,
+  `startDate` datetime NOT NULL,
+  `endDate` datetime NOT NULL,
+  `description` text NOT NULL,
   `entryFee` decimal(10,2) DEFAULT '0.00',
   `maxParticipants` int DEFAULT '0',
   `registeredParticipants` int DEFAULT '0',
   `imageUrl` varchar(255) DEFAULT NULL,
-  `imageDataAiHint` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `facilityId` (`facilityId`),
-  KEY `sportId` (`sportId`),
-  CONSTRAINT `events_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `events_ibfk_2` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `imageDataAiHint` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `membership_plans` (
   `id` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `pricePerMonth` decimal(10,2) NOT NULL,
-  `benefits` json NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `benefits` json NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `pricing_rules` (
   `id` varchar(255) NOT NULL,
@@ -289,9 +223,8 @@ CREATE TABLE `pricing_rules` (
   `adjustmentType` enum('percentage_increase','percentage_decrease','fixed_increase','fixed_decrease','fixed_price') NOT NULL,
   `value` decimal(10,2) NOT NULL,
   `priority` int DEFAULT NULL,
-  `isActive` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `isActive` tinyint(1) DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `promotion_rules` (
   `id` varchar(255) NOT NULL,
@@ -304,27 +237,19 @@ CREATE TABLE `promotion_rules` (
   `endDate` date DEFAULT NULL,
   `usageLimit` int DEFAULT NULL,
   `usageLimitPerUser` int DEFAULT NULL,
-  `isActive` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+  `isActive` tinyint(1) DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- =================================================================
--- COMMUNITY & MATCHMAKING
+-- COMMUNITY FEATURES: TEAMS, LFG, CHALLENGES
 -- =================================================================
 CREATE TABLE `teams` (
   `id` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `sportId` varchar(255) NOT NULL,
   `captainId` varchar(255) NOT NULL,
-  `memberIds` json NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `sportId` (`sportId`),
-  KEY `captainId` (`captainId`),
-  CONSTRAINT `teams_ibfk_1` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `teams_ibfk_2` FOREIGN KEY (`captainId`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `memberIds` json NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `lfg_requests` (
   `id` varchar(255) NOT NULL,
@@ -332,21 +257,14 @@ CREATE TABLE `lfg_requests` (
   `sportId` varchar(255) NOT NULL,
   `facilityId` varchar(255) NOT NULL,
   `facilityName` varchar(255) NOT NULL,
-  `notes` text,
+  `notes` text NOT NULL,
   `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `status` enum('open','closed') NOT NULL DEFAULT 'open',
   `interestedUserIds` json DEFAULT NULL,
   `skillLevel` enum('Any','Beginner','Intermediate','Advanced') DEFAULT 'Any',
   `playersNeeded` int DEFAULT NULL,
-  `preferredTime` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `userId` (`userId`),
-  KEY `sportId` (`sportId`),
-  KEY `facilityId` (`facilityId`),
-  CONSTRAINT `lfg_requests_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `lfg_requests_ibfk_2` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `lfg_requests_ibfk_3` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `preferredTime` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4g4_general_ci;
 
 CREATE TABLE `challenges` (
   `id` varchar(255) NOT NULL,
@@ -355,27 +273,53 @@ CREATE TABLE `challenges` (
   `sportId` varchar(255) NOT NULL,
   `facilityId` varchar(255) NOT NULL,
   `facilityName` varchar(255) NOT NULL,
-  `proposedDate` timestamp NOT NULL,
+  `proposedDate` datetime NOT NULL,
   `notes` text,
   `status` enum('open','accepted','completed','cancelled') NOT NULL DEFAULT 'open',
-  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `challengerId` (`challengerId`),
-  KEY `opponentId` (`opponentId`),
-  KEY `sportId` (`sportId`),
-  KEY `facilityId` (`facilityId`),
-  CONSTRAINT `challenges_ibfk_1` FOREIGN KEY (`challengerId`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `challenges_ibfk_2` FOREIGN KEY (`opponentId`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `challenges_ibfk_3` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `challenges_ibfk_4` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `maintenance_schedules` (
+    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `facilityId` VARCHAR(255) NOT NULL,
+    `taskName` VARCHAR(255) NOT NULL,
+    `recurrenceInDays` INT NOT NULL,
+    `lastPerformedDate` DATE NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- =================================================================
+-- PRIMARY KEYS & FOREIGN KEYS
+-- =================================================================
+
+ALTER TABLE `users` ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `email` (`email`);
+ALTER TABLE `facilities` ADD PRIMARY KEY (`id`), ADD KEY `ownerId` (`ownerId`);
+ALTER TABLE `sports` ADD PRIMARY KEY (`id`);
+ALTER TABLE `amenities` ADD PRIMARY KEY (`id`);
+ALTER TABLE `bookings` ADD PRIMARY KEY (`id`), ADD KEY `userId` (`userId`), ADD KEY `facilityId` (`facilityId`);
+ALTER TABLE `reviews` ADD PRIMARY KEY (`id`), ADD KEY `facilityId` (`facilityId`), ADD KEY `userId` (`userId`);
+ALTER TABLE `notifications` ADD PRIMARY KEY (`id`), ADD KEY `userId` (`userId`);
+ALTER TABLE `facility_sports` ADD PRIMARY KEY (`facilityId`,`sportId`), ADD KEY `sportId` (`sportId`);
+ALTER TABLE `facility_amenities` ADD PRIMARY KEY (`facilityId`,`amenityId`), ADD KEY `amenityId` (`amenityId`);
+ALTER TABLE `sport_prices` ADD PRIMARY KEY (`facilityId`, `sportId`), ADD KEY `sportId` (`sportId`);
+ALTER TABLE `operating_hours` ADD PRIMARY KEY (`facilityId`, `day`);
+ALTER TABLE `events` ADD PRIMARY KEY (`id`), ADD KEY `facilityId` (`facilityId`), ADD KEY `sportId`(`sportId`);
+ALTER TABLE `membership_plans` ADD PRIMARY KEY (`id`);
+ALTER_TABLE `pricing_rules` ADD PRIMARY KEY (`id`);
+ALTER_TABLE `promotion_rules` ADD PRIMARY KEY (`id`);
+ALTER_TABLE `teams` ADD PRIMARY KEY (`id`);
+ALTER_TABLE `lfg_requests` ADD PRIMARY KEY (`id`);
+ALTER_TABLE `challenges` ADD PRIMARY KEY (`id`);
+
+-- Constraints can be added here in a real production environment
+-- ALTER TABLE `facilities` ADD CONSTRAINT `facilities_ibfk_1` FOREIGN KEY (`ownerId`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 
 -- =================================================================
 -- SEED DATA
 -- =================================================================
 
--- Amenities
+-- Seed Amenities
 INSERT INTO `amenities` (`id`, `name`, `iconName`) VALUES
 ('amenity-1', 'Parking', 'ParkingCircle'),
 ('amenity-2', 'Lockers', 'Lock'),
@@ -384,57 +328,61 @@ INSERT INTO `amenities` (`id`, `name`, `iconName`) VALUES
 ('amenity-5', 'Equipment Rental', 'PackageSearch'),
 ('amenity-6', 'Cafe', 'Utensils');
 
--- Sports
+-- Seed Sports
 INSERT INTO `sports` (`id`, `name`, `iconName`, `imageUrl`, `imageDataAiHint`) VALUES
 ('sport-1', 'Soccer', 'Goal', 'https://picsum.photos/400/300?random=1', 'soccer field'),
 ('sport-2', 'Basketball', 'Dribbble', 'https://picsum.photos/400/300?random=2', 'basketball court'),
-('sport-3', 'Tennis', 'Dices', 'https://picsum.photos/400/300?random=3', 'tennis court'),
-('sport-4', 'Badminton', 'Feather', 'https://picsum.photos/400/300?random=4', 'badminton shuttlecock'),
+('sport-3', 'Tennis', 'Feather', 'https://picsum.photos/400/300?random=3', 'tennis court'),
+('sport-4', 'Cricket', 'Zap', 'https://picsum.photos/400/300?random=4', 'cricket pitch'),
 ('sport-5', 'Swimming', 'Wind', 'https://picsum.photos/400/300?random=5', 'swimming pool'),
-('sport-6', 'Cricket', 'Zap', 'https://picsum.photos/400/300?random=6', 'cricket pitch');
+('sport-6', 'Badminton', 'Feather', 'https://picsum.photos/400/300?random=6', 'badminton court');
 
--- Users
-INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `isProfilePublic`, `loyaltyPoints`, `preferredSports`, `skillLevels`) VALUES
-('user-admin-1', 'Admin Alice', 'admin@sportsarena.com', 'adminpass', 'Admin', 1, 100, '[]', '[]'),
-('user-owner-1', 'Owner Oscar', 'owner@sportsarena.com', 'ownerpass', 'FacilityOwner', 1, 50, '[]', '[]'),
-('user-1', 'Charlie Player', 'charlie@example.com', 'charliepass', 'User', 1, 250, '[{"id": "sport-1", "name": "Soccer"}, {"id": "sport-6", "name": "Cricket"}]', '[{"sportId": "sport-1", "sportName": "Soccer", "level": "Intermediate"}, {"sportId": "sport-6", "sportName": "Cricket", "level": "Advanced"}]'),
-('user-2', 'Diana Competitor', 'diana@example.com', 'dianapass', 'User', 1, 150, '[{"id": "sport-3", "name": "Tennis"}]', '[{"sportId": "sport-3", "sportName": "Tennis", "level": "Beginner"}]');
+-- Seed Facilities
+INSERT INTO `facilities` (`id`, `name`, `type`, `address`, `city`, `location`, `description`, `rating`, `capacity`, `isPopular`, `isIndoor`, `dataAiHint`, `ownerId`) VALUES
+('facility-1', 'Grand Arena', 'Complex', '123 Main St, Pune', 'Pune', 'Koregaon Park', 'A state-of-the-art sports complex with multiple courts and fields.', 4.5, 200, 1, 1, 'sports complex modern', 'owner-1'),
+('facility-2', 'City Sports Club', 'Court', '456 Oak Ave, Pune', 'Pune', 'Viman Nagar', 'Premium courts for Tennis and Basketball enthusiasts.', 4.8, 50, 1, 0, 'tennis court outdoors', 'owner-1');
 
--- Facilities
-INSERT INTO `facilities` (`id`, `name`, `type`, `address`, `city`, `location`, `description`, `rating`, `capacity`, `isPopular`, `isIndoor`, `ownerId`) VALUES
-('facility-1', 'Grand City Arena', 'Complex', '123 Sports Rd, Koregaon Park', 'Pune', 'Koregaon Park', 'A state-of-the-art multi-sport complex with top-notch amenities.', 4.8, 200, 1, 1, 'user-owner-1'),
-('facility-2', 'Greenfield Pitch', 'Field', '456 Meadow Lane, Hinjewadi', 'Pune', 'Hinjewadi', 'A lush green outdoor field perfect for soccer and cricket.', 4.5, 100, 0, 0, 'user-owner-1');
-
--- Facility Sports & Prices
+-- Associate Sports with Facilities
 INSERT INTO `facility_sports` (`facilityId`, `sportId`) VALUES
-('facility-1', 'sport-2'), ('facility-1', 'sport-3'), ('facility-1', 'sport-4'),
-('facility-2', 'sport-1'), ('facility-2', 'sport-6');
+('facility-1', 'sport-1'), ('facility-1', 'sport-2'), ('facility-1', 'sport-4'),
+('facility-2', 'sport-2'), ('facility-2', 'sport-3'), ('facility-2', 'sport-6');
 
-INSERT INTO `sport_prices` (`facilityId`, `sportId`, `price`, `pricingModel`) VALUES
-('facility-1', 'sport-2', 1200.00, 'per_hour_flat'),
-('facility-1', 'sport-3', 1000.00, 'per_hour_flat'),
-('facility-1', 'sport-4', 800.00, 'per_hour_flat'),
-('facility-2', 'sport-1', 1500.00, 'per_hour_flat'),
-('facility-2', 'sport-6', 2000.00, 'per_hour_flat');
-
--- Facility Amenities
+-- Associate Amenities with Facilities
 INSERT INTO `facility_amenities` (`facilityId`, `amenityId`) VALUES
-('facility-1', 'amenity-1'), ('facility-1', 'amenity-2'), ('facility-1', 'amenity-3'), ('facility-1', 'amenity-4'), ('facility-1', 'amenity-5'), ('facility-1', 'amenity-6'),
-('facility-2', 'amenity-1'), ('facility-2', 'amenity-4');
+('facility-1', 'amenity-1'), ('facility-1', 'amenity-2'), ('facility-1', 'amenity-3'), ('facility-1', 'amenity-4'),
+('facility-2', 'amenity-1'), ('facility-2', 'amenity-2'), ('facility-2', 'amenity-6');
 
--- Operating Hours
+-- Seed Sport Prices
+INSERT INTO `sport_prices` (`facilityId`, `sportId`, `price`, `pricingModel`) VALUES
+('facility-1', 'sport-1', 1500.00, 'per_hour_flat'), ('facility-1', 'sport-2', 1200.00, 'per_hour_flat'), ('facility-1', 'sport-4', 2000.00, 'per_hour_flat'),
+('facility-2', 'sport-2', 1300.00, 'per_hour_flat'), ('facility-2', 'sport-3', 800.00, 'per_hour_per_person'), ('facility-2', 'sport-6', 600.00, 'per_hour_per_person');
+
+-- Seed Operating Hours
 INSERT INTO `operating_hours` (`facilityId`, `day`, `open`, `close`) VALUES
-('facility-1', 'Mon', '08:00:00', '22:00:00'), ('facility-1', 'Tue', '08:00:00', '22:00:00'), ('facility-1', 'Wed', '08:00:00', '22:00:00'), ('facility-1', 'Thu', '08:00:00', '22:00:00'), ('facility-1', 'Fri', '08:00:00', '23:00:00'), ('facility-1', 'Sat', '09:00:00', '23:00:00'), ('facility-1', 'Sun', '09:00:00', '20:00:00'),
-('facility-2', 'Mon', '07:00:00', '21:00:00'), ('facility-2', 'Tue', '07:00:00', '21:00:00'), ('facility-2', 'Wed', '07:00:00', '21:00:00'), ('facility-2', 'Thu', '07:00:00', '21:00:00'), ('facility-2', 'Fri', '07:00:00', '21:00:00'), ('facility-2', 'Sat', '06:00:00', '22:00:00'), ('facility-2', 'Sun', '06:00:00', '22:00:00');
+('facility-1', 'Mon', '06:00:00', '23:00:00'), ('facility-1', 'Tue', '06:00:00', '23:00:00'), ('facility-1', 'Wed', '06:00:00', '23:00:00'),
+('facility-1', 'Thu', '06:00:00', '23:00:00'), ('facility-1', 'Fri', '06:00:00', '23:00:00'), ('facility-1', 'Sat', '07:00:00', '23:59:00'),
+('facility-1', 'Sun', '07:00:00', '23:59:00'),
+('facility-2', 'Mon', '07:00:00', '22:00:00'), ('facility-2', 'Tue', '07:00:00', '22:00:00'), ('facility-2', 'Wed', '07:00:00', '22:00:00'),
+('facility-2', 'Thu', '07:00:00', '22:00:00'), ('facility-2', 'Fri', '07:00:00', '22:00:00'), ('facility-2', 'Sat', '08:00:00', '22:00:00'),
+('facility-2', 'Sun', '08:00:00', '20:00:00');
 
--- Events
+-- Seed Users
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `status`) VALUES
+('admin-1', 'Admin User', 'admin@example.com', 'admin123', 'Admin', 'Active'),
+('owner-1', 'Alice Owner', 'owner@example.com', 'owner123', 'FacilityOwner', 'Active'),
+('user-1', 'Bob User', 'bob@example.com', 'user123', 'User', 'Active'),
+('user-2', 'Charlie Player', 'charlie@example.com', 'user123', 'User', 'Active');
+
+-- Seed Events
 INSERT INTO `events` (`id`, `name`, `facilityId`, `facilityName`, `sportId`, `startDate`, `endDate`, `description`, `entryFee`, `maxParticipants`, `registeredParticipants`) VALUES
-('event-1', 'Summer Cricket Tournament', 'facility-2', 'Greenfield Pitch', 'sport-6', '2024-08-10 09:00:00', '2024-08-11 18:00:00', 'An exciting weekend cricket tournament for all amateur teams.', 5000.00, 16, 4);
+('event-1', 'Summer Cricket Tournament', 'facility-1', 'Grand Arena', 'sport-4', '2024-08-10 09:00:00', '2024-08-11 18:00:00', 'Annual summer T20 cricket tournament. Exciting prizes to be won!', 500.00, 16, 4);
 
--- LFG Request
-INSERT INTO `lfg_requests` (`id`, `userId`, `sportId`, `facilityId`, `facilityName`, `notes`, `status`, `interestedUserIds`, `skillLevel`, `playersNeeded`, `preferredTime`) VALUES
-('lfg-1', 'user-2', 'sport-3', 'facility-1', 'Grand City Arena', 'Looking for a friendly tennis partner for a singles match this weekend. I am a beginner, just want to practice.', 'open', '[]', 'Beginner', 1, 'Weekend afternoons');
+-- Seed Matchmaking (LFG)
+INSERT INTO `lfg_requests` (`id`, `userId`, `sportId`, `facilityId`, `facilityName`, `notes`, `status`, `skillLevel`, `playersNeeded`) VALUES
+('lfg-1', 'user-2', 'sport-3', 'facility-2', 'City Sports Club', 'Looking for an intermediate level player for a friendly singles match this weekend. Flexible on time.', 'open', 'Intermediate', 1);
 
--- Challenges
+-- Seed Challenges
 INSERT INTO `challenges` (`id`, `challengerId`, `sportId`, `facilityId`, `facilityName`, `proposedDate`, `notes`, `status`) VALUES
-('chl-1', 'user-1', 'sport-1', 'facility-2', 'Greenfield Pitch', '2024-07-28 17:00:00', 'Open challenge for a 5-a-side soccer game. Bring your team!', 'open');
+('chl-1', 'user-1', 'sport-2', 'facility-1', 'Grand Arena', '2024-08-05 18:00:00', 'Open challenge for a 3v3 basketball game. Winner gets bragging rights!', 'open');
+
+COMMIT;
