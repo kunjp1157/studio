@@ -94,6 +94,7 @@ CREATE TABLE `bookings` (
   `startTime` time NOT NULL,
   `endTime` time NOT NULL,
   `durationHours` int DEFAULT '1',
+  `pricingModel` enum('per_hour_flat','per_hour_per_person') DEFAULT 'per_hour_flat',
   `numberOfGuests` int DEFAULT NULL,
   `baseFacilityPrice` decimal(10,2) NOT NULL,
   `equipmentRentalCost` decimal(10,2) DEFAULT '0.00',
@@ -264,7 +265,7 @@ CREATE TABLE `lfg_requests` (
   `skillLevel` enum('Any','Beginner','Intermediate','Advanced') DEFAULT 'Any',
   `playersNeeded` int DEFAULT NULL,
   `preferredTime` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4g4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `challenges` (
   `id` varchar(255) NOT NULL,
@@ -305,11 +306,11 @@ ALTER TABLE `sport_prices` ADD PRIMARY KEY (`facilityId`, `sportId`), ADD KEY `s
 ALTER TABLE `operating_hours` ADD PRIMARY KEY (`facilityId`, `day`);
 ALTER TABLE `events` ADD PRIMARY KEY (`id`), ADD KEY `facilityId` (`facilityId`), ADD KEY `sportId`(`sportId`);
 ALTER TABLE `membership_plans` ADD PRIMARY KEY (`id`);
-ALTER_TABLE `pricing_rules` ADD PRIMARY KEY (`id`);
-ALTER_TABLE `promotion_rules` ADD PRIMARY KEY (`id`);
-ALTER_TABLE `teams` ADD PRIMARY KEY (`id`);
-ALTER_TABLE `lfg_requests` ADD PRIMARY KEY (`id`);
-ALTER_TABLE `challenges` ADD PRIMARY KEY (`id`);
+ALTER TABLE `pricing_rules` ADD PRIMARY KEY (`id`);
+ALTER TABLE `promotion_rules` ADD PRIMARY KEY (`id`);
+ALTER TABLE `teams` ADD PRIMARY KEY (`id`);
+ALTER TABLE `lfg_requests` ADD PRIMARY KEY (`id`);
+ALTER TABLE `challenges` ADD PRIMARY KEY (`id`);
 
 -- Constraints can be added here in a real production environment
 -- ALTER TABLE `facilities` ADD CONSTRAINT `facilities_ibfk_1` FOREIGN KEY (`ownerId`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
