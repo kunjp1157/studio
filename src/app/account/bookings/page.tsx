@@ -116,11 +116,6 @@ export default function BookingsPage() {
     if (currentUser) {
         fetchBookings();
     }
-    // Add event listener to refetch data when a booking is confirmed elsewhere
-    window.addEventListener('dataChanged', fetchBookings);
-    return () => {
-        window.removeEventListener('dataChanged', fetchBookings);
-    };
   }, [currentUser, fetchBookings]);
 
   useEffect(() => {
@@ -384,3 +379,5 @@ export default function BookingsPage() {
     </div>
   );
 }
+
+    

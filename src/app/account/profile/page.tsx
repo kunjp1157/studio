@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,8 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { mockUser, mockMembershipPlans } from '@/lib/data';
-import { getMockSports } from '@/lib/mock-data';
+import { updateUserAction, getAllSportsAction } from '@/app/actions';
 import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement, UserSkill, SkillLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell, Shield } from 'lucide-react';
@@ -35,15 +35,30 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const [mockSports, setMockSports] = useState<Sport[]>([]);
+  const [allSports, setAllSports] = useState<Sport[]>([]);
 
   useEffect(() => {
     const activeUserStr = sessionStorage.getItem('activeUser');
     if (activeUserStr) {
         setUser(JSON.parse(activeUserStr));
     }
-    setMockSports(getMockSports());
+    const fetchSports = async () => {
+        const sports = await getAllSportsAction();
+        setAllSports(sports);
+    };
+    fetchSports();
     setIsLoading(false);
+  }, []);
+  
+  useEffect(() => {
+    const handleUserUpdate = () => {
+        const activeUserStr = sessionStorage.getItem('activeUser');
+        if (activeUserStr) {
+            setUser(JSON.parse(activeUserStr));
+        }
+    };
+    window.addEventListener('userChanged', handleUserUpdate);
+    return () => window.removeEventListener('userChanged', handleUserUpdate);
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -55,7 +70,7 @@ export default function ProfilePage() {
   const handlePreferredSportsChange = (sportId: string) => {
     if (!user) return;
     const currentPreferredSports = user.preferredSports || [];
-    const sport = mockSports.find(s => s.id === sportId);
+    const sport = allSports.find(s => s.id === sportId);
     if (!sport) return;
 
     const isAlreadyPreferred = currentPreferredSports.some(s => s.id === sportId);
@@ -94,25 +109,27 @@ export default function ProfilePage() {
     setUser({ ...user, isProfilePublic: checked });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if(!user) return;
     setIsLoading(true);
-    setTimeout(() => {
-      setIsEditing(false);
-      setIsLoading(false);
-      
-      if (user) {
-        // In a real app, this would be an API call. Here we update session storage
-        sessionStorage.setItem('activeUser', JSON.stringify(user));
-        // And notify other components
-        window.dispatchEvent(new Event('userChanged'));
-      }
-
-      toast({
-        title: "Profile Updated",
-        description: "Your profile information has been successfully saved.",
-      });
-    }, 1000);
+    
+    try {
+        const updatedUser = await updateUserAction(user.id, user);
+        if (updatedUser) {
+            sessionStorage.setItem('activeUser', JSON.stringify(updatedUser));
+            window.dispatchEvent(new Event('userChanged'));
+            setIsEditing(false);
+            toast({
+                title: "Profile Updated",
+                description: "Your profile information has been successfully saved.",
+            });
+        }
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update your profile.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   if (isLoading) {
@@ -120,7 +137,7 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return <div className="container mx-auto py-12 px-4 md:px-6">Error loading profile.</div>;
+    return <div className="container mx-auto py-12 px-4 md:px-6">Error loading profile. Please log in again.</div>;
   }
 
   return (
@@ -221,7 +238,7 @@ export default function ProfilePage() {
                 <div>
                   <Label className="text-base">Preferred Sports</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2 p-4 border rounded-md bg-muted/30">
-                    {mockSports.map(sport => {
+                    {allSports.map(sport => {
                         const SportIcon = getIconComponent(sport.iconName) || Zap;
                         return (
                             <div key={sport.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-background transition-colors">
@@ -248,7 +265,7 @@ export default function ProfilePage() {
                 <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Dumbbell className="mr-2 h-5 w-5 text-primary" />Skill Levels</h3>
                 <div className="space-y-4 p-4 border rounded-md bg-muted/30">
                 {isEditing ? (
-                    mockSports.map(sport => {
+                    allSports.map(sport => {
                         const currentSkill = user.skillLevels?.find(s => s.sportId === sport.id)?.level || "Not Specified";
                         const SportIcon = getIconComponent(sport.iconName) || Zap;
                         return (
@@ -278,7 +295,7 @@ export default function ProfilePage() {
                     user.skillLevels && user.skillLevels.length > 0 ? (
                         <ul className="list-none space-y-2">
                         {user.skillLevels.map(skill => {
-                            const sportDetails = mockSports.find(s => s.id === skill.sportId);
+                            const sportDetails = allSports.find(s => s.id === skill.sportId);
                             const SportIcon = getIconComponent(sportDetails?.iconName) || Zap;
                             return (
                                 <li key={skill.sportId} className="flex items-center text-base text-muted-foreground">

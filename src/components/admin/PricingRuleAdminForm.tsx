@@ -7,7 +7,7 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { PricingRule } from '@/lib/types';
-import { addPricingRule, updatePricingRule } from '@/lib/data';
+import { addPricingRuleAction, updatePricingRuleAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -112,9 +112,9 @@ export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps)
 
     try {
       if (initialData) {
-        await updatePricingRule({ ...payload, id: initialData.id });
+        await updatePricingRuleAction({ ...payload, id: initialData.id });
       } else {
-        await addPricingRule(payload);
+        await addPricingRuleAction(payload);
       }
       toast({
         title: initialData ? "Pricing Rule Updated" : "Pricing Rule Created",

@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -15,9 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, createTeam } from '@/lib/data';
-import { mockSports } from '@/lib/mock-data';
-import type { Sport } from '@/lib/types';
+import { createTeamAction, getAllSportsAction } from '@/app/actions';
+import type { Sport, UserProfile } from '@/lib/types';
 import { ArrowLeft, Dices, User, Save } from 'lucide-react';
 
 const createTeamSchema = z.object({
@@ -31,6 +31,23 @@ export default function CreateTeamPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [allSports, setAllSports] = useState<Sport[]>([]);
+
+  useEffect(() => {
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+      setCurrentUser(JSON.parse(activeUserStr));
+    } else {
+      router.push('/account/login');
+    }
+    
+    const fetchSports = async () => {
+        const sports = await getAllSportsAction();
+        setAllSports(sports);
+    };
+    fetchSports();
+  }, [router]);
 
   const form = useForm<CreateTeamFormValues>({
     resolver: zodResolver(createTeamSchema),
@@ -41,13 +58,14 @@ export default function CreateTeamPage() {
   });
 
   const onSubmit = async (data: CreateTeamFormValues) => {
+    if (!currentUser) {
+        toast({ title: "Error", description: "You must be logged in to create a team.", variant: "destructive" });
+        return;
+    }
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     try {
-        const newTeam = createTeam({ ...data, captainId: mockUser.id });
+        const newTeam = await createTeamAction({ ...data, captainId: currentUser.id });
         toast({
             title: "Team Created!",
             description: `Your new team, "${newTeam.name}", has been successfully created.`,
@@ -56,7 +74,7 @@ export default function CreateTeamPage() {
     } catch (error) {
         toast({
             title: "Error Creating Team",
-            description: "An unexpected error occurred. Please try again.",
+            description: error instanceof Error ? error.message : "An unexpected error occurred.",
             variant: "destructive",
         });
         setIsLoading(false);
@@ -104,7 +122,7 @@ export default function CreateTeamPage() {
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                    {mockSports.map((sport) => (
+                                    {allSports.map((sport) => (
                                         <SelectItem key={sport.id} value={sport.id}>
                                             {sport.name}
                                         </SelectItem>

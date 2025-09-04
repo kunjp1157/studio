@@ -7,9 +7,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { SportEvent, Facility, Sport, SiteSettings } from '@/lib/types';
-import { mockSports } from '@/lib/mock-data';
-import { addEvent, updateEvent, getSiteSettings } from '@/lib/data'; 
-import { getAllFacilitiesAction } from '@/app/actions';
+import { addEventAction, updateEventAction } from '@/app/actions'; 
+import { getAllFacilitiesAction, getAllSportsAction, getSiteSettingsAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,12 +53,13 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
 
   useEffect(() => {
     const loadData = async () => {
-        const [facilitiesData, settingsData] = await Promise.all([
+        const [facilitiesData, sportsData, settingsData] = await Promise.all([
             getAllFacilitiesAction(),
-            getSiteSettings()
+            getAllSportsAction(),
+            getSiteSettingsAction()
         ]);
         setFacilities(facilitiesData);
-        setSports(mockSports);
+        setSports(sportsData);
         setCurrency(settingsData.defaultCurrency);
     };
     loadData();
@@ -69,9 +69,9 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
     resolver: zodResolver(eventFormSchema),
     defaultValues: initialData ? {
       ...initialData,
-      sportId: initialData.sport.id, // Store sport ID for the form
-      startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().substring(0, 16) : '', // Format for datetime-local
-      endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().substring(0, 16) : '', // Format for datetime-local
+      sportId: initialData.sport.id,
+      startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().substring(0, 16) : '',
+      endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().substring(0, 16) : '',
       entryFee: initialData.entryFee ?? 0,
       maxParticipants: initialData.maxParticipants ?? 0,
       imageUrl: initialData.imageUrl ?? '',
@@ -86,9 +86,9 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
 
     try {
         if (initialData) {
-            await updateEvent({ ...initialData, ...data });
+            await updateEventAction({ ...initialData, ...data });
         } else {
-            await addEvent(data);
+            await addEventAction(data);
         }
         toast({
             title: initialData ? "Event Updated" : "Event Created",

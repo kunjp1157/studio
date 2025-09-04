@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { SportEvent } from '@/lib/types';
-import { deleteEvent, listenToAllEvents } from '@/lib/data';
+import { deleteEvent, getAllEventsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, CalendarDays as EventIcon, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -47,24 +47,24 @@ export default function AdminEventsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = listenToAllEvents(
-      (freshEvents) => {
-        setEvents(freshEvents);
-        if (isLoading) setIsLoading(false);
-      },
-      (error) => {
-        console.error("Failed to fetch events:", error);
-        toast({
-          title: "Error",
-          description: "Could not load events data.",
-          variant: "destructive",
-        });
-        if (isLoading) setIsLoading(false);
-      }
-    );
-    
-    return () => unsubscribe();
-  }, [isLoading, toast]);
+    const fetchEvents = async () => {
+        setIsLoading(true);
+        try {
+            const freshEvents = await getAllEventsAction();
+            setEvents(freshEvents);
+        } catch (error) {
+            console.error("Failed to fetch events:", error);
+            toast({
+                title: "Error",
+                description: "Could not load events data.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchEvents();
+  }, [toast]);
 
   const handleDeleteEvent = async () => {
     if (!eventToDelete) return;
@@ -75,6 +75,8 @@ export default function AdminEventsPage() {
         title: "Event Deleted",
         description: `"${eventToDelete.name}" has been successfully deleted.`,
       });
+       const freshEvents = await getAllEventsAction();
+       setEvents(freshEvents);
     } catch (error) {
       toast({
         title: "Error",
@@ -199,3 +201,5 @@ export default function AdminEventsPage() {
     </div>
   );
 }
+
+    

@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { PromotionRule } from '@/lib/types';
-import { addPromotionRule, updatePromotionRule } from '@/lib/data';
+import { addPromotionRuleAction, updatePromotionRuleAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -92,9 +92,9 @@ export function PromotionRuleAdminForm({ initialData }: PromotionRuleAdminFormPr
 
     try {
       if (initialData) {
-        await updatePromotionRule({ ...payload, id: initialData.id });
+        await updatePromotionRuleAction({ ...payload, id: initialData.id });
       } else {
-        await addPromotionRule(payload);
+        await addPromotionRuleAction(payload);
       }
       toast({
         title: initialData ? "Promotion Updated" : "Promotion Created",

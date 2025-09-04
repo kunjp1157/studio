@@ -8,7 +8,7 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice, UserRole, MaintenanceSchedule, UserProfile } from '@/lib/types';
-import { getSiteSettingsAction, addFacilityAction, updateFacilityAction, getUsersAction, getAllSportsAction } from '@/app/actions';
+import { getSiteSettingsAction, addFacilityAction, updateFacilityAction, getUsersAction, getAllSportsAction, getAllAmenitiesAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -120,6 +120,9 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
         }
         const sportsData = await getAllSportsAction();
         setSports(sportsData);
+        
+        const amenitiesData = await getAllAmenitiesAction();
+        setAmenities(amenitiesData);
     };
     fetchInitialData();
   }, [currentUserRole]);

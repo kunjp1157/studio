@@ -12,7 +12,7 @@ import { Wand2, Lightbulb, ThumbsUp, ThumbsDown, AlertCircle, Sparkles } from 'l
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { recommendFacility, type RecommendFacilityOutput } from '@/ai/flows/facility-recommendation';
 import { useToast } from '@/hooks/use-toast';
-import { getBookingsByUserId, getFacilityById, getStaticUsers } from '@/lib/data'; // For pre-filling example data
+import { getBookingsByUserIdAction, getFacilityByIdAction } from '@/app/actions';
 import type { UserProfile, Booking } from '@/lib/types';
 
 
@@ -35,10 +35,10 @@ export default function RecommendationPage() {
         setCurrentUser(user);
         
         const fetchBookings = async () => {
-            const userBookings = await getBookingsByUserId(user.id);
+            const userBookings = await getBookingsByUserIdAction(user.id);
             if(userBookings.length > 0) {
                 const bookingPromises = userBookings.slice(0,2).map(async (b: Booking) => {
-                    const facility = await getFacilityById(b.facilityId);
+                    const facility = await getFacilityByIdAction(b.facilityId);
                     return `- ${b.facilityName} (${facility?.type || 'Unknown Type'}) on ${b.date} from ${b.startTime} to ${b.endTime} for ${b.sportName}. Status: ${b.status}.`;
                 });
                 const bookingsStrings = await Promise.all(bookingPromises);
@@ -177,3 +177,5 @@ export default function RecommendationPage() {
     </div>
   );
 }
+
+    

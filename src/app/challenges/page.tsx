@@ -16,8 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { getOpenChallenges, createChallenge, acceptChallenge, getUserById, getSportById, getFacilityById, getAllFacilities } from '@/lib/data';
-import { getMockSports } from '@/lib/mock-data';
+import { getOpenChallengesAction, createChallengeAction, acceptChallengeAction, getFacilitiesAction, getAllSportsAction } from '@/app/actions';
 import type { Challenge, UserProfile, Sport, Facility } from '@/lib/types';
 import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, CalendarDays, BookUser, Building } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -44,9 +43,9 @@ const ChallengeCard = ({ challenge, onAccept, currentUser }: { challenge: Challe
     const isMyChallenge = challenge.challengerId === currentUser.id;
     const SportIcon = getIconComponent(challenge.sport.iconName) || Dices;
     
-    const handleAccept = () => {
+    const handleAccept = async () => {
         try {
-            onAccept(challenge.id);
+            await onAccept(challenge.id);
             toast({
                 title: 'Challenge Accepted!',
                 description: `You have accepted the challenge from ${challenge.challenger.name}.`,
@@ -106,7 +105,7 @@ export default function ChallengesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sportFilter, setSportFilter] = useState<string>('all');
-  const [mockSports, setMockSports] = useState<Sport[]>([]);
+  const [sports, setSports] = useState<Sport[]>([]);
   const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
@@ -124,17 +123,19 @@ export default function ChallengesPage() {
   }, []);
 
   useEffect(() => {
-    setIsLoading(true);
-    setMockSports(getMockSports());
-    const fetchFacilities = async () => {
-        const facilitiesData = await getAllFacilities();
+    const fetchInitialData = async () => {
+        setIsLoading(true);
+        const [facilitiesData, sportsData, challengesData] = await Promise.all([
+            getFacilitiesAction(),
+            getAllSportsAction(),
+            getOpenChallengesAction(),
+        ]);
         setAllFacilities(facilitiesData);
+        setSports(sportsData);
+        setChallenges(challengesData);
+        setIsLoading(false);
     };
-    fetchFacilities();
-    setTimeout(() => {
-      setChallenges(getOpenChallenges());
-      setIsLoading(false);
-    }, 300);
+    fetchInitialData();
   }, []);
   
   const onSubmit = async (data: ChallengeFormValues) => {
@@ -148,15 +149,17 @@ export default function ChallengesPage() {
     const combinedDateTime = new Date(data.proposedDate);
     combinedDateTime.setHours(hours, minutes);
 
-    await new Promise(resolve => setTimeout(resolve, 700));
-    const updatedChallenges = createChallenge({ 
+    await createChallengeAction({ 
         challengerId: currentUser.id,
         sportId: data.sportId,
         facilityId: data.facilityId,
         notes: data.notes,
         proposedDate: combinedDateTime.toISOString(),
     });
+    
+    const updatedChallenges = await getOpenChallengesAction();
     setChallenges(updatedChallenges);
+    
     toast({
         title: "Challenge Issued!",
         description: "Your challenge is now live for others to accept.",
@@ -165,12 +168,13 @@ export default function ChallengesPage() {
     setIsSubmitting(false);
   };
 
-  const handleAcceptChallenge = (challengeId: string) => {
+  const handleAcceptChallenge = async (challengeId: string) => {
     if (!currentUser) {
       toast({ title: "Error", description: "You must be logged in to accept a challenge.", variant: "destructive" });
       return;
     }
-    const updatedChallenges = acceptChallenge(challengeId, currentUser.id);
+    await acceptChallengeAction(challengeId, currentUser.id);
+    const updatedChallenges = await getOpenChallengesAction();
     setChallenges(updatedChallenges);
   };
 
@@ -200,7 +204,7 @@ export default function ChallengesPage() {
                                     <FormLabel>Sport</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select a sport" /></SelectTrigger></FormControl>
-                                        <SelectContent>{mockSports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                                        <SelectContent>{sports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                                     </Select>
                                     <FormMessage />
                                 </FormItem>
@@ -306,7 +310,7 @@ export default function ChallengesPage() {
                             <SelectTrigger><SelectValue placeholder="Filter by sport..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Sports</SelectItem>
-                                {mockSports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                                {sports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>

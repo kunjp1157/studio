@@ -95,6 +95,10 @@ export default function MembershipsPage() {
   }, [fetchInitialData]);
 
   const handleChoosePlan = (plan: MembershipPlan) => {
+    if (!currentUser) {
+        toast({ title: "Login Required", description: "Please log in to change your membership.", variant: "destructive" });
+        return;
+    }
     setSelectedPlanForPayment(plan);
     setIsPaymentDialogOpen(true);
   };
@@ -155,7 +159,7 @@ export default function MembershipsPage() {
       variant: "default" | "secondary" | "outline";
     } => {
     if (!currentUser) {
-        return { text: "Loading...", disabled: true, variant: 'secondary' };
+        return { text: "Choose Plan", disabled: false, variant: 'default' };
     }
     if (isProcessingPayment) {
         return { text: "Processing...", disabled: true, variant: 'secondary' };
@@ -204,7 +208,7 @@ export default function MembershipsPage() {
   const currentPlanPrice = (currentUser && plans) ? plans.find(p => p.name === currentUser.membershipLevel)?.pricePerMonth ?? 0 : 0;
   const priceDifference = selectedPlanForPayment ? selectedPlanForPayment.pricePerMonth - currentPlanPrice : 0;
   
-  if (isLoading || !currentUser) {
+  if (isLoading) {
     return (
       <div className="container mx-auto py-12 px-4 md:px-6">
         <PageTitle title="Membership Plans" description="Unlock exclusive benefits and discounts with our membership tiers." />
@@ -224,7 +228,7 @@ export default function MembershipsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12 items-stretch">
         {plans.map((plan) => {
           const buttonState = getButtonState(plan);
-          const isCurrentPlan = currentUser.membershipLevel === plan.name;
+          const isCurrentPlan = currentUser?.membershipLevel === plan.name;
           const isMostPopular = plan.name === 'Premium';
           
           return (
@@ -365,3 +369,5 @@ export default function MembershipsPage() {
     </div>
   );
 }
+
+    

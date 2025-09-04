@@ -17,9 +17,9 @@ import {
     getAllMembershipPlans,
     getAllPricingRules,
     getAllPromotionRules,
-    getNotificationsForUser,
-    markNotificationAsRead,
-    markAllNotificationsAsRead,
+    dbGetNotificationsForUser,
+    dbMarkNotificationAsRead,
+    dbMarkAllNotificationsAsRead,
     dbGetBookingsByUserId,
     dbBlockTimeSlot,
     dbUnblockTimeSlot,
@@ -35,11 +35,31 @@ import {
     dbAddUser,
     getPromotionRuleByCode,
     getAllBlogPosts,
+    getBlogPostBySlug,
     registerForEvent,
+    dbCreateTeam,
+    dbGetTeamsByUserId,
+    dbGetTeamById,
+    dbLeaveTeam,
+    dbRemoveUserFromTeam,
+    dbTransferCaptaincy,
+    dbDeleteTeam,
+    dbGetOpenLfgRequests,
+    dbCreateLfgRequest,
+    dbExpressInterestInLfg,
+    dbGetOpenChallenges,
+    dbCreateChallenge,
+    dbAcceptChallenge,
+    dbGetAllAmenities,
+    dbAddSport,
+    dbUpdateSport,
+    dbDeleteSport,
+    dbGetUserById,
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
+import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import twilio from 'twilio';
+import { v4 as uuidv4 } from 'uuid';
 
 // This function now lives in actions.ts, a server-only file.
 export async function sendBookingConfirmationSms(booking: Booking): Promise<void> {
@@ -124,6 +144,7 @@ export async function getUsersAction(): Promise<UserProfile[]> {
 export async function addUserAction(userData: { name: string; email: string; password?: string }): Promise<UserProfile> {
     const newUser = await dbAddUser(userData);
     revalidatePath('/admin/users');
+    revalidatePath('/leaderboard');
     return newUser;
 }
 
@@ -164,15 +185,15 @@ export async function getPromotionRuleByCodeAction(code: string): Promise<Promot
 }
 
 export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
-    return await getNotificationsForUser(userId);
+    return await dbGetNotificationsForUser(userId);
 }
 
 export async function markNotificationAsReadAction(userId: string, notificationId: string): Promise<void> {
-    return await markNotificationAsRead(userId, notificationId);
+    return await dbMarkNotificationAsRead(userId, notificationId);
 }
 
 export async function markAllNotificationsAsReadAction(userId: string): Promise<void> {
-    return await markAllNotificationsAsRead(userId);
+    return await dbMarkAllNotificationsAsRead(userId);
 }
 
 export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
@@ -206,6 +227,7 @@ export async function updateUserAction(userId: string, updates: Partial<UserProf
     if (user) {
         revalidatePath(`/account/profile`);
         revalidatePath(`/admin/users`);
+        revalidatePath(`/leaderboard`);
     }
     return user;
 }
@@ -220,12 +242,13 @@ export async function updateBookingAction(bookingId: string, updates: Partial<Bo
     return booking;
 }
 
-export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
+export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt' | 'dataAiHint'>): Promise<Booking> {
     const bookingWithId: Booking = { ...bookingData, id: `booking-${uuidv4()}`, bookedAt: new Date().toISOString() };
     const newBooking = await dbAddBooking(bookingWithId);
     
     if (newBooking.userId) {
-        if (newBooking.phoneNumber && newBooking.phoneNumber !== (await dbGetUserById(newBooking.userId))?.phone) {
+        const user = await dbGetUserById(newBooking.userId);
+        if (user && newBooking.phoneNumber && newBooking.phoneNumber !== user.phone) {
             await dbUpdateUser(newBooking.userId, { phone: newBooking.phoneNumber });
         }
         await addNotificationAction(newBooking.userId, {
@@ -244,6 +267,8 @@ export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'booked
     revalidatePath('/account/bookings');
     revalidatePath(`/facilities/${bookingData.facilityId}`);
     revalidatePath('/admin/bookings');
+    revalidatePath('/owner/dashboard');
+    revalidatePath('/owner/my-bookings');
     return newBooking;
 }
 
@@ -256,6 +281,10 @@ export async function addNotificationAction(
 
 export async function getAllSportsAction(): Promise<Sport[]> {
   return await dbGetAllSports();
+}
+
+export async function getAllAmenitiesAction(): Promise<Amenity[]> {
+  return await dbGetAllAmenities();
 }
 
 export async function addSportAction(sportData: Omit<Sport, 'id'>): Promise<Sport> {
@@ -300,6 +329,97 @@ export async function getBlogPostBySlugAction(slug: string): Promise<BlogPost | 
     return await getBlogPostBySlug(slug);
 }
 
-export async function registerForEventAction(eventId: string): Promise<boolean> {
-    return await registerForEvent(eventId);
+export async function registerForEventAction(eventId: string, userId: string): Promise<boolean> {
+    const success = await registerForEvent(eventId);
+    if (success) {
+      const event = await getEventById(eventId);
+      if (event) {
+         await addNotificationAction(userId, {
+            type: 'general',
+            title: 'Event Registration Confirmed',
+            message: `You are now registered for ${event.name}.`,
+            link: `/events/${event.id}`,
+            iconName: 'Ticket'
+        });
+      }
+      revalidatePath(`/events/${eventId}`);
+    }
+    return success;
 }
+
+// Team Actions
+export async function createTeamAction(data: { name: string; sportId: string; captainId: string }): Promise<Team> {
+    const newTeam = await dbCreateTeam(data);
+    revalidatePath('/account/teams');
+    return newTeam;
+}
+
+export async function getTeamsByUserIdAction(userId: string): Promise<Team[]> {
+    return await dbGetTeamsByUserId(userId);
+}
+
+export async function getTeamByIdAction(teamId: string): Promise<Team | undefined> {
+    return await dbGetTeamById(teamId);
+}
+
+export async function leaveTeamAction(teamId: string, userId: string): Promise<boolean> {
+    const success = await dbLeaveTeam(teamId, userId);
+    revalidatePath('/account/teams');
+    return success;
+}
+
+export async function removeUserFromTeamAction(teamId: string, memberIdToRemove: string, currentUserId: string): Promise<void> {
+    await dbRemoveUserFromTeam(teamId, memberIdToRemove, currentUserId);
+    revalidatePath(`/account/teams/${teamId}/manage`);
+}
+
+export async function transferCaptaincyAction(teamId: string, newCaptainId: string, currentUserId: string): Promise<void> {
+    await dbTransferCaptaincy(teamId, newCaptainId, currentUserId);
+    revalidatePath(`/account/teams/${teamId}/manage`);
+    revalidatePath('/account/teams');
+}
+
+export async function deleteTeamAction(teamId: string, currentUserId: string): Promise<void> {
+    await dbDeleteTeam(teamId, currentUserId);
+    revalidatePath('/account/teams');
+}
+
+
+// LFG & Challenge Actions
+export async function getOpenLfgRequestsAction(): Promise<LfgRequest[]> {
+    return await dbGetOpenLfgRequests();
+}
+
+export async function createLfgRequestAction(data: Omit<LfgRequest, 'id'|'createdAt'|'status'|'interestedUserIds'>): Promise<LfgRequest> {
+    const newRequest = await dbCreateLfgRequest(data);
+    revalidatePath('/matchmaking');
+    return newRequest;
+}
+
+export async function expressInterestInLfgAction(lfgId: string, userId: string): Promise<LfgRequest | undefined> {
+    const updatedRequest = await dbExpressInterestInLfg(lfgId, userId);
+    if(updatedRequest) {
+        revalidatePath('/matchmaking');
+    }
+    return updatedRequest;
+}
+
+export async function getOpenChallengesAction(): Promise<Challenge[]> {
+    return await dbGetOpenChallenges();
+}
+
+export async function createChallengeAction(data: Omit<Challenge, 'id'|'challenger'|'sport'|'createdAt'|'status'>): Promise<Challenge> {
+    const newChallenge = await dbCreateChallenge(data);
+    revalidatePath('/challenges');
+    return newChallenge;
+}
+
+export async function acceptChallengeAction(challengeId: string, opponentId: string): Promise<Challenge | undefined> {
+    const updatedChallenge = await dbAcceptChallenge(challengeId, opponentId);
+    if (updatedChallenge) {
+        revalidatePath('/challenges');
+    }
+    return updatedChallenge;
+}
+
+    

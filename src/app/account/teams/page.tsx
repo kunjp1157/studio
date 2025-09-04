@@ -22,7 +22,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Team, UserProfile } from '@/lib/types';
-import { getTeamsByUserId, getUserById, leaveTeam as mockLeaveTeam } from '@/lib/data';
+import { getTeamsByUserIdAction, leaveTeamAction } from '@/app/actions';
+import { dbGetUserById } from '@/lib/data';
 import { Users, PlusCircle, Crown, User, LogOut, Settings, AlertCircle, Zap } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +32,7 @@ import { getIconComponent } from '@/components/shared/Icon';
 
 export default function MyTeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
+  const [teamMembers, setTeamMembers] = useState<Record<string, UserProfile[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -45,46 +47,55 @@ export default function MyTeamsPage() {
     }
   }, []);
 
-  const fetchTeams = useCallback(() => {
+  const fetchTeams = useCallback(async () => {
     if (!currentUser) return;
-    const userTeams = getTeamsByUserId(currentUser.id);
+    setIsLoading(true);
+    const userTeams = await getTeamsByUserIdAction(currentUser.id);
     setTeams(userTeams);
+    
+    // Fetch members for all teams
+    const memberPromises = userTeams.map(async (team) => {
+        const members = (await Promise.all(team.memberIds.map(id => dbGetUserById(id)))).filter(Boolean) as UserProfile[];
+        return { teamId: team.id, members };
+    });
+    const membersByTeam = await Promise.all(memberPromises);
+    setTeamMembers(membersByTeam.reduce((acc, {teamId, members}) => {
+        acc[teamId] = members;
+        return acc;
+    }, {} as Record<string, UserProfile[]>));
+
+    setIsLoading(false);
   }, [currentUser]);
 
   useEffect(() => {
     if (currentUser) {
-        setIsLoading(true);
         fetchTeams();
-        setIsLoading(false);
     }
   }, [currentUser, fetchTeams]);
 
-  const handleLeaveTeam = (teamId: string, teamName: string) => {
+  const handleLeaveTeam = async (teamId: string, teamName: string) => {
     if (!currentUser) {
         toast({ title: "Error", description: "You must be logged in to leave a team.", variant: "destructive" });
         return;
     }
 
     setIsActionLoading(true);
-    setTimeout(() => {
-        try {
-            const success = mockLeaveTeam(teamId, currentUser.id);
-            if (success) {
-                toast({
-                    title: "You have left the team",
-                    description: `You are no longer a member of ${teamName}.`
-                });
-                fetchTeams(); // Refresh the list
-            } 
-        } catch (error) {
-             toast({
-                title: "Error Leaving Team",
-                description: error instanceof Error ? error.message : "An unexpected error occurred.",
-                variant: "destructive"
-            });
-        }
+    try {
+        await leaveTeamAction(teamId, currentUser.id);
+        toast({
+            title: "You have left the team",
+            description: `You are no longer a member of ${teamName}.`
+        });
+        await fetchTeams(); // Refresh the list
+    } catch (error) {
+         toast({
+            title: "Error Leaving Team",
+            description: error instanceof Error ? error.message : "An unexpected error occurred.",
+            variant: "destructive"
+        });
+    } finally {
         setIsActionLoading(false);
-    }, 1000);
+    }
   };
   
   const MemberAvatar = ({ member, teamCaptainId }: { member: UserProfile, teamCaptainId: string }) => (
@@ -104,8 +115,7 @@ export default function MyTeamsPage() {
 
   const TeamCard = ({ team }: { team: Team }) => {
     if (!currentUser) return null;
-
-    const members = team.memberIds.map(id => getUserById(id)).filter(Boolean) as UserProfile[];
+    const members = teamMembers[team.id] || [];
     const isCaptain = currentUser.id === team.captainId;
     const SportIcon = getIconComponent(team.sport.iconName) || Zap;
 

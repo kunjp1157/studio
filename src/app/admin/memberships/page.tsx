@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { MembershipPlan, SiteSettings } from '@/lib/types';
-import { deleteMembershipPlan, listenToAllMembershipPlans, getSiteSettings } from '@/lib/data';
+import { deleteMembershipPlan, getAllMembershipPlansAction, getSiteSettingsAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Award, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -48,27 +48,27 @@ export default function AdminMembershipsPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
-    
-    const unsubscribe = listenToAllMembershipPlans(
-      (freshPlans) => {
-        setPlans(freshPlans);
-        if (isLoading) setIsLoading(false);
-      },
-      (error) => {
-        console.error("Failed to fetch membership plans:", error);
-        toast({
-            title: "Error",
-            description: "Could not load membership plans.",
-            variant: "destructive",
-        });
-        if (isLoading) setIsLoading(false);
-      }
-    );
-    
-    return () => unsubscribe();
-  }, [isLoading, toast]);
+    const fetchInitialData = async () => {
+        setIsLoading(true);
+        try {
+            const [plansData, settingsData] = await Promise.all([
+                getAllMembershipPlansAction(),
+                getSiteSettingsAction()
+            ]);
+            setPlans(plansData);
+            setCurrency(settingsData.defaultCurrency);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Could not load membership plans.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchInitialData();
+  }, [toast]);
 
   const handleDeletePlan = async () => {
     if (!planToDelete) return;
@@ -79,6 +79,8 @@ export default function AdminMembershipsPage() {
         title: "Membership Plan Deleted",
         description: `"${planToDelete.name}" has been successfully deleted.`,
       });
+      const updatedPlans = await getAllMembershipPlansAction();
+      setPlans(updatedPlans);
     } catch (error) {
        toast({
         title: "Error",
@@ -210,3 +212,5 @@ export default function AdminMembershipsPage() {
     </div>
   );
 }
+
+    

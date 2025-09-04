@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { SearchFilters, Amenity as AmenityType, SiteSettings, Facility, Sport } from '@/lib/types';
+import { getAllAmenitiesAction, getAllSportsAction } from '@/app/actions';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,9 +18,6 @@ import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { formatCurrency } from '@/lib/utils';
 import { getIconComponent } from '@/components/shared/Icon';
-import { getStaticSports } from '@/lib/data';
-import { mockAmenities } from '@/lib/mock-data';
-
 
 interface FacilitySearchFormProps {
   onSearch: (filters: SearchFilters) => void;
@@ -56,11 +54,19 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
 
   const [filteredLocations, setFilteredLocations] = useState<string[]>(allLocations);
   
-  const [mockSports, setMockSports] = useState<Sport[]>([]);
+  const [allSports, setAllSports] = useState<Sport[]>([]);
+  const [allAmenities, setAllAmenities] = useState<AmenityType[]>([]);
 
   useEffect(() => {
-    const sports = getStaticSports();
-    setMockSports(sports);
+    const loadData = async () => {
+        const [sportsData, amenitiesData] = await Promise.all([
+            getAllSportsAction(),
+            getAllAmenitiesAction()
+        ]);
+        setAllSports(sportsData);
+        setAllAmenities(amenitiesData);
+    };
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -74,7 +80,8 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
         sport: sportQueryParam,
       });
     }
-  }, [sportQueryParam, onSearch]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sportQueryParam]);
 
   useEffect(() => {
     if (selectedCity === 'all') {
@@ -162,7 +169,7 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ANY_SPORT_VALUE}>Any Sport</SelectItem>
-              {mockSports.map((sport) => (
+              {allSports.map((sport) => (
                 <SelectItem key={sport.id} value={sport.id}>
                   {sport.name}
                 </SelectItem>
@@ -283,7 +290,7 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
                 <ListChecks className="inline h-4 w-4 mr-2 text-muted-foreground" /> Specific Amenities
               </Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2 p-4 border rounded-md bg-muted/20">
-                {mockAmenities.map((amenity) => {
+                {allAmenities.map((amenity) => {
                   const AmenityIcon = getIconComponent(amenity.iconName) || LayoutPanelLeft;
                   return (
                     <div key={amenity.id} className="flex items-center space-x-2">
@@ -312,3 +319,5 @@ export function FacilitySearchForm({ onSearch, currency, facilities, cities = []
     </form>
   );
 }
+
+    

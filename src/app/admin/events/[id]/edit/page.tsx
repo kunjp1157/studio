@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { EventAdminForm } from '@/components/admin/EventAdminForm';
 import type { SportEvent } from '@/lib/types';
-import { getEventById } from '@/lib/data';
+import { getEventByIdAction } from '@/app/actions';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -21,11 +21,11 @@ export default function EditEventPage() {
 
   useEffect(() => {
     if (eventId) {
-      // Simulate fetching event data
-      setTimeout(() => {
-        const foundEvent = getEventById(eventId);
+      const fetchEvent = async () => {
+        const foundEvent = await getEventByIdAction(eventId);
         setEvent(foundEvent || null);
-      }, 300);
+      };
+      fetchEvent();
     }
   }, [eventId]);
 
@@ -61,3 +61,5 @@ export default function EditEventPage() {
     </div>
   );
 }
+
+    

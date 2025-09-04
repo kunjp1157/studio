@@ -11,8 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import type { SportEvent, Facility, Sport } from '@/lib/types';
-import { getAllEventsAction, getFacilityByIdAction } from '@/app/actions';
-import { getMockSports } from '@/lib/mock-data';
+import { getAllEventsAction, getFacilityByIdAction, getAllSportsAction } from '@/app/actions';
 import { CalendarDays, MapPin, Users, Ticket, AlertCircle, Trophy, Zap, FilterX, ListFilter, Dices, SortAsc } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format, parseISO, isSameDay, isPast } from 'date-fns';
@@ -29,14 +28,17 @@ export default function EventsPage() {
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [sortOption, setSortOption] = useState<SortOption>('date-asc');
-  const [mockSports, setMockSports] = useState<Sport[]>([]);
+  const [allSports, setAllSports] = useState<Sport[]>([]);
 
   const fetchEvents = useCallback(async () => {
     setIsLoading(true);
-    const eventsData = await getAllEventsAction();
+    const [eventsData, sportsData] = await Promise.all([
+        getAllEventsAction(),
+        getAllSportsAction()
+    ]);
     setAllEvents(eventsData);
     setFilteredEvents(eventsData.sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()));
-    setMockSports(getMockSports());
+    setAllSports(sportsData);
     setIsLoading(false);
   }, []);
 
@@ -168,7 +170,7 @@ export default function EventsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sports</SelectItem>
-                {mockSports.map(sport => (
+                {allSports.map(sport => (
                   <SelectItem key={sport.id} value={sport.id}>{sport.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -226,3 +228,5 @@ export default function EventsPage() {
     </div>
   );
 }
+
+    

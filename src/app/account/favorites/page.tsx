@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { FacilityCard } from '@/components/facilities/FacilityCard';
 import type { Facility, SiteSettings, UserProfile } from '@/lib/types';
-import { getFacilitiesByIds, getSiteSettings } from '@/lib/data';
+import { getFacilitiesByIds } from '@/lib/data';
+import { getSiteSettingsAction } from '@/app/actions';
 import { Heart } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
@@ -47,7 +48,7 @@ export default function FavoritesPage() {
       }
       
       setIsLoading(true);
-      const settings = getSiteSettings();
+      const settings = await getSiteSettingsAction();
       setCurrency(settings.defaultCurrency);
 
       try {
@@ -106,3 +107,5 @@ export default function FavoritesPage() {
     </div>
   );
 }
+
+    

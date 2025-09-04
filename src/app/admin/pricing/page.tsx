@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { PricingRule, SiteSettings } from '@/lib/types';
-import { deletePricingRule, getSiteSettings, listenToAllPricingRules } from '@/lib/data';
+import { deletePricingRule, getSiteSettingsAction, getAllPricingRulesAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -50,26 +50,27 @@ export default function AdminPricingPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
   useEffect(() => {
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
-
-    const unsubscribe = listenToAllPricingRules(
-      (freshRules) => {
-        setRules(freshRules);
-        if (isLoading) setIsLoading(false);
-      },
-      (error) => {
-        console.error("Failed to fetch pricing rules:", error);
-        toast({
-            title: "Error",
-            description: "Could not load pricing rules data.",
-            variant: "destructive",
-        });
-        if (isLoading) setIsLoading(false);
-      }
-    );
-    return () => unsubscribe();
-  }, [isLoading, toast]);
+    const fetchInitialData = async () => {
+        setIsLoading(true);
+        try {
+            const [rulesData, settingsData] = await Promise.all([
+                getAllPricingRulesAction(),
+                getSiteSettingsAction()
+            ]);
+            setRules(rulesData);
+            setCurrency(settingsData.defaultCurrency);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Could not load pricing rules data.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchInitialData();
+  }, [toast]);
 
   const handleDeleteRule = async () => {
     if (!ruleToDelete) return;
@@ -80,6 +81,8 @@ export default function AdminPricingPage() {
             title: "Pricing Rule Deleted",
             description: `"${ruleToDelete.name}" has been successfully deleted.`,
         });
+        const updatedRules = await getAllPricingRulesAction();
+        setRules(updatedRules);
     } catch (error) {
         toast({
             title: "Error",
@@ -241,3 +244,5 @@ export default function AdminPricingPage() {
     </div>
   );
 }
+
+    

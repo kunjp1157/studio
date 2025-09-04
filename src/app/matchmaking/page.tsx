@@ -16,9 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { getOpenLfgRequests, createLfgRequest, expressInterestInLfg, getUserById, getSportById } from '@/lib/data';
-import { getFacilitiesAction } from '@/app/actions';
-import { getMockSports } from '@/lib/mock-data';
+import { getOpenLfgRequestsAction, createLfgRequestAction, expressInterestInLfgAction, getFacilitiesAction, getAllSportsAction } from '@/app/actions';
+import { dbGetUserById } from '@/lib/data';
 import type { LfgRequest, UserProfile, Sport, SkillLevel, Facility } from '@/lib/types';
 import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, BarChart, Clock, Users2, Building } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,9 +36,9 @@ const lfgFormSchema = z.object({
 
 type LfgFormValues = z.infer<typeof lfgFormSchema>;
 
-const LfgRequestCard = ({ request, onInterest, currentUser }: { request: LfgRequest, onInterest: (lfgId: string) => void, currentUser: UserProfile | null }) => {
-    const user = getUserById(request.userId);
-    const sport = getSportById(request.sportId);
+const LfgRequestCard = ({ request, onInterest, currentUser, allUsers }: { request: LfgRequest, onInterest: (lfgId: string) => void, currentUser: UserProfile | null, allUsers: UserProfile[] }) => {
+    const user = allUsers.find(u => u.id === request.userId);
+    const sport = request.sport; // Assuming sport is now populated in the request object
     if (!currentUser || !user || !sport) return null;
 
     const isMyPost = request.userId === currentUser.id;
@@ -101,7 +100,7 @@ const LfgRequestCard = ({ request, onInterest, currentUser }: { request: LfgRequ
                         <TooltipProvider>
                             <div className="flex -space-x-2">
                                 {request.interestedUserIds.slice(0,5).map(userId => {
-                                    const interestedUser = getUserById(userId);
+                                    const interestedUser = allUsers.find(u => u.id === userId);
                                     if (!interestedUser) return null;
                                     return (
                                         <Tooltip key={userId}>
@@ -137,11 +136,13 @@ const LfgRequestCard = ({ request, onInterest, currentUser }: { request: LfgRequ
 
 
 export default function MatchmakingPage() {
-  const [requests, setRequests] = useState<LfgRequest[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
+  const [sports, setSports] = useState<Sport[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
@@ -156,16 +157,28 @@ export default function MatchmakingPage() {
         setCurrentUser(JSON.parse(activeUserStr));
     }
     
-    setIsLoading(true);
-    const fetchFacilities = async () => {
-        const facilitiesData = await getFacilitiesAction();
+    const fetchInitialData = async () => {
+        setIsLoading(true);
+        const [facilitiesData, sportsData, requestsData, usersData] = await Promise.all([
+            getFacilitiesAction(),
+            getAllSportsAction(),
+            getOpenLfgRequestsAction(),
+            dbGetAllUsers(), // Fetching all users to populate details
+        ]);
         setAllFacilities(facilitiesData);
+        setSports(sportsData);
+        setAllUsers(usersData);
+
+        // Populate sport object in each request
+        const populatedRequests = requestsData.map(req => ({
+            ...req,
+            sport: sportsData.find(s => s.id === req.sportId)
+        }));
+
+        setRequests(populatedRequests);
+        setIsLoading(false);
     };
-    fetchFacilities();
-    setTimeout(() => {
-      setRequests(getOpenLfgRequests());
-      setIsLoading(false);
-    }, 300);
+    fetchInitialData();
   }, []);
   
   const onSubmit = async (data: LfgFormValues) => {
@@ -178,9 +191,24 @@ export default function MatchmakingPage() {
         return;
     }
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 700));
-    const updatedRequests = createLfgRequest({ ...data, userId: currentUser.id });
-    setRequests(updatedRequests);
+    
+    const facility = allFacilities.find(f => f.id === data.facilityId);
+    if (!facility) {
+        toast({ title: 'Error', description: 'Selected facility not found.', variant: 'destructive' });
+        setIsSubmitting(false);
+        return;
+    }
+
+    await createLfgRequestAction({ ...data, userId: currentUser.id, facilityName: facility.name });
+
+    // Refetch requests
+    const requestsData = await getOpenLfgRequestsAction();
+    const populatedRequests = requestsData.map(req => ({
+        ...req,
+        sport: sports.find(s => s.id === req.sportId)
+    }));
+    setRequests(populatedRequests);
+
     toast({
         title: "Post Created!",
         description: "Your 'Looking for Game' post is now live.",
@@ -189,7 +217,7 @@ export default function MatchmakingPage() {
     setIsSubmitting(false);
   };
 
-  const handleInterest = (lfgId: string) => {
+  const handleInterest = async (lfgId: string) => {
     if (!currentUser) {
         toast({
             title: "Login Required",
@@ -198,8 +226,16 @@ export default function MatchmakingPage() {
         });
         return;
     }
-    const updatedRequests = expressInterestInLfg(lfgId, currentUser.id);
-    setRequests(updatedRequests);
+    await expressInterestInLfgAction(lfgId, currentUser.id);
+
+    // Refetch to show updated interest
+    const requestsData = await getOpenLfgRequestsAction();
+    const populatedRequests = requestsData.map(req => ({
+        ...req,
+        sport: sports.find(s => s.id === req.sportId)
+    }));
+    setRequests(populatedRequests);
+    
     toast({
         title: "Interest Expressed!",
         description: "The post creator has been notified.",
@@ -211,7 +247,6 @@ export default function MatchmakingPage() {
     return requests.filter(req => req.sportId === sportFilter);
   }, [requests, sportFilter]);
   
-  const mockSports = getMockSports();
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -234,7 +269,7 @@ export default function MatchmakingPage() {
                                     <FormLabel>Sport</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Select a sport" /></SelectTrigger></FormControl>
-                                        <SelectContent>{mockSports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                                        <SelectContent>{sports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                                     </Select>
                                     <FormMessage />
                                 </FormItem>
@@ -331,7 +366,7 @@ export default function MatchmakingPage() {
                             <SelectTrigger><SelectValue placeholder="Filter by sport..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Sports</SelectItem>
-                                {mockSports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                                {sports.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -350,7 +385,7 @@ export default function MatchmakingPage() {
                 </Alert>
             ) : (
                 <div className="grid md:grid-cols-2 gap-6">
-                    {filteredRequests.map(req => <LfgRequestCard key={req.id} request={req} onInterest={handleInterest} currentUser={currentUser} />)}
+                    {filteredRequests.map(req => <LfgRequestCard key={req.id} request={req} onInterest={handleInterest} currentUser={currentUser} allUsers={allUsers}/>)}
                 </div>
             )}
         </div>

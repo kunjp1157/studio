@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import type { PromotionRule, SiteSettings } from '@/lib/types';
-import { deletePromotionRule, getSiteSettings, listenToAllPromotionRules } from '@/lib/data';
+import { deletePromotionRule, getSiteSettingsAction, getAllPromotionRulesAction } from '@/app/actions';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Tag, CheckCircle, XCircle, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -50,27 +50,27 @@ export default function AdminPromotionsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const settings = getSiteSettings();
-    setCurrency(settings.defaultCurrency);
-    
-    const unsubscribe = listenToAllPromotionRules(
-        (freshPromos) => {
-            setPromotions(freshPromos);
-            if (isLoading) setIsLoading(false);
-        },
-        (error) => {
-            console.error("Failed to fetch promotions:", error);
+    const fetchInitialData = async () => {
+        setIsLoading(true);
+        try {
+            const [promosData, settingsData] = await Promise.all([
+                getAllPromotionRulesAction(),
+                getSiteSettingsAction()
+            ]);
+            setPromotions(promosData);
+            setCurrency(settingsData.defaultCurrency);
+        } catch (error) {
             toast({
                 title: "Error",
                 description: "Could not load promotions data.",
                 variant: "destructive",
             });
-            if (isLoading) setIsLoading(false);
+        } finally {
+            setIsLoading(false);
         }
-    );
-
-    return () => unsubscribe();
-  }, [isLoading, toast]);
+    };
+    fetchInitialData();
+  }, [toast]);
 
   const handleDeletePromotion = async () => {
     if (!promotionToDelete) return;
@@ -81,6 +81,8 @@ export default function AdminPromotionsPage() {
         title: "Promotion Deleted",
         description: `Promotion "${promotionToDelete.name}" has been successfully deleted.`,
       });
+      const updatedPromos = await getAllPromotionRulesAction();
+      setPromotions(updatedPromos);
     } catch (error) {
        toast({
         title: "Error",
@@ -247,3 +249,5 @@ export default function AdminPromotionsPage() {
     </div>
   );
 }
+
+    

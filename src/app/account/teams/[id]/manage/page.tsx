@@ -1,10 +1,12 @@
 
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getTeamById, getUserById, removeUserFromTeam, transferCaptaincy, deleteTeam as disbandTeam, mockUser } from '@/lib/data';
+import { getTeamByIdAction, removeUserFromTeamAction, transferCaptaincyAction, deleteTeamAction } from '@/app/actions';
+import { dbGetUserById } from '@/lib/data';
 import type { Team, UserProfile } from '@/lib/types';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -42,33 +44,45 @@ export default function ManageTeamPage() {
     const [members, setMembers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
     
     const [actionTarget, setActionTarget] = useState<UserProfile | null>(null);
     const [actionType, setActionType] = useState<'remove' | 'promote' | 'disband' | null>(null);
 
-    const fetchTeamData = () => {
-        const foundTeam = getTeamById(teamId);
+    const fetchTeamData = useCallback(async () => {
+        if (!currentUser || !teamId) return;
+
+        const foundTeam = await getTeamByIdAction(teamId);
         if (foundTeam) {
-            if (foundTeam.captainId !== mockUser.id) {
-                // If the user is no longer the captain (e.g., after a transfer), redirect them.
+            if (foundTeam.captainId !== currentUser.id) {
                 toast({ title: "No Longer Captain", description: "You have been redirected as you are no longer the team captain.", variant: "destructive" });
                 router.push('/account/teams');
                 return;
             }
             setTeam(foundTeam);
-            const memberProfiles = foundTeam.memberIds.map(id => getUserById(id)).filter(Boolean) as UserProfile[];
+            const memberPromises = foundTeam.memberIds.map(id => dbGetUserById(id));
+            const memberProfiles = (await Promise.all(memberPromises)).filter(Boolean) as UserProfile[];
             setMembers(memberProfiles);
         } else {
             setTeam(null);
         }
         setIsLoading(false);
-    };
+    }, [currentUser, teamId, router, toast]);
+
+    useEffect(() => {
+        const activeUserStr = sessionStorage.getItem('activeUser');
+        if (activeUserStr) {
+            setCurrentUser(JSON.parse(activeUserStr));
+        } else {
+            router.push('/account/login');
+        }
+    }, [router]);
     
     useEffect(() => {
-        if (teamId) {
+        if (currentUser && teamId) {
             fetchTeamData();
         }
-    }, [teamId]);
+    }, [currentUser, teamId, fetchTeamData]);
 
     const openConfirmationDialog = (type: 'remove' | 'promote' | 'disband', target?: UserProfile) => {
         setActionType(type);
@@ -83,31 +97,30 @@ export default function ManageTeamPage() {
     };
 
     const handleConfirmAction = async () => {
-        if (!actionType || !team) return;
+        if (!actionType || !team || !currentUser) return;
         setIsSubmitting(true);
 
         try {
             switch(actionType) {
                 case 'remove':
                     if (actionTarget) {
-                        removeUserFromTeam(team.id, actionTarget.id, mockUser.id);
+                        await removeUserFromTeamAction(team.id, actionTarget.id, currentUser.id);
                         toast({ title: "Member Removed", description: `${actionTarget.name} has been removed from the team.` });
                     }
                     break;
                 case 'promote':
                     if (actionTarget) {
-                        transferCaptaincy(team.id, actionTarget.id, mockUser.id);
+                        await transferCaptaincyAction(team.id, actionTarget.id, currentUser.id);
                         toast({ title: "Captaincy Transferred", description: `You are no longer the captain. ${actionTarget.name} is the new captain.` });
-                        // The useEffect will handle the redirect since the current user is no longer the captain.
                     }
                     break;
                 case 'disband':
-                    disbandTeam(team.id, mockUser.id);
+                    await deleteTeamAction(team.id, currentUser.id);
                     toast({ title: "Team Disbanded", description: `The team "${team.name}" has been permanently deleted.`, variant: 'destructive' });
                     router.push('/account/teams');
                     break;
             }
-            fetchTeamData(); // Refresh data after action
+            await fetchTeamData(); // Refresh data after action
         } catch (error) {
              toast({ title: "Action Failed", description: error instanceof Error ? error.message : "An unexpected error occurred.", variant: "destructive" });
         } finally {
@@ -116,7 +129,7 @@ export default function ManageTeamPage() {
         }
     };
     
-    if (isLoading) {
+    if (isLoading || !team) {
         return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
     }
 
@@ -210,4 +223,3 @@ export default function ManageTeamPage() {
         </div>
     );
 }
-

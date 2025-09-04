@@ -21,10 +21,11 @@ export default function EditMembershipPlanPage() {
 
   useEffect(() => {
     if (planId) {
-      setTimeout(() => { // Simulate fetch
-        const foundPlan = getMembershipPlanById(planId);
+      const fetchPlan = async () => {
+        const foundPlan = await getMembershipPlanById(planId);
         setPlan(foundPlan || null);
-      }, 300);
+      };
+      fetchPlan();
     }
   }, [planId]);
 
@@ -60,3 +61,5 @@ export default function EditMembershipPlanPage() {
     </div>
   );
 }
+
+    
