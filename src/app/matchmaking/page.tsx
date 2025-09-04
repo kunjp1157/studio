@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { getOpenLfgRequestsAction, createLfgRequestAction, expressInterestInLfgAction, getFacilitiesAction, getAllSportsAction } from '@/app/actions';
+import { getOpenLfgRequestsAction, createLfgRequestAction, expressInterestInLfgAction, getFacilitiesAction, getAllSportsAction, getUsersAction } from '@/app/actions';
 import { dbGetUserById } from '@/lib/data';
 import type { LfgRequest, UserProfile, Sport, SkillLevel, Facility } from '@/lib/types';
 import { PlusCircle, Users, Swords, ThumbsUp, CheckCircle, User, Dices, BarChart, Clock, Users2, Building } from 'lucide-react';
@@ -163,7 +163,7 @@ export default function MatchmakingPage() {
             getFacilitiesAction(),
             getAllSportsAction(),
             getOpenLfgRequestsAction(),
-            dbGetAllUsers(), // Fetching all users to populate details
+            getUsersAction(), // Fetching all users to populate details
         ]);
         setAllFacilities(facilitiesData);
         setSports(sportsData);
