@@ -257,7 +257,7 @@ export async function dbGetBookingsByUserId(userId: string): Promise<Booking[]> 
 }
 
 export async function dbGetBookingsForFacilityOnDate(facilityId: string, date: string): Promise<Booking[]> {
-    const [rows] = await query('SELECT * FROM bookings WHERE facilityId = ? AND date = ? AND status = "Confirmed"', [facilityId, date]);
+    const [rows] = await query("SELECT * FROM bookings WHERE facilityId = ? AND date = ? AND status IN ('Confirmed', 'Pending')", [facilityId, date]);
     return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]'), pricingModel: row.pricingModel }));
 }
 
@@ -714,3 +714,6 @@ export const getUserById = (userId: string): UserProfile | undefined => {
   // For now, we return a mock or undefined
   return undefined;
 };
+
+
+    
