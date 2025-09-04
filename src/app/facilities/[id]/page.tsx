@@ -58,7 +58,7 @@ const generateTimeSlots = (
 
     if(isAvailable) {
         for (const blocked of dateSpecificBlockedSlots) {
-            if (startTime < blocked.endTime && endTime > startTime) {
+            if (startTime < blocked.endTime && endTime > blocked.startTime) {
                 isAvailable = false;
                 break; 
             }
@@ -539,4 +539,3 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
-
