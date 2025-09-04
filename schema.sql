@@ -1,210 +1,183 @@
 
--- Users Table
-CREATE TABLE IF NOT EXISTS users (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255),
-    phone VARCHAR(255),
-    profile_picture_url VARCHAR(255),
-    data_ai_hint VARCHAR(255),
-    membership_level VARCHAR(50) DEFAULT 'Basic',
-    loyalty_points INT DEFAULT 0,
-    bio TEXT,
-    preferred_playing_times VARCHAR(255),
-    role VARCHAR(50) NOT NULL DEFAULT 'User',
-    status VARCHAR(50) NOT NULL DEFAULT 'Active',
-    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_profile_public BOOLEAN DEFAULT TRUE
+-- Main Tables
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `password` VARCHAR(255),
+  `phone` VARCHAR(20),
+  `profilePictureUrl` VARCHAR(255),
+  `role` ENUM('Admin', 'FacilityOwner', 'User') NOT NULL,
+  `status` ENUM('Active', 'Suspended', 'PendingApproval') NOT NULL,
+  `joinedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `isProfilePublic` BOOLEAN DEFAULT TRUE,
+  `loyaltyPoints` INT DEFAULT 0,
+  `membershipLevel` VARCHAR(50) DEFAULT 'Basic',
+  `bio` TEXT,
+  `preferredPlayingTimes` VARCHAR(255),
+  `favoriteFacilities` JSON,
+  `preferredSports` JSON,
+  `skillLevels` JSON,
+  `achievements` JSON,
+  `teamIds` JSON
 );
 
--- Sports Table
-CREATE TABLE IF NOT EXISTS sports (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    icon_name VARCHAR(255),
-    image_url VARCHAR(255),
-    image_data_ai_hint VARCHAR(255)
+CREATE TABLE IF NOT EXISTS `facilities` (
+  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `type` ENUM('Complex', 'Court', 'Field', 'Studio', 'Pool', 'Box Cricket') NOT NULL,
+  `address` VARCHAR(255) NOT NULL,
+  `city` VARCHAR(100) NOT NULL,
+  `location` VARCHAR(100) NOT NULL,
+  `description` TEXT NOT NULL,
+  `rating` DECIMAL(3, 2) DEFAULT 0.00,
+  `capacity` INT,
+  `isPopular` BOOLEAN DEFAULT FALSE,
+  `isIndoor` BOOLEAN DEFAULT FALSE,
+  `dataAiHint` VARCHAR(255),
+  `ownerId` VARCHAR(255),
+  FOREIGN KEY (`ownerId`) REFERENCES `users`(`id`) ON DELETE SET NULL
 );
 
--- Amenities Table
-CREATE TABLE IF NOT EXISTS amenities (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    icon_name VARCHAR(255)
+CREATE TABLE IF NOT EXISTS `sports` (
+  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL UNIQUE,
+  `iconName` VARCHAR(100),
+  `imageUrl` VARCHAR(255),
+  `imageDataAiHint` VARCHAR(255)
 );
 
--- Facilities Table
-CREATE TABLE IF NOT EXISTS facilities (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    city VARCHAR(100) NOT NULL,
-    location VARCHAR(100) NOT NULL,
-    description TEXT,
-    rating DECIMAL(2, 1) DEFAULT 0.0,
-    capacity INT,
-    is_popular BOOLEAN DEFAULT FALSE,
-    is_indoor BOOLEAN DEFAULT FALSE,
-    data_ai_hint VARCHAR(255),
-    owner_id VARCHAR(255),
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
+CREATE TABLE IF NOT EXISTS `amenities` (
+  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL UNIQUE,
+  `iconName` VARCHAR(100)
 );
 
--- Bookings Table
-CREATE TABLE IF NOT EXISTS bookings (
-    id VARCHAR(255) PRIMARY KEY,
-    user_id VARCHAR(255),
-    facility_id VARCHAR(255) NOT NULL,
-    sport_id VARCHAR(255) NOT NULL,
-    date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    duration_hours INT,
-    number_of_guests INT,
-    base_facility_price DECIMAL(10, 2) NOT NULL,
-    equipment_rental_cost DECIMAL(10, 2) DEFAULT 0.0,
-    total_price DECIMAL(10, 2) NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    booked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    reviewed BOOLEAN DEFAULT FALSE,
-    phone_number VARCHAR(255),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
-    FOREIGN KEY (sport_id) REFERENCES sports(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS `bookings` (
+  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+  `userId` VARCHAR(255),
+  `facilityId` VARCHAR(255) NOT NULL,
+  `facilityName` VARCHAR(255),
+  `sportId` VARCHAR(255) NOT NULL,
+  `sportName` VARCHAR(255),
+  `date` DATE NOT NULL,
+  `startTime` TIME NOT NULL,
+  `endTime` TIME NOT NULL,
+  `numberOfGuests` INT,
+  `baseFacilityPrice` DECIMAL(10, 2) NOT NULL,
+  `equipmentRentalCost` DECIMAL(10, 2) NOT NULL,
+  `totalPrice` DECIMAL(10, 2) NOT NULL,
+  `status` ENUM('Confirmed', 'Pending', 'Cancelled') NOT NULL,
+  `bookedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reviewed` BOOLEAN DEFAULT FALSE,
+  `phoneNumber` VARCHAR(20),
+  `appliedPromotion` JSON,
+  `rentedEquipment` JSON,
+  FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE
 );
 
--- Reviews Table
-CREATE TABLE IF NOT EXISTS reviews (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    facility_id VARCHAR(255) NOT NULL,
-    user_id VARCHAR(255) NOT NULL,
-    booking_id VARCHAR(255),
-    rating INT NOT NULL,
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL
+CREATE TABLE IF NOT EXISTS `reviews` (
+    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `facilityId` VARCHAR(255) NOT NULL,
+    `userId` VARCHAR(255) NOT NULL,
+    `bookingId` VARCHAR(255),
+    `userName` VARCHAR(255),
+    `userAvatar` VARCHAR(255),
+    `isPublicProfile` BOOLEAN,
+    `rating` INT NOT NULL,
+    `comment` TEXT,
+    `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE
 );
 
--- Notifications Table
-CREATE TABLE IF NOT EXISTS notifications (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id VARCHAR(255) NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    link VARCHAR(255),
-    icon_name VARCHAR(255),
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+-- Junction Tables
+CREATE TABLE IF NOT EXISTS `facility_sports` (
+  `facilityId` VARCHAR(255) NOT NULL,
+  `sportId` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`facilityId`, `sportId`),
+  FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`sportId`) REFERENCES `sports`(`id`) ON DELETE CASCADE
 );
 
--- Teams Table
-CREATE TABLE IF NOT EXISTS teams (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    sport_id VARCHAR(255) NOT NULL,
-    captain_id VARCHAR(255) NOT NULL,
-    FOREIGN KEY (sport_id) REFERENCES sports(id),
-    FOREIGN KEY (captain_id) REFERENCES users(id)
+CREATE TABLE IF NOT EXISTS `facility_amenities` (
+  `facilityId` VARCHAR(255) NOT NULL,
+  `amenityId` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`facilityId`, `amenityId`),
+  FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`amenityId`) REFERENCES `amenities`(`id`) ON DELETE CASCADE
 );
 
--- Team Members Junction Table
-CREATE TABLE IF NOT EXISTS team_members (
-    team_id VARCHAR(255),
-    user_id VARCHAR(255),
-    PRIMARY KEY (team_id, user_id),
-    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+-- Supporting Tables
+CREATE TABLE IF NOT EXISTS `operating_hours` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `facilityId` VARCHAR(255) NOT NULL,
+  `day` ENUM('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun') NOT NULL,
+  `open` TIME NOT NULL,
+  `close` TIME NOT NULL,
+  UNIQUE (`facilityId`, `day`),
+  FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE
 );
 
--- Facility Sports Junction Table
-CREATE TABLE IF NOT EXISTS facility_sports (
-    facility_id VARCHAR(255),
-    sport_id VARCHAR(255),
-    PRIMARY KEY (facility_id, sport_id),
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
-    FOREIGN KEY (sport_id) REFERENCES sports(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS `sport_prices` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `facilityId` VARCHAR(255) NOT NULL,
+  `sportId` VARCHAR(255) NOT NULL,
+  `price` DECIMAL(10, 2) NOT NULL,
+  `pricingModel` ENUM('per_hour_flat', 'per_hour_per_person') NOT NULL,
+  UNIQUE (`facilityId`, `sportId`),
+  FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`sportId`) REFERENCES `sports`(`id`) ON DELETE CASCADE
 );
 
--- Sport Prices Table
-CREATE TABLE IF NOT EXISTS sport_prices (
-    facility_id VARCHAR(255),
-    sport_id VARCHAR(255),
-    price DECIMAL(10, 2) NOT NULL,
-    pricing_model VARCHAR(50) NOT NULL DEFAULT 'per_hour_flat',
-    PRIMARY KEY (facility_id, sport_id),
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
-    FOREIGN KEY (sport_id) REFERENCES sports(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS `rental_equipment` (
+    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `facilityId` VARCHAR(255) NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `pricePerItem` DECIMAL(10, 2) NOT NULL,
+    `priceType` ENUM('per_booking', 'per_hour') NOT NULL,
+    `stock` INT NOT NULL,
+    `sportIds` JSON NOT NULL,
+    FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE
 );
 
--- Facility Amenities Junction Table
-CREATE TABLE IF NOT EXISTS facility_amenities (
-    facility_id VARCHAR(255),
-    amenity_id VARCHAR(255),
-    PRIMARY KEY (facility_id, amenity_id),
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
-    FOREIGN KEY (amenity_id) REFERENCES amenities(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS `blocked_slots` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `facilityId` VARCHAR(255) NOT NULL,
+  `date` DATE NOT NULL,
+  `startTime` TIME NOT NULL,
+  `endTime` TIME NOT NULL,
+  `reason` VARCHAR(255),
+  FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE
 );
 
--- Operating Hours Table
-CREATE TABLE IF NOT EXISTS operating_hours (
-    facility_id VARCHAR(255),
-    day_of_week ENUM('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
-    open_time TIME,
-    close_time TIME,
-    PRIMARY KEY (facility_id, day_of_week),
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS `maintenance_schedules` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `facilityId` VARCHAR(255) NOT NULL,
+  `taskName` VARCHAR(255) NOT NULL,
+  `recurrenceInDays` INT NOT NULL,
+  `lastPerformedDate` DATE NOT NULL,
+  FOREIGN KEY (`facilityId`) REFERENCES `facilities`(`id`) ON DELETE CASCADE
 );
 
--- Blocked Slots Table
-CREATE TABLE IF NOT EXISTS blocked_slots (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    facility_id VARCHAR(255) NOT NULL,
-    date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    reason VARCHAR(255),
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE
-);
+-- Seed initial data
+INSERT IGNORE INTO `sports` (`id`, `name`, `iconName`) VALUES
+('sport-1', 'Soccer', 'Goal'),
+('sport-2', 'Basketball', 'Dribbble'),
+('sport-3', 'Tennis', 'Drama'),
+('sport-4', 'Badminton', 'Feather'),
+('sport-5', 'Swimming', 'Bike'),
+('sport-6', 'Cricket', 'Cricket'),
+('sport-7', 'Gym', 'Dumbbell'),
+('sport-8', 'Yoga', 'PersonStanding');
 
--- Favorite Facilities Junction Table
-CREATE TABLE IF NOT EXISTS favorite_facilities (
-    user_id VARCHAR(255),
-    facility_id VARCHAR(255),
-    PRIMARY KEY (user_id, facility_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE
-);
-
--- User Skills Table
-CREATE TABLE IF NOT EXISTS user_skills (
-    user_id VARCHAR(255),
-    sport_id VARCHAR(255),
-    level ENUM('Beginner', 'Intermediate', 'Advanced'),
-    PRIMARY KEY (user_id, sport_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (sport_id) REFERENCES sports(id) ON DELETE CASCADE
-);
-
--- Achievements Table
-CREATE TABLE IF NOT EXISTS achievements (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    icon_name VARCHAR(255)
-);
-
--- User Achievements Junction Table
-CREATE TABLE IF NOT EXISTS user_achievements (
-    user_id VARCHAR(255),
-    achievement_id VARCHAR(255),
-    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, achievement_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
-);
+INSERT IGNORE INTO `amenities` (`id`, `name`, `iconName`) VALUES
+('amenity-1', 'Parking', 'ParkingCircle'),
+('amenity-2', 'WiFi', 'Wifi'),
+('amenity-3', 'Showers', 'ShowerHead'),
+('amenity-4', 'Lockers', 'Lock'),
+('amenity-5', 'Equipment Rental', 'PackageSearch'),
+('amenity-6', 'Cafe', 'Utensils'),
+('amenity-7', 'Accessible', 'Users');

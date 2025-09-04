@@ -2,10 +2,8 @@
 'use server';
 
 import { 
-    // IMPORTANT: Functions from here are NOT direct server actions.
-    // They are helpers for the actual actions below.
-    getStaticFacilities,
-    getStaticSports,
+    dbGetAllFacilities,
+    dbGetAllSports,
     dbGetFacilityById,
     dbAddFacility,
     dbUpdateFacility,
@@ -14,14 +12,14 @@ import {
     dbGetAllBookings, 
     getSiteSettings,
     dbGetFacilitiesByOwnerId,
-    dbGetEventById,
-    dbGetAllEvents,
-    dbGetAllMembershipPlans,
-    dbGetAllPricingRules,
-    dbGetAllPromotionRules,
-    dbGetNotificationsForUser,
-    dbMarkNotificationAsRead,
-    dbMarkAllNotificationsAsRead,
+    getEventById,
+    getAllEvents,
+    getAllMembershipPlans,
+    getAllPricingRules,
+    getAllPromotionRules,
+    getNotificationsForUser,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
     dbGetBookingsByUserId,
     dbBlockTimeSlot,
     dbUnblockTimeSlot,
@@ -29,27 +27,21 @@ import {
     dbGetSportById,
     dbUpdateBooking,
     dbAddNotification,
-    dbGetAllSports,
-    dbAddSport,
-    dbUpdateSport,
-    dbDeleteSport,
     dbToggleFavoriteFacility,
     dbGetBookingsForFacilityOnDate,
     dbAddBooking,
     dbAddReview,
     dbGetBookingById,
     dbAddUser,
-    dbGetPromotionRuleByCode,
-    dbGetAllBlogPosts,
+    getPromotionRuleByCode,
+    getAllBlogPosts,
     registerForEvent,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
-import { mockAmenities } from '@/lib/mock-data';
-import { v4 as uuidv4 } from 'uuid';
-import { parseISO, format as formatDateFns } from 'date-fns';
 import twilio from 'twilio';
 
+// This function now lives in actions.ts, a server-only file.
 export async function sendBookingConfirmationSms(booking: Booking): Promise<void> {
   const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env;
   
@@ -65,9 +57,9 @@ export async function sendBookingConfirmationSms(booking: Booking): Promise<void
   }
 
   const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
-  const user = booking.userId ? await dbGetAllUsers().then(users => users.find(u => u.id === booking.userId)) : null;
+  const user = booking.userId ? await dbGetUserById(booking.userId) : null;
   const userName = user ? user.name : 'Guest';
-  const message = `Hi ${userName}, your booking for ${booking.sportName} at ${booking.facilityName} on ${formatDateFns(parseISO(booking.date), 'MMM d')} at ${booking.startTime} is confirmed. Booking ID: ${booking.id.substring(0,8)}.`;
+  const message = `Hi ${userName}, your booking for ${booking.sportName} at ${booking.facilityName} is confirmed. View details: /account/bookings/${booking.id}/receipt`;
 
   try {
     const response = await client.messages.create({
@@ -81,12 +73,12 @@ export async function sendBookingConfirmationSms(booking: Booking): Promise<void
   }
 }
 
-export async function getSports(): Promise<Sport[]> {
-    return getStaticSports();
+export async function getSportsAction(): Promise<Sport[]> {
+    return await dbGetAllSports();
 }
 
 export async function getFacilitiesAction(): Promise<Facility[]> {
-  const facilities = getStaticFacilities();
+  const facilities = await dbGetAllFacilities();
   return facilities;
 }
 
@@ -100,41 +92,21 @@ export async function getBookingByIdAction(id: string): Promise<Booking | undefi
     return booking;
 }
 
-// Action to add a facility. It takes form data, processes it, and calls the DB function.
 export async function addFacilityAction(facilityData: any): Promise<Facility> {
-    const allSports = await getSports();
-    const sportData = (facilityData.sports || []).map((sportId: string) => allSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
-    const payload = {
-      ...facilityData,
-      sports: sportData,
-      amenities: mockAmenities.filter(amenity => (facilityData.amenities || []).includes(amenity.id)),
-      reviews: [],
-      blockedSlots: [],
-    };
-    const newFacility = await dbAddFacility(payload);
+    const newFacility = await dbAddFacility(facilityData);
     revalidatePath('/admin/facilities');
     revalidatePath('/owner/my-facilities');
-    revalidatePath('/facilities'); // Revalidate public facilities page
+    revalidatePath('/facilities');
     return newFacility;
 }
 
-// Action to update a facility. It takes form data, processes it, and calls the DB function.
 export async function updateFacilityAction(facilityData: any): Promise<Facility> {
-    const allSports = await getSports();
-    const existingFacility = await dbGetFacilityById(facilityData.id);
-    const sportData = (facilityData.sports || []).map((sportId: string) => allSports.find(s => s.id === sportId)).filter(Boolean) as Sport[];
-    const payload = {
-      ...existingFacility, // Start with existing data to preserve reviews, etc.
-      ...facilityData,
-      sports: sportData,
-      amenities: mockAmenities.filter(amenity => (facilityData.amenities || []).includes(amenity.id)),
-    };
-    const updatedFacility = await dbUpdateFacility(payload);
+    const updatedFacility = await dbUpdateFacility(facilityData);
     revalidatePath(`/admin/facilities/${facilityData.id}/edit`);
     revalidatePath(`/owner/my-facilities/${facilityData.id}/edit`);
     revalidatePath('/admin/facilities');
     revalidatePath('/owner/my-facilities');
-    revalidatePath('/facilities'); // Revalidate public facilities page
+    revalidatePath('/facilities');
     return updatedFacility;
 }
 
@@ -150,13 +122,6 @@ export async function getUsersAction(): Promise<UserProfile[]> {
 }
 
 export async function addUserAction(userData: { name: string; email: string; password?: string }): Promise<UserProfile> {
-    const allUsers = await dbGetAllUsers();
-    const existingUser = allUsers.find(user => user.email.toLowerCase() === userData.email.toLowerCase());
-
-    if (existingUser) {
-        throw new Error('A user with this email already exists.');
-    }
-
     const newUser = await dbAddUser(userData);
     revalidatePath('/admin/users');
     return newUser;
@@ -167,7 +132,7 @@ export async function getAllBookingsAction(): Promise<Booking[]> {
 }
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
-    return getSiteSettings();
+    return getSiteSettings(); // This can remain mock or read from a settings table/file
 }
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
@@ -175,39 +140,39 @@ export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Fac
 }
 
 export async function getAllEventsAction(): Promise<SportEvent[]> {
-    return await dbGetAllEvents();
+    return await getAllEvents();
 }
 
 export async function getEventByIdAction(id: string): Promise<SportEvent | undefined> {
-    return await dbGetEventById(id);
+    return await getEventById(id);
 }
 
 export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
-    return await dbGetAllMembershipPlans();
+    return await getAllMembershipPlans();
 }
 
 export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
-    return await dbGetAllPricingRules();
+    return await getAllPricingRules();
 }
 
 export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
-    return await dbGetAllPromotionRules();
+    return await getAllPromotionRules();
 }
 
 export async function getPromotionRuleByCodeAction(code: string): Promise<PromotionRule | undefined> {
-    return await dbGetPromotionRuleByCode(code);
+    return await getPromotionRuleByCode(code);
 }
 
 export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
-    return await dbGetNotificationsForUser(userId);
+    return await getNotificationsForUser(userId);
 }
 
 export async function markNotificationAsReadAction(userId: string, notificationId: string): Promise<void> {
-    return await dbMarkNotificationAsRead(userId, notificationId);
+    return await markNotificationAsRead(userId, notificationId);
 }
 
 export async function markAllNotificationsAsReadAction(userId: string): Promise<void> {
-    return await dbMarkAllNotificationsAsRead(userId);
+    return await markAllNotificationsAsRead(userId);
 }
 
 export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
@@ -256,17 +221,13 @@ export async function updateBookingAction(bookingId: string, updates: Partial<Bo
 }
 
 export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
-    const bookingWithId: Booking = { ...bookingData, id: uuidv4(), bookedAt: new Date().toISOString() };
+    const bookingWithId: Booking = { ...bookingData, id: `booking-${uuidv4()}`, bookedAt: new Date().toISOString() };
     const newBooking = await dbAddBooking(bookingWithId);
     
-    // Fire off notifications but don't wait for them
     if (newBooking.userId) {
-        // Update user's phone number if it's new
-        const user = await dbGetAllUsers().then(users => users.find(u => u.id === newBooking.userId));
-        if (user && user.phone !== newBooking.phoneNumber) {
+        if (newBooking.phoneNumber && newBooking.phoneNumber !== (await dbGetUserById(newBooking.userId))?.phone) {
             await dbUpdateUser(newBooking.userId, { phone: newBooking.phoneNumber });
         }
-        
         await addNotificationAction(newBooking.userId, {
             type: 'booking_confirmed',
             title: 'Booking Confirmed!',
@@ -285,7 +246,6 @@ export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'booked
     revalidatePath('/admin/bookings');
     return newBooking;
 }
-
 
 export async function addNotificationAction(
   userId: string,
@@ -328,16 +288,16 @@ export async function toggleFavoriteFacilityAction(userId: string, facilityId: s
 export async function addReviewAction(reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> {
     const newReview = await dbAddReview(reviewData);
     revalidatePath(`/facilities/${reviewData.facilityId}`);
-    revalidatePath('/account/bookings'); // Revalidate bookings to show "Reviewed" status
+    revalidatePath('/account/bookings');
     return newReview;
 }
 
 export async function getAllBlogPostsAction(): Promise<BlogPost[]> {
-    return await dbGetAllBlogPosts();
+    return await getAllBlogPosts();
 }
 
 export async function getBlogPostBySlugAction(slug: string): Promise<BlogPost | undefined> {
-    return await dbGetBlogPostBySlug(slug);
+    return await getBlogPostBySlug(slug);
 }
 
 export async function registerForEventAction(eventId: string): Promise<boolean> {
