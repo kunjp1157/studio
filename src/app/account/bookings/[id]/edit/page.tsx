@@ -88,7 +88,7 @@ export default function EditBookingPage() {
           const foundFacility = await getFacilityByIdAction(foundBooking.facilityId);
           setBooking(foundBooking);
           setFacility(foundFacility || null);
-          setSelectedDate(parseISO(foundBooking.date));
+          setSelectedDate(new Date(foundBooking.date));
         } else {
           setBooking(null);
           setFacility(null);
@@ -225,7 +225,7 @@ export default function EditBookingPage() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <p><strong>Sport:</strong> {booking.sportName}</p>
-              <p><strong>Date:</strong> {format(parseISO(booking.date), 'EEEE, MMM d, yyyy')}</p>
+              <p><strong>Date:</strong> {format(new Date(booking.date), 'EEEE, MMM d, yyyy')}</p>
               <p><strong>Time:</strong> {booking.startTime} - {booking.endTime}</p>
               <p><strong>Original Price:</strong> {renderPrice(booking.totalPrice)}</p>
             </CardContent>
