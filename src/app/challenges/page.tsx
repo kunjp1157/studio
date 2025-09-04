@@ -85,7 +85,7 @@ const ChallengeCard = ({ challenge, onAccept, currentUser }: { challenge: Challe
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground gap-1.5">
                     <CalendarDays className="h-4 w-4"/> 
-                    Proposed for: {format(parseISO(challenge.proposedDate), 'MMM d, yyyy @ p')}
+                    Proposed for: {format(new Date(challenge.proposedDate), 'MMM d, yyyy @ p')}
                 </div>
                 <p className="text-sm text-foreground bg-muted/50 p-3 rounded-md border">{challenge.notes}</p>
             </CardContent>
