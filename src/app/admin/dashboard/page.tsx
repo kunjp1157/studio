@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -29,7 +30,7 @@ const popularSportsChartConfig = {
 // Define a unified activity item type
 interface ActivityFeedItemType {
   type: 'booking' | 'newUser';
-  timestamp: string; // ISO string
+  timestamp: string | Date; // Can be ISO string or Date object
   user: UserProfile | undefined;
   bookingData?: Booking;
   facility?: Facility | undefined;
@@ -39,7 +40,9 @@ interface ActivityFeedItemType {
 const ActivityItem = ({ item, currency }: { item: ActivityFeedItemType, currency: SiteSettings['defaultCurrency'] | null }) => {
   if (!item.user) return null;
 
-  const timeAgo = formatDistanceToNow(parseISO(item.timestamp), { addSuffix: true });
+  const dateToFormat = typeof item.timestamp === 'string' ? parseISO(item.timestamp) : item.timestamp;
+  const timeAgo = formatDistanceToNow(dateToFormat, { addSuffix: true });
+
 
   if (item.type === 'booking' && item.bookingData && item.facility) {
     return (
@@ -175,7 +178,11 @@ export default function AdminDashboardPage() {
         user: u,
     }));
     const combinedFeed = [...bookingActivities, ...newUserActivities]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .sort((a, b) => {
+            const dateA = typeof a.timestamp === 'string' ? new Date(a.timestamp) : a.timestamp;
+            const dateB = typeof b.timestamp === 'string' ? new Date(b.timestamp) : b.timestamp;
+            return dateB.getTime() - dateA.getTime();
+        })
         .slice(0, 10);
 
     return { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed: combinedFeed };
