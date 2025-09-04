@@ -142,14 +142,14 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
       dataAiHint: initialData.dataAiHint ?? '',
       availableEquipment: initialData.availableEquipment || [],
       maintenanceSchedules: initialData.maintenanceSchedules || [],
-      ownerId: initialData.ownerId,
+      ownerId: initialData.ownerId || 'no-owner',
     } : {
       name: '', type: 'Court', address: '', city: 'Pune', location: '', description: '',
       sports: [], sportPrices: [], amenities: [], operatingHours: defaultOperatingHours,
       rating: 0, capacity: 0, isPopular: false, isIndoor: false, dataAiHint: '',
       availableEquipment: [],
       maintenanceSchedules: [],
-      ownerId: ownerId,
+      ownerId: ownerId || 'no-owner',
     },
   });
   
@@ -200,10 +200,14 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
     setIsLoading(true);
 
     try {
+        const payload = {
+            ...data,
+            ownerId: data.ownerId === 'no-owner' ? undefined : data.ownerId
+        };
         if (initialData) {
-            await updateFacilityAction({ ...data, id: initialData.id });
+            await updateFacilityAction({ ...payload, id: initialData.id });
         } else {
-            await addFacilityAction(data);
+            await addFacilityAction(payload);
         }
         
         window.dispatchEvent(new CustomEvent('dataChanged'));
@@ -282,7 +286,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    <SelectItem value="">None</SelectItem>
+                                    <SelectItem value="no-owner">None</SelectItem>
                                     {facilityOwners.map(owner => (
                                         <SelectItem key={owner.id} value={owner.id}>
                                             {owner.name} ({owner.email})
