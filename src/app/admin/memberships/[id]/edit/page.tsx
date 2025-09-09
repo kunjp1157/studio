@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { MembershipAdminForm } from '@/components/admin/MembershipAdminForm';
 import type { MembershipPlan } from '@/lib/types';
-import { getMembershipPlanById } from '@/lib/data';
+import { getMembershipPlanByIdAction } from '@/app/actions';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -22,7 +22,7 @@ export default function EditMembershipPlanPage() {
   useEffect(() => {
     if (planId) {
       const fetchPlan = async () => {
-        const foundPlan = await getMembershipPlanById(planId);
+        const foundPlan = await getMembershipPlanByIdAction(planId);
         setPlan(foundPlan || null);
       };
       fetchPlan();
