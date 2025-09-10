@@ -186,8 +186,7 @@ export default function AdminFacilitiesPage() {
                 </TableHeader>
                 <TableBody>
                     {facilities.length === 0 ? (
-                    <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                         No facilities found. Add one to get started!
                         </TableCell>
                     </TableRow>
