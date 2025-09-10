@@ -26,8 +26,8 @@ import {
     dbMarkNotificationAsRead,
     dbMarkAllNotificationsAsRead,
     dbGetBookingsByUserId,
-    dbBlockTimeSlot,
-    dbUnblockTimeSlot,
+    blockTimeSlot as dbBlockTimeSlot,
+    unblockTimeSlot as dbUnblockTimeSlot,
     dbUpdateUser,
     dbGetSportById,
     dbUpdateBooking,
@@ -62,11 +62,18 @@ import {
     dbGetUserById,
     dbAddMembershipPlan,
     dbUpdateMembershipPlan,
-    deleteMembershipPlan,
+    deleteMembershipPlan as dbDeleteMembershipPlan,
     addPricingRule,
     updatePricingRule,
     getLfgRequestsByFacilityIds as dbGetLfgRequestsByFacilityIds,
     getChallengesByFacilityIds as dbGetChallengesByFacilityIds,
+    deleteEvent as dbDeleteEvent,
+    updateEventAction as dbUpdateEvent,
+    addEventAction as dbAddEvent,
+    deletePricingRule as dbDeletePricingRule,
+    deletePromotionRule as dbDeletePromotionRule,
+    updatePromotionRule as dbUpdatePromotionRule,
+    addPromotionRule as dbAddPromotionRule,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team, Amenity } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -168,7 +175,7 @@ export async function getAllBookingsAction(): Promise<Booking[]> {
 }
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
-    return getSiteSettings(); // This can remain mock or read from a settings table/file
+    return getSiteSettings();
 }
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
@@ -206,6 +213,11 @@ export async function updateMembershipPlanAction(data: MembershipPlan): Promise<
     revalidatePath('/admin/memberships');
     revalidatePath('/memberships');
 }
+export async function deleteMembershipPlan(id: string): Promise<void> {
+    await dbDeleteMembershipPlan(id);
+    revalidatePath('/admin/memberships');
+}
+
 
 export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
     return await getAllPricingRules();
@@ -227,6 +239,12 @@ export async function updatePricingRuleAction(ruleData: PricingRule): Promise<vo
     revalidatePath('/owner/pricing');
 }
 
+export async function deletePricingRule(id: string): Promise<void> {
+    await dbDeletePricingRule(id);
+    revalidatePath('/admin/pricing');
+    revalidatePath('/owner/pricing');
+}
+
 
 export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
     return await getAllPromotionRules();
@@ -235,6 +253,19 @@ export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
 export async function getPromotionRuleByCodeAction(code: string): Promise<PromotionRule | undefined> {
     return await getPromotionRuleByCode(code);
 }
+export async function addPromotionRuleAction(data: Omit<PromotionRule, 'id'>): Promise<void> {
+    await dbAddPromotionRule(data);
+    revalidatePath('/admin/promotions');
+}
+export async function updatePromotionRuleAction(data: PromotionRule): Promise<void> {
+    await dbUpdatePromotionRule(data);
+    revalidatePath('/admin/promotions');
+}
+export async function deletePromotionRule(id: string): Promise<void> {
+    await dbDeletePromotionRule(id);
+    revalidatePath('/admin/promotions');
+}
+
 
 export async function getNotificationsForUserAction(userId: string): Promise<AppNotification[]> {
     return await dbGetNotificationsForUser(userId);
@@ -256,7 +287,7 @@ export async function getBookingsForFacilityOnDateAction(facilityId: string, dat
     return await dbGetBookingsForFacilityOnDate(facilityId, date);
 }
 
-export async function blockTimeSlotAction(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
+export async function blockTimeSlot(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
     const success = await dbBlockTimeSlot(facilityId, ownerId, newBlock);
     if(success) {
         revalidatePath(`/owner/availability`);
@@ -265,7 +296,7 @@ export async function blockTimeSlotAction(facilityId: string, ownerId: string, n
     return success;
 }
 
-export async function unblockTimeSlotAction(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
+export async function unblockTimeSlot(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
     const success = await dbUnblockTimeSlot(facilityId, ownerId, date, startTime);
     if (success) {
         revalidatePath(`/owner/availability`);
@@ -365,6 +396,19 @@ export async function updateSportAction(sportId: string, sportData: Partial<Spor
 export async function deleteSportAction(sportId: string): Promise<void> {
   await dbDeleteSport(sportId);
   revalidatePath('/admin/sports');
+}
+export async function deleteEvent(id: string): Promise<void> {
+    await dbDeleteEvent(id);
+    revalidatePath('/admin/events');
+}
+export async function updateEventAction(eventData: SportEvent): Promise<void> {
+    await dbUpdateEvent(eventData);
+    revalidatePath(`/admin/events/${eventData.id}/edit`);
+    revalidatePath('/admin/events');
+}
+export async function addEventAction(data: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'>): Promise<void> {
+    await dbAddEvent(data);
+    revalidatePath('/admin/events');
 }
 
 export async function toggleFavoriteFacilityAction(userId: string, facilityId: string): Promise<UserProfile | undefined> {
