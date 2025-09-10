@@ -52,7 +52,7 @@ export default function OwnerBookingsPage() {
           const facilityIds = ownerFacilities.map(f => f.id);
           const ownerBookings = allBookings
               .filter(b => facilityIds.includes(b.facilityId))
-              .sort((a,b) => parseISO(b.bookedAt).getTime() - parseISO(a.bookedAt).getTime());
+              .sort((a,b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime());
           
           setBookings(ownerBookings);
       } catch (error) {
@@ -118,14 +118,14 @@ export default function OwnerBookingsPage() {
                       <TableCell className="font-medium">{booking.facilityName}</TableCell>
                       <TableCell>{booking.sportName}</TableCell>
                       <TableCell>
-                        {format(parseISO(booking.date), 'MMM d, yyyy')} at {booking.startTime}
+                        {format(new Date(booking.date), 'MMM d, yyyy')} at {booking.startTime}
                       </TableCell>
                       <TableCell>
                         <Badge variant={booking.status === 'Confirmed' ? 'default' : (booking.status === 'Cancelled' ? 'destructive' : 'secondary')}>
                           {booking.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{format(parseISO(booking.bookedAt), 'MMM d, p')}</TableCell>
+                      <TableCell>{format(new Date(booking.bookedAt), 'MMM d, p')}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
