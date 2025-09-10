@@ -1,737 +1,701 @@
 
 
-import type { Facility, Sport, Amenity, UserProfile, UserRole, UserStatus, Booking, ReportData, MembershipPlan, SportEvent, Review, AppNotification, NotificationType, BlogPost, PricingRule, PromotionRule, RentalEquipment, RentedItemInfo, AppliedPromotionInfo, TimeSlot, UserSkill, SkillLevel, BlockedSlot, SiteSettings, Team, WaitlistEntry, LfgRequest, SportPrice, NotificationTemplate, Challenge, MaintenanceSchedule } from './types';
+'use server';
+
+import { unstable_noStore as noStore } from 'next/cache';
 import { query } from './db';
+import type { Facility, Sport, Review, Amenity, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, BlogPost, Team, LfgRequest, Challenge, MaintenanceSchedule, FacilityOperatingHours, SportPrice, PricingModel, FacilityStatus } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import { format, parseISO, isWithinIntervals } from 'date-fns';
 
-// =================================================================
-// USER FUNCTIONS
-// =================================================================
+let siteSettings: SiteSettings = {
+  siteName: 'Sports Arena',
+  defaultCurrency: 'INR',
+  timezone: 'Asia/Kolkata',
+  maintenanceMode: false,
+  notificationTemplates: [
+    { type: 'booking_confirmed', label: "Booking Confirmed", description: "Sent when a booking is successfully paid and confirmed.", emailEnabled: true, smsEnabled: true, emailSubject: "Your Booking is Confirmed!", emailBody: "Hi {{userName}}, your booking for {{facilityName}} on {{date}} at {{time}} is confirmed. Booking ID: {{bookingId}}.", smsBody: "Booking Confirmed: {{facilityName}} on {{date}} at {{time}}. ID: {{bookingId}}." },
+    { type: 'reminder', label: "Booking Reminder", description: "Sent 24 hours before a scheduled booking.", emailEnabled: true, smsEnabled: false, emailSubject: "Reminder: You have a booking tomorrow!", emailBody: "Hi {{userName}}, this is a reminder for your booking at {{facilityName}} tomorrow, {{date}} at {{time}}.", smsBody: "" },
+    { type: 'booking_cancelled', label: "Booking Cancelled", description: "Sent when a user or admin cancels a booking.", emailEnabled: true, smsEnabled: false, emailSubject: "Your Booking has been Cancelled", emailBody: "Hi {{userName}}, your booking for {{facilityName}} on {{date}} has been cancelled. If you have any questions, please contact support.", smsBody: "" },
+    { type: 'general', label: "General Notification", description: "For general announcements or updates.", emailEnabled: true, smsEnabled: false, emailSubject: "A new update from Sports Arena", emailBody: "Hi {{userName}}, \n\nWe have a new update for you. Please log in to your account to see more details.", smsBody: "" },
+    { type: 'user_status_changed', label: 'User Status Changed', description: 'When an admin changes a user status (e.g., suspend).', emailEnabled: true, smsEnabled: false, emailSubject: 'Your Account Status has been Updated', emailBody: 'Hi {{userName}},\n\nAn administrator has updated your account status. Please log in to view the changes or contact support if you have questions.', smsBody: '' },
+    { type: 'facility_approved', label: 'Facility Approved/Rejected', description: 'When an admin approves or rejects a facility.', emailEnabled: true, smsEnabled: false, emailSubject: 'Your Facility Submission has been Reviewed', emailBody: 'Hi {{userName}},\n\nYour facility "{{facilityName}}" has been reviewed by our team. Please log in to your owner portal to see the latest status.', smsBody: '' },
+  ],
+};
 
-export async function dbGetAllUsers(): Promise<UserProfile[]> {
-  const [rows] = await query('SELECT * FROM users');
-  return (rows as any[]).map(row => ({...row, favoriteFacilities: JSON.parse(row.favoriteFacilities || '[]'), preferredSports: JSON.parse(row.preferredSports || '[]'), skillLevels: JSON.parse(row.skillLevels || '[]'), achievements: JSON.parse(row.achievements || '[]'), teamIds: JSON.parse(row.teamIds || '[]')  }));
-}
 
-export async function dbGetUserById(id: string): Promise<UserProfile | undefined> {
-  const [rows] = await query('SELECT * FROM users WHERE id = ?', [id]);
-  if ((rows as any[]).length === 0) return undefined;
-  const row = (rows as any)[0];
-  return {...row, favoriteFacilities: JSON.parse(row.favoriteFacilities || '[]'), preferredSports: JSON.parse(row.preferredSports || '[]'), skillLevels: JSON.parse(row.skillLevels || '[]'), achievements: JSON.parse(row.achievements || '[]'), teamIds: JSON.parse(row.teamIds || '[]')  };
-}
+// In-memory data stores
+let facilities: Facility[] = [];
+let sports: Sport[] = [];
+let amenities: Amenity[] = [];
+let users: UserProfile[] = [];
+let bookings: Booking[] = [];
+let events: SportEvent[] = [];
+let membershipPlans: MembershipPlan[] = [];
+let pricingRules: PricingRule[] = [];
+let promotionRules: PromotionRule[] = [];
+let notifications: AppNotification[] = [];
+let blogPosts: BlogPost[] = [];
+let teams: Team[] = [];
+let lfgRequests: LfgRequest[] = [];
+let challenges: Challenge[] = [];
 
-export async function dbAddUser(userData: { name: string; email: string, password?: string }): Promise<UserProfile> {
-  const existingUser = (await query('SELECT id FROM users WHERE email = ?', [userData.email]))[0] as any[];
-  if (existingUser.length > 0) {
-      throw new Error('A user with this email already exists.');
-  }
 
-  const newUser: UserProfile = {
-      id: `user-${uuidv4()}`,
-      name: userData.name,
-      email: userData.email,
-      password: userData.password, // Should be hashed in a real app
-      role: 'User',
-      status: 'Active',
-      joinedAt: new Date().toISOString(),
-      isProfilePublic: true,
-      loyaltyPoints: 0,
-      membershipLevel: 'Basic',
-      favoriteFacilities: [],
-      preferredSports: [],
-      skillLevels: [],
-      achievements: [],
-      teamIds: [],
-  };
-
-  await query('INSERT INTO users SET ?', { ...newUser, password: newUser.password || null, favoriteFacilities: '[]', preferredSports: '[]', skillLevels: '[]', achievements: '[]', teamIds: '[]' });
-  return newUser;
-}
-
-export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
-    const user = await dbGetUserById(userId);
-    if (!user) return undefined;
+// --- Seeding initial data ---
+async function seedData() {
+    noStore(); // Prevents this function from being cached
     
-    const updateData: Record<string, any> = { ...updates };
+    // Check if data is already seeded
+    if (sports.length > 0 && amenities.length > 0) return;
+
+    sports = [
+        { id: 'sport-1', name: 'Cricket', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1595152772109-a7f20542384a?q=80&w=2071&auto=format&fit=crop', imageDataAiHint: 'cricket stadium' },
+        { id: 'sport-2', name: 'Football', iconName: 'Goal', imageUrl: 'https://images.unsplash.com/photo-1551958214-2d5e23efa6e2?q=80&w=2070&auto=format&fit=crop', imageDataAiHint: 'football stadium' },
+        { id: 'sport-3', name: 'Badminton', iconName: 'Feather', imageUrl: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=2070&auto=format&fit=crop', imageDataAiHint: 'badminton court' },
+        { id: 'sport-4', name: 'Tennis', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1554062614-6da4fa67725a?q=80&w=2070&auto=format&fit=crop', imageDataAiHint: 'tennis court' },
+        { id: 'sport-5', name: 'Basketball', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1519861531473-920026218875?q=80&w=2070&auto=format&fit=crop', imageDataAiHint: 'basketball court' },
+        { id: 'sport-6', name: 'Swimming', iconName: 'Bike', imageUrl: 'https://images.unsplash.com/photo-1580252178272-b5239a4946c1?q=80&w=1969&auto=format&fit=crop', imageDataAiHint: 'swimming pool' },
+        { id: 'sport-7', name: 'Table Tennis', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?q=80&w=2070&auto=format&fit=crop', imageDataAiHint: 'table tennis' },
+        { id: 'sport-8', name: 'Box Cricket', iconName: 'Dribbble', imageUrl: 'https://plus.unsplash.com/premium_photo-1661963897341-c69c65544b6c?q=80&w=2062&auto=format&fit=crop', imageDataAiHint: 'indoor cricket' },
+        { id: 'sport-9', name: 'Squash', iconName: 'Dribbble', imageUrl: 'https://images.unsplash.com/photo-1599481238640-4c1278592a9a?q=80&w=1964&auto=format&fit=crop', imageDataAiHint: 'squash court' }
+    ];
+
+    amenities = [
+        { id: 'amenity-1', name: 'Parking', iconName: 'ParkingCircle' },
+        { id: 'amenity-2', name: 'Washroom', iconName: 'ShowerHead' },
+        { id: 'amenity-3', name: 'Locker Room', iconName: 'Lock' },
+        { id: 'amenity-4', name: 'Wi-Fi', iconName: 'Wifi' },
+        { id: 'amenity-5', name: 'First Aid', iconName: 'Medal' },
+        { id: 'amenity-6', name: 'Cafe', iconName: 'Utensils' },
+    ];
     
-    // Serialize array/object fields to JSON strings
-    ['favoriteFacilities', 'preferredSports', 'skillLevels', 'achievements', 'teamIds'].forEach(key => {
-        if (updateData[key] && Array.isArray(updateData[key])) {
-            updateData[key] = JSON.stringify(updateData[key]);
-        }
-    });
+    const ownerId = "user-2";
 
-    // Remove id from update payload
-    delete updateData.id;
-
-    await query('UPDATE users SET ? WHERE id = ?', [updateData, userId]);
-    return await dbGetUserById(userId);
-}
-
-
-export async function dbToggleFavoriteFacility(userId: string, facilityId: string): Promise<UserProfile | undefined> {
-    const user = await dbGetUserById(userId);
-    if (!user) return undefined;
-
-    const favorites = user.favoriteFacilities || [];
-    const isFavorited = favorites.includes(facilityId);
-    const newFavorites = isFavorited
-        ? favorites.filter(id => id !== facilityId)
-        : [...favorites, facilityId];
+    const defaultOperatingHours: FacilityOperatingHours[] = [
+        { day: 'Mon', open: '08:00', close: '22:00' }, { day: 'Tue', open: '08:00', close: '22:00' },
+        { day: 'Wed', open: '08:00', close: '22:00' }, { day: 'Thu', open: '08:00', close: '22:00' },
+        { day: 'Fri', open: '08:00', close: '23:00' }, { day: 'Sat', open: '09:00', close: '23:00' },
+        { day: 'Sun', open: '09:00', close: '20:00' },
+    ];
     
-    return await dbUpdateUser(userId, { favoriteFacilities: newFavorites });
+    const sportPrices: SportPrice[] = [
+        { sportId: 'sport-1', price: 1500, pricingModel: 'per_hour_flat' },
+        { sportId: 'sport-2', price: 1800, pricingModel: 'per_hour_flat' },
+        { sportId: 'sport-3', price: 500, pricingModel: 'per_hour_flat' },
+        { sportId: 'sport-4', price: 800, pricingModel: 'per_hour_flat' },
+        { sportId: 'sport-5', price: 1000, pricingModel: 'per_hour_flat' },
+        { sportId: 'sport-6', price: 300, pricingModel: 'per_hour_per_person' },
+        { sportId: 'sport-7', price: 400, pricingModel: 'per_hour_flat' },
+        { sportId: 'sport-8', price: 2000, pricingModel: 'per_hour_flat' },
+        { sportId: 'sport-9', price: 700, pricingModel: 'per_hour_flat' }
+    ];
+
+    facilities = [
+        { id: 'facility-1', name: 'Grand Arena', type: 'Complex', address: '123, Viman Nagar, Pune, Maharashtra 411014', city: 'Pune', location: 'Viman Nagar', description: 'A state-of-the-art sports complex with multiple courts and fields.', sports: [sports[0], sports[1], sports[3]], sportPrices: [sportPrices[0], sportPrices[1], sportPrices[3]], amenities: [amenities[0], amenities[1], amenities[2], amenities[5]], operatingHours: defaultOperatingHours, rating: 4.8, isPopular: true, isIndoor: false, dataAiHint: 'sports complex stadium', ownerId, status: 'Active' },
+        { id: 'facility-2', name: 'Smash It Badminton', type: 'Court', address: '45, Koregaon Park, Pune, Maharashtra 411001', city: 'Pune', location: 'Koregaon Park', description: 'Indoor badminton courts with excellent lighting.', sports: [sports[2]], sportPrices: [sportPrices[2]], amenities: [amenities[0], amenities[1]], operatingHours: defaultOperatingHours, rating: 4.5, isIndoor: true, dataAiHint: 'badminton court shuttlecock', ownerId, status: 'Active' },
+        { id: 'facility-3', name: 'Swim Bliss', type: 'Pool', address: '789, Hinjewadi, Pune, Maharashtra 411057', city: 'Pune', location: 'Hinjewadi', description: 'Olympic size swimming pool with clean water and good facilities.', sports: [sports[5]], sportPrices: [sportPrices[5]], amenities: [amenities[1], amenities[2]], operatingHours: defaultOperatingHours, rating: 4.2, dataAiHint: 'swimming pool water', ownerId, status: 'Active' },
+        { id: 'facility-4', name: 'Kothrud Box Cricket', type: 'Box Cricket', address: 'Plot 5, Kothrud, Pune, Maharashtra 411038', city: 'Pune', location: 'Kothrud', description: 'A perfect place for a quick game of box cricket with friends.', sports: [sports[7]], sportPrices: [sportPrices[7]], amenities: [amenities[0]], operatingHours: defaultOperatingHours, rating: 4.6, isPopular: true, isIndoor: true, dataAiHint: 'indoor cricket action', ownerId, status: 'PendingApproval' },
+    ];
+    
+    const achievements: Achievement[] = [
+      { id: 'ach-1', name: 'First Booking', description: 'Make your first booking', iconName: 'Medal' },
+      { id: 'ach-2', name: 'Weekend Warrior', description: 'Play on both Saturday & Sunday', iconName: 'Swords' },
+      { id: 'ach-3', name: 'Social Sharer', description: 'Share your booking on social media', iconName: 'Share2' },
+      { id: 'ach-4', name: 'Reviewer', description: 'Write your first review', iconName: 'MessageSquare' }
+    ];
+
+    users = [
+        { id: 'user-1', name: 'Admin User', email: 'admin@sportsarena.com', password: 'password', role: 'Admin', status: 'Active', joinedAt: '2023-01-15T10:00:00Z', isProfilePublic: true, loyaltyPoints: 1500, achievements: achievements.map(a => ({...a, unlockedAt: '2023-05-10T10:00:00Z'})) },
+        { id: 'user-2', name: 'Bob Johnson (Owner)', email: 'owner@sportsarena.com', password: 'password', role: 'FacilityOwner', status: 'Active', joinedAt: '2023-02-20T11:30:00Z', isProfilePublic: true, loyaltyPoints: 800, achievements: [achievements[0]] },
+        { id: 'user-3', name: 'Charlie Davis', email: 'charlie@example.com', password: 'password', role: 'User', status: 'Active', joinedAt: '2023-03-10T09:00:00Z', isProfilePublic: true, loyaltyPoints: 250, achievements: [achievements[0]] },
+        { id: 'user-4', name: 'Diana Prince', email: 'diana@example.com', password: 'password', role: 'User', status: 'Suspended', joinedAt: '2023-04-05T18:00:00Z', isProfilePublic: false, loyaltyPoints: 50 },
+    ];
+    
+    bookings = [
+        { id: 'booking-1', userId: 'user-3', facilityId: 'facility-1', facilityName: 'Grand Arena', sportId: 'sport-1', sportName: 'Cricket', date: '2024-06-20', startTime: '18:00', endTime: '20:00', baseFacilityPrice: 3000, equipmentRentalCost: 0, totalPrice: 3000, status: 'Confirmed', bookedAt: '2024-06-15T10:00:00Z', reviewed: true },
+        { id: 'booking-2', userId: 'user-3', facilityId: 'facility-2', facilityName: 'Smash It Badminton', sportId: 'sport-3', sportName: 'Badminton', date: '2024-06-22', startTime: '10:00', endTime: '11:00', baseFacilityPrice: 500, equipmentRentalCost: 100, totalPrice: 600, status: 'Confirmed', bookedAt: '2024-06-18T14:00:00Z', reviewed: false, rentedEquipment: [{ equipmentId: 'eq-1', name: 'Racket', quantity: 2, priceAtBooking: 50, priceTypeAtBooking: 'per_booking', totalCost: 100 }] },
+        { id: 'booking-3', userId: 'user-4', facilityId: 'facility-3', facilityName: 'Swim Bliss', sportId: 'sport-6', sportName: 'Swimming', date: '2024-05-10', startTime: '08:00', endTime: '09:00', baseFacilityPrice: 300, equipmentRentalCost: 0, totalPrice: 300, status: 'Cancelled', bookedAt: '2024-05-01T12:00:00Z', reviewed: false },
+    ];
+    
+    facilities[0].reviews = [
+        { id: 'review-1', facilityId: 'facility-1', userId: 'user-3', userName: 'Charlie Davis', rating: 5, comment: 'Amazing ground, well maintained. Had a great time!', createdAt: '2024-06-20T21:00:00Z', isPublicProfile: true, bookingId: 'booking-1' },
+    ];
+
+    membershipPlans = [
+        { id: 'plan-1', name: 'Basic', pricePerMonth: 0, benefits: ['Access to all facilities', 'Standard booking slots', 'Community access'] },
+        { id: 'plan-2', name: 'Premium', pricePerMonth: 999, benefits: ['5% discount on all bookings', 'Priority booking slots', 'Access to exclusive events', 'No cancellation fees'] },
+        { id: 'plan-3', name: 'Pro', pricePerMonth: 2499, benefits: ['15% discount on all bookings', 'Access to all premium features', 'Free equipment rental', 'Personalized coaching tips (AI)'] },
+    ];
+    
+    events = [
+        { id: 'event-1', name: 'Summer Football Frenzy', facilityId: 'facility-1', facilityName: 'Grand Arena', sport: sports[1], startDate: '2024-07-15T09:00:00Z', endDate: '2024-07-16T18:00:00Z', description: 'An exciting 5-a-side football tournament with cash prizes.', entryFee: 5000, maxParticipants: 32, registeredParticipants: 12, imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=2070&auto=format&fit=crop', imageDataAiHint: 'football on grass' },
+        { id: 'event-2', name: 'Monsoon Badminton League', facilityId: 'facility-2', facilityName: 'Smash It Badminton', sport: sports[2], startDate: '2024-08-01T10:00:00Z', endDate: '2024-08-30T20:00:00Z', description: 'A month-long badminton league for all skill levels.', entryFee: 1000, maxParticipants: 64, registeredParticipants: 45, imageUrl: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=2070&auto=format&fit=crop', imageDataAiHint: 'badminton player action' },
+    ];
+
+    notifications = [
+      { id: 'notif-1', userId: 'user-3', type: 'booking_confirmed', title: 'Booking Confirmed', message: 'Your booking for Grand Arena is confirmed.', createdAt: '2024-06-15T10:00:00Z', isRead: true, link: '/account/bookings' },
+      { id: 'notif-2', userId: 'user-3', type: 'reminder', title: 'Upcoming Booking', message: 'You have a booking at Smash It Badminton tomorrow.', createdAt: '2024-06-21T10:00:00Z', isRead: false, link: '/account/bookings' },
+    ];
+
+    blogPosts = [
+        { id: 'post-1', slug: 'top-5-cricket-grounds-in-pune', title: 'Top 5 Cricket Grounds in Pune You Must Play At', excerpt: 'Discover the best cricket grounds Pune has to offer, from lush green outfields to professional-grade pitches that will make you feel like a star.', content: '<p>Pune, a city with a rich cricketing culture, offers a plethora of options for enthusiasts. Whether you\'re a professional looking for a practice pitch or a group of friends wanting a weekend match, there\'s a ground for everyone. Here are our top 5 picks:</p><ul><li><strong>PYC Hindu Gymkhana:</strong> Known for its pristine pitch and historic pavilion.</li><li><strong>Nehru Stadium:</strong> A classic venue that has hosted international matches.</li><li><strong>Deccan Gymkhana:</strong> Offers excellent facilities and a vibrant atmosphere.</li><li><strong>Poona Club:</strong> A premium choice with beautifully manicured grounds.</li><li><strong>Grand Arena:</strong> Our very own state-of-the-art complex with floodlit grounds for night matches.</li></ul><p>Each of these venues provides a unique experience. We recommend trying them all to find your perfect cricketing home!</p>', authorName: 'Admin User', publishedAt: '2024-05-20T12:00:00Z', tags: ['Cricket', 'Pune', 'Sports'], isFeatured: true },
+        { id: 'post-2', slug: 'how-to-improve-your-badminton-smash', title: 'How to Improve Your Badminton Smash in 5 Easy Steps', excerpt: 'Unleash your inner champion with our expert guide to perfecting your badminton smash. Follow these simple steps to add power and precision to your game.', content: '<p>The smash is the most powerful shot in badminton, but it requires technique and timing. Here\'s how to improve it:</p><ol><li><strong>Perfect Your Grip:</strong> Hold the racket like you\'re shaking hands with it, ensuring a firm but relaxed grip.</li><li><strong>Master Your Footwork:</strong> Position yourself behind the shuttlecock to generate maximum power.</li><li><strong>Focus on Rotation:</strong> Your body rotation, from your hips to your shoulders, is key to a powerful shot.</li><li><strong>Snap Your Wrist:</strong> The final flick of the wrist at the point of impact provides the explosive power.</li><li><strong>Follow Through:</strong> A smooth follow-through ensures accuracy and prevents injury.</li></ol><p>Practice these steps consistently, and you\'ll see a dramatic improvement in your game. Good luck!</p>', authorName: 'Bob Johnson (Owner)', publishedAt: '2024-06-02T15:00:00Z', tags: ['Badminton', 'Tips', 'Training'] },
+    ];
+    
+    pricingRules = [
+        { id: 'rule-1', name: 'Weekend Evening Surge', description: '15% price increase for all bookings on weekend evenings.', isActive: true, adjustmentType: 'percentage_increase', value: 15, daysOfWeek: ['Sat', 'Sun'], timeRange: { start: '17:00', end: '22:00' }, priority: 10, facilityIds: ['facility-1', 'facility-2'] },
+        { id: 'rule-2', name: 'Weekday Morning Discount', description: '20% off for bookings on weekday mornings.', isActive: true, adjustmentType: 'percentage_decrease', value: 20, daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], timeRange: { start: '08:00', end: '11:00' }, priority: 10, facilityIds: ['facility-1', 'facility-2', 'facility-3'] },
+    ];
+    
+    promotionRules = [
+        { id: 'promo-1', name: 'New User Offer', description: '10% off first booking', code: 'NEWBIE10', discountType: 'percentage', discountValue: 10, usageLimitPerUser: 1, isActive: true },
+        { id: 'promo-2', name: 'Summer Sale', description: 'Flat 200 off on bookings above 1000', code: 'SUMMER200', discountType: 'fixed_amount', discountValue: 200, startDate: '2024-06-01', endDate: '2024-08-31', isActive: true },
+    ];
+
+    teams = [
+      { id: 'team-1', name: 'Pune Strikers', sport: sports[0], captainId: 'user-3', memberIds: ['user-3', 'user-4'] },
+    ];
 }
 
+// --- Data Access Functions ---
+// Ensure data is seeded before any access
+seedData();
 
-// =================================================================
-// FACILITY FUNCTIONS
-// =================================================================
-
-async function getFacilityRelations(facility: any): Promise<Facility> {
-    const [sports] = await query('SELECT s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sportId WHERE fs.facilityId = ?', [facility.id]);
-    const [amenities] = await query('SELECT a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenityId WHERE fa.facilityId = ?', [facility.id]);
-    const [sportPrices] = await query('SELECT * FROM sport_prices WHERE facilityId = ?', [facility.id]);
-    const [operatingHours] = await query('SELECT * FROM operating_hours WHERE facilityId = ?', [facility.id]);
-    const [equipment] = await query('SELECT * FROM rental_equipment WHERE facilityId = ?', [facility.id]);
-    const [reviews] = await query('SELECT * FROM reviews WHERE facilityId = ? ORDER BY createdAt DESC', [facility.id]);
-    const [blockedSlots] = await query('SELECT * FROM blocked_slots WHERE facilityId = ?', [facility.id]);
-    const [maintenanceSchedules] = await query('SELECT * FROM maintenance_schedules WHERE facilityId = ?', [facility.id]);
-
-    return {
-        ...facility,
-        rating: parseFloat(facility.rating) || 0, // Ensure rating is a number
-        sports: sports as Sport[],
-        amenities: amenities as Amenity[],
-        sportPrices: (sportPrices as any[]).map(p => ({...p, price: parseFloat(p.price)})) as SportPrice[],
-        operatingHours: operatingHours as FacilityOperatingHours[],
-        availableEquipment: (equipment as any[]).map(e => ({...e, pricePerItem: parseFloat(e.pricePerItem), sportIds: JSON.parse(e.sportIds || '[]')})) as RentalEquipment[],
-        reviews: reviews as Review[],
-        blockedSlots: blockedSlots as BlockedSlot[],
-        maintenanceSchedules: (maintenanceSchedules as any[]).map(m => ({...m, lastPerformedDate: new Date(m.lastPerformedDate).toISOString()})) as MaintenanceSchedule[],
-    };
+// GET all
+export async function dbGetAllSports(): Promise<Sport[]> { return sports; }
+export async function dbGetAllAmenities(): Promise<Amenity[]> { return amenities; }
+export async function dbGetAllFacilities(): Promise<Facility[]> { return facilities; }
+export async function dbGetAllUsers(): Promise<UserProfile[]> { return users; }
+export async function dbGetAllBookings(): Promise<Booking[]> { return bookings; }
+export async function getAllEvents(): Promise<SportEvent[]> { return events; }
+export async function getAllMembershipPlans(): Promise<MembershipPlan[]> { return membershipPlans; }
+export async function getAllPricingRules(): Promise<PricingRule[]> { return pricingRules; }
+export async function getAllPromotionRules(): Promise<PromotionRule[]> { return promotionRules; }
+export async function getAllBlogPosts(): Promise<BlogPost[]> { return blogPosts; }
+export async function getSiteSettings(): Promise<SiteSettings> { return siteSettings; }
+export async function dbGetTeamsByUserId(userId: string): Promise<Team[]> {
+    return teams.filter(team => team.memberIds.includes(userId));
 }
 
+// GET by ID
+export async function getSportById(id: string): Promise<Sport | undefined> { return sports.find(s => s.id === id); }
+export async function getAmenityById(id: string): Promise<Amenity | undefined> { return amenities.find(a => a.id === id); }
+export async function dbGetFacilityById(id: string): Promise<Facility | undefined> { return facilities.find(f => f.id === id); }
+export async function dbGetUserById(id: string): Promise<UserProfile | undefined> { return users.find(u => u.id === id); }
+export async function dbGetBookingById(id: string): Promise<Booking | undefined> { return bookings.find(b => b.id === id); }
+export async function getEventById(id: string): Promise<SportEvent | undefined> { return events.find(e => e.id === id); }
+export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> { return blogPosts.find(p => p.slug === slug); }
+export async function dbGetMembershipPlanById(id: string): Promise<MembershipPlan | undefined> { return membershipPlans.find(p => p.id === id); }
+export async function dbGetTeamById(id: string): Promise<Team | undefined> { return teams.find(t => t.id === id); }
+export async function getPricingRuleById(id: string): Promise<PricingRule | undefined> { return pricingRules.find(r => r.id === id); }
+export async function getPromotionRuleByCode(code: string): Promise<PromotionRule | undefined> {
+  return promotionRules.find(p => p.code?.toLowerCase() === code.toLowerCase() && p.isActive);
+}
+export async function dbGetSportById(id: string): Promise<Sport | undefined> { return sports.find(s => s.id === id); }
 
-export async function dbGetAllFacilities(): Promise<Facility[]> {
-    const [rows] = await query('SELECT * FROM facilities');
-    const facilities = await Promise.all((rows as any[]).map(row => getFacilityRelations(row)));
-    return facilities;
+
+// GET by criteria
+export async function dbGetFacilitiesByOwnerId(ownerId: string): Promise<Facility[]> {
+  return facilities.filter(f => f.ownerId === ownerId);
+}
+export async function getPricingRulesByFacilityIds(facilityIds: string[]): Promise<PricingRule[]> {
+    return pricingRules.filter(rule => 
+        !rule.facilityIds || rule.facilityIds.length === 0 || rule.facilityIds.some(id => facilityIds.includes(id))
+    );
 }
 
-export async function dbGetFacilityById(id: string): Promise<Facility | undefined> {
-    const [rows] = await query('SELECT * FROM facilities WHERE id = ?', [id]);
-    if ((rows as any[]).length === 0) return undefined;
-    return await getFacilityRelations((rows as any)[0]);
+export async function dbGetEventsByFacilityIds(facilityIds: string[]): Promise<SportEvent[]> {
+    return events.filter(event => facilityIds.includes(event.facilityId));
+}
+
+export async function getLfgRequestsByFacilityIds(facilityIds: string[]): Promise<LfgRequest[]> {
+    return lfgRequests.filter(req => facilityIds.includes(req.facilityId));
+}
+
+export async function getChallengesByFacilityIds(facilityIds: string[]): Promise<Challenge[]> {
+    return challenges.filter(c => facilityIds.includes(c.facilityId));
 }
 
 export async function dbGetFacilitiesByIds(ids: string[]): Promise<Facility[]> {
-    if (ids.length === 0) return [];
-    const [rows] = await query('SELECT * FROM facilities WHERE id IN (?)', [ids]);
-    const facilities = await Promise.all((rows as any[]).map(row => getFacilityRelations(row)));
-    return facilities;
+  return facilities.filter(f => ids.includes(f.id));
 }
-
-export async function dbGetFacilitiesByOwnerId(ownerId: string): Promise<Facility[]> {
-    const [rows] = await query('SELECT * FROM facilities WHERE ownerId = ?', [ownerId]);
-    const facilities = await Promise.all((rows as any[]).map(row => getFacilityRelations(row)));
-    return facilities;
-}
-
-export async function dbAddFacility(facilityData: any): Promise<Facility> {
-    const facilityId = `facility-${uuidv4()}`;
-    const newFacility = {
-        id: facilityId,
-        name: facilityData.name,
-        type: facilityData.type,
-        address: facilityData.address,
-        city: facilityData.city,
-        location: facilityData.location,
-        description: facilityData.description,
-        rating: facilityData.rating,
-        capacity: facilityData.capacity,
-        isPopular: facilityData.isPopular,
-        isIndoor: facilityData.isIndoor,
-        dataAiHint: facilityData.dataAiHint,
-        ownerId: facilityData.ownerId,
-        status: facilityData.status,
-    };
-    await query('INSERT INTO facilities SET ?', newFacility);
-
-    for (const sportId of facilityData.sports) {
-        await query('INSERT INTO facility_sports (facilityId, sportId) VALUES (?, ?)', [facilityId, sportId]);
-    }
-    for (const amenityId of facilityData.amenities) {
-        await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES (?, ?)', [facilityId, amenityId]);
-    }
-    for (const priceInfo of facilityData.sportPrices) {
-        await query('INSERT INTO sport_prices (facilityId, sportId, price, pricingModel) VALUES (?, ?, ?, ?)', [facilityId, priceInfo.sportId, priceInfo.price, priceInfo.pricingModel]);
-    }
-    for (const hours of facilityData.operatingHours) {
-        await query('INSERT INTO operating_hours (facilityId, day, `open`, `close`) VALUES (?, ?, ?, ?)', [facilityId, hours.day, hours.open, hours.close]);
-    }
-    for (const equip of facilityData.availableEquipment) {
-        const equipId = `equip-${uuidv4()}`;
-        await query('INSERT INTO rental_equipment (id, facilityId, name, pricePerItem, priceType, stock, sportIds) VALUES (?, ?, ?, ?, ?, ?, ?)', [equipId, facilityId, equip.name, equip.pricePerItem, equip.priceType, equip.stock, JSON.stringify(equip.sportIds)]);
-    }
-    for (const maint of facilityData.maintenanceSchedules) {
-        const maintId = `maint-${uuidv4()}`;
-        await query('INSERT INTO maintenance_schedules (id, facilityId, taskName, recurrenceInDays, lastPerformedDate) VALUES (?, ?, ?, ?, ?)', [maintId, facilityId, maint.taskName, maint.recurrenceInDays, maint.lastPerformedDate]);
-    }
-
-    return (await dbGetFacilityById(facilityId))!;
-}
-
-export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
-    const facilityId = facilityData.id;
-    
-    // Update main facility table
-    const mainData = {
-        name: facilityData.name, type: facilityData.type, address: facilityData.address, city: facilityData.city, location: facilityData.location,
-        description: facilityData.description, rating: facilityData.rating, capacity: facilityData.capacity, isPopular: facilityData.isPopular,
-        isIndoor: facilityData.isIndoor, dataAiHint: facilityData.dataAiHint, ownerId: facilityData.ownerId, status: facilityData.status
-    };
-    await query('UPDATE facilities SET ? WHERE id = ?', [mainData, facilityId]);
-
-    // Update related tables by deleting old and inserting new
-    await query('DELETE FROM facility_sports WHERE facilityId = ?', [facilityId]);
-    for (const sportId of facilityData.sports) {
-        await query('INSERT INTO facility_sports (facilityId, sportId) VALUES (?, ?)', [facilityId, sportId]);
-    }
-
-    await query('DELETE FROM facility_amenities WHERE facilityId = ?', [facilityId]);
-    for (const amenityId of facilityData.amenities) {
-        await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES (?, ?)', [facilityId, amenityId]);
-    }
-    
-    await query('DELETE FROM sport_prices WHERE facilityId = ?', [facilityId]);
-    for (const priceInfo of facilityData.sportPrices) {
-        await query('INSERT INTO sport_prices (facilityId, sportId, price, pricingModel) VALUES (?, ?, ?, ?)', [facilityId, priceInfo.sportId, priceInfo.price, priceInfo.pricingModel]);
-    }
-    
-    await query('DELETE FROM operating_hours WHERE facilityId = ?', [facilityId]);
-    for (const hours of facilityData.operatingHours) {
-        await query('INSERT INTO operating_hours (facilityId, day, `open`, `close`) VALUES (?, ?, ?, ?)', [facilityId, hours.day, hours.open, hours.close]);
-    }
-    
-    await query('DELETE FROM rental_equipment WHERE facilityId = ?', [facilityId]);
-    for (const equip of facilityData.availableEquipment) {
-        const equipId = equip.id.startsWith('new-') ? `equip-${uuidv4()}` : equip.id;
-        await query('INSERT INTO rental_equipment (id, facilityId, name, pricePerItem, priceType, stock, sportIds) VALUES (?, ?, ?, ?, ?, ?, ?)', [equipId, facilityId, equip.name, equip.pricePerItem, equip.priceType, equip.stock, JSON.stringify(equip.sportIds)]);
-    }
-
-    await query('DELETE FROM maintenance_schedules WHERE facilityId = ?', [facilityId]);
-    for (const maint of facilityData.maintenanceSchedules) {
-        const maintId = maint.id.startsWith('new-') ? `maint-${uuidv4()}` : maint.id;
-        await query('INSERT INTO maintenance_schedules (id, facilityId, taskName, recurrenceInDays, lastPerformedDate) VALUES (?, ?, ?, ?, ?)', [maintId, facilityId, maint.taskName, maint.recurrenceInDays, maint.lastPerformedDate]);
-    }
-
-    return (await dbGetFacilityById(facilityId))!;
-}
-
-export async function dbDeleteFacility(facilityId: string): Promise<void> {
-    const tables = ['facilities', 'facility_sports', 'facility_amenities', 'sport_prices', 'operating_hours', 'rental_equipment', 'reviews', 'bookings', 'blocked_slots', 'events', 'lfg_requests', 'challenges', 'maintenance_schedules'];
-    for (const table of tables) {
-        await query(`DELETE FROM ${table} WHERE facilityId = ?`, [facilityId]).catch(e => console.log(`Could not delete from ${table}, it might not have a facilityId column.`));
-    }
-     await query('DELETE FROM facilities WHERE id = ?', [facilityId]);
-}
-
-// =================================================================
-// BOOKING FUNCTIONS
-// =================================================================
-
-export async function dbGetAllBookings(): Promise<Booking[]> {
-    const [rows] = await query('SELECT * FROM bookings');
-    return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]'), pricingModel: row.pricingModel }));
-}
-
-export async function dbGetBookingById(id: string): Promise<Booking | undefined> {
-    const [rows] = await query('SELECT * FROM bookings WHERE id = ?', [id]);
-    if ((rows as any[]).length === 0) return undefined;
-    const row = (rows as any)[0];
-    return {...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]'), pricingModel: row.pricingModel };
-}
-
 export async function dbGetBookingsByUserId(userId: string): Promise<Booking[]> {
-    const [rows] = await query('SELECT * FROM bookings WHERE userId = ?', [userId]);
-    return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]'), pricingModel: row.pricingModel }));
+  return bookings.filter(b => b.userId === userId);
+}
+export async function dbGetBookingsForFacilityOnDate(facilityId: string, date: string): Promise<Booking[]> {
+  return bookings.filter(b => b.facilityId === facilityId && b.date === date && b.status === 'Confirmed');
 }
 
-export async function dbGetBookingsForFacilityOnDate(facilityId: string, date: string): Promise<Booking[]> {
-    const [rows] = await query("SELECT * FROM bookings WHERE facilityId = ? AND date = ? AND status IN ('Confirmed', 'Pending')", [facilityId, date]);
-    return (rows as any[]).map(row => ({...row, baseFacilityPrice: parseFloat(row.baseFacilityPrice), equipmentRentalCost: parseFloat(row.equipmentRentalCost), totalPrice: parseFloat(row.totalPrice), appliedPromotion: JSON.parse(row.appliedPromotion || 'null'), rentedEquipment: JSON.parse(row.rentedEquipment || '[]'), pricingModel: row.pricingModel }));
+// Notifications
+export async function dbGetNotificationsForUser(userId: string): Promise<AppNotification[]> {
+  return notifications
+    .filter(n => n.userId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+// ADD
+export async function dbAddFacility(facilityData: any): Promise<Facility> {
+    const newFacility: Facility = { ...facilityData, id: `facility-${uuidv4()}` };
+    facilities.push(newFacility);
+    return newFacility;
+}
+
+export async function dbAddUser(userData: { name: string; email: string; password?: string }): Promise<UserProfile> {
+    if (users.find(u => u.email.toLowerCase() === userData.email.toLowerCase())) {
+        throw new Error('A user with this email already exists.');
+    }
+    const newUser: UserProfile = {
+        ...userData,
+        id: `user-${uuidv4()}`,
+        role: 'User',
+        status: 'Active',
+        joinedAt: new Date().toISOString(),
+        isProfilePublic: true,
+        favoriteFacilities: [],
+        loyaltyPoints: 0,
+        achievements: [],
+        membershipLevel: 'Basic',
+    };
+    users.push(newUser);
+    return newUser;
 }
 
 export async function dbAddBooking(bookingData: Booking): Promise<Booking> {
-    const payload = {
-        ...bookingData,
-        appliedPromotion: JSON.stringify(bookingData.appliedPromotion || null),
-        rentedEquipment: JSON.stringify(bookingData.rentedEquipment || []),
-    };
-    await query('INSERT INTO bookings SET ?', [payload]);
+    bookings.push(bookingData);
     return bookingData;
 }
 
-export async function dbUpdateBooking(bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> {
-    await query('UPDATE bookings SET ? WHERE id = ?', [updates, bookingId]);
-    return dbGetBookingById(bookingId);
-}
-
-
-// =================================================================
-// SPORT, AMENITY, and Other static-like data
-// =================================================================
-
-export async function dbGetAllSports(): Promise<Sport[]> {
-    const [rows] = await query('SELECT * FROM sports');
-    return rows as Sport[];
-}
-
-export async function dbGetSportById(id: string): Promise<Sport | undefined> {
-    const [rows] = await query('SELECT * FROM sports WHERE id = ?', [id]);
-    return (rows as any)[0];
-}
-
-export async function dbAddSport(sportData: Omit<Sport, 'id'>): Promise<Sport> {
-    const newSport: Sport = { ...sportData, id: `sport-${uuidv4()}`};
-    await query('INSERT INTO sports SET ?', [newSport]);
-    return newSport;
-}
-
-export async function dbUpdateSport(sportId: string, sportData: Partial<Sport>): Promise<Sport> {
-    await query('UPDATE sports SET ? WHERE id = ?', [sportData, sportId]);
-    return (await dbGetSportById(sportId))!;
-}
-
-export async function dbDeleteSport(sportId: string): Promise<void> {
-    await query('DELETE FROM sports WHERE id = ?', [sportId]);
-}
-
-export async function dbGetAllAmenities(): Promise<Amenity[]> {
-    const [rows] = await query('SELECT * FROM amenities');
-    return rows as Amenity[];
-}
-
-// =================================================================
-// OTHER DYNAMIC FUNCTIONS
-// =================================================================
-export async function dbAddNotification(userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<AppNotification> {
+export async function dbAddNotification(userId: string, data: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<AppNotification> {
     const newNotification: AppNotification = {
+      ...data,
       id: `notif-${uuidv4()}`,
       userId,
-      ...notificationData,
       createdAt: new Date().toISOString(),
       isRead: false,
     };
-    await query('INSERT INTO notifications SET ?', newNotification);
+    notifications.unshift(newNotification); // Add to the beginning of the list
     return newNotification;
 }
 
-export async function dbGetNotificationsForUser(userId: string): Promise<AppNotification[]> {
-    const [rows] = await query('SELECT * FROM notifications WHERE userId = ? ORDER BY createdAt DESC', [userId]);
-    return rows as AppNotification[];
-}
-
-export async function dbMarkNotificationAsRead(userId: string, notificationId: string): Promise<void> {
-    await query('UPDATE notifications SET isRead = 1 WHERE id = ? AND userId = ?', [notificationId, userId]);
-}
-
-export async function dbMarkAllNotificationsAsRead(userId: string): Promise<void> {
-    await query('UPDATE notifications SET isRead = 1 WHERE userId = ?', [userId]);
-}
-
-export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> {
-    const user = await dbGetUserById(reviewData.userId);
-    if (!user) throw new Error("User not found");
-
+export async function dbAddReview(data: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> {
+    const user = await dbGetUserById(data.userId);
+    if (!user) throw new Error("User not found for review");
+    
     const newReview: Review = {
-        ...reviewData,
+        ...data,
         id: `review-${uuidv4()}`,
         createdAt: new Date().toISOString(),
         userName: user.name,
         userAvatar: user.profilePictureUrl,
-        isPublicProfile: user.isProfilePublic,
+        isPublicProfile: user.isProfilePublic
     };
-    
-    await query('INSERT INTO reviews SET ?', [newReview]);
-    
-    // Update facility rating
-    const [stats] = await query('SELECT AVG(rating) as avgRating FROM reviews WHERE facilityId = ?', [reviewData.facilityId]);
-    const newRating = (stats as any)[0].avgRating || 0;
-    await query('UPDATE facilities SET rating = ? WHERE id = ?', [newRating, reviewData.facilityId]);
 
-    // Mark booking as reviewed
-    if (reviewData.bookingId) {
-        await dbUpdateBooking(reviewData.bookingId, { reviewed: true });
+    const facility = facilities.find(f => f.id === data.facilityId);
+    if (facility) {
+        if (!facility.reviews) facility.reviews = [];
+        facility.reviews.push(newReview);
+        // Recalculate average rating
+        const totalRating = facility.reviews.reduce((sum, r) => sum + r.rating, 0);
+        facility.rating = totalRating / facility.reviews.length;
     }
     
+    const booking = bookings.find(b => b.id === data.bookingId);
+    if (booking) {
+        booking.reviewed = true;
+    }
+
     return newReview;
 }
-export async function dbBlockTimeSlot(facilityId: string, ownerId: string, newBlock: Omit<BlockedSlot, 'id'>): Promise<boolean> {
-    const facility = await dbGetFacilityById(facilityId);
-    if (!facility || facility.ownerId !== ownerId) {
-        return false;
+
+export async function dbAddSport(sportData: Omit<Sport, 'id'>): Promise<Sport> {
+    const newSport: Sport = { ...sportData, id: `sport-${uuidv4()}` };
+    sports.push(newSport);
+    return newSport;
+}
+export async function dbAddMembershipPlan(data: Omit<MembershipPlan, 'id'>): Promise<MembershipPlan> {
+    const newPlan: MembershipPlan = { ...data, id: `plan-${uuidv4()}` };
+    membershipPlans.push(newPlan);
+    return newPlan;
+}
+export async function addPricingRule(data: Omit<PricingRule, 'id'>): Promise<PricingRule> {
+    const newRule: PricingRule = { ...data, id: `pr-${uuidv4()}` };
+    pricingRules.push(newRule);
+    return newRule;
+}
+export async function addPromotionRule(data: Omit<PromotionRule, 'id'>): Promise<PromotionRule> {
+    const newRule: PromotionRule = { ...data, id: `promo-${uuidv4()}` };
+    promotionRules.push(newRule);
+    return newRule;
+}
+export async function addEventAction(eventData: any): Promise<SportEvent> {
+    const sport = await getSportById(eventData.sportId);
+    const facility = await dbGetFacilityById(eventData.facilityId);
+    if (!sport || !facility) throw new Error("Invalid sport or facility for event.");
+
+    const newEvent: SportEvent = {
+        ...eventData,
+        id: `event-${uuidv4()}`,
+        sport,
+        facilityName: facility.name,
+        registeredParticipants: 0,
+    };
+    events.push(newEvent);
+    return newEvent;
+}
+export async function dbCreateTeam(data: { name: string; sportId: string; captainId: string }): Promise<Team> {
+  const sport = await getSportById(data.sportId);
+  if (!sport) throw new Error("Invalid sport selected for team.");
+
+  const newTeam: Team = {
+    id: `team-${uuidv4()}`,
+    name: data.name,
+    sport,
+    captainId: data.captainId,
+    memberIds: [data.captainId],
+  };
+  teams.push(newTeam);
+  return newTeam;
+}
+
+// UPDATE
+export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
+    const index = facilities.findIndex(f => f.id === facilityData.id);
+    if (index === -1) throw new Error("Facility not found");
+    facilities[index] = { ...facilities[index], ...facilityData };
+    return facilities[index];
+}
+
+export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex !== -1) {
+    users[userIndex] = { ...users[userIndex], ...updates };
+    return users[userIndex];
+  }
+  return undefined;
+}
+
+export async function dbUpdateBooking(bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> {
+  const bookingIndex = bookings.findIndex(b => b.id === bookingId);
+  if (bookingIndex !== -1) {
+    bookings[bookingIndex] = { ...bookings[bookingIndex], ...updates };
+    return bookings[bookingIndex];
+  }
+  return undefined;
+}
+export async function dbMarkNotificationAsRead(userId: string, notificationId: string): Promise<void> {
+    const notification = notifications.find(n => n.id === notificationId && n.userId === userId);
+    if (notification) {
+        notification.isRead = true;
     }
-    await query('INSERT INTO blocked_slots (facilityId, date, startTime, endTime, reason) VALUES (?, ?, ?, ?, ?)', [facilityId, newBlock.date, newBlock.startTime, newBlock.endTime, newBlock.reason]);
+}
+export async function dbMarkAllNotificationsAsRead(userId: string): Promise<void> {
+    notifications.forEach(n => {
+        if (n.userId === userId) {
+            n.isRead = true;
+        }
+    });
+}
+export async function dbToggleFavoriteFacility(userId: string, facilityId: string): Promise<UserProfile | undefined> {
+    const user = await dbGetUserById(userId);
+    if (!user) return undefined;
+    
+    const favorites = user.favoriteFacilities || [];
+    const isFavorited = favorites.includes(facilityId);
+    
+    const newFavorites = isFavorited
+        ? favorites.filter(id => id !== facilityId)
+        : [...favorites, facilityId];
+        
+    return dbUpdateUser(userId, { favoriteFacilities: newFavorites });
+}
+export async function dbUpdateSport(id: string, updates: Partial<Sport>): Promise<Sport> {
+    const index = sports.findIndex(s => s.id === id);
+    if (index === -1) throw new Error("Sport not found");
+    sports[index] = { ...sports[index], ...updates };
+    return sports[index];
+}
+export async function dbUpdateMembershipPlan(data: MembershipPlan): Promise<MembershipPlan> {
+    const index = membershipPlans.findIndex(p => p.id === data.id);
+    if (index === -1) throw new Error("Membership plan not found");
+    membershipPlans[index] = { ...membershipPlans[index], ...data };
+    return membershipPlans[index];
+}
+export async function updatePricingRule(data: PricingRule): Promise<PricingRule> {
+    const index = pricingRules.findIndex(r => r.id === data.id);
+    if (index === -1) throw new Error("Pricing rule not found");
+    pricingRules[index] = { ...pricingRules[index], ...data };
+    return pricingRules[index];
+}
+export async function updatePromotionRule(data: PromotionRule): Promise<PromotionRule> {
+    const index = promotionRules.findIndex(r => r.id === data.id);
+    if (index === -1) throw new Error("Promotion rule not found");
+    promotionRules[index] = { ...promotionRules[index], ...data };
+    return promotionRules[index];
+}
+export async function updateEventAction(eventData: SportEvent): Promise<SportEvent> {
+    const index = events.findIndex(e => e.id === eventData.id);
+    if (index === -1) throw new Error("Event not found");
+    events[index] = { ...events[index], ...eventData };
+    return events[index];
+}
+
+
+// DELETE
+export async function dbDeleteFacility(facilityId: string): Promise<void> {
+  facilities = facilities.filter(f => f.id !== facilityId);
+  // Also remove related bookings, reviews, etc.
+  bookings = bookings.filter(b => b.facilityId !== facilityId);
+}
+export async function dbDeleteSport(id: string): Promise<void> {
+    sports = sports.filter(s => s.id !== id);
+}
+export async function deleteMembershipPlan(id: string): Promise<void> {
+    membershipPlans = membershipPlans.filter(p => p.id !== id);
+}
+export async function deletePricingRule(id: string): Promise<void> {
+    pricingRules = pricingRules.filter(r => r.id !== id);
+}
+export async function deletePromotionRule(id: string): Promise<void> {
+    promotionRules = promotionRules.filter(p => p.id !== id);
+}
+export async function deleteEvent(id: string): Promise<void> {
+    events = events.filter(e => e.id !== id);
+}
+
+
+// Availability
+export async function dbBlockTimeSlot(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
+    const facility = await dbGetFacilityById(facilityId);
+    if (!facility || facility.ownerId !== ownerId) return false;
+
+    if (!facility.blockedSlots) {
+        facility.blockedSlots = [];
+    }
+
+    // Check for overlapping blocks
+    const isOverlapping = facility.blockedSlots.some(slot =>
+        slot.date === newBlock.date &&
+        Math.max(parseInt(slot.startTime), parseInt(newBlock.startTime)) < Math.min(parseInt(slot.endTime), parseInt(newBlock.endTime))
+    );
+
+    if (isOverlapping) return false;
+
+    facility.blockedSlots.push(newBlock);
+    await dbUpdateFacility(facility);
     return true;
-};
+}
 
 export async function dbUnblockTimeSlot(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
     const facility = await dbGetFacilityById(facilityId);
-    if (!facility || facility.ownerId !== ownerId) {
-        return false;
+    if (!facility || facility.ownerId !== ownerId || !facility.blockedSlots) return false;
+
+    const initialLength = facility.blockedSlots.length;
+    facility.blockedSlots = facility.blockedSlots.filter(slot =>
+        !(slot.date === date && slot.startTime === startTime)
+    );
+
+    if (facility.blockedSlots.length < initialLength) {
+        await dbUpdateFacility(facility);
+        return true;
     }
-    await query('DELETE FROM blocked_slots WHERE facilityId = ? AND date = ? AND startTime = ?', [facilityId, date, startTime]);
+    return false;
+}
+
+// Site Settings
+export async function updateSiteSettings(newSettings: SiteSettings): Promise<SiteSettings> {
+    siteSettings = { ...siteSettings, ...newSettings };
+    return siteSettings;
+}
+
+// Event Registration
+export async function registerForEvent(eventId: string): Promise<boolean> {
+  const event = events.find(e => e.id === eventId);
+  if (event && (!event.maxParticipants || event.registeredParticipants < event.maxParticipants)) {
+    event.registeredParticipants++;
     return true;
-};
-
-// =================================================================
-// TEAM, CHALLENGE, LFG FUNCTIONS
-// =================================================================
-
-export async function dbGetTeamById(teamId: string): Promise<Team | undefined> {
-    const [rows] = await query('SELECT * FROM teams WHERE id = ?', [teamId]);
-    if ((rows as any[]).length === 0) return undefined;
-    const row = (rows as any)[0];
-    const sport = await dbGetSportById(row.sportId);
-    if (!sport) throw new Error("Sport for team not found");
-    return {...row, memberIds: JSON.parse(row.memberIds || '[]'), sport };
+  }
+  return false;
 }
 
-export async function dbGetTeamsByUserId(userId: string): Promise<Team[]> {
-    const [rows] = await query('SELECT * FROM teams WHERE JSON_CONTAINS(memberIds, ?)', [`"${userId}"`]);
-    const teams = await Promise.all((rows as any[]).map(async row => {
-        const sport = await dbGetSportById(row.sportId);
-        return {...row, memberIds: JSON.parse(row.memberIds || '[]'), sport: sport! };
-    }));
-    return teams.filter(team => team.sport);
-}
-
-export async function dbCreateTeam(teamData: { name: string, sportId: string, captainId: string }): Promise<Team> {
-    const sport = await dbGetSportById(teamData.sportId);
-    if (!sport) throw new Error("Sport not found");
-
-    const newTeam: Omit<Team, 'sport'> = {
-        id: `team-${uuidv4()}`,
-        name: teamData.name,
-        sportId: sport.id,
-        captainId: teamData.captainId,
-        memberIds: [teamData.captainId],
-    };
-
-    await query('INSERT INTO teams SET ?', { ...newTeam, memberIds: JSON.stringify(newTeam.memberIds) });
-    const user = await dbGetUserById(teamData.captainId);
-    if(user && user.teamIds) {
-        const teamIds = [...user.teamIds, newTeam.id];
-        await dbUpdateUser(user.id, {teamIds});
-    }
-
-    return {...newTeam, sport};
-}
-
+// TEAM LOGIC
 export async function dbLeaveTeam(teamId: string, userId: string): Promise<boolean> {
-    const team = await dbGetTeamById(teamId);
-    if (!team) throw new Error("Team not found");
-    if (team.captainId === userId && team.memberIds.length > 1) {
-        throw new Error("Captain cannot leave a team with other members. Please transfer captaincy first.");
-    }
-    if (team.memberIds.length === 1 && team.captainId === userId) {
-        await query('DELETE FROM teams WHERE id = ?', [teamId]);
-    } else {
-        const newMemberIds = team.memberIds.filter(id => id !== userId);
-        await query('UPDATE teams SET memberIds = ? WHERE id = ?', [JSON.stringify(newMemberIds), teamId]);
-    }
-
-    const user = await dbGetUserById(userId);
-    if(user && user.teamIds) {
-        const teamIds = user.teamIds.filter(id => id !== teamId);
-        await dbUpdateUser(user.id, {teamIds});
-    }
-
+  const team = await dbGetTeamById(teamId);
+  if (!team) throw new Error("Team not found.");
+  if (team.captainId === userId && team.memberIds.length > 1) {
+    throw new Error("Captain cannot leave a team with other members. Please transfer captaincy first.");
+  }
+  if (team.memberIds.length === 1 && team.captainId === userId) {
+    // If last member is captain, disband team
+    teams = teams.filter(t => t.id !== teamId);
     return true;
+  }
+  
+  team.memberIds = team.memberIds.filter(id => id !== userId);
+  return true;
 }
 
 export async function dbRemoveUserFromTeam(teamId: string, memberIdToRemove: string, currentUserId: string): Promise<void> {
-    const team = await dbGetTeamById(teamId);
-    if (!team || team.captainId !== currentUserId) {
-        throw new Error("Only the team captain can remove members.");
-    }
-    const newMemberIds = team.memberIds.filter(id => id !== memberIdToRemove);
-    await query('UPDATE teams SET memberIds = ? WHERE id = ?', [JSON.stringify(newMemberIds), teamId]);
+  const team = await dbGetTeamById(teamId);
+  if (!team) throw new Error("Team not found.");
+  if (team.captainId !== currentUserId) throw new Error("Only the team captain can remove members.");
+  if (memberIdToRemove === currentUserId) throw new Error("Captain cannot remove themselves.");
 
-    const user = await dbGetUserById(memberIdToRemove);
-    if(user && user.teamIds) {
-        const teamIds = user.teamIds.filter(id => id !== teamId);
-        await dbUpdateUser(user.id, {teamIds});
-    }
+  team.memberIds = team.memberIds.filter(id => id !== memberIdToRemove);
 }
 
 export async function dbTransferCaptaincy(teamId: string, newCaptainId: string, currentUserId: string): Promise<void> {
     const team = await dbGetTeamById(teamId);
-    if (!team || team.captainId !== currentUserId) {
-        throw new Error("Only the team captain can transfer captaincy.");
-    }
-    await query('UPDATE teams SET captainId = ? WHERE id = ?', [newCaptainId, teamId]);
+    if (!team) throw new Error("Team not found.");
+    if (team.captainId !== currentUserId) throw new Error("Only the team captain can transfer captaincy.");
+    if (!team.memberIds.includes(newCaptainId)) throw new Error("New captain must be a member of the team.");
+
+    team.captainId = newCaptainId;
 }
 
 export async function dbDeleteTeam(teamId: string, currentUserId: string): Promise<void> {
     const team = await dbGetTeamById(teamId);
-    if (!team || team.captainId !== currentUserId) {
-        throw new Error("Only the team captain can disband the team.");
-    }
-    // Remove team from all members' profiles
-    for (const memberId of team.memberIds) {
-        const user = await dbGetUserById(memberId);
-        if(user && user.teamIds) {
-            const teamIds = user.teamIds.filter(id => id !== teamId);
-            await dbUpdateUser(user.id, {teamIds});
-        }
-    }
-    await query('DELETE FROM teams WHERE id = ?', [teamId]);
+    if (!team) throw new Error("Team not found.");
+    if (team.captainId !== currentUserId) throw new Error("Only the team captain can delete the team.");
+
+    teams = teams.filter(t => t.id !== teamId);
 }
 
+// LFG & Challenges
 export async function dbGetOpenLfgRequests(): Promise<LfgRequest[]> {
-    const [rows] = await query("SELECT * FROM lfg_requests WHERE status = 'open' ORDER BY createdAt DESC");
-    return (rows as any[]).map(row => ({...row, interestedUserIds: JSON.parse(row.interestedUserIds || '[]')}));
+    return lfgRequests.filter(r => r.status === 'open');
 }
 
-export async function dbGetLfgRequestsByFacilityIds(facilityIds: string[]): Promise<LfgRequest[]> {
-    if (facilityIds.length === 0) return [];
-    const [rows] = await query("SELECT * FROM lfg_requests WHERE facilityId IN (?) ORDER BY createdAt DESC", [facilityIds]);
-    return (rows as any[]).map(row => ({...row, interestedUserIds: JSON.parse(row.interestedUserIds || '[]')}));
-}
-
-export async function dbCreateLfgRequest(requestData: Omit<LfgRequest, 'id' | 'createdAt' | 'status' | 'interestedUserIds'>): Promise<LfgRequest> {
+export async function dbCreateLfgRequest(data: Omit<LfgRequest, 'id'|'createdAt'|'status'|'interestedUserIds'>): Promise<LfgRequest> {
     const newRequest: LfgRequest = {
-        ...requestData,
+        ...data,
         id: `lfg-${uuidv4()}`,
         createdAt: new Date().toISOString(),
         status: 'open',
         interestedUserIds: [],
     };
-    await query('INSERT INTO lfg_requests SET ?', { ...newRequest, interestedUserIds: '[]' });
+    lfgRequests.push(newRequest);
     return newRequest;
 }
 
 export async function dbExpressInterestInLfg(lfgId: string, userId: string): Promise<LfgRequest | undefined> {
-    const [rows] = await query('SELECT * FROM lfg_requests WHERE id = ?', [lfgId]);
-    if ((rows as any[]).length === 0) throw new Error("Request not found");
-    const req = (rows as any)[0];
-    const interestedUserIds = JSON.parse(req.interestedUserIds || '[]');
-    if (!interestedUserIds.includes(userId)) {
-        interestedUserIds.push(userId);
-        await query('UPDATE lfg_requests SET interestedUserIds = ? WHERE id = ?', [JSON.stringify(interestedUserIds), lfgId]);
-        req.interestedUserIds = interestedUserIds;
+    const request = lfgRequests.find(r => r.id === lfgId);
+    if (request && request.userId !== userId && !request.interestedUserIds.includes(userId)) {
+        request.interestedUserIds.push(userId);
+        return request;
     }
-    return req;
+    return undefined;
 }
 
 export async function dbGetOpenChallenges(): Promise<Challenge[]> {
-    const [rows] = await query("SELECT * FROM challenges WHERE status = 'open' ORDER BY createdAt DESC");
-    const challenges = await Promise.all((rows as any[]).map(async row => {
-        const [challenger, sport] = await Promise.all([
-            dbGetUserById(row.challengerId),
-            dbGetSportById(row.sportId)
-        ]);
-        return {...row, challenger, sport };
+    const openChallenges = challenges.filter(c => c.status === 'open');
+    // Populate challenger details
+    return Promise.all(openChallenges.map(async c => {
+        const challenger = await dbGetUserById(c.challengerId);
+        return { ...c, challenger: challenger! };
     }));
-    return challenges as Challenge[];
 }
 
-export async function dbGetChallengesByFacilityIds(facilityIds: string[]): Promise<Challenge[]> {
-    if (facilityIds.length === 0) return [];
-    const [rows] = await query("SELECT * FROM challenges WHERE facilityId IN (?) ORDER BY createdAt DESC", [facilityIds]);
-    const challenges = await Promise.all((rows as any[]).map(async row => {
-        const [challenger, sport] = await Promise.all([
-            dbGetUserById(row.challengerId),
-            dbGetSportById(row.sportId)
-        ]);
-        return {...row, challenger, sport };
-    }));
-    return challenges as Challenge[];
-}
+export async function dbCreateChallenge(data: Omit<Challenge, 'id'|'challenger'|'sport'|'createdAt'|'status'>): Promise<Challenge> {
+    const challenger = await dbGetUserById(data.challengerId);
+    const sport = await dbGetSportById(data.sportId);
+    const facility = await dbGetFacilityById(data.facilityId);
 
-export async function dbCreateChallenge(challengeData: Omit<Challenge, 'id' | 'challenger' | 'sport' | 'createdAt' | 'status'>): Promise<Challenge> {
-    const [challenger, sport] = await Promise.all([dbGetUserById(challengeData.challengerId), dbGetSportById(challengeData.sportId)]);
-    if (!challenger || !sport) throw new Error("Invalid user or sport");
-
-    const newChallenge = {
-        ...challengeData,
-        id: `chl-${uuidv4()}`,
-        createdAt: new Date().toISOString(),
-        status: 'open' as const,
-    };
-    await query('INSERT INTO challenges (id, challengerId, sportId, facilityId, facilityName, proposedDate, notes, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-        [newChallenge.id, newChallenge.challengerId, newChallenge.sportId, newChallenge.facilityId, newChallenge.facilityName, newChallenge.proposedDate, newChallenge.notes, newChallenge.status, newChallenge.createdAt]);
+    if (!challenger || !sport || !facility) throw new Error("Invalid details for creating challenge.");
     
-    return { ...newChallenge, challenger, sport };
+    const newChallenge: Challenge = {
+        ...data,
+        id: `chal-${uuidv4()}`,
+        createdAt: new Date().toISOString(),
+        status: 'open',
+        challenger: challenger,
+        sport: sport,
+        facilityName: facility.name,
+    };
+    challenges.push(newChallenge);
+    return newChallenge;
 }
 
 export async function dbAcceptChallenge(challengeId: string, opponentId: string): Promise<Challenge | undefined> {
-    await query("UPDATE challenges SET status = 'accepted', opponentId = ? WHERE id = ?", [opponentId, challengeId]);
-    const [rows] = await query("SELECT * FROM challenges WHERE id = ?", [challengeId]);
-    if ((rows as any[]).length === 0) return undefined;
-    const row = (rows as any)[0];
-    const [challenger, opponent, sport] = await Promise.all([dbGetUserById(row.challengerId), dbGetUserById(row.opponentId), dbGetSportById(row.sportId)]);
-    return {...row, challenger, opponent, sport};
-}
-
-
-// =================================================================
-// MOCK FUNCTIONS (TO BE REMOVED/REPLACED) -> REAL IMPLEMENTATIONS
-// =================================================================
-export const getSiteSettings = (): SiteSettings => ({ siteName: 'Sports Arena', defaultCurrency: 'INR', timezone: 'Asia/Kolkata', maintenanceMode: false, notificationTemplates: [] });
-export const updateSiteSettings = (settings: SiteSettings) => {};
-
-// Events
-export async function getAllEvents(): Promise<SportEvent[]> {
-    const [rows] = await query('SELECT * FROM events ORDER BY startDate DESC');
-    const events = await Promise.all((rows as any[]).map(async (row) => {
-        const sport = await dbGetSportById(row.sportId);
-        return { ...row, sport: sport! };
-    }));
-    return events;
-}
-
-export async function getEventsByFacilityIds(facilityIds: string[]): Promise<SportEvent[]> {
-    if (facilityIds.length === 0) return [];
-    const [rows] = await query("SELECT * FROM events WHERE facilityId IN (?) ORDER BY startDate DESC", [facilityIds]);
-    const events = await Promise.all((rows as any[]).map(async (row) => {
-        const sport = await dbGetSportById(row.sportId);
-        return { ...row, sport: sport! };
-    }));
-    return events;
-}
-
-export async function getEventById(id: string): Promise<SportEvent | undefined> {
-    const [rows] = await query('SELECT * FROM events WHERE id = ?', [id]);
-    if ((rows as any[]).length === 0) return undefined;
-    const row = (rows as any)[0];
-    const sport = await dbGetSportById(row.sportId);
-    return { ...row, sport: sport! };
-}
-
-export async function addEventAction(eventData: any): Promise<void> {
-    const newEvent = { ...eventData, id: `event-${uuidv4()}` };
-    await query('INSERT INTO events SET ?', newEvent);
-}
-
-export async function updateEventAction(eventData: any): Promise<void> {
-    await query('UPDATE events SET ? WHERE id = ?', [eventData, eventData.id]);
-}
-
-export async function deleteEvent(id: string): Promise<void> {
-    await query('DELETE FROM events WHERE id = ?', [id]);
-}
-
-export async function registerForEvent(eventId: string): Promise<boolean> {
-    const [event] = (await query('SELECT registeredParticipants, maxParticipants FROM events WHERE id = ?', [eventId])) as any[];
-    if (!event || (event[0].maxParticipants !== 0 && event[0].registeredParticipants >= event[0].maxParticipants)) {
-        return false;
+    const challenge = challenges.find(c => c.id === challengeId);
+    if (challenge && challenge.status === 'open' && challenge.challengerId !== opponentId) {
+        challenge.status = 'accepted';
+        challenge.opponentId = opponentId;
+        challenge.opponent = await dbGetUserById(opponentId);
+        return challenge;
     }
-    await query('UPDATE events SET registeredParticipants = registeredParticipants + 1 WHERE id = ?', [eventId]);
-    return true;
+    return undefined;
 }
 
+export async function calculateDynamicPrice(
+  basePricePerHour: number,
+  selectedDate: Date,
+  selectedSlot: TimeSlot,
+  durationHours: number
+): Promise<{ finalPrice: number; appliedRuleName?: string; appliedRuleDetails?: PricingRule }> {
+  const applicableRules = pricingRules.filter(rule => {
+    if (!rule.isActive) return false;
 
-// Membership Plans
-export async function getAllMembershipPlans(): Promise<MembershipPlan[]> {
-    const [rows] = await query('SELECT * FROM membership_plans');
-    return (rows as any[]).map(row => ({...row, benefits: JSON.parse(row.benefits || '[]')}));
-}
-export async function dbGetMembershipPlanById(id: string): Promise<MembershipPlan | undefined> {
-    const [rows] = await query('SELECT * FROM membership_plans WHERE id = ?', [id]);
-    if ((rows as any[]).length === 0) return undefined;
-    const row = (rows as any)[0];
-    return { ...row, benefits: JSON.parse(row.benefits || '[]') };
-}
-export async function dbAddMembershipPlan(data: Omit<MembershipPlan, 'id'>): Promise<void> {
-    const newPlan = { id: `plan-${uuidv4()}`, ...data, benefits: JSON.stringify(data.benefits) };
-    await query('INSERT INTO membership_plans SET ?', newPlan);
-}
-export async function dbUpdateMembershipPlan(data: MembershipPlan): Promise<void> {
-    const payload = { ...data, benefits: JSON.stringify(data.benefits) };
-    await query('UPDATE membership_plans SET ? WHERE id = ?', [payload, data.id]);
-}
-export async function deleteMembershipPlan(id: string): Promise<void> {
-    await query('DELETE FROM membership_plans WHERE id = ?', [id]);
-}
+    // Day of week check
+    const dayOfWeek = format(selectedDate, 'E').slice(0, 3);
+    if (rule.daysOfWeek && rule.daysOfWeek.length > 0 && !rule.daysOfWeek.includes(dayOfWeek as any)) {
+      return false;
+    }
 
-// Pricing Rules
-export async function getAllPricingRules(): Promise<PricingRule[]> {
-    const [rows] = await query('SELECT * FROM pricing_rules');
-    return (rows as any[]).map(row => ({...row, daysOfWeek: JSON.parse(row.daysOfWeek || 'null'), timeRange: JSON.parse(row.timeRange || 'null'), dateRange: JSON.parse(row.dateRange || 'null'), facilityIds: JSON.parse(row.facilityIds || 'null') }));
-}
-export async function getPricingRuleById(id: string): Promise<PricingRule | undefined> {
-    const [rows] = await query('SELECT * FROM pricing_rules WHERE id = ?', [id]);
-    if ((rows as any[]).length === 0) return undefined;
-    const row = (rows as any)[0];
-    return { ...row, daysOfWeek: JSON.parse(row.daysOfWeek || 'null'), timeRange: JSON.parse(row.timeRange || 'null'), dateRange: JSON.parse(row.dateRange || 'null'), facilityIds: JSON.parse(row.facilityIds || 'null') };
-}
-export async function getPricingRulesByFacilityIds(facilityIds: string[]): Promise<PricingRule[]> {
-    if (facilityIds.length === 0) return [];
-    
-    // This is a bit tricky in SQL. We'll fetch all rules that are either global (facilityIds is NULL)
-    // or specifically linked to one of the owner's facilities.
-    const [rows] = await query(
-        `SELECT * FROM pricing_rules WHERE facilityIds IS NULL OR JSON_OVERLAPS(facilityIds, ?)`,
-        [JSON.stringify(facilityIds)]
-    );
+    // Time range check
+    if (rule.timeRange && rule.timeRange.start && rule.timeRange.end) {
+      const slotStart = parseISO(`1970-01-01T${selectedSlot.startTime}:00`);
+      const ruleStart = parseISO(`1970-01-01T${rule.timeRange.start}:00`);
+      const ruleEnd = parseISO(`1970-01-01T${rule.timeRange.end}:00`);
+      if (slotStart < ruleStart || slotStart >= ruleEnd) {
+        return false;
+      }
+    }
 
-    return (rows as any[]).map((row: any) => {
-        const ruleFacilityIds = JSON.parse(row.facilityIds || 'null');
-        // If the rule has facility IDs, we must ensure there's an intersection
-        if (ruleFacilityIds && !ruleFacilityIds.some((id: string) => facilityIds.includes(id))) {
-            return null; // This rule doesn't apply, filter it out
+    // Date range check
+    if (rule.dateRange && rule.dateRange.start && rule.dateRange.end) {
+        const interval = { start: parseISO(rule.dateRange.start), end: parseISO(rule.dateRange.end) };
+        if (!isWithinIntervals(selectedDate, [interval])) {
+            return false;
         }
-        return {
-            ...row, 
-            daysOfWeek: JSON.parse(row.daysOfWeek || 'null'), 
-            timeRange: JSON.parse(row.timeRange || 'null'), 
-            dateRange: JSON.parse(row.dateRange || 'null'),
-            facilityIds: ruleFacilityIds,
-        };
-    }).filter((rule: PricingRule | null): rule is PricingRule => rule !== null);
-}
+    }
+    
+    return true;
+  });
 
+  if (applicableRules.length === 0) {
+    return { finalPrice: basePricePerHour * durationHours };
+  }
 
-export async function addPricingRule(data: Omit<PricingRule, 'id'>): Promise<void> {
-    const newRule = { id: `pr-${uuidv4()}`, ...data, daysOfWeek: JSON.stringify(data.daysOfWeek || null), timeRange: JSON.stringify(data.timeRange || null), dateRange: JSON.stringify(data.dateRange || null), facilityIds: JSON.stringify(data.facilityIds || null) };
-    await query('INSERT INTO pricing_rules SET ?', newRule);
-}
-export async function updatePricingRule(data: PricingRule): Promise<void> {
-    const payload = { ...data, daysOfWeek: JSON.stringify(data.daysOfWeek || null), timeRange: JSON.stringify(data.timeRange || null), dateRange: JSON.stringify(data.dateRange || null), facilityIds: JSON.stringify(data.facilityIds || null) };
-    await query('UPDATE pricing_rules SET ? WHERE id = ?', [payload, data.id]);
-}
-export async function deletePricingRule(id: string): Promise<void> {
-    await query('DELETE FROM pricing_rules WHERE id = ?', [id]);
-}
+  // Sort by priority (lower number = higher priority)
+  applicableRules.sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
 
-// Promotion Rules
-export async function getAllPromotionRules(): Promise<PromotionRule[]> {
-    const [rows] = await query('SELECT * FROM promotion_rules');
-    return rows as PromotionRule[];
-}
-export async function getPromotionRuleById(id: string): Promise<PromotionRule | undefined> {
-    const [rows] = await query('SELECT * FROM promotion_rules WHERE id = ?', [id]);
-    return (rows as any)[0];
-}
-export async function getPromotionRuleByCode(code: string): Promise<PromotionRule | undefined> {
-    const [rows] = await query('SELECT * FROM promotion_rules WHERE code = ? AND isActive = 1', [code]);
-    // Add logic here to check for validity (date range, usage limits)
-    return (rows as any)[0];
-}
-export async function addPromotionRuleAction(data: Omit<PromotionRule, 'id'>): Promise<void> {
-    const newRule = { id: `promo-${uuidv4()}`, ...data };
-    await query('INSERT INTO promotion_rules SET ?', newRule);
-}
-export async function updatePromotionRuleAction(data: PromotionRule): Promise<void> {
-    await query('UPDATE promotion_rules SET ? WHERE id = ?', [data, data.id]);
-}
-export async function deletePromotionRule(id: string): Promise<void> {
-    await query('DELETE FROM promotion_rules WHERE id = ?', [id]);
-}
+  const bestRule = applicableRules[0];
+  let finalPrice = basePricePerHour;
 
-// Blog Posts (kept as simple mocks for now as it's not a core DB feature)
-export const getAllBlogPosts = async (): Promise<BlogPost[]> => [];
-export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => undefined;
+  switch (bestRule.adjustmentType) {
+    case 'percentage_increase':
+      finalPrice *= (1 + bestRule.value / 100);
+      break;
+    case 'percentage_decrease':
+      finalPrice *= (1 - bestRule.value / 100);
+      break;
+    case 'fixed_increase':
+      finalPrice += bestRule.value;
+      break;
+    case 'fixed_decrease':
+      finalPrice -= bestRule.value;
+      break;
+    case 'fixed_price':
+      finalPrice = bestRule.value;
+      break;
+  }
+
+  return {
+    finalPrice: Math.max(0, finalPrice) * durationHours,
+    appliedRuleName: bestRule.name,
+    appliedRuleDetails: bestRule,
+  };
+};
+
+// Initial data seeding call
+seedData();
