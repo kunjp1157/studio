@@ -153,6 +153,7 @@ export async function dbAddFacility(facilityData: any): Promise<Facility> {
         isIndoor: facilityData.isIndoor,
         dataAiHint: facilityData.dataAiHint,
         ownerId: facilityData.ownerId,
+        status: facilityData.status,
     };
     await query('INSERT INTO facilities SET ?', newFacility);
 
@@ -187,7 +188,7 @@ export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
     const mainData = {
         name: facilityData.name, type: facilityData.type, address: facilityData.address, city: facilityData.city, location: facilityData.location,
         description: facilityData.description, rating: facilityData.rating, capacity: facilityData.capacity, isPopular: facilityData.isPopular,
-        isIndoor: facilityData.isIndoor, dataAiHint: facilityData.dataAiHint, ownerId: facilityData.ownerId
+        isIndoor: facilityData.isIndoor, dataAiHint: facilityData.dataAiHint, ownerId: facilityData.ownerId, status: facilityData.status
     };
     await query('UPDATE facilities SET ? WHERE id = ?', [mainData, facilityId]);
 

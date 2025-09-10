@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { FacilityAdminForm } from '@/components/admin/FacilityAdminForm';
 import type { Facility } from '@/lib/types';
-import { getFacilityById } from '@/lib/data';
+import { getFacilityByIdAction } from '@/app/actions';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -21,11 +21,11 @@ export default function EditFacilityPage() {
 
   useEffect(() => {
     if (facilityId) {
-      // Simulate fetching facility data
-      setTimeout(() => {
-        const foundFacility = getFacilityById(facilityId);
+      const fetchFacility = async () => {
+        const foundFacility = await getFacilityByIdAction(facilityId);
         setFacility(foundFacility || null);
-      }, 300);
+      };
+      fetchFacility();
     }
   }, [facilityId]);
 
@@ -61,4 +61,3 @@ export default function EditFacilityPage() {
     </div>
   );
 }
-
