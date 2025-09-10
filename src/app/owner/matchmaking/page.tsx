@@ -3,9 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
-import type { UserProfile, LfgRequest, Challenge } from '@/lib/types';
-import { getFacilitiesByOwnerIdAction } from '@/app/actions';
-import { getLfgRequestsByFacilityIds, getChallengesByFacilityIds, getUserById } from '@/lib/data';
+import type { UserProfile, LfgRequest, Challenge, Sport } from '@/lib/types';
+import { getFacilitiesByOwnerIdAction, getLfgRequestsByFacilityIdsAction, getChallengesByFacilityIdsAction, getUsersAction } from '@/app/actions';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +21,7 @@ export default function OwnerMatchmakingPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,13 +38,17 @@ export default function OwnerMatchmakingPage() {
       try {
         const ownerFacilities = await getFacilitiesByOwnerIdAction(currentUser.id);
         const facilityIds = ownerFacilities.map(f => f.id);
-        const [ownerLfg, ownerChallenges] = await Promise.all([
-          getLfgRequestsByFacilityIds(facilityIds),
-          getChallengesByFacilityIds(facilityIds)
+        
+        const [ownerLfg, ownerChallenges, usersData] = await Promise.all([
+          getLfgRequestsByFacilityIdsAction(facilityIds),
+          getChallengesByFacilityIdsAction(facilityIds),
+          getUsersAction()
         ]);
 
+        setAllUsers(usersData);
         setLfgRequests(ownerLfg.sort((a, b) => parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime()));
         setChallenges(ownerChallenges.sort((a, b) => parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime()));
+
       } catch (error) {
         toast({ title: "Error", description: "Could not fetch matchmaking data for your facilities.", variant: "destructive" });
       } finally {
@@ -54,6 +58,14 @@ export default function OwnerMatchmakingPage() {
     
     fetchOwnerData();
   }, [currentUser, toast]);
+
+  const getUserName = (userId: string) => {
+    return allUsers.find(u => u.id === userId)?.name || 'Unknown User';
+  }
+
+  const getSportFromChallenge = (challenge: Challenge): Sport => {
+    return challenge.sport;
+  }
 
   return (
     <div className="space-y-8">
@@ -81,12 +93,11 @@ export default function OwnerMatchmakingPage() {
                     <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Facility</TableHead><TableHead>Sport</TableHead><TableHead>Posted</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {lfgRequests.map((req) => {
-                        const user = getUserById(req.userId);
                         return (
                           <TableRow key={req.id}>
-                            <TableCell>{user?.name || 'Unknown'}</TableCell>
+                            <TableCell>{getUserName(req.userId)}</TableCell>
                             <TableCell>{req.facilityName}</TableCell>
-                            <TableCell>{getSportById(req.sportId)?.name || 'Unknown'}</TableCell>
+                            <TableCell>{req.sportId}</TableCell>
                             <TableCell>{format(parseISO(req.createdAt), 'MMM d, yyyy')}</TableCell>
                           </TableRow>
                         );
@@ -114,14 +125,16 @@ export default function OwnerMatchmakingPage() {
                   <Table>
                     <TableHeader><TableRow><TableHead>Challenger</TableHead><TableHead>Facility</TableHead><TableHead>Sport</TableHead><TableHead>Date Proposed</TableHead></TableRow></TableHeader>
                     <TableBody>
-                      {challenges.map((challenge) => (
+                      {challenges.map((challenge) => {
+                        const sport = getSportFromChallenge(challenge);
+                        return (
                         <TableRow key={challenge.id}>
                           <TableCell>{challenge.challenger.name}</TableCell>
                           <TableCell>{challenge.facilityName}</TableCell>
-                          <TableCell>{challenge.sport.name}</TableCell>
-                          <TableCell>{format(parseISO(challenge.proposedDate), 'MMM d, p')}</TableCell>
+                          <TableCell>{sport?.name || 'Unknown Sport'}</TableCell>
+                          <TableCell>{format(new Date(challenge.proposedDate), 'MMM d, p')}</TableCell>
                         </TableRow>
-                      ))}
+                      )})}
                     </TableBody>
                   </Table>
                 </div>

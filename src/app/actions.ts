@@ -14,9 +14,9 @@ import {
     dbGetFacilitiesByOwnerId,
     getEventById,
     getAllEvents,
-    getEventsByFacilityIds as dbGetEventsByFacilityIds,
+    dbGetEventsByFacilityIds,
     getAllMembershipPlans,
-    getMembershipPlanById as dbGetMembershipPlanById,
+    dbGetMembershipPlanById,
     getAllPricingRules,
     getAllPromotionRules,
     dbGetNotificationsForUser,
@@ -60,6 +60,8 @@ import {
     dbAddMembershipPlan,
     dbUpdateMembershipPlan,
     deleteMembershipPlan,
+    getLfgRequestsByFacilityIds as dbGetLfgRequestsByFacilityIds,
+    getChallengesByFacilityIds as dbGetChallengesByFacilityIds,
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team, Amenity } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -417,6 +419,14 @@ export async function deleteTeamAction(teamId: string, currentUserId: string): P
 // LFG & Challenge Actions
 export async function getOpenLfgRequestsAction(): Promise<LfgRequest[]> {
     return await dbGetOpenLfgRequests();
+}
+
+export async function getLfgRequestsByFacilityIdsAction(facilityIds: string[]): Promise<LfgRequest[]> {
+    return await dbGetLfgRequestsByFacilityIds(facilityIds);
+}
+
+export async function getChallengesByFacilityIdsAction(facilityIds: string[]): Promise<Challenge[]> {
+    return await dbGetChallengesByFacilityIds(facilityIds);
 }
 
 export async function createLfgRequestAction(data: Omit<LfgRequest, 'id'|'createdAt'|'status'|'interestedUserIds'>): Promise<LfgRequest> {
