@@ -33,14 +33,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import type { Facility, SiteSettings } from '@/lib/types';
-import { getFacilitiesAction, getSiteSettingsAction, deleteFacilityAction } from '@/app/actions';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Building2 } from 'lucide-react';
+import type { Facility, SiteSettings, FacilityStatus } from '@/lib/types';
+import { getFacilitiesAction, getSiteSettingsAction, deleteFacilityAction, updateFacilityAction, addNotificationAction } from '@/app/actions';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, Building2, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function AdminFacilitiesPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
@@ -50,27 +51,30 @@ export default function AdminFacilitiesPage() {
   const { toast } = useToast();
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
 
+  const fetchFacilitiesData = async () => {
+    setIsLoading(true);
+    try {
+        const [facilitiesData, settingsData] = await Promise.all([
+            getFacilitiesAction(),
+            getSiteSettingsAction()
+        ]);
+        setFacilities(facilitiesData.sort((a,b) => (a.status === 'PendingApproval' ? -1 : 1) - (b.status === 'PendingApproval' ? -1 : 1)));
+        setCurrency(settingsData.defaultCurrency);
+    } catch (error) {
+         toast({
+          title: "Error",
+          description: "Could not load facilities data.",
+          variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchInitialData = async () => {
-        setIsLoading(true);
-        try {
-            const [facilitiesData, settingsData] = await Promise.all([
-                getFacilitiesAction(),
-                getSiteSettingsAction()
-            ]);
-            setFacilities(facilitiesData);
-            setCurrency(settingsData.defaultCurrency);
-        } catch (error) {
-             toast({
-              title: "Error",
-              description: "Could not load facilities data.",
-              variant: "destructive",
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    fetchInitialData();
+    fetchFacilitiesData();
+    window.addEventListener('dataChanged', fetchFacilitiesData);
+    return () => window.removeEventListener('dataChanged', fetchFacilitiesData);
   }, [toast]);
 
   const handleDeleteFacility = async () => {
@@ -82,9 +86,7 @@ export default function AdminFacilitiesPage() {
         title: "Facility Deleted",
         description: `"${facilityToDelete.name}" and all its associated bookings, events, and reviews have been removed.`,
       });
-      // Refresh facilities list after deletion
-      const facilitiesData = await getFacilitiesAction();
-      setFacilities(facilitiesData);
+      fetchFacilitiesData();
     } catch (error) {
        toast({
         title: "Error Deleting Facility",
@@ -94,6 +96,27 @@ export default function AdminFacilitiesPage() {
     } finally {
         setIsDeleting(false);
         setFacilityToDelete(null);
+    }
+  };
+  
+  const handleStatusUpdate = async (facility: Facility, newStatus: FacilityStatus) => {
+    try {
+        const updatedFacility = await updateFacilityAction({ ...facility, status: newStatus });
+        if (updatedFacility.ownerId) {
+            await addNotificationAction(updatedFacility.ownerId, {
+                type: 'facility_approved',
+                title: `Facility ${newStatus}`,
+                message: `Your facility "${facility.name}" has been ${newStatus === 'Active' ? 'approved' : 'rejected'} by an admin.`,
+                link: `/owner/my-facilities`,
+            });
+        }
+        toast({
+            title: `Facility ${newStatus}`,
+            description: `"${facility.name}" has been ${newStatus === 'Active' ? 'approved' : 'rejected'}.`,
+        });
+        fetchFacilitiesData();
+    } catch (error) {
+         toast({ title: "Error", description: "Failed to update facility status.", variant: "destructive" });
     }
   };
 
@@ -109,6 +132,16 @@ export default function AdminFacilitiesPage() {
       return formatCurrency(minPrice, currency);
     }
     return `${formatCurrency(minPrice, currency)} - ${formatCurrency(maxPrice, currency)}`;
+  }
+  
+  const getStatusBadgeVariant = (status: FacilityStatus) => {
+      switch (status) {
+          case 'Active': return 'default';
+          case 'PendingApproval': return 'secondary';
+          case 'Rejected': return 'destructive';
+          case 'Inactive': return 'outline';
+          default: return 'outline';
+      }
   }
 
   if (isLoading) {
@@ -145,9 +178,8 @@ export default function AdminFacilitiesPage() {
                 <TableHeader>
                     <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
                     <TableHead>Location</TableHead>
-                    <TableHead>Price/hr</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-center">Rating</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -161,11 +193,14 @@ export default function AdminFacilitiesPage() {
                     </TableRow>
                     ) : (
                     facilities.map((facility) => (
-                        <TableRow key={facility.id}>
+                        <TableRow key={facility.id} className={cn(facility.status === 'PendingApproval' && 'bg-yellow-500/10 hover:bg-yellow-500/20')}>
                         <TableCell className="font-medium">{facility.name}</TableCell>
-                        <TableCell><Badge variant="outline">{facility.type}</Badge></TableCell>
                         <TableCell>{facility.location}</TableCell>
-                        <TableCell>{getPriceRange(facility)}</TableCell>
+                        <TableCell>
+                            <Badge variant={getStatusBadgeVariant(facility.status)}>
+                                {facility.status === 'PendingApproval' ? 'Pending' : facility.status}
+                            </Badge>
+                        </TableCell>
                         <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>
                         <TableCell className="text-right">
                             <DropdownMenu>
@@ -177,6 +212,17 @@ export default function AdminFacilitiesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                {facility.status === 'PendingApproval' && (
+                                    <>
+                                        <DropdownMenuItem onClick={() => handleStatusUpdate(facility, 'Active')}>
+                                            <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> Approve
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleStatusUpdate(facility, 'Rejected')} className="text-destructive focus:text-destructive">
+                                            <XCircle className="mr-2 h-4 w-4"/> Reject
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                    </>
+                                )}
                                 <DropdownMenuItem asChild>
                                   <Link href={`/facilities/${facility.id}`}><Eye className="mr-2 h-4 w-4" /> View Public Page</Link>
                                 </DropdownMenuItem>

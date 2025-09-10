@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice, UserRole, MaintenanceSchedule, UserProfile } from '@/lib/types';
+import type { Facility, Sport, Amenity, RentalEquipment, FacilityOperatingHours, SiteSettings, SportPrice, UserRole, MaintenanceSchedule, UserProfile, FacilityStatus } from '@/lib/types';
 import { getSiteSettingsAction, addFacilityAction, updateFacilityAction, getUsersAction, getAllSportsAction, getAllAmenitiesAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,6 +67,7 @@ const facilityFormSchema = z.object({
   availableEquipment: z.array(rentalEquipmentSchema).optional().default([]),
   maintenanceSchedules: z.array(maintenanceScheduleSchema).optional().default([]),
   ownerId: z.string().optional(),
+  status: z.enum(['Active', 'PendingApproval', 'Rejected', 'Inactive']),
 }).refine(data => {
     const selectedSportIds = new Set(data.sports);
     const pricedSportIds = new Set(data.sportPrices.map(p => p.sportId));
@@ -143,6 +144,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
       availableEquipment: initialData.availableEquipment || [],
       maintenanceSchedules: initialData.maintenanceSchedules || [],
       ownerId: initialData.ownerId || 'no-owner',
+      status: initialData.status || 'Active',
     } : {
       name: '', type: 'Court', address: '', city: 'Pune', location: '', description: '',
       sports: [], sportPrices: [], amenities: [], operatingHours: defaultOperatingHours,
@@ -150,6 +152,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
       availableEquipment: [],
       maintenanceSchedules: [],
       ownerId: ownerId || 'no-owner',
+      status: currentUserRole === 'Admin' ? 'Active' : 'PendingApproval',
     },
   });
   
@@ -213,14 +216,14 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
         window.dispatchEvent(new CustomEvent('dataChanged'));
 
         toast({
-            title: initialData ? "Facility Updated" : "Facility Created",
+            title: initialData ? "Facility Updated" : (currentUserRole === 'Admin' ? "Facility Created" : "Facility Submitted for Approval"),
             description: `${data.name} has been successfully saved.`,
         });
         
         if (onSubmitSuccess) {
             onSubmitSuccess();
         } else {
-            router.push('/admin/facilities');
+            router.push(currentUserRole === 'Admin' ? '/admin/facilities' : '/owner/my-facilities');
         }
     } catch (error) {
         console.error("Error saving facility:", error);
@@ -654,7 +657,7 @@ export function FacilityAdminForm({ initialData, onSubmitSuccess, ownerId, curre
           </Button>
           <Button type="submit" disabled={isLoading}>
             {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-            {initialData ? 'Save Changes' : 'Create Facility'}
+            {initialData ? 'Save Changes' : (isOwner ? 'Submit for Approval' : 'Create Facility')}
           </Button>
         </div>
       </form>

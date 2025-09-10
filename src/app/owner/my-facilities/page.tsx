@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import type { Facility, SiteSettings, UserProfile } from '@/lib/types';
+import type { Facility, SiteSettings, UserProfile, FacilityStatus } from '@/lib/types';
 import { getSiteSettingsAction, getFacilitiesByOwnerIdAction } from '@/app/actions'; 
 import { PlusCircle, MoreHorizontal, Edit, Eye, Building2, AlertCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -100,6 +100,16 @@ export default function OwnerFacilitiesPage() {
     return `${formatCurrency(minPrice, currency)} - ${formatCurrency(maxPrice, currency)}`;
   }
 
+  const getStatusBadgeVariant = (status: FacilityStatus) => {
+      switch (status) {
+          case 'Active': return 'default';
+          case 'PendingApproval': return 'secondary';
+          case 'Rejected': return 'destructive';
+          case 'Inactive': return 'outline';
+          default: return 'outline';
+      }
+  }
+
 
   if (isLoading) {
     return (
@@ -146,7 +156,7 @@ export default function OwnerFacilitiesPage() {
                     <TableHeader>
                         <TableRow>
                         <TableHead>Name</TableHead>
-                        <TableHead>Type</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>Price/hr</TableHead>
                         <TableHead className="text-center">Rating</TableHead>
@@ -157,7 +167,11 @@ export default function OwnerFacilitiesPage() {
                         {facilities.map((facility) => (
                             <TableRow key={facility.id}>
                             <TableCell className="font-medium">{facility.name}</TableCell>
-                            <TableCell><Badge variant="outline">{facility.type}</Badge></TableCell>
+                            <TableCell>
+                                <Badge variant={getStatusBadgeVariant(facility.status)}>
+                                    {facility.status === 'PendingApproval' ? 'Pending' : facility.status}
+                                </Badge>
+                            </TableCell>
                             <TableCell>{facility.location}</TableCell>
                             <TableCell>{getPriceRange(facility)}</TableCell>
                             <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>

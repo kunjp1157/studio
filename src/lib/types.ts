@@ -100,6 +100,8 @@ export interface SportPrice {
   pricingModel: PricingModel;
 }
 
+export type FacilityStatus = 'Active' | 'PendingApproval' | 'Rejected' | 'Inactive';
+
 export interface Facility {
   id: string;
   name:string;
@@ -123,6 +125,7 @@ export interface Facility {
   ownerId?: string;
   blockedSlots?: BlockedSlot[];
   maintenanceSchedules?: MaintenanceSchedule[];
+  status: FacilityStatus;
 }
 
 export interface TimeSlot {
