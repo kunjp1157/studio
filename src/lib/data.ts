@@ -660,20 +660,47 @@ export async function deleteMembershipPlan(id: string): Promise<void> {
 // Pricing Rules
 export async function getAllPricingRules(): Promise<PricingRule[]> {
     const [rows] = await query('SELECT * FROM pricing_rules');
-    return (rows as any[]).map(row => ({...row, daysOfWeek: JSON.parse(row.daysOfWeek || 'null'), timeRange: JSON.parse(row.timeRange || 'null'), dateRange: JSON.parse(row.dateRange || 'null') }));
+    return (rows as any[]).map(row => ({...row, daysOfWeek: JSON.parse(row.daysOfWeek || 'null'), timeRange: JSON.parse(row.timeRange || 'null'), dateRange: JSON.parse(row.dateRange || 'null'), facilityIds: JSON.parse(row.facilityIds || 'null') }));
 }
 export async function getPricingRuleById(id: string): Promise<PricingRule | undefined> {
     const [rows] = await query('SELECT * FROM pricing_rules WHERE id = ?', [id]);
     if ((rows as any[]).length === 0) return undefined;
     const row = (rows as any)[0];
-    return { ...row, daysOfWeek: JSON.parse(row.daysOfWeek || 'null'), timeRange: JSON.parse(row.timeRange || 'null'), dateRange: JSON.parse(row.dateRange || 'null') };
+    return { ...row, daysOfWeek: JSON.parse(row.daysOfWeek || 'null'), timeRange: JSON.parse(row.timeRange || 'null'), dateRange: JSON.parse(row.dateRange || 'null'), facilityIds: JSON.parse(row.facilityIds || 'null') };
 }
-export async function addPricingRuleAction(data: Omit<PricingRule, 'id'>): Promise<void> {
-    const newRule = { id: `pr-${uuidv4()}`, ...data, daysOfWeek: JSON.stringify(data.daysOfWeek || null), timeRange: JSON.stringify(data.timeRange || null), dateRange: JSON.stringify(data.dateRange || null) };
+export async function getPricingRulesByFacilityIds(facilityIds: string[]): Promise<PricingRule[]> {
+    if (facilityIds.length === 0) return [];
+    
+    // This is a bit tricky in SQL. We'll fetch all rules that are either global (facilityIds is NULL)
+    // or specifically linked to one of the owner's facilities.
+    const [rows] = await query(
+        `SELECT * FROM pricing_rules WHERE facilityIds IS NULL OR JSON_OVERLAPS(facilityIds, ?)`,
+        [JSON.stringify(facilityIds)]
+    );
+
+    return (rows as any[]).map((row: any) => {
+        const ruleFacilityIds = JSON.parse(row.facilityIds || 'null');
+        // If the rule has facility IDs, we must ensure there's an intersection
+        if (ruleFacilityIds && !ruleFacilityIds.some((id: string) => facilityIds.includes(id))) {
+            return null; // This rule doesn't apply, filter it out
+        }
+        return {
+            ...row, 
+            daysOfWeek: JSON.parse(row.daysOfWeek || 'null'), 
+            timeRange: JSON.parse(row.timeRange || 'null'), 
+            dateRange: JSON.parse(row.dateRange || 'null'),
+            facilityIds: ruleFacilityIds,
+        };
+    }).filter((rule: PricingRule | null): rule is PricingRule => rule !== null);
+}
+
+
+export async function addPricingRule(data: Omit<PricingRule, 'id'>): Promise<void> {
+    const newRule = { id: `pr-${uuidv4()}`, ...data, daysOfWeek: JSON.stringify(data.daysOfWeek || null), timeRange: JSON.stringify(data.timeRange || null), dateRange: JSON.stringify(data.dateRange || null), facilityIds: JSON.stringify(data.facilityIds || null) };
     await query('INSERT INTO pricing_rules SET ?', newRule);
 }
-export async function updatePricingRuleAction(data: PricingRule): Promise<void> {
-    const payload = { ...data, daysOfWeek: JSON.stringify(data.daysOfWeek || null), timeRange: JSON.stringify(data.timeRange || null), dateRange: JSON.stringify(data.dateRange || null) };
+export async function updatePricingRule(data: PricingRule): Promise<void> {
+    const payload = { ...data, daysOfWeek: JSON.stringify(data.daysOfWeek || null), timeRange: JSON.stringify(data.timeRange || null), dateRange: JSON.stringify(data.dateRange || null), facilityIds: JSON.stringify(data.facilityIds || null) };
     await query('UPDATE pricing_rules SET ? WHERE id = ?', [payload, data.id]);
 }
 export async function deletePricingRule(id: string): Promise<void> {

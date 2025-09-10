@@ -1,0 +1,243 @@
+
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { PageTitle } from '@/components/shared/PageTitle';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import type { PricingRule, SiteSettings, UserProfile, Facility } from '@/lib/types';
+import { deletePricingRule, getSiteSettingsAction, getPricingRulesByFacilityIdsAction, getFacilitiesByOwnerIdAction } from '@/app/actions';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, DollarSign, CheckCircle, XCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { format, parseISO } from 'date-fns';
+import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+
+export default function OwnerPricingPage() {
+  const [rules, setRules] = useState<PricingRule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [ruleToDelete, setRuleToDelete] = useState<PricingRule | null>(null);
+  const { toast } = useToast();
+  const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+      setCurrentUser(JSON.parse(activeUser));
+    }
+  }, []);
+
+  const fetchPricingData = useCallback(async () => {
+    if (!currentUser) return;
+    setIsLoading(true);
+    try {
+      const ownerFacilities = await getFacilitiesByOwnerIdAction(currentUser.id);
+      const facilityIds = ownerFacilities.map(f => f.id);
+      
+      const [rulesData, settingsData] = await Promise.all([
+        getPricingRulesByFacilityIdsAction(facilityIds),
+        getSiteSettingsAction()
+      ]);
+      
+      setRules(rulesData);
+      setCurrency(settingsData.defaultCurrency);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not load pricing rules data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUser, toast]);
+
+  useEffect(() => {
+    fetchPricingData();
+  }, [currentUser, fetchPricingData]);
+
+  const handleDeleteRule = async () => {
+    if (!ruleToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deletePricingRule(ruleToDelete.id);
+      toast({
+        title: "Pricing Rule Deleted",
+        description: `"${ruleToDelete.name}" has been successfully deleted.`,
+      });
+      fetchPricingData(); // Refetch data
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not delete pricing rule.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setRuleToDelete(null);
+    }
+  };
+
+  const formatAdjustment = (rule: PricingRule, currentCurrency: SiteSettings['defaultCurrency']) => {
+    switch (rule.adjustmentType) {
+      case 'percentage_increase': return `+${rule.value}%`;
+      case 'percentage_decrease': return `-${rule.value}%`;
+      case 'fixed_increase': return `+${formatCurrency(rule.value, currentCurrency)}`;
+      case 'fixed_decrease': return `-${formatCurrency(rule.value, currentCurrency)}`;
+      case 'fixed_price': return `Set to ${formatCurrency(rule.value, currentCurrency)}`;
+      default: return 'N/A';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <PageTitle title="Dynamic Pricing Management" description="Configure and manage pricing rules for your facilities." />
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center"><DollarSign className="mr-2 h-6 w-6 text-primary" />Loading Rules...</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-center min-h-[300px]">
+            <LoadingSpinner size={48} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <PageTitle title="Your Pricing Rules" description="Configure rules to dynamically adjust prices for your facilities." />
+      <Card className="shadow-lg">
+        <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <CardTitle className="flex items-center"><DollarSign className="mr-2 h-6 w-6 text-primary" />Your Pricing Rules</CardTitle>
+            <CardDescription>Define rules to dynamically adjust your facility prices based on various conditions.</CardDescription>
+          </div>
+          <Link href="/owner/pricing/new">
+            <Button><PlusCircle className="mr-2 h-4 w-4" /> Add New Rule</Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Adjustment</TableHead>
+                  <TableHead>Conditions</TableHead>
+                  <TableHead className="text-center">Active</TableHead>
+                  <TableHead className="text-center">Priority</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rules.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      No pricing rules found. Add one to get started!
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rules.map((rule) => (
+                    <TableRow key={rule.id}>
+                      <TableCell className="font-medium">{rule.name}</TableCell>
+                      <TableCell>{currency ? formatAdjustment(rule, currency) : <Skeleton className="h-5 w-24" />}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {rule.daysOfWeek && rule.daysOfWeek.length > 0 && <div>Days: {rule.daysOfWeek.join(', ')}</div>}
+                        {rule.timeRange && <div>Time: {rule.timeRange.start} - {rule.timeRange.end}</div>}
+                        {rule.dateRange && <div>Date: {format(parseISO(rule.dateRange.start), 'MMM d')} - {format(parseISO(rule.dateRange.end), 'MMM d, yyyy')}</div>}
+                        {!rule.daysOfWeek && !rule.timeRange && !rule.dateRange && <span className="italic">Always Applies</span>}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {rule.isActive ? 
+                          <CheckCircle className="h-5 w-5 text-green-500 mx-auto" /> : 
+                          <XCircle className="h-5 w-5 text-red-500 mx-auto" />}
+                      </TableCell>
+                      <TableCell className="text-center">{rule.priority ?? 'N/A'}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/owner/pricing/${rule.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                              onClick={() => setRuleToDelete(rule)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {ruleToDelete && (
+        <AlertDialog open={!!ruleToDelete} onOpenChange={(open) => !open && setRuleToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the pricing rule "{ruleToDelete.name}".
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setRuleToDelete(null)} disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteRule} 
+                disabled={isDeleting} 
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              >
+                {isDeleting ? <LoadingSpinner size={16} className="mr-2" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                {isDeleting ? 'Deleting...' : 'Yes, delete rule'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </div>
+  );
+}

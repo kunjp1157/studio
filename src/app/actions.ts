@@ -19,6 +19,8 @@ import {
     getAllMembershipPlans,
     dbGetMembershipPlanById,
     getAllPricingRules,
+    getPricingRuleById,
+    getPricingRulesByFacilityIds as dbGetPricingRulesByFacilityIds,
     getAllPromotionRules,
     dbGetNotificationsForUser,
     dbMarkNotificationAsRead,
@@ -61,6 +63,8 @@ import {
     dbAddMembershipPlan,
     dbUpdateMembershipPlan,
     deleteMembershipPlan,
+    addPricingRule,
+    updatePricingRule,
     getLfgRequestsByFacilityIds as dbGetLfgRequestsByFacilityIds,
     getChallengesByFacilityIds as dbGetChallengesByFacilityIds,
 } from '@/lib/data';
@@ -206,6 +210,23 @@ export async function updateMembershipPlanAction(data: MembershipPlan): Promise<
 export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
     return await getAllPricingRules();
 }
+
+export async function getPricingRulesByFacilityIdsAction(facilityIds: string[]): Promise<PricingRule[]> {
+    return await dbGetPricingRulesByFacilityIds(facilityIds);
+}
+
+export async function addPricingRuleAction(ruleData: Omit<PricingRule, 'id'>): Promise<void> {
+    await addPricingRule(ruleData);
+    revalidatePath('/admin/pricing');
+    revalidatePath('/owner/pricing');
+}
+
+export async function updatePricingRuleAction(ruleData: PricingRule): Promise<void> {
+    await updatePricingRule(ruleData);
+    revalidatePath('/admin/pricing');
+    revalidatePath('/owner/pricing');
+}
+
 
 export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
     return await getAllPromotionRules();

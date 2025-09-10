@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, LayoutDashboard, Ticket, CalendarClock, BarChart2, Settings, LogOut, HandCoins, CalendarDays, Swords, Dices } from 'lucide-react';
+import { Building, LayoutDashboard, Ticket, CalendarClock, BarChart2, Settings, LogOut, HandCoins, CalendarDays, Swords, Dices, DollarSign } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import type { UserProfile } from '@/lib/types';
@@ -138,6 +138,14 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   <SidebarMenuButton isActive={isActive('/owner/availability')} tooltip="Manage Availability">
                     <CalendarClock />
                     <span>Availability</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <Link href="/owner/pricing">
+                  <SidebarMenuButton isActive={isActive('/owner/pricing')} tooltip="Pricing Rules">
+                    <DollarSign />
+                    <span>Pricing Rules</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>

@@ -46,6 +46,7 @@ export interface PricingRule {
   id: string;
   name: string;
   description?: string;
+  facilityIds?: string[];
   daysOfWeek?: ('Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun')[];
   timeRange?: { start: string; end: string }; 
   dateRange?: { start: string; end: string }; 

@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { PricingRule } from '@/lib/types';
-import { addPricingRuleAction, updatePricingRuleAction } from '@/app/actions';
+import type { PricingRule, Facility, UserProfile } from '@/lib/types';
+import { addPricingRuleAction, updatePricingRuleAction, getFacilitiesByOwnerIdAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Save, ArrowLeft, DollarSign, Percent, CalendarDays, Clock, AlertTriangle, Tag, Trash2, PlusCircle } from 'lucide-react';
+import { Save, ArrowLeft, DollarSign, Percent, CalendarDays, Clock, AlertTriangle, Tag, Trash2, PlusCircle, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 
@@ -43,6 +43,7 @@ const pricingRuleFormSchema = z.object({
   timeRangeEnd: z.string().optional().refine(val => !val || timeRegex.test(val), { message: "Invalid end time (HH:MM)"}),
   dateRangeStart: z.date().optional(),
   dateRangeEnd: z.date().optional(),
+  facilityIds: z.array(z.string()).optional(), // New field for owner form
 }).refine(data => {
     if (data.timeRangeStart && !data.timeRangeEnd) return false;
     if (!data.timeRangeStart && data.timeRangeEnd) return false;
@@ -63,12 +64,26 @@ const days: ('Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun')[] = ['Mon', 
 
 interface PricingRuleAdminFormProps {
   initialData?: PricingRule | null;
+  isOwnerForm?: boolean;
 }
 
-export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps) {
+export function PricingRuleAdminForm({ initialData, isOwnerForm = false }: PricingRuleAdminFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [ownerFacilities, setOwnerFacilities] = useState<Facility[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const activeUser = sessionStorage.getItem('activeUser');
+    if (activeUser) {
+      const user = JSON.parse(activeUser);
+      setCurrentUser(user);
+      if (isOwnerForm) {
+        getFacilitiesByOwnerIdAction(user.id).then(setOwnerFacilities);
+      }
+    }
+  }, [isOwnerForm]);
 
   const form = useForm<PricingRuleFormValues>({
     resolver: zodResolver(pricingRuleFormSchema),
@@ -80,6 +95,7 @@ export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps)
       timeRangeEnd: initialData.timeRange?.end ?? '',
       dateRangeStart: initialData.dateRange?.start ? parseISO(initialData.dateRange.start) : undefined,
       dateRangeEnd: initialData.dateRange?.end ? parseISO(initialData.dateRange.end) : undefined,
+      facilityIds: initialData.facilityIds ?? [],
     } : {
       name: '',
       description: '',
@@ -92,6 +108,7 @@ export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps)
       timeRangeEnd: '',
       dateRangeStart: undefined,
       dateRangeEnd: undefined,
+      facilityIds: [],
     },
   });
 
@@ -108,6 +125,7 @@ export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps)
       daysOfWeek: data.daysOfWeek?.length ? data.daysOfWeek : undefined,
       timeRange: data.timeRangeStart && data.timeRangeEnd ? { start: data.timeRangeStart, end: data.timeRangeEnd } : undefined,
       dateRange: data.dateRangeStart && data.dateRangeEnd ? { start: data.dateRangeStart.toISOString().split('T')[0], end: data.dateRangeEnd.toISOString().split('T')[0] } : undefined,
+      facilityIds: data.facilityIds?.length ? data.facilityIds : undefined,
     };
 
     try {
@@ -120,7 +138,7 @@ export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps)
         title: initialData ? "Pricing Rule Updated" : "Pricing Rule Created",
         description: `Rule "${payload.name}" has been successfully saved.`,
       });
-      router.push('/admin/pricing');
+      router.push(isOwnerForm ? '/owner/pricing' : '/admin/pricing');
     } catch (error) {
       toast({
         title: "Error",
@@ -148,6 +166,37 @@ export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps)
             <CardDescription>Define the conditions and adjustments for this pricing rule.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {isOwnerForm && (
+                 <FormField control={form.control} name="facilityIds" render={() => (
+                    <FormItem>
+                        <FormLabel className="flex items-center"><Building2 className="mr-2 h-4 w-4"/>Apply to Facilities</FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-2 border rounded-md">
+                        {ownerFacilities.map(facility => (
+                            <FormField
+                            key={facility.id}
+                            control={form.control}
+                            name="facilityIds"
+                            render={({ field }) => (
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl><Checkbox 
+                                    checked={field.value?.includes(facility.id)}
+                                    onCheckedChange={checked => {
+                                        return checked
+                                            ? field.onChange([...(field.value || []), facility.id])
+                                            : field.onChange(field.value?.filter(id => id !== facility.id));
+                                    }}
+                                /></FormControl>
+                                <FormLabel className="font-normal text-sm">{facility.name}</FormLabel>
+                                </FormItem>
+                            )}
+                            />
+                        ))}
+                        </div>
+                        <FormDescription>Select which of your facilities this rule applies to. Leave blank to apply to all.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+            )}
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem><FormLabel>Rule Name</FormLabel><FormControl><Input placeholder="e.g., Weekend Evening Surge" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
@@ -276,7 +325,7 @@ export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps)
         </Card>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <Button type="button" variant="outline" onClick={() => router.push('/admin/pricing')} disabled={isLoading}>
+          <Button type="button" variant="outline" onClick={() => router.push(isOwnerForm ? '/owner/pricing' : '/admin/pricing')} disabled={isLoading}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
