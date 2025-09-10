@@ -638,7 +638,7 @@ export async function getAllMembershipPlans(): Promise<MembershipPlan[]> {
     const [rows] = await query('SELECT * FROM membership_plans');
     return (rows as any[]).map(row => ({...row, benefits: JSON.parse(row.benefits || '[]')}));
 }
-export async function getMembershipPlanById(id: string): Promise<MembershipPlan | undefined> {
+export async function dbGetMembershipPlanById(id: string): Promise<MembershipPlan | undefined> {
     const [rows] = await query('SELECT * FROM membership_plans WHERE id = ?', [id]);
     if ((rows as any[]).length === 0) return undefined;
     const row = (rows as any)[0];
@@ -707,13 +707,3 @@ export async function deletePromotionRule(id: string): Promise<void> {
 // Blog Posts (kept as simple mocks for now as it's not a core DB feature)
 export const getAllBlogPosts = async (): Promise<BlogPost[]> => [];
 export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => undefined;
-
-// Mock user retrieval for components that need it without full auth
-export const getUserById = (userId: string): UserProfile | undefined => {
-  // In a real app, this would be `dbGetUserById(userId)`
-  // For now, we return a mock or undefined
-  return undefined;
-};
-
-
-    

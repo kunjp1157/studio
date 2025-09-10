@@ -6,14 +6,13 @@ import { PageTitle } from '@/components/shared/PageTitle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, Building, Ticket, DollarSign, Users, Construction } from 'lucide-react';
 import type { SiteSettings, Booking, Facility, UserProfile } from '@/lib/types';
-import { getSiteSettingsAction, getFacilitiesByOwnerIdAction, getAllBookingsAction } from '@/app/actions';
+import { getSiteSettingsAction, getFacilitiesByOwnerIdAction, getAllBookingsAction, getUsersAction } from '@/app/actions';
 import { formatCurrency } from '@/lib/utils';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getMonth, getYear, parseISO, isAfter, format, subMonths } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getUserById } from '@/lib/data';
 import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import type { ChartConfig } from '@/components/ui/chart';
 
@@ -28,6 +27,7 @@ export default function OwnerDashboardPage() {
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
@@ -51,14 +51,16 @@ export default function OwnerDashboardPage() {
     
     setIsLoading(true);
     try {
-        const [settings, ownerFacilities, allBookings] = await Promise.all([
+        const [settings, ownerFacilities, allBookings, allUsers] = await Promise.all([
             getSiteSettingsAction(),
             getFacilitiesByOwnerIdAction(currentUser.id),
-            getAllBookingsAction()
+            getAllBookingsAction(),
+            getUsersAction()
         ]);
         
         setCurrency(settings.defaultCurrency);
         setFacilities(ownerFacilities);
+        setUsers(allUsers);
 
         const facilityIds = ownerFacilities.map(f => f.id);
         const ownerBookings = allBookings.filter(b => facilityIds.includes(b.facilityId));
@@ -107,10 +109,15 @@ export default function OwnerDashboardPage() {
     const upcoming = bookings
         .filter(b => b.status === 'Confirmed' && isAfter(parseISO(b.date), new Date()))
         .sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
-        .slice(0, 5);
+        .slice(0, 5)
+        .map(booking => {
+            const user = users.find(u => u.id === booking.userId);
+            return { ...booking, user };
+        });
+
 
     return { ownerStats: stats, facilityUsageData: usageData, upcomingBookings: upcoming };
-  }, [bookings]);
+  }, [bookings, users]);
 
   return (
     <div className="space-y-8">
@@ -209,16 +216,15 @@ export default function OwnerDashboardPage() {
                                 </TableRow>
                             ) : (
                                 upcomingBookings.map(booking => {
-                                    const user = getUserById(booking.userId);
                                     return (
                                         <TableRow key={booking.id}>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-8 w-8 hidden sm:flex">
-                                                        <AvatarImage src={user?.profilePictureUrl} />
-                                                        <AvatarFallback>{user?.name.charAt(0) || 'U'}</AvatarFallback>
+                                                        <AvatarImage src={booking.user?.profilePictureUrl} />
+                                                        <AvatarFallback>{booking.user?.name.charAt(0) || 'U'}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="font-medium truncate">{user?.name || 'Unknown'}</span>
+                                                    <span className="font-medium truncate">{booking.user?.name || 'Unknown'}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>{format(parseISO(booking.date), 'MMM d, yy')}</TableCell>
