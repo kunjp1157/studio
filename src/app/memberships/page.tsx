@@ -99,6 +99,9 @@ export default function MembershipsPage() {
         toast({ title: "Login Required", description: "Please log in to change your membership.", variant: "destructive" });
         return;
     }
+    if (currentUser.membershipLevel === plan.name) {
+        return; // Do nothing if it's the current plan
+    }
     setSelectedPlanForPayment(plan);
     setIsPaymentDialogOpen(true);
   };
