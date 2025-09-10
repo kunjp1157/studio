@@ -120,20 +120,6 @@ export default function AdminFacilitiesPage() {
     }
   };
 
-  const getPriceRange = (facility: Facility) => {
-    if (!currency) return <Skeleton className="h-5 w-24" />;
-    if (!facility.sportPrices || facility.sportPrices.length === 0) return 'N/A';
-    
-    const prices = facility.sportPrices.map(p => p.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-
-    if (minPrice === maxPrice) {
-      return formatCurrency(minPrice, currency);
-    }
-    return `${formatCurrency(minPrice, currency)} - ${formatCurrency(maxPrice, currency)}`;
-  }
-  
   const getStatusBadgeVariant = (status: FacilityStatus) => {
       switch (status) {
           case 'Active': return 'default';
@@ -196,7 +182,11 @@ export default function AdminFacilitiesPage() {
                         <TableCell className="font-medium">{facility.name}</TableCell>
                         <TableCell>{facility.location}</TableCell>
                         <TableCell>
-                            <Badge variant={getStatusBadgeVariant(facility.status)}>
+                            <Badge variant={getStatusBadgeVariant(facility.status)} className={cn(
+                                facility.status === 'Active' && 'bg-green-500/20 text-green-700 border-green-500/50',
+                                facility.status === 'PendingApproval' && 'bg-yellow-500/20 text-yellow-700 border-yellow-500/50',
+                                facility.status === 'Rejected' && 'bg-red-500/20 text-red-700 border-red-500/50'
+                            )}>
                                 {facility.status === 'PendingApproval' ? 'Pending' : facility.status}
                             </Badge>
                         </TableCell>
