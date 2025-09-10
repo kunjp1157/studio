@@ -520,13 +520,11 @@ export async function dbUnblockTimeSlot(facilityId: string, ownerId: string, dat
     return false;
 }
 
-// Site Settings
 export async function updateSiteSettings(newSettings: SiteSettings): Promise<SiteSettings> {
     siteSettings = { ...siteSettings, ...newSettings };
     return siteSettings;
 }
 
-// Event Registration
 export async function registerForEvent(eventId: string): Promise<boolean> {
   const event = events.find(e => e.id === eventId);
   if (event && (!event.maxParticipants || event.registeredParticipants < event.maxParticipants)) {
@@ -718,5 +716,3 @@ export async function calculateDynamicPrice(
 
 // Initial data seeding call
 seedData();
-
-export { dbGetAllUsers };
