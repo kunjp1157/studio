@@ -265,6 +265,17 @@ export async function dbAddBooking(bookingData: Booking): Promise<Booking> {
     return bookingData;
 }
 
+export async function addNotification(userId: string, data: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<AppNotification> {
+    const newNotification: AppNotification = {
+      ...data,
+      id: `notif-${uuidv4()}`,
+      userId,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    };
+    notifications.unshift(newNotification); // Add to the beginning of the list
+    return newNotification;
+}
 export async function dbAddNotification(userId: string, data: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<AppNotification> {
     const newNotification: AppNotification = {
       ...data,
@@ -366,6 +377,14 @@ export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
 }
 
 export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex !== -1) {
+    users[userIndex] = { ...users[userIndex], ...updates };
+    return users[userIndex];
+  }
+  return undefined;
+}
+export async function updateUser(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
   const userIndex = users.findIndex(u => u.id === userId);
   if (userIndex !== -1) {
     users[userIndex] = { ...users[userIndex], ...updates };
@@ -700,4 +719,4 @@ export async function calculateDynamicPrice(
 // Initial data seeding call
 seedData();
 
-export { dbGetAllUsers as _dbGetAllUsers };
+export { dbGetAllUsers };

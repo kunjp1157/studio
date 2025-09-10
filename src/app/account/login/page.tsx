@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { getUsersAction } from '@/app/actions';
-import type { UserProfile } from '@/lib/types';
 import { Heart, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
