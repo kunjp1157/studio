@@ -58,7 +58,7 @@ export default function AdminFacilitiesPage() {
             getFacilitiesAction(),
             getSiteSettingsAction()
         ]);
-        setFacilities(facilitiesData.sort((a,b) => (a.status === 'PendingApproval' ? -1 : 1) - (b.status === 'PendingApproval' ? -1 : 1)));
+        setFacilities(facilitiesData.sort((a,b) => (a.status === 'PendingApproval' ? -1 : 1) - (b.status === 'PendingApproval' ? -1 : 1) || new Date(b.id.split('-').pop()!).getTime() - new Date(a.id.split('-').pop()!).getTime()));
         setCurrency(settingsData.defaultCurrency);
     } catch (error) {
          toast({
@@ -101,7 +101,7 @@ export default function AdminFacilitiesPage() {
   
   const handleStatusUpdate = async (facility: Facility, newStatus: FacilityStatus) => {
     try {
-        const updatedFacility = await updateFacilityAction({ ...facility, status: newStatus });
+        const updatedFacility = await updateFacilityAction({ ...facility, id: facility.id, status: newStatus });
         if (updatedFacility.ownerId) {
             await addNotificationAction(updatedFacility.ownerId, {
                 type: 'facility_approved',
@@ -202,41 +202,41 @@ export default function AdminFacilitiesPage() {
                         </TableCell>
                         <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>
                         <TableCell className="text-right">
+                           {facility.status === 'PendingApproval' ? (
+                                <div className="flex gap-2 justify-end">
+                                    <Button size="sm" variant="default" onClick={() => handleStatusUpdate(facility, 'Active')} className="bg-green-500 hover:bg-green-600">
+                                        <CheckCircle className="mr-1 h-4 w-4"/> Approve
+                                    </Button>
+                                    <Button size="sm" variant="destructive" onClick={() => handleStatusUpdate(facility, 'Rejected')}>
+                                        <XCircle className="mr-1 h-4 w-4"/> Reject
+                                    </Button>
+                                </div>
+                           ) : (
                             <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                {facility.status === 'PendingApproval' && (
-                                    <>
-                                        <DropdownMenuItem onClick={() => handleStatusUpdate(facility, 'Active')}>
-                                            <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> Approve
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleStatusUpdate(facility, 'Rejected')} className="text-destructive focus:text-destructive">
-                                            <XCircle className="mr-2 h-4 w-4"/> Reject
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                    </>
-                                )}
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/facilities/${facility.id}`}><Eye className="mr-2 h-4 w-4" /> View Public Page</Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/admin/facilities/${facility.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                                onClick={() => setFacilityToDelete(facility)}
-                                >
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/facilities/${facility.id}`}><Eye className="mr-2 h-4 w-4" /> View Public Page</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/admin/facilities/${facility.id}/edit`}><Edit className="mr-2 h-4 w-4" /> Edit</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem 
+                                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                    onClick={() => setFacilityToDelete(facility)}
+                                    >
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
                             </DropdownMenu>
+                           )}
                         </TableCell>
                         </TableRow>
                     ))
