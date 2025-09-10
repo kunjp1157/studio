@@ -4,8 +4,7 @@
 import { useState, useEffect } from 'react';
 import { PageTitle } from '@/components/shared/PageTitle';
 import type { SportEvent, UserProfile } from '@/lib/types';
-import { getFacilitiesByOwnerIdAction } from '@/app/actions';
-import { getEventsByFacilityIds } from '@/lib/data';
+import { getFacilitiesByOwnerIdAction, getEventsByFacilityIdsAction } from '@/app/actions';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +35,7 @@ export default function OwnerEventsPage() {
       try {
         const ownerFacilities = await getFacilitiesByOwnerIdAction(currentUser.id);
         const facilityIds = ownerFacilities.map(f => f.id);
-        const ownerEvents = await getEventsByFacilityIds(facilityIds);
+        const ownerEvents = await getEventsByFacilityIdsAction(facilityIds);
         setEvents(ownerEvents.sort((a,b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime()));
       } catch (error) {
         toast({ title: "Error", description: "Could not fetch events for your facilities.", variant: "destructive" });

@@ -14,6 +14,7 @@ import {
     dbGetFacilitiesByOwnerId,
     getEventById,
     getAllEvents,
+    getEventsByFacilityIds as dbGetEventsByFacilityIds,
     getAllMembershipPlans,
     getMembershipPlanById as dbGetMembershipPlanById,
     getAllPricingRules,
@@ -174,6 +175,10 @@ export async function getAllEventsAction(): Promise<SportEvent[]> {
 
 export async function getEventByIdAction(id: string): Promise<SportEvent | undefined> {
     return await getEventById(id);
+}
+
+export async function getEventsByFacilityIdsAction(facilityIds: string[]): Promise<SportEvent[]> {
+    return await dbGetEventsByFacilityIds(facilityIds);
 }
 
 export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
