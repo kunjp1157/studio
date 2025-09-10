@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -166,8 +166,7 @@ export default function AdminFacilitiesPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-center">Rating</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -190,10 +189,9 @@ export default function AdminFacilitiesPage() {
                                 {facility.status === 'PendingApproval' ? 'Pending' : facility.status}
                             </Badge>
                         </TableCell>
-                        <TableCell className="text-center">{facility.rating.toFixed(1)}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell>
                            {facility.status === 'PendingApproval' ? (
-                                <div className="flex gap-2 justify-end">
+                                <div className="flex gap-2 justify-start">
                                     <Button size="sm" variant="default" onClick={() => handleStatusUpdate(facility, 'Active')} className="bg-green-500 hover:bg-green-600">
                                         <CheckCircle className="mr-1 h-4 w-4"/> Approve
                                     </Button>
