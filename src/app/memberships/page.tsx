@@ -132,25 +132,29 @@ export default function MembershipsPage() {
     setIsProcessingPayment(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const updatedUser = await updateUserAction(currentUser.id, { membershipLevel: selectedPlanForPayment.name as 'Basic' | 'Premium' | 'Pro' });
-    
-    if (updatedUser) {
-        setCurrentUser(updatedUser);
-        sessionStorage.setItem('activeUser', JSON.stringify(updatedUser)); // Keep session storage in sync
-        window.dispatchEvent(new Event('userChanged')); // Notify other components
+    try {
+        const updatedUser = await updateUserAction(currentUser.id, { membershipLevel: selectedPlanForPayment.name as 'Basic' | 'Premium' | 'Pro' });
+        
+        if (updatedUser) {
+            setCurrentUser(updatedUser);
+            sessionStorage.setItem('activeUser', JSON.stringify(updatedUser)); // Keep session storage in sync
+            window.dispatchEvent(new Event('userChanged')); // Notify other components
 
-        toast({
-            title: "Membership Updated!",
-            description: `You are now on the ${selectedPlanForPayment.name} plan.`,
-            className: 'bg-green-500 text-white'
-        });
-    } else {
+            toast({
+                title: "Membership Updated!",
+                description: `You are now on the ${selectedPlanForPayment.name} plan.`,
+                className: 'bg-green-500 text-white'
+            });
+        } else {
+            throw new Error("User update failed.");
+        }
+    } catch (error) {
         toast({ title: 'Update failed', description: 'Could not update your membership plan.', variant: 'destructive'});
+    } finally {
+        setIsProcessingPayment(false);
+        setIsPaymentDialogOpen(false);
+        setSelectedPlanForPayment(null);
     }
-    
-    setIsProcessingPayment(false);
-    setIsPaymentDialogOpen(false);
-    setSelectedPlanForPayment(null);
   };
   
   const getButtonState = (plan: MembershipPlan): { 
@@ -369,5 +373,3 @@ export default function MembershipsPage() {
     </div>
   );
 }
-
-    
