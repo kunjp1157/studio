@@ -19,6 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -177,10 +178,10 @@ export default function AdminFacilitiesPage() {
                 <Table>
                 <TableHeader>
                     <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -193,16 +194,16 @@ export default function AdminFacilitiesPage() {
                     facilities.map((facility) => (
                         <TableRow key={facility.id} className={cn(facility.status === 'PendingApproval' && 'bg-yellow-500/10 hover:bg-yellow-500/20')}>
                         <TableCell className="font-medium">{facility.name}</TableCell>
-                        <TableCell>{facility.location}</TableCell>
                         <TableCell>
-                            <Badge variant={getStatusBadgeVariant(facility.status)} className={cn(
-                                facility.status === 'Active' && 'bg-green-500/20 text-green-700 border-green-500/50',
-                                facility.status === 'PendingApproval' && 'bg-yellow-500/20 text-yellow-700 border-yellow-500/50',
-                                facility.status === 'Rejected' && 'bg-red-500/20 text-red-700 border-red-500/50'
-                            )}>
-                                {facility.status === 'PendingApproval' ? 'Pending' : facility.status}
-                            </Badge>
+                          <Badge variant={getStatusBadgeVariant(facility.status)} className={cn(
+                              facility.status === 'Active' && 'bg-green-500/20 text-green-700 border-green-500/50',
+                              facility.status === 'PendingApproval' && 'bg-yellow-500/20 text-yellow-700 border-yellow-500/50',
+                              facility.status === 'Rejected' && 'bg-red-500/20 text-red-700 border-red-500/50'
+                          )}>
+                              {facility.status === 'PendingApproval' ? 'Pending' : facility.status}
+                          </Badge>
                         </TableCell>
+                        <TableCell>{facility.location}</TableCell>
                         <TableCell>
                            {facility.status === 'PendingApproval' ? (
                                 <div className="flex gap-2 justify-start">
