@@ -699,3 +699,5 @@ export async function calculateDynamicPrice(
 
 // Initial data seeding call
 seedData();
+
+export { dbGetAllUsers as _dbGetAllUsers };
