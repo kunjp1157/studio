@@ -19,7 +19,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -129,6 +128,21 @@ export default function AdminFacilitiesPage() {
           default: return 'outline';
       }
   }
+  
+    const getPriceRange = (facility: Facility) => {
+    if (!currency) return <Skeleton className="h-5 w-24" />;
+    if (!facility.sportPrices || facility.sportPrices.length === 0) return 'N/A';
+    
+    const prices = facility.sportPrices.map(p => p.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    if (minPrice === maxPrice) {
+      return formatCurrency(minPrice, currency);
+    }
+    return `${formatCurrency(minPrice, currency)} - ${formatCurrency(maxPrice, currency)}`;
+  }
+
 
   if (isLoading) {
     return (
