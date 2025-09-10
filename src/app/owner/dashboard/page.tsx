@@ -86,7 +86,7 @@ export default function OwnerDashboardPage() {
     const stats = bookings.reduce((acc, booking) => {
         const now = new Date();
         if (booking.status === 'Confirmed') {
-            const bookingDate = parseISO(booking.bookedAt);
+            const bookingDate = new Date(booking.bookedAt);
             acc.totalBookings += 1;
             if (getMonth(bookingDate) === getMonth(now) && getYear(bookingDate) === getYear(now)) {
                 acc.totalBookingsThisMonth += 1;
@@ -107,8 +107,8 @@ export default function OwnerDashboardPage() {
         .sort((a,b) => b.bookings - a.bookings);
 
     const upcoming = bookings
-        .filter(b => b.status === 'Confirmed' && isAfter(parseISO(b.date), new Date()))
-        .sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
+        .filter(b => b.status === 'Confirmed' && isAfter(new Date(b.date), new Date()))
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 5)
         .map(booking => {
             const user = users.find(u => u.id === booking.userId);
@@ -227,7 +227,7 @@ export default function OwnerDashboardPage() {
                                                     <span className="font-medium truncate">{booking.user?.name || 'Unknown'}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{format(parseISO(booking.date), 'MMM d, yy')}</TableCell>
+                                            <TableCell>{format(new Date(booking.date), 'MMM d, yy')}</TableCell>
                                             <TableCell className="text-right">{booking.startTime}</TableCell>
                                         </TableRow>
                                     )
