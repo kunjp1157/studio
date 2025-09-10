@@ -1,6 +1,10 @@
 
 import mysql from 'mysql2/promise';
 
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set in the .env file. Please provide a valid PostgreSQL connection string.');
+}
+
 // This creates a single, shared pool of database connections.
 // The pool is configured using environment variables.
 // `next dev` will automatically load variables from `.env`.
