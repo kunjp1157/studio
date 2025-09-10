@@ -12,16 +12,27 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { updateUserAction, getAllSportsAction } from '@/app/actions';
+import { updateUserAction, getAllSportsAction, requestOwnerRoleAction } from '@/app/actions';
 import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement, UserSkill, SkillLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell, Shield } from 'lucide-react';
+import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell, Shield, HandCoins } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import { getIconComponent } from '@/components/shared/Icon';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const skillLevelsOptions: {value: SkillLevel | "Not Specified", label: string}[] = [
     { value: "Not Specified", label: "Not Specified" },
@@ -132,6 +143,26 @@ export default function ProfilePage() {
     }
   };
 
+  const handleRequestOwner = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const updatedUser = await requestOwnerRoleAction(user.id);
+      if (updatedUser) {
+        sessionStorage.setItem('activeUser', JSON.stringify(updatedUser));
+        window.dispatchEvent(new Event('userChanged'));
+        toast({
+          title: "Request Submitted",
+          description: "Your request to become a facility owner has been submitted for admin approval.",
+        });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Could not submit your request.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
   }
@@ -139,6 +170,10 @@ export default function ProfilePage() {
   if (!user) {
     return <div className="container mx-auto py-12 px-4 md:px-6">Error loading profile. Please log in again.</div>;
   }
+
+  const isOwnerOrAdmin = user.role === 'FacilityOwner' || user.role === 'Admin';
+  const isRequestPending = user.status === 'PendingApproval';
+
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -315,7 +350,7 @@ export default function ProfilePage() {
               <Separator />
 
               <section>
-                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Shield className="mr-2 h-5 w-5 text-primary" /> Privacy Settings</h3>
+                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Shield className="mr-2 h-5 w-5 text-primary" /> Privacy & Account Settings</h3>
                  <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
                     <div className="space-y-0.5">
                         <Label htmlFor="public-profile-switch" className="text-base font-normal">Public Profile</Label>
@@ -358,6 +393,43 @@ export default function ProfilePage() {
                     <Button variant="link" className="w-full mt-4 text-sm p-0">Learn how to earn & redeem points (Coming Soon)</Button>
                 </CardContent>
             </Card>
+
+            {!isOwnerOrAdmin && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center"><HandCoins className="mr-2 h-6 w-6 text-primary"/>Become a Facility Owner</CardTitle>
+                  <CardDescription>Do you own a sports facility? Join our platform to reach more players.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isRequestPending ? (
+                    <div className="text-sm p-3 bg-yellow-500/10 border border-yellow-500/30 text-yellow-700 rounded-md">
+                      Your request to become an owner is pending approval by an administrator.
+                    </div>
+                  ) : (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button className="w-full" disabled={isRequestPending}>Request Owner Access</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirm Request</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will submit a request to the site administrators to grant you facility owner privileges. You will be notified once your request is reviewed.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleRequestOwner}>
+                            Yes, Submit Request
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
 
             <Card className="shadow-lg">
                 <CardHeader>

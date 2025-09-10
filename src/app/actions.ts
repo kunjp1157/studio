@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { 
@@ -110,8 +111,7 @@ export async function getFacilitiesAction(): Promise<Facility[]> {
 }
 
 export async function getFacilityByIdAction(id: string): Promise<Facility | undefined> {
-    const facility = await dbGetFacilityById(id);
-    return facility;
+    return await dbGetFacilityById(id);
 }
 
 export async function getBookingByIdAction(id: string): Promise<Booking | undefined> {
@@ -262,6 +262,16 @@ export async function updateUserAction(userId: string, updates: Partial<UserProf
     }
     return user;
 }
+
+export async function requestOwnerRoleAction(userId: string): Promise<UserProfile | undefined> {
+    const user = await dbUpdateUser(userId, { status: 'PendingApproval' });
+    if(user) {
+        revalidatePath('/account/profile');
+        revalidatePath('/admin/users');
+    }
+    return user;
+}
+
 
 export async function updateBookingAction(bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> {
     const booking = await dbUpdateBooking(bookingId, updates);
