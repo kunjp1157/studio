@@ -46,7 +46,7 @@ The application is split into two main user experiences: the public-facing site 
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components:** [ShadCN UI](https://ui.shadcn.com/)
-- **Database:** [PostgreSQL](https://www.postgresql.org/) (connected via `pg`)
+- **Database:** [MySQL](https://www.mysql.com/) (via XAMPP/WAMP, connected with `mysql2`)
 - **AI Integration:** [Genkit (by Google)](https://firebase.google.com/docs/genkit)
 - **State Management:** React Hooks & Server Components
 - **Form Handling:** [React Hook Form](https://react-hook-form.com/) with [Zod](https://zod.dev/) for validation
@@ -59,7 +59,7 @@ To get a local copy up and running, follow these simple steps.
 
 - Node.js (v18 or later)
 - npm or yarn
-- PostgreSQL installed and running on your local machine.
+- XAMPP or any other MySQL server environment installed and running.
 
 ### 1. Clone the Repository
 ```sh
@@ -72,29 +72,28 @@ cd sports-arena-app
 npm install
 ```
 
-### 3. Set Up the PostgreSQL Database
+### 3. Set Up the MySQL Database
 
-1.  **Create a New Database:**
-    Open your PostgreSQL command-line tool (`psql`) or a GUI tool like pgAdmin. Create a new database for this project.
-    ```sql
-    CREATE DATABASE sports_arena;
-    ```
+1.  **Start XAMPP**: Ensure your Apache and MySQL services are running from the XAMPP Control Panel.
+2.  **Create a New Database:**
+    - Open your web browser and go to `http://localhost/phpmyadmin`.
+    - Click on "New" in the left sidebar.
+    - Enter a database name (e.g., `sports_arena`) and click "Create".
 
-2.  **Run the Schema Script:**
-    The `schema.sql` file in the project root contains all the table definitions. Use `psql` to execute this file and create the necessary tables in your new database.
-    ```sh
-    psql -d sports_arena -f schema.sql
-    ```
-    *Note: You might need to provide host, username, and password flags depending on your PostgreSQL setup.*
+3.  **Run the Schema Script:**
+    - Select your newly created database from the left sidebar.
+    - Click on the "Import" tab at the top.
+    - Click "Choose File" and select the `schema.sql` file from the project root.
+    - Scroll down and click "Go" to execute the script and create all the necessary tables.
 
 ### 4. Set up Environment Variables
-Create a `.env` file in the root of the project. You need to add your PostgreSQL connection string to this file.
+Create a `.env` file in the root of the project. You need to add your MySQL connection string to this file.
 
--   **Replace the placeholders** (`your_user`, `your_password`, `your_host`, `your_port`, `sports_arena`) with your actual local PostgreSQL credentials.
+-   **Replace the placeholders** (`root`, `your_password`, `localhost`, `3306`, `sports_arena`) with your actual local MySQL credentials from XAMPP. By default, XAMPP's root user has no password.
 
 ```env
-# Example PostgreSQL Connection URL
-DATABASE_URL="postgresql://your_user:your_password@your_host:your_port/sports_arena"
+# Example MySQL Connection URL for XAMPP
+DATABASE_URL="mysql://root:your_password@localhost:3306/sports_arena"
 ```
 
 ### 5. Run the Development Server
@@ -102,7 +101,7 @@ Now you can start the Next.js development server.
 ```sh
 npm run dev
 ```
-The application will be available at `http://localhost:3000`. The first time you run it, the application will automatically seed the database with initial data.
+The application will be available at `http://localhost:3000`.
 
 ## Available Scripts
 
@@ -119,4 +118,4 @@ The application will be available at `http://localhost:3000`. The first time you
 - `src/ai/`: Home for all AI-related code, including Genkit flows and tools.
 - `src/hooks/`: Custom React hooks.
 - `public/`: Static assets like images and fonts.
-- `schema.sql`: The complete database schema definition.
+- `schema.sql`: The complete database schema definition for MySQL.
