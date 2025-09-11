@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { 
@@ -20,7 +19,6 @@ import {
     dbGetMembershipPlanById,
     getAllPricingRules,
     getPricingRuleById,
-    getPricingRulesByFacilityIds as dbGetPricingRulesByFacilityIds,
     getAllPromotionRules,
     dbGetNotificationsForUser,
     dbMarkNotificationAsRead,
@@ -118,6 +116,7 @@ export async function getSportsAction(): Promise<Sport[]> {
 
 export async function getFacilitiesAction(): Promise<Facility[]> {
   const facilities = await dbGetAllFacilities();
+  revalidatePath('/facilities');
   return facilities;
 }
 
@@ -221,10 +220,6 @@ export async function deleteMembershipPlan(id: string): Promise<void> {
 
 export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
     return await getAllPricingRules();
-}
-
-export async function getPricingRulesByFacilityIdsAction(facilityIds: string[]): Promise<PricingRule[]> {
-    return await dbGetPricingRulesByFacilityIds(facilityIds);
 }
 
 export async function addPricingRuleAction(ruleData: Omit<PricingRule, 'id'>): Promise<void> {

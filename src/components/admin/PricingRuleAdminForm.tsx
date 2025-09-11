@@ -64,27 +64,13 @@ const days: ('Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun')[] = ['Mon', 
 
 interface PricingRuleAdminFormProps {
   initialData?: PricingRule | null;
-  isOwnerForm?: boolean;
 }
 
-export function PricingRuleAdminForm({ initialData, isOwnerForm = false }: PricingRuleAdminFormProps) {
+export function PricingRuleAdminForm({ initialData }: PricingRuleAdminFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [ownerFacilities, setOwnerFacilities] = useState<Facility[]>([]);
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-
-  useEffect(() => {
-    const activeUser = sessionStorage.getItem('activeUser');
-    if (activeUser) {
-      const user = JSON.parse(activeUser);
-      setCurrentUser(user);
-      if (isOwnerForm) {
-        getFacilitiesByOwnerIdAction(user.id).then(setOwnerFacilities);
-      }
-    }
-  }, [isOwnerForm]);
-
+  
   const form = useForm<PricingRuleFormValues>({
     resolver: zodResolver(pricingRuleFormSchema),
     defaultValues: initialData ? {
@@ -138,7 +124,7 @@ export function PricingRuleAdminForm({ initialData, isOwnerForm = false }: Prici
         title: initialData ? "Pricing Rule Updated" : "Pricing Rule Created",
         description: `Rule "${payload.name}" has been successfully saved.`,
       });
-      router.push(isOwnerForm ? '/owner/pricing' : '/admin/pricing');
+      router.push('/admin/pricing');
     } catch (error) {
       toast({
         title: "Error",
@@ -166,37 +152,6 @@ export function PricingRuleAdminForm({ initialData, isOwnerForm = false }: Prici
             <CardDescription>Define the conditions and adjustments for this pricing rule.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {isOwnerForm && (
-                 <FormField control={form.control} name="facilityIds" render={() => (
-                    <FormItem>
-                        <FormLabel className="flex items-center"><Building2 className="mr-2 h-4 w-4"/>Apply to Facilities</FormLabel>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-2 border rounded-md">
-                        {ownerFacilities.map(facility => (
-                            <FormField
-                            key={facility.id}
-                            control={form.control}
-                            name="facilityIds"
-                            render={({ field }) => (
-                                <FormItem className="flex items-center space-x-2 space-y-0">
-                                <FormControl><Checkbox 
-                                    checked={field.value?.includes(facility.id)}
-                                    onCheckedChange={checked => {
-                                        return checked
-                                            ? field.onChange([...(field.value || []), facility.id])
-                                            : field.onChange(field.value?.filter(id => id !== facility.id));
-                                    }}
-                                /></FormControl>
-                                <FormLabel className="font-normal text-sm">{facility.name}</FormLabel>
-                                </FormItem>
-                            )}
-                            />
-                        ))}
-                        </div>
-                        <FormDescription>Select which of your facilities this rule applies to. Leave blank to apply to all.</FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-            )}
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem><FormLabel>Rule Name</FormLabel><FormControl><Input placeholder="e.g., Weekend Evening Surge" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
@@ -325,7 +280,7 @@ export function PricingRuleAdminForm({ initialData, isOwnerForm = false }: Prici
         </Card>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <Button type="button" variant="outline" onClick={() => router.push(isOwnerForm ? '/owner/pricing' : '/admin/pricing')} disabled={isLoading}>
+          <Button type="button" variant="outline" onClick={() => router.push('/admin/pricing')} disabled={isLoading}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>

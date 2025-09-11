@@ -141,14 +141,6 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
-               <SidebarMenuItem>
-                <Link href="/owner/pricing">
-                  <SidebarMenuButton isActive={isActive('/owner/pricing')} tooltip="Pricing Rules">
-                    <DollarSign />
-                    <span>Pricing Rules</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
             </SidebarGroup>
 
              <SidebarGroup>
