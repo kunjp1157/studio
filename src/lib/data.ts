@@ -14,102 +14,130 @@ import { unstable_noStore as noStore } from 'next/cache';
 // Get all entities
 export async function dbGetAllFacilities(): Promise<Facility[]> {
   noStore();
-  const res = await query('SELECT * FROM "facilities"');
-  return res.rows as Facility[];
+  const [rows] = await query('SELECT * FROM facilities');
+  const facilities = rows as Facility[];
+  // In a real app, you'd probably want to fetch related entities in a more optimized way
+  for (const facility of facilities) {
+      await enrichFacility(facility);
+  }
+  return facilities;
 }
 
 export async function dbGetAllUsers(): Promise<UserProfile[]> {
     noStore();
-    const res = await query('SELECT * FROM "users"');
-    return res.rows as UserProfile[];
+    const [rows] = await query('SELECT * FROM users');
+    return rows as UserProfile[];
 }
 
 export async function dbGetAllBookings(): Promise<Booking[]> {
     noStore();
-    const res = await query('SELECT * FROM "bookings"');
-    return res.rows as Booking[];
+    const [rows] = await query('SELECT * FROM bookings');
+    return rows as Booking[];
 }
 
 export async function getAllSportsAction(): Promise<Sport[]> {
     noStore();
-    const res = await query('SELECT * FROM "sports"');
-    return res.rows as Sport[];
+    const [rows] = await query('SELECT * FROM sports');
+    return rows as Sport[];
 }
 
 export async function getAllAmenitiesAction(): Promise<Amenity[]> {
     noStore();
-    const res = await query('SELECT * FROM "amenities"');
-    return res.rows as Amenity[];
+    const [rows] = await query('SELECT * FROM amenities');
+    return rows as Amenity[];
 }
 
 export async function getAllEventsAction(): Promise<SportEvent[]> {
     noStore();
-    const res = await query('SELECT * FROM "events"');
-    return res.rows as SportEvent[];
+    const [rows] = await query('SELECT * FROM events');
+    const events = rows as SportEvent[];
+    for(const event of events) {
+        const [sportRows] = await query('SELECT * FROM sports WHERE id = ?', [event.sportId]);
+        event.sport = (sportRows as Sport[])[0];
+    }
+    return events;
 }
 
 export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
     noStore();
-    const res = await query('SELECT * FROM "membership_plans"');
-    return res.rows as MembershipPlan[];
+    const [rows] = await query('SELECT * FROM membership_plans');
+    return rows as MembershipPlan[];
 }
 
 export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
     noStore();
-    const res = await query('SELECT * FROM "pricing_rules"');
-    return res.rows as PricingRule[];
+    const [rows] = await query('SELECT * FROM pricing_rules');
+    return rows as PricingRule[];
 }
 
 export async function getAllPromotionRulesAction(): Promise<PromotionRule[]> {
     noStore();
-    const res = await query('SELECT * FROM "promotion_rules"');
-    return res.rows as PromotionRule[];
+    const [rows] = await query('SELECT * FROM promotion_rules');
+    return rows as PromotionRule[];
 }
 
 export async function getAllBlogPostsAction(): Promise<BlogPost[]> {
     noStore();
-    const res = await query('SELECT * FROM "blog_posts"');
-    return res.rows as BlogPost[];
+    const [rows] = await query('SELECT * FROM blog_posts');
+    return rows as BlogPost[];
 }
 
+async function enrichFacility(facility: Facility): Promise<void> {
+    if (!facility) return;
+
+    const [sportsRes] = await query('SELECT s.* FROM sports s JOIN facility_sports fs ON s.id = fs.sportId WHERE fs.facilityId = ?', [facility.id]);
+    const [amenitiesRes] = await query('SELECT a.* FROM amenities a JOIN facility_amenities fa ON a.id = fa.amenityId WHERE fa.facilityId = ?', [facility.id]);
+    const [hoursRes] = await query('SELECT day, open, close FROM facility_operating_hours WHERE facilityId = ?', [facility.id]);
+    const [pricesRes] = await query('SELECT sportId, price, pricingModel FROM facility_sport_prices WHERE facilityId = ?', [facility.id]);
+    const [reviewsRes] = await query('SELECT r.*, u.name as userName, u.profilePictureUrl as userAvatar, u.isProfilePublic FROM reviews r JOIN users u ON r.userId = u.id WHERE r.facilityId = ? ORDER BY r.createdAt DESC', [facility.id]);
+    
+    facility.sports = sportsRes as Sport[];
+    facility.amenities = amenitiesRes as Amenity[];
+    facility.operatingHours = hoursRes as FacilityOperatingHours[];
+    facility.sportPrices = pricesRes as SportPrice[];
+    facility.reviews = reviewsRes as Review[];
+
+    // JSON fields need parsing
+    if (typeof facility.availableEquipment === 'string') {
+        facility.availableEquipment = JSON.parse(facility.availableEquipment);
+    }
+    if (typeof facility.blockedSlots === 'string') {
+        facility.blockedSlots = JSON.parse(facility.blockedSlots);
+    }
+}
 
 // Get by ID or specific criteria
 export async function dbGetFacilityById(id: string): Promise<Facility | undefined> {
     noStore();
-    const facilityRes = await query('SELECT * FROM "facilities" WHERE id = $1', [id]);
-    if (facilityRes.rows.length === 0) return undefined;
-    const facility = facilityRes.rows[0] as Facility;
-
-    // Fetch related data in parallel
-    const [sportsRes, amenitiesRes, hoursRes, pricesRes, reviewsRes] = await Promise.all([
-        query('SELECT s.* FROM "sports" s JOIN "facility_sports" fs ON s.id = fs."sportId" WHERE fs."facilityId" = $1', [id]),
-        query('SELECT a.* FROM "amenities" a JOIN "facility_amenities" fa ON a.id = fa."amenityId" WHERE fa."facilityId" = $1', [id]),
-        query('SELECT "day", "open", "close" FROM "facility_operating_hours" WHERE "facilityId" = $1', [id]),
-        query('SELECT "sportId", "price", "pricingModel" FROM "facility_sport_prices" WHERE "facilityId" = $1', [id]),
-        query('SELECT r.*, u.name as "userName", u."profilePictureUrl" as "userAvatar", u."isProfilePublic" FROM "reviews" r JOIN "users" u ON r."userId" = u.id WHERE r."facilityId" = $1 ORDER BY r."createdAt" DESC', [id])
-    ]);
-    
-    facility.sports = sportsRes.rows as Sport[];
-    facility.amenities = amenitiesRes.rows as Amenity[];
-    facility.operatingHours = hoursRes.rows as FacilityOperatingHours[];
-    facility.sportPrices = pricesRes.rows as SportPrice[];
-    facility.reviews = reviewsRes.rows as Review[];
-    
+    const [facilityRows] = await query('SELECT * FROM facilities WHERE id = ?', [id]);
+    if ((facilityRows as any[]).length === 0) return undefined;
+    const facility = (facilityRows as Facility[])[0];
+    await enrichFacility(facility);
     return facility;
 }
 
 export async function dbGetUserById(id: string): Promise<UserProfile | undefined> {
     noStore();
-    const res = await query('SELECT * FROM "users" WHERE id = $1', [id]);
-    return res.rows[0] as UserProfile | undefined;
+    const [rows] = await query('SELECT * FROM users WHERE id = ?', [id]);
+    const user = (rows as UserProfile[])[0];
+    if (user && typeof user.favoriteFacilities === 'string') {
+        user.favoriteFacilities = JSON.parse(user.favoriteFacilities);
+    }
+    if (user && typeof user.achievements === 'string') {
+        user.achievements = JSON.parse(user.achievements);
+    }
+    if (user && typeof user.skillLevels === 'string') {
+        user.skillLevels = JSON.parse(user.skillLevels);
+    }
+    return user;
 }
 
 export async function dbGetBookingById(id: string): Promise<Booking | undefined> {
     noStore();
-    const res = await query('SELECT * FROM "bookings" WHERE id = $1', [id]);
-    if (res.rows.length === 0) return undefined;
+    const [rows] = await query('SELECT * FROM bookings WHERE id = ?', [id]);
+    if ((rows as any[]).length === 0) return undefined;
     
-    const booking = res.rows[0] as Booking;
+    const booking = (rows as Booking[])[0];
 
     const facility = await dbGetFacilityById(booking.facilityId);
     if(facility) {
@@ -121,13 +149,13 @@ export async function dbGetBookingById(id: string): Promise<Booking | undefined>
     return booking;
 }
 
-export async function getBookingsByUserIdAction(userId: string): Promise<Booking[]> {
+export async function dbGetBookingsByUserId(userId: string): Promise<Booking[]> {
     noStore();
-    const res = await query('SELECT * FROM "bookings" WHERE "userId" = $1 ORDER BY "date" DESC, "startTime" DESC', [userId]);
+    const [rows] = await query('SELECT * FROM bookings WHERE userId = ? ORDER BY date DESC, startTime DESC', [userId]);
     
-    // Enrich with facility and sport names
-    const bookings = res.rows as Booking[];
+    const bookings = rows as Booking[];
     for (const booking of bookings) {
+        // This could be optimized by fetching all needed facilities/sports at once
         const facility = await dbGetFacilityById(booking.facilityId);
         if (facility) {
             booking.facilityName = facility.name;
@@ -138,45 +166,52 @@ export async function getBookingsByUserIdAction(userId: string): Promise<Booking
     return bookings;
 }
 
-export async function getBookingsForFacilityOnDateAction(facilityId: string, date: string): Promise<Booking[]> {
+export async function dbGetBookingsForFacilityOnDate(facilityId: string, date: string): Promise<Booking[]> {
     noStore();
-    const res = await query('SELECT * FROM "bookings" WHERE "facilityId" = $1 AND "date" = $2 AND "status" = \'Confirmed\'', [facilityId, date]);
-    return res.rows as Booking[];
+    const [rows] = await query('SELECT * FROM bookings WHERE facilityId = ? AND date = ? AND status = ?', [facilityId, date, 'Confirmed']);
+    return rows as Booking[];
 }
 
-export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
+export async function dbGetFacilitiesByOwnerId(ownerId: string): Promise<Facility[]> {
     noStore();
-    const res = await query('SELECT * FROM "facilities" WHERE "ownerId" = $1', [ownerId]);
-    return res.rows as Facility[];
+    const [rows] = await query('SELECT * FROM facilities WHERE ownerId = ?', [ownerId]);
+    return rows as Facility[];
 }
 
 export async function getPricingRulesByFacilityIdsAction(facilityIds: string[]): Promise<PricingRule[]> {
+    if (facilityIds.length === 0) return [];
     noStore();
-    const res = await query('SELECT * FROM "pricing_rules" WHERE id = ANY($1)', [facilityIds]);
-    return res.rows as PricingRule[];
+    const placeholders = facilityIds.map(() => '?').join(',');
+    const [rows] = await query(`SELECT * FROM pricing_rules WHERE facilityIds IS NULL OR JSON_CONTAINS(facilityIds, '["${facilityIds.join('","')}"]')`, []);
+    return rows as PricingRule[];
 }
 
-export async function getEventsByFacilityIdsAction(facilityIds: string[]): Promise<SportEvent[]> {
+export async function dbGetEventsByFacilityIds(facilityIds: string[]): Promise<SportEvent[]> {
+    if (facilityIds.length === 0) return [];
     noStore();
-    const res = await query('SELECT * FROM "events" WHERE "facilityId" = ANY($1)', [facilityIds]);
-    return res.rows as SportEvent[];
+    const placeholders = facilityIds.map(() => '?').join(',');
+    const [rows] = await query(`SELECT * FROM events WHERE facilityId IN (${placeholders})`, facilityIds);
+    return rows as SportEvent[];
 }
 
 export async function getLfgRequestsByFacilityIds(facilityIds: string[]): Promise<LfgRequest[]> {
+    if (facilityIds.length === 0) return [];
     noStore();
-    const res = await query('SELECT * FROM lfg_requests WHERE "facilityId" = ANY($1)', [facilityIds]);
-    return res.rows as LfgRequest[];
+    const placeholders = facilityIds.map(() => '?').join(',');
+    const [rows] = await query(`SELECT * FROM lfg_requests WHERE facilityId IN (${placeholders})`, facilityIds);
+    return rows as LfgRequest[];
 }
 
 export async function getChallengesByFacilityIds(facilityIds: string[]): Promise<Challenge[]> {
+    if (facilityIds.length === 0) return [];
     noStore();
-    const res = await query('SELECT * FROM challenges WHERE "facilityId" = ANY($1)', [facilityIds]);
-    return res.rows as Challenge[];
+    const placeholders = facilityIds.map(() => '?').join(',');
+    const [rows] = await query(`SELECT * FROM challenges WHERE facilityId IN (${placeholders})`, facilityIds);
+    return rows as Challenge[];
 }
 
-export async function getSiteSettingsAction(): Promise<SiteSettings> {
+export async function getSiteSettings(): Promise<SiteSettings> {
     noStore();
-    // This is a mock, in a real app this would come from a DB table or config file
     return {
         siteName: 'Sports Arena',
         defaultCurrency: 'INR',
@@ -185,39 +220,41 @@ export async function getSiteSettingsAction(): Promise<SiteSettings> {
     };
 }
 
-
-// ========== WRITE ==========
-
 export async function dbAddFacility(facilityData: any): Promise<Facility> {
-    const { sports, amenities, sportPrices, operatingHours, ...mainData } = facilityData;
-    const newId = `facility-${Date.now()}`;
-    mainData.id = newId;
+    noStore();
+    const { sports, amenities, sportPrices, operatingHours, availableEquipment, blockedSlots, ...mainData } = facilityData;
+    
+    // Convert arrays to JSON strings for storage
+    mainData.availableEquipment = JSON.stringify(availableEquipment || []);
+    mainData.blockedSlots = JSON.stringify(blockedSlots || []);
 
-    const columns = Object.keys(mainData).map(k => `"${k}"`).join(', ');
+    const columns = Object.keys(mainData).map(k => `\`${k}\``).join(', ');
     const values = Object.values(mainData);
-    const valuePlaceholders = values.map((_, i) => `$${i + 1}`).join(', ');
+    const valuePlaceholders = values.map(() => '?').join(', ');
 
-    await query(`INSERT INTO "facilities" (${columns}) VALUES (${valuePlaceholders})`, values);
+    const [result] = await query(`INSERT INTO facilities (${columns}) VALUES (${valuePlaceholders})`, values);
+    const newId = (result as any).insertId;
+    mainData.id = newId;
     
     // Handle relationships
     if (sports) {
         for (const sportId of sports) {
-            await query('INSERT INTO "facility_sports" ("facilityId", "sportId") VALUES ($1, $2)', [newId, sportId]);
+            await query('INSERT INTO facility_sports (facilityId, sportId) VALUES (?, ?)', [newId, sportId]);
         }
     }
     if (amenities) {
          for (const amenityId of amenities) {
-            await query('INSERT INTO "facility_amenities" ("facilityId", "amenityId") VALUES ($1, $2)', [newId, amenityId]);
+            await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES (?, ?)', [newId, amenityId]);
         }
     }
     if (operatingHours) {
         for (const oh of operatingHours) {
-            await query('INSERT INTO "facility_operating_hours" ("facilityId", "day", "open", "close") VALUES ($1, $2, $3, $4)', [newId, oh.day, oh.open, oh.close]);
+            await query('INSERT INTO facility_operating_hours (facilityId, day, open, close) VALUES (?, ?, ?, ?)', [newId, oh.day, oh.open, oh.close]);
         }
     }
     if (sportPrices) {
         for (const sp of sportPrices) {
-            await query('INSERT INTO "facility_sport_prices" ("facilityId", "sportId", "price", "pricingModel") VALUES ($1, $2, $3, $4)', [newId, sp.sportId, sp.price, sp.pricingModel]);
+            await query('INSERT INTO facility_sport_prices (facilityId, sportId, price, pricingModel) VALUES (?, ?, ?, ?)', [newId, sp.sportId, sp.price, sp.pricingModel]);
         }
     }
 
@@ -225,68 +262,109 @@ export async function dbAddFacility(facilityData: any): Promise<Facility> {
 }
 
 export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
-    const { id, sports, amenities, sportPrices, operatingHours, ...mainData } = facilityData;
+    noStore();
+    const { id, sports, amenities, sportPrices, operatingHours, availableEquipment, blockedSlots, ...mainData } = facilityData;
     
-    const setClauses = Object.keys(mainData).map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+    // Convert arrays to JSON strings for storage
+    mainData.availableEquipment = JSON.stringify(availableEquipment || []);
+    mainData.blockedSlots = JSON.stringify(blockedSlots || []);
+    
+    const setClauses = Object.keys(mainData).map((k) => `\`${k}\` = ?`).join(', ');
     const values = [...Object.values(mainData), id];
     
-    await query(`UPDATE "facilities" SET ${setClauses} WHERE id = $${Object.keys(mainData).length + 1}`, values);
+    await query(`UPDATE facilities SET ${setClauses} WHERE id = ?`, values);
 
     // Simplistic relationship update: delete old, insert new
-    await query('DELETE FROM "facility_sports" WHERE "facilityId" = $1', [id]);
+    await query('DELETE FROM facility_sports WHERE facilityId = ?', [id]);
     if (sports) {
         for (const sportId of sports) {
-            await query('INSERT INTO "facility_sports" ("facilityId", "sportId") VALUES ($1, $2)', [id, sportId]);
+            await query('INSERT INTO facility_sports (facilityId, sportId) VALUES (?, ?)', [id, sportId]);
         }
     }
-    // ... repeat for amenities, hours, prices ...
+    await query('DELETE FROM facility_amenities WHERE facilityId = ?', [id]);
+    if (amenities) {
+        for (const amenityId of amenities) {
+            await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES (?, ?)', [id, amenityId]);
+        }
+    }
+    await query('DELETE FROM facility_operating_hours WHERE facilityId = ?', [id]);
+    if (operatingHours) {
+        for (const oh of operatingHours) {
+            await query('INSERT INTO facility_operating_hours (facilityId, day, open, close) VALUES (?, ?, ?, ?)', [id, oh.day, oh.open, oh.close]);
+        }
+    }
+    await query('DELETE FROM facility_sport_prices WHERE facilityId = ?', [id]);
+    if (sportPrices) {
+        for (const sp of sportPrices) {
+            await query('INSERT INTO facility_sport_prices (facilityId, sportId, price, pricingModel) VALUES (?, ?, ?, ?)', [id, sp.sportId, sp.price, sp.pricingModel]);
+        }
+    }
 
     return (await dbGetFacilityById(id))!;
 }
 
 export async function dbDeleteFacility(facilityId: string): Promise<void> {
-    await query('DELETE FROM "facilities" WHERE id = $1', [facilityId]);
+    noStore();
+    await query('DELETE FROM facilities WHERE id = ?', [facilityId]);
+    // Note: ON DELETE CASCADE in schema will handle related table cleanup.
 }
 
 
-export async function dbAddBooking(booking: Booking): Promise<Booking> {
-    const columns = Object.keys(booking).map(k => `"${k}"`).join(', ');
-    const values = Object.values(booking);
-    const valuePlaceholders = values.map((_, i) => `$${i + 1}`).join(', ');
-    await query(`INSERT INTO "bookings" (${columns}) VALUES (${valuePlaceholders})`, values);
-    return booking;
+export async function dbAddBooking(booking: Omit<Booking, 'id'>): Promise<Booking> {
+    noStore();
+    const columns = Object.keys(booking).map(k => `\`${k}\``).join(', ');
+    const values = Object.values(booking).map(v => typeof v === 'object' ? JSON.stringify(v) : v);
+    const valuePlaceholders = values.map(() => '?').join(', ');
+    const [result] = await query(`INSERT INTO bookings (${columns}) VALUES (${valuePlaceholders})`, values);
+    const newId = (result as any).insertId;
+    return (await dbGetBookingById(newId))!;
 }
 
 export async function dbUpdateBooking(bookingId: string, updates: Partial<Booking>): Promise<Booking | undefined> {
-    const setClauses = Object.keys(updates).map((k, i) => `"${k}" = $${i + 1}`).join(', ');
-    const values = [...Object.values(updates), bookingId];
-    await query(`UPDATE "bookings" SET ${setClauses} WHERE id = $${Object.keys(updates).length + 1}`, values);
+    noStore();
+    const setClauses = Object.keys(updates).map((k) => `\`${k}\` = ?`).join(', ');
+    const values = [...Object.values(updates).map(v => typeof v === 'object' ? JSON.stringify(v) : v), bookingId];
+    await query(`UPDATE bookings SET ${setClauses} WHERE id = ?`, values);
     return dbGetBookingById(bookingId);
 }
 
-export async function dbAddUser(userData: Partial<UserProfile>): Promise<UserProfile> {
-    const newId = `user-${Date.now()}`;
-    userData.id = newId;
-    userData.joinedAt = new Date().toISOString();
+export async function dbAddUser(userData: Partial<Omit<UserProfile, 'id'>>): Promise<UserProfile> {
+    noStore();
+    const dataToInsert = {
+        ...userData,
+        joinedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        favoriteFacilities: JSON.stringify(userData.favoriteFacilities || []),
+        achievements: JSON.stringify(userData.achievements || []),
+        skillLevels: JSON.stringify(userData.skillLevels || [])
+    };
     
-    const columns = Object.keys(userData).map(k => `"${k}"`).join(', ');
-    const values = Object.values(userData);
-    const valuePlaceholders = values.map((_, i) => `$${i + 1}`).join(', ');
+    const columns = Object.keys(dataToInsert).map(k => `\`${k}\``).join(', ');
+    const values = Object.values(dataToInsert);
+    const valuePlaceholders = values.map(() => '?').join(', ');
 
-    await query(`INSERT INTO "users" (${columns}) VALUES (${valuePlaceholders})`, values);
-    return (await dbGetUserById(newId))!;
+    const [result] = await query(`INSERT INTO users (${columns}) VALUES (${valuePlaceholders})`, values);
+    const newId = (result as any).insertId;
+    return (await dbGetUserById(newId.toString()))!;
 }
 
 
 export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
-    const setClauses = Object.keys(updates).map((k, i) => `"${k}" = $${i + 1}`).join(', ');
-    const values = [...Object.values(updates), userId];
-    await query(`UPDATE "users" SET ${setClauses} WHERE id = $${Object.keys(updates).length + 1}`, values);
+    noStore();
+    const updateData: any = {...updates};
+    // Stringify JSON fields if they are present in the update
+    if (updates.favoriteFacilities) updateData.favoriteFacilities = JSON.stringify(updates.favoriteFacilities);
+    if (updates.achievements) updateData.achievements = JSON.stringify(updates.achievements);
+    if (updates.skillLevels) updateData.skillLevels = JSON.stringify(updates.skillLevels);
+
+    const setClauses = Object.keys(updateData).map((k) => `\`${k}\` = ?`).join(', ');
+    const values = [...Object.values(updateData), userId];
+    await query(`UPDATE users SET ${setClauses} WHERE id = ?`, values);
     return dbGetUserById(userId);
 }
 
 
 export async function dbToggleFavoriteFacility(userId: string, facilityId: string): Promise<UserProfile | undefined> {
+    noStore();
     const user = await dbGetUserById(userId);
     if (!user) return undefined;
     
@@ -299,100 +377,151 @@ export async function dbToggleFavoriteFacility(userId: string, facilityId: strin
     return dbUpdateUser(userId, { favoriteFacilities: newFavorites });
 }
 
-
 export async function blockTimeSlot(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {
-    // In a real app, verify ownerId owns facilityId first
-    // For now, this is a simplified mock
+    noStore();
     const facility = await dbGetFacilityById(facilityId);
-    if (!facility) return false;
+    if (!facility || facility.ownerId !== ownerId) return false;
 
-    facility.blockedSlots = [...(facility.blockedSlots || []), newBlock];
-    await dbUpdateFacility(facility);
+    const newBlockedSlots = [...(facility.blockedSlots || []), newBlock];
+    await dbUpdateFacility({ ...facility, blockedSlots: newBlockedSlots });
     return true;
 }
 
 export async function unblockTimeSlot(facilityId: string, ownerId: string, date: string, startTime: string): Promise<boolean> {
+    noStore();
     const facility = await dbGetFacilityById(facilityId);
-    if (!facility || !facility.blockedSlots) return false;
+    if (!facility || !facility.blockedSlots || facility.ownerId !== ownerId) return false;
 
-    facility.blockedSlots = facility.blockedSlots.filter(
+    const newBlockedSlots = facility.blockedSlots.filter(
         slot => !(slot.date === date && slot.startTime === startTime)
     );
-    await dbUpdateFacility(facility);
+    await dbUpdateFacility({ ...facility, blockedSlots: newBlockedSlots });
     return true;
 }
 
 
-// ... other write operations (addReview, addSport, etc.) would follow a similar pattern ...
-// These are simplified for the mock.
 export async function addSportAction(sportData: Omit<Sport, 'id'>): Promise<Sport> {
-    const newSport = { ...sportData, id: `sport-${Date.now()}` };
-    await query('INSERT INTO "sports" (id, name, "iconName") VALUES ($1, $2, $3)', [newSport.id, newSport.name, newSport.iconName]);
-    return newSport;
+    noStore();
+    const [result] = await query('INSERT INTO sports (name, iconName, imageUrl, imageDataAiHint) VALUES (?, ?, ?, ?)', [sportData.name, sportData.iconName, sportData.imageUrl, sportData.imageDataAiHint]);
+    const newId = (result as any).insertId;
+    const [rows] = await query('SELECT * FROM sports WHERE id = ?', [newId]);
+    return (rows as Sport[])[0];
 }
 export async function dbUpdateSport(sportId: string, sportData: Partial<Sport>): Promise<Sport> {
-    await dbUpdateUser(sportId, sportData); // Re-uses user update logic, which is not correct but works for mock
-    const res = await query('SELECT * FROM "sports" WHERE id = $1', [sportId]);
-    return res.rows[0];
+    noStore();
+    const setClauses = Object.keys(sportData).map((k) => `\`${k}\` = ?`).join(', ');
+    const values = [...Object.values(sportData), sportId];
+    await query(`UPDATE sports SET ${setClauses} WHERE id = ?`, values);
+    const [rows] = await query('SELECT * FROM sports WHERE id = ?', [sportId]);
+    return (rows as Sport[])[0];
 }
 export async function dbDeleteSport(sportId: string): Promise<void> {
-    await query('DELETE FROM "sports" WHERE id = $1', [sportId]);
+    noStore();
+    await query('DELETE FROM sports WHERE id = ?', [sportId]);
 }
 
 export async function addEventAction(data: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'>): Promise<void> {
-   // Simplified mock
+    noStore();
+    await query('INSERT INTO events (name, facilityId, sportId, startDate, endDate, description, entryFee, maxParticipants) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [data.name, data.facilityId, data.sportId, data.startDate, data.endDate, data.description, data.entryFee, data.maxParticipants]);
 }
-export async function dbUpdateEvent(data: SportEvent): Promise<void> {
-   // Simplified mock
+export async function updateEventAction(data: SportEvent): Promise<void> {
+    noStore();
+    await query('UPDATE events SET name = ?, facilityId = ?, sportId = ?, startDate = ?, endDate = ?, description = ?, entryFee = ?, maxParticipants = ? WHERE id = ?', [data.name, data.facilityId, data.sportId, data.startDate, data.endDate, data.description, data.entryFee, data.maxParticipants, data.id]);
 }
-export async function dbDeleteEvent(id: string): Promise<void> {
-   // Simplified mock
+export async function deleteEvent(id: string): Promise<void> {
+    noStore();
+    await query('DELETE FROM events WHERE id = ?', [id]);
 }
 
 export async function addPricingRule(ruleData: Omit<PricingRule, 'id'>): Promise<void> {
-   // Simplified mock
+    noStore();
+    const { name, description, isActive, adjustmentType, value, priority, daysOfWeek, timeRange, dateRange, facilityIds } = ruleData;
+    await query('INSERT INTO pricing_rules (name, description, isActive, adjustmentType, value, priority, daysOfWeek, timeRange, dateRange, facilityIds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+        [name, description, isActive, adjustmentType, value, priority, JSON.stringify(daysOfWeek), JSON.stringify(timeRange), JSON.stringify(dateRange), JSON.stringify(facilityIds)]
+    );
 }
 export async function updatePricingRule(ruleData: PricingRule): Promise<void> {
-   // Simplified mock
+    noStore();
+     const { name, description, isActive, adjustmentType, value, priority, daysOfWeek, timeRange, dateRange, facilityIds, id } = ruleData;
+    await query('UPDATE pricing_rules SET name=?, description=?, isActive=?, adjustmentType=?, value=?, priority=?, daysOfWeek=?, timeRange=?, dateRange=?, facilityIds=? WHERE id=?', 
+        [name, description, isActive, adjustmentType, value, priority, JSON.stringify(daysOfWeek), JSON.stringify(timeRange), JSON.stringify(dateRange), JSON.stringify(facilityIds), id]
+    );
 }
-export async function dbDeletePricingRule(id: string): Promise<void> {
-   // Simplified mock
+export async function deletePricingRule(id: string): Promise<void> {
+    noStore();
+    await query('DELETE FROM pricing_rules WHERE id = ?', [id]);
 }
-export async function dbAddPromotionRule(data: Omit<PromotionRule, 'id'>): Promise<void> {
-   // Simplified mock
+export async function addPromotionRule(data: Omit<PromotionRule, 'id'>): Promise<void> {
+    noStore();
+    await query('INSERT INTO promotion_rules (name, description, code, discountType, discountValue, startDate, endDate, usageLimit, usageLimitPerUser, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+    [data.name, data.description, data.code, data.discountType, data.discountValue, data.startDate, data.endDate, data.usageLimit, data.usageLimitPerUser, data.isActive]);
 }
-export async function dbUpdatePromotionRule(data: PromotionRule): Promise<void> {
-   // Simplified mock
+export async function updatePromotionRule(data: PromotionRule): Promise<void> {
+    noStore();
+    await query('UPDATE promotion_rules SET name=?, description=?, code=?, discountType=?, discountValue=?, startDate=?, endDate=?, usageLimit=?, usageLimitPerUser=?, isActive=? WHERE id = ?', 
+    [data.name, data.description, data.code, data.discountType, data.discountValue, data.startDate, data.endDate, data.usageLimit, data.usageLimitPerUser, data.isActive, data.id]);
 }
-export async function dbDeletePromotionRule(id: string): Promise<void> {
-   // Simplified mock
+export async function deletePromotionRule(id: string): Promise<void> {
+    noStore();
+    await query('DELETE FROM promotion_rules WHERE id = ?', [id]);
 }
 export async function dbAddMembershipPlan(data: Omit<MembershipPlan, 'id'>): Promise<void> {
-    // Simplified mock
+    noStore();
+    await query('INSERT INTO membership_plans (name, pricePerMonth, benefits) VALUES (?, ?, ?)', [data.name, data.pricePerMonth, JSON.stringify(data.benefits)]);
 }
 export async function dbUpdateMembershipPlan(data: MembershipPlan): Promise<void> {
-    // Simplified mock
+    noStore();
+    await query('UPDATE membership_plans SET name=?, pricePerMonth=?, benefits=? WHERE id = ?', [data.name, data.pricePerMonth, JSON.stringify(data.benefits), data.id]);
 }
-export async function dbDeleteMembershipPlan(id: string): Promise<void> {
-    // Simplified mock
+export async function deleteMembershipPlan(id: string): Promise<void> {
+    noStore();
+    await query('DELETE FROM membership_plans WHERE id = ?', [id]);
 }
 export async function dbCreateTeam(data: { name: string; sportId: string; captainId: string }): Promise<Team> {
-    const newTeam: Team = {
-        id: `team-${Date.now()}`,
-        name: data.name,
-        sport: (await query('SELECT * from sports WHERE id = $1', [data.sportId])).rows[0],
-        captainId: data.captainId,
-        memberIds: [data.captainId],
-    };
-    return newTeam;
+    noStore();
+    const [result] = await query('INSERT INTO teams (name, sportId, captainId, memberIds) VALUES (?, ?, ?, ?)', [data.name, data.sportId, data.captainId, JSON.stringify([data.captainId])]);
+    const newId = (result as any).insertId;
+    return (await dbGetTeamById(newId.toString()))!;
 }
 
-export async function dbLeaveTeam(teamId: string, userId: string): Promise<boolean> { return true; }
-export async function dbRemoveUserFromTeam(teamId: string, memberIdToRemove: string, currentUserId: string): Promise<void> {}
-export async function dbTransferCaptaincy(teamId: string, newCaptainId: string, currentUserId: string): Promise<void> {}
-export async function dbDeleteTeam(teamId: string, currentUserId: string): Promise<void> {}
+export async function dbLeaveTeam(teamId: string, userId: string): Promise<boolean> { 
+    noStore();
+    const team = await dbGetTeamById(teamId);
+    if (!team) return false;
+    if (team.captainId === userId && team.memberIds.length > 1) {
+        throw new Error("Captain cannot leave a team with other members. Please transfer captaincy first.");
+    }
+    const newMemberIds = team.memberIds.filter(id => id !== userId);
+    if (newMemberIds.length === 0) {
+        await dbDeleteTeam(teamId, userId);
+    } else {
+        await query('UPDATE teams SET memberIds = ? WHERE id = ?', [JSON.stringify(newMemberIds), teamId]);
+    }
+    return true; 
+}
+export async function dbRemoveUserFromTeam(teamId: string, memberIdToRemove: string, currentUserId: string): Promise<void> {
+    noStore();
+    const team = await dbGetTeamById(teamId);
+    if (!team || team.captainId !== currentUserId) throw new Error("Only the team captain can remove members.");
+    const newMemberIds = team.memberIds.filter(id => id !== memberIdToRemove);
+    await query('UPDATE teams SET memberIds = ? WHERE id = ?', [JSON.stringify(newMemberIds), teamId]);
+}
+export async function dbTransferCaptaincy(teamId: string, newCaptainId: string, currentUserId: string): Promise<void> {
+    noStore();
+    const team = await dbGetTeamById(teamId);
+    if (!team || team.captainId !== currentUserId) throw new Error("Only the team captain can transfer captaincy.");
+    if (!team.memberIds.includes(newCaptainId)) throw new Error("New captain must be a member of the team.");
+    await query('UPDATE teams SET captainId = ? WHERE id = ?', [newCaptainId, teamId]);
+}
+export async function dbDeleteTeam(teamId: string, currentUserId: string): Promise<void> {
+    noStore();
+    const team = await dbGetTeamById(teamId);
+    if (!team || team.captainId !== currentUserId) throw new Error("Only the team captain can delete the team.");
+    await query('DELETE FROM teams WHERE id = ?', [teamId]);
+}
 
 export async function dbAddNotification(userId: string, notificationData: Omit<AppNotification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<AppNotification> {
+    noStore();
     const newNotification: AppNotification = {
         ...notificationData,
         id: `notification-${Date.now()}`,
@@ -404,52 +533,159 @@ export async function dbAddNotification(userId: string, notificationData: Omit<A
 }
 
 export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'userName' | 'userAvatar' | 'isPublicProfile'>): Promise<Review> {
-    const user = await dbGetUserById(reviewData.userId);
-    const newReview: Review = {
-        ...reviewData,
-        id: `review-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        userName: user?.name || 'Anonymous',
-        userAvatar: user?.profilePictureUrl,
-        isPublicProfile: user?.isProfilePublic || false,
-    };
-    return newReview;
+    noStore();
+    const { userId, facilityId, rating, comment, bookingId } = reviewData;
+    const user = await dbGetUserById(userId);
+    const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
+    );
+    await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
+    const newId = (result as any).insertId;
+    const [rows] = await query('SELECT * FROM reviews WHERE id = ?', [newId]);
+    return (rows as Review[])[0];
 }
-export async function dbMarkNotificationAsRead(userId: string, notificationId: string): Promise<void> {}
-export async function dbMarkAllNotificationsAsRead(userId: string): Promise<void> {}
+export async function dbMarkNotificationAsRead(userId: string, notificationId: string): Promise<void> {
+    noStore();
+    // Mock
+}
+export async function dbMarkAllNotificationsAsRead(userId: string): Promise<void> {
+    noStore();
+    // Mock
+}
 export async function dbGetNotificationsForUser(userId: string): Promise<AppNotification[]> {
+    noStore();
+    // Mock
     return [];
 }
 export async function dbGetOpenLfgRequests(): Promise<LfgRequest[]> {
-    const res = await query('SELECT * FROM "lfg_requests" WHERE status = \'open\'');
-    return res.rows as LfgRequest[];
+    noStore();
+    const [rows] = await query('SELECT * FROM lfg_requests WHERE status = \'open\'');
+    return rows as LfgRequest[];
 }
 export async function dbGetOpenChallenges(): Promise<Challenge[]> {
-    const res = await query('SELECT * FROM "challenges" WHERE status = \'open\'');
-    return res.rows as Challenge[];
+    noStore();
+    const [rows] = await query('SELECT * FROM challenges WHERE status = \'open\'');
+    for (const challenge of rows as Challenge[]) {
+        const [userRows] = await query('SELECT * FROM users WHERE id = ?', [challenge.challengerId]);
+        challenge.challenger = (userRows as UserProfile[])[0];
+        const [sportRows] = await query('SELECT * FROM sports WHERE id = ?', [challenge.sportId]);
+        challenge.sport = (sportRows as Sport[])[0];
+    }
+    return rows as Challenge[];
 }
 export async function dbCreateLfgRequest(data: Omit<LfgRequest, 'id'|'createdAt'|'status'|'interestedUserIds'>): Promise<LfgRequest> {
-    const newId = `lfg-${Date.now()}`;
-    await query('INSERT INTO "lfg_requests" (id, "userId", "sportId", "facilityId", notes, "skillLevel", "playersNeeded") VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [newId, data.userId, data.sportId, data.facilityId, data.notes, data.skillLevel, data.playersNeeded]
+    noStore();
+    const [result] = await query('INSERT INTO lfg_requests (userId, sportId, facilityId, facilityName, notes, skillLevel, playersNeeded, preferredTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [data.userId, data.sportId, data.facilityId, data.facilityName, data.notes, data.skillLevel, data.playersNeeded, data.preferredTime]
     );
-    const res = await query('SELECT * FROM "lfg_requests" WHERE id = $1', [newId]);
-    return res.rows[0];
+    const newId = (result as any).insertId;
+    const [rows] = await query('SELECT * FROM lfg_requests WHERE id = ?', [newId]);
+    return (rows as LfgRequest[])[0];
 }
 export async function dbExpressInterestInLfg(lfgId: string, userId: string): Promise<LfgRequest | undefined> {
-    // This is a simplified mock. A real implementation would handle arrays better.
-    return undefined;
+    noStore();
+    const [lfgRows] = await query('SELECT * FROM lfg_requests WHERE id = ?', [lfgId]);
+    const lfg = (lfgRows as LfgRequest[])[0];
+    if (!lfg) return undefined;
+    const interestedIds = lfg.interestedUserIds ? JSON.parse(lfg.interestedUserIds as any) : [];
+    if (!interestedIds.includes(userId)) {
+        interestedIds.push(userId);
+        await query('UPDATE lfg_requests SET interestedUserIds = ? WHERE id = ?', [JSON.stringify(interestedIds), lfgId]);
+    }
+    return dbGetLfgRequestById(lfgId);
 }
-export async function dbCreateChallenge(data: Omit<Challenge, 'id'|'challenger'|'sport'|'createdAt'|'status'>): Promise<Challenge> {
-    const newId = `challenge-${Date.now()}`;
-     await query('INSERT INTO "challenges" (id, "challengerId", "sportId", "facilityId", "proposedDate", notes) VALUES ($1, $2, $3, $4, $5, $6)',
-        [newId, data.challengerId, data.sportId, data.facilityId, data.proposedDate, data.notes]
+export async function dbCreateChallenge(data: Omit<Challenge, 'id'|'challenger'|'sport'|'createdAt'|'status'| 'challengerId' | 'sportId' > & { challengerId: string, sportId: string}): Promise<Challenge> {
+    noStore();
+    const [result] = await query('INSERT INTO challenges (challengerId, sportId, facilityId, facilityName, proposedDate, notes) VALUES (?, ?, ?, ?, ?, ?)',
+        [data.challengerId, data.sportId, data.facilityId, data.facilityName, data.proposedDate, data.notes]
     );
-    const res = await query('SELECT * FROM "challenges" WHERE id = $1', [newId]);
-    return res.rows[0];
+    const newId = (result as any).insertId;
+    return (await dbGetChallengeById(newId.toString()))!;
 }
 export async function dbAcceptChallenge(challengeId: string, opponentId: string): Promise<Challenge | undefined> {
-     await query('UPDATE "challenges" SET "opponentId" = $1, status = \'accepted\' WHERE id = $2', [opponentId, challengeId]);
-     const res = await query('SELECT * FROM "challenges" WHERE id = $1', [challengeId]);
-     return res.rows[0];
+    noStore();
+     await query('UPDATE challenges SET opponentId = ?, status = \'accepted\' WHERE id = ?', [opponentId, challengeId]);
+     return dbGetChallengeById(challengeId);
+}
+
+
+// These are needed for other actions that depend on them
+export async function getEventById(id: string): Promise<SportEvent | undefined> { 
+    noStore();
+    const [rows] = await query('SELECT * FROM events WHERE id = ?', [id]);
+    return (rows as SportEvent[])[0];
+}
+export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> { 
+    noStore();
+    const [rows] = await query('SELECT * FROM blog_posts WHERE slug = ?', [slug]);
+    return (rows as BlogPost[])[0];
+}
+export async function dbGetMembershipPlanById(id: string): Promise<MembershipPlan | undefined> { 
+    noStore();
+    const [rows] = await query('SELECT * FROM membership_plans WHERE id = ?', [id]);
+    return (rows as MembershipPlan[])[0];
+}
+export async function dbGetTeamById(id: string): Promise<Team | undefined> { 
+    noStore();
+    const [rows] = await query('SELECT * FROM teams WHERE id = ?', [id]);
+    const team = (rows as Team[])[0];
+    if (team) {
+        if(typeof team.memberIds === 'string') team.memberIds = JSON.parse(team.memberIds);
+        const [sportRows] = await query('SELECT * FROM sports WHERE id = ?', [(team as any).sportId]);
+        team.sport = (sportRows as Sport[])[0];
+    }
+    return team;
+}
+export async function getPricingRuleById(id: string): Promise<PricingRule | undefined> { 
+    noStore();
+    const [rows] = await query('SELECT * FROM pricing_rules WHERE id = ?', [id]);
+    return (rows as PricingRule[])[0];
+}
+export async function getPromotionRuleByCode(code: string): Promise<PromotionRule | undefined> {
+    noStore();
+    const [rows] = await query('SELECT * FROM promotion_rules WHERE code = ? AND isActive = true', [code]);
+    return (rows as PromotionRule[])[0];
+}
+
+export async function getPromotionRuleById(id: string): Promise<PromotionRule | undefined> {
+    noStore();
+    const [rows] = await query('SELECT * FROM promotion_rules WHERE id = ?', [id]);
+    return (rows as PromotionRule[])[0];
+}
+
+export async function dbGetSportById(id: string): Promise<Sport | undefined> { 
+    noStore();
+    const [rows] = await query('SELECT * FROM sports WHERE id = ?', [id]);
+    return (rows as Sport[])[0];
+}
+
+export async function dbGetLfgRequestById(id: string): Promise<LfgRequest | undefined> { 
+    noStore();
+    const [rows] = await query('SELECT * FROM lfg_requests WHERE id = ?', [id]);
+    return (rows as LfgRequest[])[0];
+}
+export async function dbGetChallengeById(id: string): Promise<Challenge | undefined> { 
+    noStore();
+    const [rows] = await query('SELECT * FROM challenges WHERE id = ?', [id]);
+    return (rows as Challenge[])[0];
+}
+export async function dbGetTeamsByUserId(userId: string): Promise<Team[]> {
+    noStore();
+    const [rows] = await query('SELECT * FROM teams WHERE JSON_CONTAINS(memberIds, ?)', [`"${userId}"`]);
+    for(const team of rows as Team[]) {
+        if(typeof team.memberIds === 'string') team.memberIds = JSON.parse(team.memberIds);
+        const [sportRows] = await query('SELECT * FROM sports WHERE id = ?', [(team as any).sportId]);
+        team.sport = (sportRows as Sport[])[0];
+    }
+    return rows as Team[];
+}
+
+export async function registerForEvent(eventId: string): Promise<boolean> {
+    noStore();
+    const event = await getEventById(eventId);
+    if (event && (!event.maxParticipants || event.registeredParticipants < event.maxParticipants)) {
+        await query('UPDATE events SET registeredParticipants = registeredParticipants + 1 WHERE id = ?', [eventId]);
+        return true;
+    }
+    return false;
 }

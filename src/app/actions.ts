@@ -3,7 +3,7 @@
 
 import { 
     dbGetAllFacilities,
-    dbGetAllSports,
+    getAllSportsAction as dbGetAllSports,
     dbGetFacilityById,
     dbAddFacility,
     dbUpdateFacility,
@@ -13,13 +13,13 @@ import {
     getSiteSettings,
     dbGetFacilitiesByOwnerId,
     getEventById,
-    getAllEvents,
+    getAllEventsAction as getAllEvents,
     dbGetEventsByFacilityIds,
-    getAllMembershipPlans,
+    getAllMembershipPlansAction as getAllMembershipPlans,
     dbGetMembershipPlanById,
-    getAllPricingRules,
+    getAllPricingRulesAction as getAllPricingRules,
     getPricingRuleById,
-    getAllPromotionRules,
+    getAllPromotionRulesAction as getAllPromotionRules,
     dbGetNotificationsForUser,
     dbMarkNotificationAsRead,
     dbMarkAllNotificationsAsRead,
@@ -37,7 +37,7 @@ import {
     dbGetBookingById,
     dbAddUser,
     getPromotionRuleByCode,
-    getAllBlogPosts,
+    getAllBlogPostsAction as getAllBlogPosts,
     getBlogPostBySlug,
     registerForEvent,
     dbCreateTeam,
@@ -53,8 +53,8 @@ import {
     dbGetOpenChallenges,
     dbCreateChallenge,
     dbAcceptChallenge,
-    dbGetAllAmenities,
-    dbAddSport,
+    getAllAmenitiesAction as dbGetAllAmenities,
+    addSportAction as dbAddSport,
     dbUpdateSport,
     dbDeleteSport,
     dbGetUserById,
@@ -72,11 +72,12 @@ import {
     deletePromotionRule as dbDeletePromotionRule,
     updatePromotionRule as dbUpdatePromotionRule,
     addPromotionRule as dbAddPromotionRule,
+    getPricingRulesByFacilityIdsAction,
+    getPromotionRuleById
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team, Amenity } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import twilio from 'twilio';
-import { v4 as uuidv4 } from 'uuid';
 
 // This function now lives in actions.ts, a server-only file.
 export async function sendBookingConfirmationSms(booking: Booking): Promise<void> {
@@ -163,6 +164,10 @@ export async function getUserByIdAction(id: string): Promise<UserProfile | undef
 }
 
 export async function addUserAction(userData: { name: string; email: string; password?: string }): Promise<UserProfile> {
+    const existingUser = await query('SELECT id FROM users WHERE email = ?', [userData.email]);
+    if ((existingUser[0] as any[]).length > 0) {
+        throw new Error('A user with this email already exists.');
+    }
     const newUser = await dbAddUser(userData);
     revalidatePath('/admin/users');
     revalidatePath('/leaderboard');
@@ -331,8 +336,8 @@ export async function updateBookingAction(bookingId: string, updates: Partial<Bo
 }
 
 export async function addBookingAction(bookingData: Omit<Booking, 'id' | 'bookedAt'>): Promise<Booking> {
-    const bookingWithId: Booking = { ...bookingData, id: `booking-${uuidv4()}`, bookedAt: new Date().toISOString() };
-    const newBooking = await dbAddBooking(bookingWithId);
+    const bookingWithTime: Omit<Booking, 'id'> = { ...bookingData, bookedAt: new Date().toISOString().slice(0, 19).replace('T', ' ') };
+    const newBooking = await dbAddBooking(bookingWithTime);
     
     if (newBooking.userId) {
         const user = await dbGetUserById(newBooking.userId);
@@ -518,7 +523,7 @@ export async function getOpenChallengesAction(): Promise<Challenge[]> {
 }
 
 export async function createChallengeAction(data: Omit<Challenge, 'id'|'challenger'|'sport'|'createdAt'|'status'>): Promise<Challenge> {
-    const newChallenge = await dbCreateChallenge(data);
+    const newChallenge = await dbCreateChallenge(data as any);
     revalidatePath('/challenges');
     return newChallenge;
 }
