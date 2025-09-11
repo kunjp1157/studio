@@ -77,7 +77,6 @@ export interface RentalEquipment {
   pricePerItem: number; 
   priceType: 'per_booking' | 'per_hour'; 
   stock: number;
-  sportIds: string[]; // Link equipment to one or more sports
 }
 
 export interface FacilityOperatingHours {
