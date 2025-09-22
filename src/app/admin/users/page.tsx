@@ -46,8 +46,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { UserProfile, UserRole, UserStatus, Facility } from '@/lib/types';
-import { updateUser as updateMockUser, addNotification } from '@/lib/data';
-import { getUsersAction, getFacilitiesByOwnerIdAction, updateUserAction } from '@/app/actions';
+import { getFacilitiesByOwnerIdAction, getUsersAction, updateUserAction, addNotificationAction } from '@/app/actions';
 import { Users, MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -146,7 +145,7 @@ export default function AdminUsersPage() {
             title: `User ${newStatus === 'Active' ? 'Activated' : 'Suspended'}`,
             description: `${user.name}'s status has been changed to ${newStatus}.`,
         });
-        addNotification(user.id, {
+        await addNotificationAction(user.id, {
             type: 'user_status_changed',
             title: `Account Status Changed`,
             message: `Your account status has been updated to ${newStatus} by an administrator.`,
@@ -174,7 +173,7 @@ export default function AdminUsersPage() {
             title: "User Updated",
             description: `${data.name}'s profile has been successfully updated.`,
         });
-        addNotification(selectedUser.id, {
+        await addNotificationAction(selectedUser.id, {
             type: 'general',
             title: 'Profile Updated by Admin',
             message: 'An administrator has updated your profile information.',

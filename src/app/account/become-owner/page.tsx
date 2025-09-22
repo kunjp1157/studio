@@ -27,9 +27,9 @@ const ownerVerificationSchema = z.object({
   idNumber: z.string().min(10, 'Please enter a valid ID number (PAN/Aadhar).'),
   facilityName: z.string().min(3, 'Facility name is required.'),
   facilityAddress: z.string().min(10, 'Facility address is required.'),
-  identityProof: z.any().refine(file => file?.length == 1, 'Identity proof is required.'),
-  addressProof: z.any().refine(file => file?.length == 1, 'Address proof is required.'),
-  ownershipProof: z.any().refine(file => file?.length == 1, 'Ownership proof is required.'),
+  identityProof: z.any().refine(fileList => fileList.length === 1, 'Identity proof is required.'),
+  addressProof: z.any().refine(fileList => fileList.length === 1, 'Address proof is required.'),
+  ownershipProof: z.any().refine(fileList => fileList.length === 1, 'Ownership proof is required.'),
 });
 
 type OwnerVerificationFormValues = z.infer<typeof ownerVerificationSchema>;
@@ -73,11 +73,20 @@ export default function BecomeOwnerPage() {
     setIsLoading(true);
 
     try {
-      // In a real app, you would upload files to a storage service and save the URLs.
-      // Here, we'll just use the form data to create a note for the admin.
-      const verificationNote = `Verification pending for ${data.fullName}. Phone: ${data.phone}. Facility: ${data.facilityName} at ${data.facilityAddress}. ID: ${data.idNumber}. Documents submitted: Identity, Address, Ownership.`;
-      
-      const updatedUser = await requestOwnerRoleAction(currentUser.id, verificationNote);
+      // In a real app, you would upload files to a storage service (like S3 or Firebase Storage)
+      // and get back URLs. For this demo, we'll just use the file names.
+      const requestPayload = {
+        fullName: data.fullName,
+        phone: data.phone,
+        idNumber: data.idNumber,
+        facilityName: data.facilityName,
+        facilityAddress: data.facilityAddress,
+        identityProofPath: (data.identityProof[0] as File).name,
+        addressProofPath: (data.addressProof[0] as File).name,
+        ownershipProofPath: (data.ownershipProof[0] as File).name,
+      };
+
+      const updatedUser = await requestOwnerRoleAction(currentUser.id, requestPayload);
 
       if (updatedUser) {
         sessionStorage.setItem('activeUser', JSON.stringify(updatedUser));
@@ -145,10 +154,17 @@ export default function BecomeOwnerPage() {
                <FormField control={form.control} name="idNumber" render={({ field }) => (
                 <FormItem><FormLabel>PAN / Aadhar Card Number</FormLabel><FormControl><Input placeholder="Your 12-digit Aadhar or 10-digit PAN" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
-              <FormField control={form.control} name="identityProof" render={({ field }) => (
-                <FormItem><FormLabel className="flex items-center"><Upload className="mr-2 h-4 w-4" />Upload Scanned Identity Proof</FormLabel>
-                <FormControl><Input type="file" onChange={(e) => field.onChange(e.target.files)} /></FormControl><FormMessage /></FormItem>
-              )}/>
+              <FormField
+                control={form.control}
+                name="identityProof"
+                render={({ field: { onChange, ...fieldProps } }) => (
+                <FormItem>
+                    <FormLabel className="flex items-center"><Upload className="mr-2 h-4 w-4" />Upload Scanned Identity Proof</FormLabel>
+                    <FormControl><Input type="file" {...fieldProps} onChange={(e) => onChange(e.target.files)} /></FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
@@ -161,14 +177,23 @@ export default function BecomeOwnerPage() {
               <FormField control={form.control} name="facilityAddress" render={({ field }) => (
                 <FormItem><FormLabel>Facility Address</FormLabel><FormControl><Textarea placeholder="Full address of your facility" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
-              <FormField control={form.control} name="addressProof" render={({ field }) => (
-                <FormItem><FormLabel className="flex items-center"><Upload className="mr-2 h-4 w-4" />Upload Facility Address Proof (e.g., Utility Bill)</FormLabel>
-                <FormControl><Input type="file" onChange={(e) => field.onChange(e.target.files)} /></FormControl><FormMessage /></FormItem>
+              <FormField 
+                control={form.control}
+                name="addressProof"
+                render={({ field: { onChange, ...fieldProps } }) => (
+                    <FormItem><FormLabel className="flex items-center"><Upload className="mr-2 h-4 w-4" />Upload Facility Address Proof (e.g., Utility Bill)</FormLabel>
+                    <FormControl><Input type="file" {...fieldProps} onChange={(e) => onChange(e.target.files)} /></FormControl>
+                    <FormMessage /></FormItem>
               )}/>
-               <FormField control={form.control} name="ownershipProof" render={({ field }) => (
-                <FormItem><FormLabel className="flex items-center"><Upload className="mr-2 h-4 w-4" />Upload Facility Ownership Proof (e.g., Lease Agreement)</FormLabel>
-                <FormControl><Input type="file" onChange={(e) => field.onChange(e.target.files)} /></FormControl><FormMessage /></FormItem>
-              )}/>
+               <FormField
+                control={form.control}
+                name="ownershipProof"
+                render={({ field: { onChange, ...fieldProps } }) => (
+                    <FormItem><FormLabel className="flex items-center"><Upload className="mr-2 h-4 w-4" />Upload Facility Ownership Proof (e.g., Lease Agreement)</FormLabel>
+                    <FormControl><Input type="file" {...fieldProps} onChange={(e) => onChange(e.target.files)} /></FormControl>
+                    <FormMessage /></FormItem>
+                )}
+              />
             </CardContent>
           </Card>
           

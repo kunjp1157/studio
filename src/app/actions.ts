@@ -72,9 +72,10 @@ import {
     deletePromotionRule as dbDeletePromotionRule,
     updatePromotionRule as dbUpdatePromotionRule,
     addPromotionRule as dbAddPromotionRule,
-    getPromotionRuleById
+    getPromotionRuleById,
+    dbRequestOwnerRole
 } from '@/lib/data';
-import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team, Amenity } from '@/lib/types';
+import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team, Amenity, OwnerVerificationRequest } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 import twilio from 'twilio';
 
@@ -315,8 +316,12 @@ export async function updateUserAction(userId: string, updates: Partial<UserProf
     return user;
 }
 
-export async function requestOwnerRoleAction(userId: string, verificationNote?: string): Promise<UserProfile | undefined> {
-    const user = await dbUpdateUser(userId, { status: 'PendingApproval', verificationNote: verificationNote || 'Requested standard access.' });
+export async function requestOwnerRoleAction(userId: string, requestData: Omit<OwnerVerificationRequest, 'id' | 'userId' | 'status' | 'createdAt'>): Promise<UserProfile | undefined> {
+    // Add the request to the new table
+    await dbRequestOwnerRole(userId, requestData);
+
+    // Update user's status to PendingApproval
+    const user = await dbUpdateUser(userId, { status: 'PendingApproval' });
     if(user) {
         revalidatePath('/account/profile');
         revalidatePath('/admin/users');

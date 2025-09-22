@@ -4,7 +4,7 @@
 import type {
   Facility, Sport, Amenity, Review, Booking, UserProfile, SportEvent, MembershipPlan,
   PricingRule, PromotionRule, AppNotification, BlogPost, Team, LfgRequest, Challenge, SiteSettings,
-  FacilityOperatingHours, RentalEquipment, MaintenanceSchedule, SportPrice
+  FacilityOperatingHours, RentalEquipment, MaintenanceSchedule, SportPrice, OwnerVerificationRequest
 } from './types';
 import { query } from './db';
 import { unstable_noStore as noStore } from 'next/cache';
@@ -444,6 +444,14 @@ export async function unblockTimeSlot(facilityId: string, ownerId: string, date:
     return true;
 }
 
+export async function dbRequestOwnerRole(userId: string, requestData: Omit<OwnerVerificationRequest, 'id' | 'userId' | 'status' | 'createdAt'>): Promise<void> {
+    noStore();
+    const { fullName, phone, idNumber, facilityName, facilityAddress, identityProofPath, addressProofPath, ownershipProofPath } = requestData;
+    await query(
+        'INSERT INTO owner_verification_requests (userId, fullName, phone, idNumber, facilityName, facilityAddress, identityProofPath, addressProofPath, ownershipProofPath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [userId, fullName, phone, idNumber, facilityName, facilityAddress, identityProofPath, addressProofPath, ownershipProofPath]
+    );
+}
 
 export async function addSportAction(sportData: Omit<Sport, 'id'>): Promise<Sport> {
     noStore();
@@ -583,7 +591,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;

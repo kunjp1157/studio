@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { updateUserAction, getAllSportsAction, requestOwnerRoleAction } from '@/app/actions';
+import { updateUserAction, getAllSportsAction } from '@/app/actions';
 import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement, UserSkill, SkillLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell, Shield, HandCoins } from 'lucide-react';
@@ -428,5 +428,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

@@ -1,5 +1,6 @@
 
 
+
 export interface MaintenanceSchedule {
   id: string;
   taskName: string;
@@ -216,13 +217,27 @@ export interface UserProfile {
   joinedAt: string; 
   teamIds?: string[];
   isProfilePublic?: boolean;
-  verificationNote?: string;
 }
 
 export interface AdminUser { 
   id: string;
   username: string;
   role: 'Admin' | 'Manager'; 
+}
+
+export interface OwnerVerificationRequest {
+  id: number;
+  userId: string;
+  fullName: string;
+  phone: string;
+  idNumber: string;
+  facilityName: string;
+  facilityAddress: string;
+  identityProofPath: string; // In a real app, this would be a URL to stored file
+  addressProofPath: string;
+  ownershipProofPath: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
 }
 
 export interface ReportData {
