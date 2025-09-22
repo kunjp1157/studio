@@ -72,7 +72,6 @@ import {
     deletePromotionRule as dbDeletePromotionRule,
     updatePromotionRule as dbUpdatePromotionRule,
     addPromotionRule as dbAddPromotionRule,
-    getPricingRulesByFacilityIdsAction,
     getPromotionRuleById
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team, Amenity } from '@/lib/types';
@@ -164,8 +163,9 @@ export async function getUserByIdAction(id: string): Promise<UserProfile | undef
 }
 
 export async function addUserAction(userData: { name: string; email: string; password?: string }): Promise<UserProfile> {
-    const existingUser = await query('SELECT id FROM users WHERE email = ?', [userData.email]);
-    if ((existingUser[0] as any[]).length > 0) {
+    const existingUsers = await dbGetAllUsers();
+    const existingUser = existingUsers.find(u => u.email.toLowerCase() === userData.email.toLowerCase());
+    if (existingUser) {
         throw new Error('A user with this email already exists.');
     }
     const newUser = await dbAddUser(userData);
@@ -315,8 +315,8 @@ export async function updateUserAction(userId: string, updates: Partial<UserProf
     return user;
 }
 
-export async function requestOwnerRoleAction(userId: string): Promise<UserProfile | undefined> {
-    const user = await dbUpdateUser(userId, { status: 'PendingApproval' });
+export async function requestOwnerRoleAction(userId: string, verificationNote?: string): Promise<UserProfile | undefined> {
+    const user = await dbUpdateUser(userId, { status: 'PendingApproval', verificationNote: verificationNote || 'Requested standard access.' });
     if(user) {
         revalidatePath('/account/profile');
         revalidatePath('/admin/users');

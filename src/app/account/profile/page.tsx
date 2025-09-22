@@ -22,17 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { format } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import { getIconComponent } from '@/components/shared/Icon';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import Link from 'next/link';
 
 const skillLevelsOptions: {value: SkillLevel | "Not Specified", label: string}[] = [
     { value: "Not Specified", label: "Not Specified" },
@@ -140,26 +130,6 @@ export default function ProfilePage() {
         toast({ title: "Error", description: "Could not update your profile.", variant: "destructive" });
     } finally {
         setIsLoading(false);
-    }
-  };
-
-  const handleRequestOwner = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    try {
-      const updatedUser = await requestOwnerRoleAction(user.id);
-      if (updatedUser) {
-        sessionStorage.setItem('activeUser', JSON.stringify(updatedUser));
-        window.dispatchEvent(new Event('userChanged'));
-        toast({
-          title: "Request Submitted",
-          description: "Your request to become a facility owner has been submitted for admin approval.",
-        });
-      }
-    } catch (error) {
-      toast({ title: "Error", description: "Could not submit your request.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -406,25 +376,11 @@ export default function ProfilePage() {
                       Your request to become an owner is pending approval by an administrator.
                     </div>
                   ) : (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button className="w-full" disabled={isRequestPending}>Request Owner Access</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirm Request</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will submit a request to the site administrators to grant you facility owner privileges. You will be notified once your request is reviewed.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleRequestOwner}>
-                            Yes, Submit Request
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <Link href="/account/become-owner">
+                      <Button className="w-full">
+                        Start Verification
+                      </Button>
+                    </Link>
                   )}
                 </CardContent>
               </Card>

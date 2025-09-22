@@ -77,6 +77,7 @@ export interface RentalEquipment {
   pricePerItem: number; 
   priceType: 'per_booking' | 'per_hour'; 
   stock: number;
+  sportIds: string[];
 }
 
 export interface FacilityOperatingHours {
@@ -215,6 +216,7 @@ export interface UserProfile {
   joinedAt: string; 
   teamIds?: string[];
   isProfilePublic?: boolean;
+  verificationNote?: string;
 }
 
 export interface AdminUser { 
