@@ -1,9 +1,16 @@
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
 --
 -- Database: `sports_arena`
 --
-DROP DATABASE IF EXISTS `sports_arena`;
-CREATE DATABASE `sports_arena`;
-USE `sports_arena`;
 
 -- --------------------------------------------------------
 
@@ -12,10 +19,10 @@ USE `sports_arena`;
 --
 
 CREATE TABLE `amenities` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `iconName` VARCHAR(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `iconName` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `amenities`
@@ -23,13 +30,13 @@ CREATE TABLE `amenities` (
 
 INSERT INTO `amenities` (`id`, `name`, `iconName`) VALUES
 ('amenity-1', 'Parking', 'ParkingCircle'),
-('amenity-2', 'Lockers', 'Lock'),
-('amenity-3', 'Showers', 'ShowerHead'),
-('amenity-4', 'Wi-Fi', 'Wifi'),
+('amenity-2', 'Locker Room', 'Lock'),
+('amenity-3', 'Wi-Fi', 'Wifi'),
+('amenity-4', 'Showers', 'ShowerHead'),
 ('amenity-5', 'First Aid', 'Feather'),
 ('amenity-6', 'Refreshments', 'Utensils'),
 ('amenity-7', 'Equipment Rental', 'PackageSearch'),
-('amenity-8', 'Floodlights', 'Zap');
+('amenity-8', 'Floodlights', 'Lightbulb');
 
 -- --------------------------------------------------------
 
@@ -38,27 +45,27 @@ INSERT INTO `amenities` (`id`, `name`, `iconName`) VALUES
 --
 
 CREATE TABLE `blog_posts` (
-  `id` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255) NOT NULL,
-  `title` VARCHAR(255) NOT NULL,
-  `excerpt` TEXT NOT NULL,
-  `content` TEXT NOT NULL,
-  `authorName` VARCHAR(255) NOT NULL,
-  `authorAvatarUrl` VARCHAR(255) DEFAULT NULL,
-  `publishedAt` DATETIME NOT NULL,
-  `tags` JSON DEFAULT NULL,
-  `isFeatured` TINYINT(1) DEFAULT 0,
-  `dataAiHint` VARCHAR(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `excerpt` text NOT NULL,
+  `content` longtext NOT NULL,
+  `authorName` varchar(255) NOT NULL,
+  `authorAvatarUrl` varchar(255) DEFAULT NULL,
+  `publishedAt` varchar(255) NOT NULL,
+  `tags` text DEFAULT NULL,
+  `isFeatured` tinyint(1) DEFAULT 0,
+  `dataAiHint` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `blog_posts`
 --
 
 INSERT INTO `blog_posts` (`id`, `slug`, `title`, `excerpt`, `content`, `authorName`, `authorAvatarUrl`, `publishedAt`, `tags`, `isFeatured`, `dataAiHint`) VALUES
-('blog-1', 'improve-your-cricket-batting', '5 Drills to Drastically Improve Your Cricket Batting', 'Whether you are a beginner or a seasoned player, these five drills will help you refine your technique, improve your timing, and score more runs.', '<h2>Introduction</h2><p>Cricket is a game of skill, and batting is its most celebrated art. To become a proficient batsman, one needs dedication, practice, and the right drills. Here are five drills that can help you improve your batting skills.</p><h3>1. The Hanging Ball Drill</h3><p>This is a classic drill that helps improve hand-eye coordination and timing. Hang a cricket ball in a sock or a net from a height where it reaches your waist. Practice different shots like the drive, cut, and pull. Focus on hitting the ball in the middle of the bat.</p><h3>2. Shadow Batting</h3><p>Shadow batting is an excellent way to work on your technique without the pressure of a bowler. Stand in front of a mirror and practice your stance, backlift, and follow-through. This helps in building muscle memory and perfecting your form.</p><h3>3. The Wall Rebound Drill</h3><p>Throw a tennis ball against a wall and play a shot as it rebounds. This drill is great for improving reflexes and reaction time, which are crucial for facing fast bowlers.</p><h3>4. Single-Handed Batting</h3><p>Practice batting with only your top hand and then with only your bottom hand. This helps in strengthening your wrists and understanding the role each hand plays in a shot. The top hand is for control, and the bottom hand provides power.</p><h3>5. Net Practice Against Various Bowlers</h3><p>There is no substitute for facing real bowlers. Practice in the nets against different types of bowlers – fast, spin, and medium pace. This will help you adapt to different speeds and styles of bowling.</p><h2>Conclusion</h2><p>Consistency is key. Incorporate these drills into your regular practice sessions, and you will see a significant improvement in your batting. Happy cricketing!</p>', 'Rohan Sharma', 'https://i.pravatar.cc/150?u=rohan', '2024-05-10 10:00:00', '[\"Cricket\", \"Batting\", \"Drills\"]', 1, 'cricket batting practice'),
-('blog-2', 'choosing-the-right-running-shoes', 'How to Choose the Right Running Shoes', 'The right pair of running shoes can make a world of difference. Learn about the key factors to consider, from pronation to cushioning, to find the perfect fit for your feet.', '<p>Choosing the right running shoes is a critical step for any runner, whether you are a seasoned marathoner or just starting out. The right shoe can prevent injuries, improve performance, and make your runs more comfortable. Here are some factors to consider:</p><h4>1. Understand Your Foot Type</h4><p>Your foot type primarily determines how you run. You can have a neutral arch, a low arch (flat feet), or a high arch. A simple way to check this is the "wet test": wet your foot, step on a piece of paper, and examine the footprint. A full footprint suggests flat feet, while a very narrow footprint suggests a high arch.</p><h4>2. Know Your Pronation</h4><p>Pronation is the way your foot rolls inward for impact distribution upon landing. Overpronation (foot rolls inward too much) and underpronation (foot doesn''t roll inward enough) can lead to injuries. A specialty running store can analyze your gait to determine your pronation type and recommend shoes accordingly.</p><h4>3. Cushioning Level</h4><p>The amount of cushioning you need depends on your personal preference and the type of running you do. Minimalist shoes have very little cushioning, while maximum-cushion shoes offer a plush ride. Consider the surface you run on – you might want more cushioning for roads and less for trails.</p><h4>4. Heel-to-Toe Drop</h4><p>This is the difference in height between the heel and the forefoot. A higher drop can be beneficial for runners who land on their heels, while a lower drop encourages a midfoot or forefoot strike. The right drop for you depends on your running form.</p><h4>5. Try Before You Buy</h4><p>Always try on shoes before buying them. It''s best to shop for running shoes in the evening when your feet are slightly swollen. Wear the same type of socks you run in and, if possible, go for a short jog in the store.</p>', 'Priya Mehta', 'https://i.pravatar.cc/150?u=priya', '2024-05-15 14:30:00', '[\"Running\", \"Shoes\", \"Fitness\"]', 0, 'running shoes selection'),
-('blog-3', 'benefits-of-swimming', 'Dive In: The Surprising Health Benefits of Swimming', 'Swimming is more than just a recreational activity; it''s a full-body workout with numerous health benefits. Discover how swimming can improve your cardiovascular health, build muscle, and reduce stress.', '<p>Swimming is often called the perfect workout. But what makes it so beneficial? Here’s a look at some of the key health benefits of taking a regular dip in the pool.</p><h4>1. Full-Body Workout</h4><p>Swimming engages almost every major muscle group in your body. From your core to your arms and legs, you get a comprehensive workout without putting excessive strain on any single part of your body.</p><h4>2. Low-Impact Exercise</h4><p>The buoyancy of water supports your body, making swimming a low-impact exercise. This makes it an excellent choice for people with arthritis, joint pain, or those recovering from injuries.</p><h4>3. Improves Cardiovascular Health</h4><p>Swimming is a great aerobic exercise that strengthens your heart and improves its ability to pump blood. Regular swimming can help lower blood pressure and improve circulation.</p><h4>4. Builds Endurance and Muscle Strength</h4><p>Water resistance is about 12 times greater than air resistance. Every kick and pull is a resistance exercise, which helps in building muscle strength and endurance.</p><h4>5. Stress Reduction</h4><p>The rhythmic and meditative nature of swimming can be incredibly relaxing. The sound of the water and the focus on your breathing can help you disconnect from daily stressors and improve your mental well-being.</p>', 'Anjali Rao', 'https://i.pravatar.cc/150?u=anjali', '2024-06-01 11:00:00', '[\"Swimming\", \"Health\", \"Fitness\"]', 0, 'swimming pool health');
+('blog-1', 'improve-your-cricket-batting', '5 Drills to Drastically Improve Your Cricket Batting', 'Whether you are a beginner or an experienced player, these five drills will help you refine your technique, improve your timing, and score more runs.', '<h2>Master the Basics</h2><p>Start with the basics. The grip, stance, and backlift are the fundamentals of batting. Spend at least 15 minutes each session practicing these in front of a mirror.</p><h2>Shadow Batting</h2><p>Shadow batting is an excellent way to work on your technique without the pressure of a bowler. Focus on your footwork and the full swing of the bat for different types of shots.</p>', 'Rohan Sharma', 'https://randomuser.me/api/portraits/men/32.jpg', '2023-06-10T09:00:00.000Z', '[\"Cricket\", \"Batting\", \"Tips\"]', 1, 'cricket batting practice'),
+('blog-2', 'choosing-the-right-football-boots', 'How to Choose the Right Football Boots', 'The right pair of football boots can make a huge difference to your game. This guide will help you understand the different types and what to look for.', '<h2>Understand the Surface</h2><p>The type of ground you play on is the most critical factor. Firm Ground (FG) boots are the most common, but you might need Soft Ground (SG) for muddy pitches or Artificial Grass (AG) boots for turf.</p>', 'Priya Singh', 'https://randomuser.me/api/portraits/women/44.jpg', '2023-07-22T12:00:00.000Z', '[\"Football\", \"Equipment\", \"Guide\"]', 0, 'football boots'),
+('blog-3', 'staying-hydrated-during-sports', 'The Importance of Staying Hydrated During Sports', 'Proper hydration is key to peak performance and avoiding injuries. Learn how much water you should be drinking before, during, and after your game.', '<p>Dehydration can lead to fatigue, muscle cramps, and a significant drop in performance. The general rule is to drink 8-10 glasses of water a day, but your needs increase when you are active. Start hydrating the day before your match.</p>', 'Dr. Anjali Mehta', 'https://randomuser.me/api/portraits/women/65.jpg', '2023-08-01T15:00:00.000Z', '[\"Health\", \"Fitness\", \"Hydration\"]', 0, 'athlete drinking water');
 
 -- --------------------------------------------------------
 
@@ -67,42 +74,38 @@ INSERT INTO `blog_posts` (`id`, `slug`, `title`, `excerpt`, `content`, `authorNa
 --
 
 CREATE TABLE `bookings` (
-  `id` VARCHAR(255) NOT NULL,
-  `userId` VARCHAR(255) DEFAULT NULL,
-  `facilityId` VARCHAR(255) NOT NULL,
-  `facilityName` VARCHAR(255) NOT NULL,
-  `dataAiHint` VARCHAR(255) DEFAULT NULL,
-  `sportId` VARCHAR(255) NOT NULL,
-  `sportName` VARCHAR(255) NOT NULL,
-  `date` DATE NOT NULL,
-  `startTime` TIME NOT NULL,
-  `endTime` TIME NOT NULL,
-  `durationHours` INT DEFAULT NULL,
-  `numberOfGuests` INT DEFAULT NULL,
-  `baseFacilityPrice` DECIMAL(10,2) NOT NULL,
-  `equipmentRentalCost` DECIMAL(10,2) NOT NULL,
-  `appliedPromotion` JSON DEFAULT NULL,
-  `totalPrice` DECIMAL(10,2) NOT NULL,
-  `status` ENUM('Confirmed','Pending','Cancelled') NOT NULL,
-  `bookedAt` DATETIME NOT NULL,
-  `reviewed` TINYINT(1) DEFAULT 0,
-  `rentedEquipment` JSON DEFAULT NULL,
-  `phoneNumber` VARCHAR(20) DEFAULT NULL,
-  `pricingModel` VARCHAR(50) DEFAULT 'per_hour_flat'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `userId` varchar(255) DEFAULT NULL,
+  `facilityId` varchar(255) NOT NULL,
+  `facilityName` varchar(255) NOT NULL,
+  `dataAiHint` varchar(255) DEFAULT NULL,
+  `sportId` varchar(255) NOT NULL,
+  `sportName` varchar(255) NOT NULL,
+  `date` varchar(255) NOT NULL,
+  `startTime` varchar(255) NOT NULL,
+  `endTime` varchar(255) NOT NULL,
+  `durationHours` int(11) DEFAULT NULL,
+  `numberOfGuests` int(11) DEFAULT NULL,
+  `baseFacilityPrice` decimal(10,2) NOT NULL,
+  `equipmentRentalCost` decimal(10,2) NOT NULL,
+  `appliedPromotion` text DEFAULT NULL,
+  `totalPrice` decimal(10,2) NOT NULL,
+  `status` enum('Confirmed','Pending','Cancelled') NOT NULL,
+  `bookedAt` varchar(255) NOT NULL,
+  `reviewed` tinyint(1) NOT NULL DEFAULT 0,
+  `rentedEquipment` text DEFAULT NULL,
+  `phoneNumber` varchar(255) DEFAULT NULL,
+  `pricingModel` varchar(50) DEFAULT 'per_hour_flat'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `bookings`
 --
 
 INSERT INTO `bookings` (`id`, `userId`, `facilityId`, `facilityName`, `dataAiHint`, `sportId`, `sportName`, `date`, `startTime`, `endTime`, `durationHours`, `numberOfGuests`, `baseFacilityPrice`, `equipmentRentalCost`, `appliedPromotion`, `totalPrice`, `status`, `bookedAt`, `reviewed`, `rentedEquipment`, `phoneNumber`, `pricingModel`) VALUES
-('booking-1', 'user-1', 'facility-pune-1', 'Pune Elite Badminton Courts', 'badminton court', 'sport-2', 'Badminton', '2024-07-20', '18:00:00', '19:00:00', 1, NULL, 600.00, 0.00, NULL, 600.00, 'Confirmed', '2024-07-01 11:05:00', 0, NULL, '9876543210', 'per_hour_flat'),
-('booking-2', 'user-2', 'facility-mumbai-master', 'Mumbai Sports Metropolis', 'sports complex', 'sport-1', 'Cricket', '2024-07-21', '10:00:00', '12:00:00', 2, NULL, 2400.00, 0.00, NULL, 2400.00, 'Confirmed', '2024-07-02 14:20:00', 0, NULL, '9876543211', 'per_hour_flat'),
-('booking-3', 'user-3', 'facility-delhi-3', 'Delhi Football Den', 'football field', 'sport-3', 'Football', '2024-06-15', '19:00:00', '21:00:00', 2, NULL, 1800.00, 0.00, NULL, 1800.00, 'Confirmed', '2024-06-10 09:00:00', 1, NULL, '9876543212', 'per_hour_flat'),
-('booking-4', 'user-1', 'facility-bangalore-2', 'The Net Rippers (Bangalore)', 'basketball court', 'sport-4', 'Basketball', '2024-06-25', '17:00:00', '18:00:00', 1, NULL, 750.00, 0.00, NULL, 750.00, 'Cancelled', '2024-06-20 18:30:00', 0, NULL, '9876543210', 'per_hour_flat'),
-('booking-5', 'user-4', 'facility-chennai-4', 'Chennai Swim Club', 'swimming pool', 'sport-5', 'Swimming', '2024-07-22', '08:00:00', '09:00:00', 1, 2, 800.00, 0.00, NULL, 800.00, 'Confirmed', '2024-07-05 12:00:00', 0, NULL, '9876543213', 'per_hour_per_person'),
-('booking-6', 'user-2', 'facility-kolkata-master', 'Kolkata Sports Complex', 'sports complex', 'sport-3', 'Football', '2024-08-01', '20:00:00', '22:00:00', 2, NULL, 2600.00, 0.00, NULL, 2600.00, 'Confirmed', '2024-07-10 16:45:00', 0, NULL, '9876543211', 'per_hour_flat'),
-('booking-7', 'user-5', 'facility-ahmedabad-1', 'Sabarmati Badminton Hall', 'badminton court', 'sport-2', 'Badminton', '2024-07-28', '19:00:00', '20:00:00', 1, NULL, 500.00, 0.00, '{\"code\": \"FIRSTBOOK\", \"discountAmount\": 50, \"description\": \"First Booking Discount\"}', 450.00, 'Confirmed', '2024-07-11 10:20:00', 0, NULL, '9876543214', 'per_hour_flat');
+('booking-1', 'user-charlie', 'facility-pune-1', 'Deccan Gymkhana Club', 'tennis court', 'sport-2', 'Tennis', '2023-08-15', '18:00', '19:00', 1, NULL, '1000.00', '0.00', NULL, '1000.00', 'Confirmed', '2023-08-01 10:00:00', 1, NULL, '9876543210', 'per_hour_flat'),
+('booking-2', 'user-diana', 'facility-mumbai-2', 'Andheri Sports Complex', 'swimming pool', 'sport-3', 'Swimming', '2023-08-20', '09:00', '10:00', 1, NULL, '500.00', '0.00', NULL, '500.00', 'Confirmed', '2023-08-05 11:30:00', 0, NULL, '9876543211', 'per_hour_flat'),
+('booking-3', 'user-charlie', 'facility-delhi-1', 'Siri Fort Sports Complex', 'badminton court', 'sport-4', 'Badminton', '2023-07-30', '17:00', '18:00', 1, NULL, '700.00', '0.00', NULL, '700.00', 'Cancelled', '2023-07-25 14:00:00', 0, NULL, '9876543210', 'per_hour_flat');
 
 -- --------------------------------------------------------
 
@@ -111,25 +114,25 @@ INSERT INTO `bookings` (`id`, `userId`, `facilityId`, `facilityName`, `dataAiHin
 --
 
 CREATE TABLE `challenges` (
-  `id` VARCHAR(255) NOT NULL,
-  `challengerId` VARCHAR(255) NOT NULL,
-  `opponentId` VARCHAR(255) DEFAULT NULL,
-  `sportId` VARCHAR(255) NOT NULL,
-  `facilityId` VARCHAR(255) NOT NULL,
-  `facilityName` VARCHAR(255) NOT NULL,
-  `proposedDate` DATETIME NOT NULL,
-  `notes` TEXT NOT NULL,
-  `status` ENUM('open','accepted','completed','cancelled') NOT NULL DEFAULT 'open',
-  `createdAt` DATETIME NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `challengerId` varchar(255) NOT NULL,
+  `opponentId` varchar(255) DEFAULT NULL,
+  `sportId` varchar(255) NOT NULL,
+  `facilityId` varchar(255) NOT NULL,
+  `facilityName` varchar(255) NOT NULL,
+  `proposedDate` varchar(255) NOT NULL,
+  `notes` text NOT NULL,
+  `status` enum('open','accepted','completed','cancelled') NOT NULL DEFAULT 'open',
+  `createdAt` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `challenges`
 --
 
 INSERT INTO `challenges` (`id`, `challengerId`, `opponentId`, `sportId`, `facilityId`, `facilityName`, `proposedDate`, `notes`, `status`, `createdAt`) VALUES
-('challenge-1', 'user-1', NULL, 'sport-2', 'facility-pune-1', 'Pune Elite Badminton Courts', '2024-08-10 19:00:00', 'Looking for a competitive singles match. Intermediate level preferred.', 'open', '2024-07-11 15:00:00'),
-('challenge-2', 'user-3', 'user-2', 'sport-3', 'facility-mumbai-master', 'Mumbai Sports Metropolis', '2024-08-05 18:00:00', '5-a-side football challenge. Got a team? Bring it on!', 'accepted', '2024-07-12 10:00:00');
+('challenge-1', 'user-charlie', NULL, 'sport-2', 'facility-pune-1', 'Deccan Gymkhana Club', '2023-09-01T18:00:00.000Z', 'Looking for a friendly but competitive tennis match. Singles. Let\'s play!', 'open', '2023-08-10T11:00:00.000Z'),
+('challenge-2', 'user-diana', 'user-charlie', 'sport-4', 'facility-delhi-1', 'Siri Fort Sports Complex', '2023-09-05T19:00:00.000Z', 'Badminton doubles challenge. I have a partner. Need two opponents.', 'accepted', '2023-08-12T15:00:00.000Z');
 
 -- --------------------------------------------------------
 
@@ -138,29 +141,28 @@ INSERT INTO `challenges` (`id`, `challengerId`, `opponentId`, `sportId`, `facili
 --
 
 CREATE TABLE `events` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `facilityId` VARCHAR(255) NOT NULL,
-  `facilityName` VARCHAR(255) DEFAULT NULL,
-  `sportId` VARCHAR(255) NOT NULL,
-  `startDate` DATETIME NOT NULL,
-  `endDate` DATETIME NOT NULL,
-  `description` TEXT NOT NULL,
-  `entryFee` DECIMAL(10,2) DEFAULT NULL,
-  `maxParticipants` INT DEFAULT NULL,
-  `registeredParticipants` INT DEFAULT 0,
-  `imageUrl` VARCHAR(255) DEFAULT NULL,
-  `imageDataAiHint` VARCHAR(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `facilityId` varchar(255) NOT NULL,
+  `facilityName` varchar(255) DEFAULT NULL,
+  `sportId` varchar(255) NOT NULL,
+  `startDate` varchar(255) NOT NULL,
+  `endDate` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `entryFee` decimal(10,2) DEFAULT 0.00,
+  `maxParticipants` int(11) DEFAULT 0,
+  `registeredParticipants` int(11) NOT NULL DEFAULT 0,
+  `imageUrl` varchar(255) DEFAULT NULL,
+  `imageDataAiHint` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `events`
 --
 
 INSERT INTO `events` (`id`, `name`, `facilityId`, `facilityName`, `sportId`, `startDate`, `endDate`, `description`, `entryFee`, `maxParticipants`, `registeredParticipants`, `imageUrl`, `imageDataAiHint`) VALUES
-('event-1', 'Pune Monsoon Badminton Open', 'facility-pune-master', 'Pune Sportsdome', 'sport-2', '2024-08-15 09:00:00', '2024-08-16 18:00:00', 'Join the most exciting badminton tournament of the season. Categories: Men''s Singles, Women''s Singles, and Mixed Doubles. Prizes worth up to 50,000 INR!', 500.00, 64, 12, 'https://picsum.photos/seed/event1/800/400', 'badminton tournament action'),
-('event-2', 'Mumbai Midnight Football League', 'facility-mumbai-master', 'Mumbai Sports Metropolis', 'sport-3', '2024-08-01 20:00:00', '2024-08-31 23:00:00', 'Experience the thrill of football under the lights. A month-long 5-a-side league for corporate teams.', 10000.00, 16, 8, 'https://picsum.photos/seed/event2/800/400', 'football league night'),
-('event-3', 'Bangalore Tech-Park Tennis Championship', 'facility-bangalore-master', 'Bangalore Racquet Club', 'sport-6', '2024-09-05 10:00:00', '2024-09-08 17:00:00', 'A competitive tennis tournament for employees of tech parks in Bangalore. Show off your skills on the court!', 800.00, 32, 4, 'https://picsum.photos/seed/event3/800/400', 'tennis championship court');
+('event-1', 'Pune Monsoon Football League', 'facility-pune-2', 'Hotfut Football', 'sport-5', '2023-09-01T09:00:00.000Z', '2023-09-30T18:00:00.000Z', 'The biggest 5-a-side football tournament in Pune. Gather your team and compete for the championship.', '5000.00', 32, 12, 'https://picsum.photos/seed/event1/800/400', 'football tournament'),
+('event-2', 'Corporate Badminton Clash', 'facility-bengaluru-1', 'Prakash Padukone Badminton Academy', 'sport-4', '2023-10-15T10:00:00.000Z', '2023-10-15T17:00:00.00Z', 'A one-day badminton tournament for corporate teams. Categories: Men\'s, Women\'s, and Mixed Doubles.', '2000.00', 50, 5, 'https://picsum.photos/seed/event2/800/400', 'badminton shuttlecock');
 
 -- --------------------------------------------------------
 
@@ -169,89 +171,89 @@ INSERT INTO `events` (`id`, `name`, `facilityId`, `facilityName`, `sportId`, `st
 --
 
 CREATE TABLE `facilities` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `type` ENUM('Complex','Court','Field','Studio','Pool','Box Cricket') NOT NULL,
-  `address` VARCHAR(255) NOT NULL,
-  `city` VARCHAR(100) NOT NULL,
-  `location` VARCHAR(100) NOT NULL,
-  `description` TEXT NOT NULL,
-  `rating` DECIMAL(3,2) DEFAULT 0.00,
-  `capacity` INT DEFAULT NULL,
-  `isPopular` TINYINT(1) DEFAULT 0,
-  `isIndoor` TINYINT(1) DEFAULT 0,
-  `dataAiHint` VARCHAR(255) DEFAULT NULL,
-  `ownerId` VARCHAR(255) DEFAULT NULL,
-  `blockedSlots` JSON DEFAULT NULL,
-  `maintenanceSchedules` JSON DEFAULT NULL,
-  `status` ENUM('Active','PendingApproval','Rejected','Inactive') NOT NULL DEFAULT 'Active'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `type` enum('Complex','Court','Field','Studio','Pool','Box Cricket') NOT NULL,
+  `address` varchar(255) NOT NULL,
+  `city` varchar(255) NOT NULL,
+  `location` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `rating` decimal(3,2) NOT NULL DEFAULT 0.00,
+  `capacity` int(11) DEFAULT 0,
+  `isPopular` tinyint(1) DEFAULT 0,
+  `isIndoor` tinyint(1) DEFAULT 0,
+  `dataAiHint` varchar(255) DEFAULT NULL,
+  `ownerId` varchar(255) DEFAULT NULL,
+  `blockedSlots` text DEFAULT NULL,
+  `maintenanceSchedules` text DEFAULT NULL,
+  `status` enum('Active','PendingApproval','Rejected','Inactive') NOT NULL DEFAULT 'Active'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `facilities`
 --
 
 INSERT INTO `facilities` (`id`, `name`, `type`, `address`, `city`, `location`, `description`, `rating`, `capacity`, `isPopular`, `isIndoor`, `dataAiHint`, `ownerId`, `blockedSlots`, `maintenanceSchedules`, `status`) VALUES
-('facility-ahmedabad-1', 'Sabarmati Badminton Hall', 'Court', '101, Riverfront Road, Ashram Road, Ahmedabad', 'Ahmedabad', 'Ashram Road', 'State-of-the-art badminton facility with wooden courts and excellent lighting.', 4.70, 50, 0, 1, 'badminton court indoor', 'user-owner-1', NULL, NULL, 'Active'),
-('facility-ahmedabad-2', 'Kankaria Cricket Ground', 'Field', '202, Maninagar, Ahmedabad', 'Ahmedabad', 'Maninagar', 'A well-maintained cricket ground perfect for corporate and local matches.', 4.50, 200, 1, 0, 'cricket field grass', NULL, NULL, NULL, 'Active'),
-('facility-ahmedabad-3', 'Adani SG Highway Football', 'Field', '303, SG Highway, Ahmedabad', 'Ahmedabad', 'SG Highway', 'FIFA-standard turf for 7-a-side football matches.', 4.80, 100, 1, 0, 'football turf night', 'user-owner-1', NULL, NULL, 'Active'),
-('facility-ahmedabad-4', 'YMCA Swimming Complex', 'Pool', '404, Law Garden, Ahmedabad', 'Ahmedabad', 'Law Garden', 'Olympic size swimming pool with certified trainers and clean facilities.', 4.60, 150, 1, 1, 'swimming pool olympic', NULL, NULL, NULL, 'Active'),
-('facility-ahmedabad-5', 'Racket & Roll Tennis', 'Court', '505, Bopal, Ahmedabad', 'Ahmedabad', 'Bopal', 'Clay courts for a classic tennis experience. Open for all age groups.', 4.40, 40, 0, 0, 'tennis court clay', NULL, NULL, NULL, 'Active'),
-('facility-ahmedabad-master', 'TransStadia Arena', 'Complex', 'The Arena, Kankaria Lakefront, Gate No. 3, Ahmedabad', 'Ahmedabad', 'Kankaria', 'A multi-purpose sports complex featuring football, basketball, and indoor sports facilities.', 4.90, 5000, 1, 1, 'sports complex modern', 'user-owner-1', '[]', '[]', 'Active'),
-('facility-bangalore-1', 'Whitefield Smashers', 'Court', 'Plot 12, ITPL Main Road, Whitefield, Bangalore', 'Bangalore', 'Whitefield', 'Modern badminton courts with non-marking surfaces, perfect for tech park crowd.', 4.80, 50, 1, 1, 'badminton court modern', NULL, NULL, NULL, 'Active'),
-('facility-bangalore-2', 'The Net Rippers (Bangalore)', 'Court', '45, 6th Block, Koramangala, Bangalore', 'Bangalore', 'Koramangala', 'Iconic basketball court with a vibrant community. Great for pickup games.', 4.70, 40, 1, 0, 'basketball court outdoor', NULL, NULL, NULL, 'Active'),
-('facility-bangalore-3', 'Koramangala Football Arena', 'Field', 'Near Sony World Signal, 80 Ft Road, Koramangala, Bangalore', 'Bangalore', 'Koramangala', 'High-quality turf for 5-a-side and 7-a-side football. Open 24/7.', 4.90, 80, 1, 0, 'football turf night', 'user-owner-1', NULL, NULL, 'Active'),
-('facility-bangalore-4', 'Indiranagar Box Cricket', 'Box Cricket', '33, 100 Ft Road, Indiranagar, Bangalore', 'Bangalore', 'Indiranagar', 'Rooftop box cricket setup with automated scoring and great ambiance.', 4.60, 25, 0, 0, 'box cricket rooftop', NULL, NULL, NULL, 'Active'),
-('facility-bangalore-5', 'HSR Layout Aquatics', 'Pool', 'Sector 7, HSR Layout, Bangalore', 'Bangalore', 'HSR Layout', 'Well-maintained swimming pool for both recreational and competitive swimmers.', 4.50, 60, 0, 1, 'swimming pool indoor', NULL, NULL, NULL, 'Active'),
-('facility-bangalore-master', 'Bangalore Racquet Club', 'Complex', '10, Vittal Mallya Road, Bangalore', 'Bangalore', 'Vittal Mallya Road', 'A premier sports complex offering world-class facilities for tennis, badminton, and squash.', 4.90, 300, 1, 1, 'sports complex luxury', 'user-owner-1', NULL, NULL, 'Active'),
-('facility-chandigarh-1', 'Sector 17 Tennis Courts', 'Court', '17B, Sector 17, Chandigarh', 'Chandigarh', 'Sector 17', 'Well-maintained public tennis courts in the heart of the city.', 4.50, 40, 0, 0, 'tennis court public', NULL, NULL, NULL, 'Active'),
-('facility-chandigarh-2', 'Lake Sports Club', 'Complex', 'Sukhna Lake, Sector 1, Chandigarh', 'Chandigarh', 'Sukhna Lake', 'Offers facilities for swimming and water sports with a scenic view.', 4.60, 100, 1, 0, 'swimming lake view', NULL, NULL, NULL, 'Active'),
-('facility-chandigarh-3', 'Mohali Cricket Academy', 'Field', 'Phase 9, Sector 63, Mohali, Chandigarh', 'Chandigarh', 'Mohali', 'Professional cricket nets and ground for aspiring cricketers.', 4.70, 150, 1, 0, 'cricket nets practice', NULL, NULL, NULL, 'Active'),
-('facility-chandigarh-4', 'Panchkula Badminton Arena', 'Court', 'Sector 5, Panchkula, Chandigarh', 'Chandigarh', 'Panchkula', 'Indoor badminton courts with excellent amenities.', 4.40, 60, 0, 1, 'badminton hall indoor', NULL, NULL, NULL, 'Active'),
-('facility-chandigarh-5', 'Zirakpur Football Turf', 'Field', 'Ambala-Chandigarh Expy, Zirakpur, Chandigarh', 'Chandigarh', 'Zirakpur', 'Modern football turf suitable for 6-a-side matches, available day and night.', 4.50, 80, 0, 0, 'football turf evening', NULL, NULL, NULL, 'Active'),
-('facility-chandigarh-master', 'Chandigarh Sports Complex', 'Complex', 'Sector 42, Chandigarh', 'Chandigarh', 'Sector 42', 'A large government-run complex with facilities for multiple sports including athletics, swimming, and hockey.', 4.80, 1000, 1, 1, 'sports complex government', NULL, NULL, NULL, 'Active'),
-('facility-chennai-1', 'Marina Beach Cricket', 'Field', 'Kamaraj Salai, Marina Beach, Chennai', 'Chennai', 'Marina Beach', 'Casual cricket pitches right by the sea. A unique playing experience.', 4.30, 100, 1, 0, 'beach cricket sunset', NULL, NULL, NULL, 'Active'),
-('facility-chennai-2', 'Nungambakkam Tennis Club', 'Court', 'Sterling Road, Nungambakkam, Chennai', 'Chennai', 'Nungambakkam', 'One of the oldest and most prestigious tennis clubs in the city.', 4.80, 60, 1, 0, 'tennis club vintage', NULL, NULL, NULL, 'Active'),
-('facility-chennai-3', 'Besant Nagar Badminton', 'Court', '4th Main Road, Besant Nagar, Chennai', 'Chennai', 'Besant Nagar', 'Community indoor badminton courts, popular among local residents.', 4.50, 40, 0, 1, 'badminton court community', NULL, NULL, NULL, 'Active'),
-('facility-chennai-4', 'Chennai Swim Club', 'Pool', 'Anna Salai, T. Nagar, Chennai', 'Chennai', 'T. Nagar', 'A premium swimming facility with a temperature-controlled pool.', 4.70, 80, 0, 1, 'swimming pool luxury', NULL, NULL, NULL, 'Active'),
-('facility-chennai-5', 'OMR Futbol', 'Field', 'Old Mahabalipuram Road, Sholinganallur, Chennai', 'Chennai', 'OMR', 'Futuristic 5-a-side football facility catering to the IT corridor.', 4.60, 70, 1, 0, 'football arena futuristic', NULL, NULL, NULL, 'Active'),
-('facility-chennai-master', 'Jawaharlal Nehru Stadium', 'Complex', 'Sydenhams Road, Periyamet, Chennai', 'Chennai', 'Periyamet', 'A massive stadium complex with facilities for football, athletics, and various indoor games.', 4.90, 10000, 1, 1, 'stadium football night', NULL, NULL, NULL, 'Active'),
-('facility-delhi-1', 'Siri Fort Sports Complex', 'Complex', 'August Kranti Marg, Siri Fort, New Delhi', 'Delhi', 'Siri Fort', 'A DDA sports complex with a wide range of facilities including tennis, badminton, and swimming.', 4.70, 500, 1, 1, 'sports complex delhi', NULL, NULL, NULL, 'Active'),
-('facility-delhi-2', 'Saket Sports Complex', 'Complex', 'Saket, New Delhi', 'Delhi', 'Saket', 'Another popular DDA complex offering courts for various sports and a swimming pool.', 4.60, 400, 0, 1, 'sports complex community', NULL, NULL, NULL, 'Active'),
-('facility-delhi-3', 'Delhi Football Den', 'Field', 'Chattarpur, New Delhi', 'Delhi', 'Chattarpur', 'Dedicated football facility with multiple turfs and a great atmosphere.', 4.80, 150, 1, 0, 'football field night', NULL, NULL, NULL, 'Active'),
-('facility-delhi-4', 'Hauz Khas Box Cricket', 'Box Cricket', 'Hauz Khas Village, New Delhi', 'Delhi', 'Hauz Khas', 'A vibrant box cricket setup perfect for fun matches with friends.', 4.50, 30, 0, 0, 'box cricket friends', NULL, NULL, NULL, 'Active'),
-('facility-delhi-5', 'Dwarka Badminton Arena', 'Court', 'Sector 11, Dwarka, New Delhi', 'Delhi', 'Dwarka', 'Modern badminton facility serving the large residential area of Dwarka.', 4.40, 60, 0, 1, 'badminton arena indoor', NULL, NULL, NULL, 'Active'),
-('facility-delhi-master', 'Thyagaraj Sports Complex', 'Complex', 'INA Colony, New Delhi', 'Delhi', 'INA Colony', 'A green, state-of-the-art indoor stadium with facilities for multiple sports.', 4.90, 5000, 1, 1, 'stadium indoor modern', NULL, NULL, NULL, 'Active'),
-('facility-hyderabad-1', 'Gachibowli Indoor Stadium', 'Complex', 'Gachibowli, Hyderabad', 'Hyderabad', 'Gachibowli', 'World-class indoor stadium with facilities for badminton, table tennis, and more.', 4.80, 400, 1, 1, 'stadium indoor badminton', NULL, NULL, NULL, 'Active'),
-('facility-hyderabad-2', 'LB Stadium', 'Complex', 'Basheer Bagh, Hyderabad', 'Hyderabad', 'Basheer Bagh', 'A historic stadium in the heart of the city, mainly used for cricket and football.', 4.60, 2000, 0, 0, 'stadium cricket historic', NULL, NULL, NULL, 'Active'),
-('facility-hyderabad-3', 'Astro Park', 'Field', 'Jubilee Hills, Hyderabad', 'Hyderabad', 'Jubilee Hills', 'Premium football turf popular among the city''s youth and corporate circles.', 4.70, 100, 1, 0, 'football turf astro', NULL, NULL, NULL, 'Active'),
-('facility-hyderabad-4', 'Banjara Hills Swim Centre', 'Pool', 'Road No. 1, Banjara Hills, Hyderabad', 'Hyderabad', 'Banjara Hills', 'An exclusive swimming pool with top-notch amenities.', 4.50, 50, 0, 1, 'swimming pool private', NULL, NULL, NULL, 'Active'),
-('facility-hyderabad-5', 'Hi-Tec City Box Cricket', 'Box Cricket', 'Madhapur, Hi-Tec City, Hyderabad', 'Hyderabad', 'Hi-Tec City', 'A popular spot for the IT crowd to unwind with a game of box cricket.', 4.60, 30, 0, 0, 'box cricket rooftop night', NULL, NULL, NULL, 'Active'),
-('facility-hyderabad-master', 'GMC Balayogi Athletic Stadium', 'Complex', 'Gachibowli, Hyderabad', 'Hyderabad', 'Gachibowli', 'An ultra-modern stadium primarily used for athletics and football.', 4.90, 30000, 1, 0, 'stadium athletics track', NULL, NULL, NULL, 'Active'),
-('facility-jaipur-1', 'Sawai Mansingh Stadium', 'Complex', 'Janpath, Lalkothi, Jaipur', 'Jaipur', 'Lalkothi', 'The main cricket stadium of Jaipur, hosting international and IPL matches.', 4.80, 25000, 1, 0, 'cricket stadium ipl', NULL, NULL, NULL, 'Active'),
-('facility-jaipur-2', 'Vaishali Nagar Sports Club', 'Complex', 'Queens Road, Vaishali Nagar, Jaipur', 'Jaipur', 'Vaishali Nagar', 'A local club with facilities for tennis, badminton, and swimming.', 4.50, 200, 0, 1, 'sports club local', NULL, NULL, NULL, 'Active'),
-('facility-jaipur-3', 'Pink City Football Ground', 'Field', 'Mansarovar, Jaipur', 'Jaipur', 'Mansarovar', 'A dedicated football ground with a lush green pitch.', 4.60, 150, 1, 0, 'football ground green', NULL, NULL, NULL, 'Active'),
-('facility-jaipur-4', 'Jagatpura Badminton Hall', 'Court', 'Jagatpura, Jaipur', 'Jaipur', 'Jagatpura', 'Well-equipped indoor badminton courts for players of all levels.', 4.40, 50, 0, 1, 'badminton court players', NULL, NULL, NULL, 'Active'),
-('facility-jaipur-5', 'Raja Park Swimming Pool', 'Pool', 'Raja Park, Jaipur', 'Jaipur', 'Raja Park', 'A popular public swimming pool, perfect for beating the heat.', 4.30, 100, 0, 0, 'swimming pool public', NULL, NULL, NULL, 'Active'),
-('facility-jaipur-master', 'Vidhyadhar Nagar Stadium', 'Complex', 'Central Spine, Vidhyadhar Nagar, Jaipur', 'Jaipur', 'Vidhyadhar Nagar', 'A large sports complex with a variety of facilities for the public.', 4.70, 2000, 1, 1, 'stadium public complex', NULL, NULL, NULL, 'Active'),
-('facility-kolkata-1', 'Eden Gardens', 'Field', 'BBD Bagh, Kolkata', 'Kolkata', 'BBD Bagh', 'One of the most iconic cricket stadiums in the world.', 4.90, 68000, 1, 0, 'cricket stadium iconic', NULL, NULL, NULL, 'Active'),
-('facility-kolkata-2', 'Salt Lake Stadium', 'Field', 'Salt Lake City, Kolkata', 'Kolkata', 'Salt Lake', 'A massive football stadium, home to major ISL clubs.', 4.80, 85000, 1, 0, 'football stadium huge', NULL, NULL, NULL, 'Active'),
-('facility-kolkata-3', 'Calcutta Cricket & Football Club', 'Complex', 'Gurusaday Dutta Road, Ballygunge, Kolkata', 'Kolkata', 'Ballygunge', 'A historic club with facilities for cricket, football, tennis, and more.', 4.70, 500, 0, 0, 'sports club historic', NULL, NULL, NULL, 'Active'),
-('facility-kolkata-4', 'New Town Box Cricket', 'Box Cricket', 'Action Area I, New Town, Kolkata', 'Kolkata', 'New Town', 'A modern box cricket facility in the rapidly developing area of New Town.', 4.60, 30, 0, 0, 'box cricket modern', NULL, NULL, NULL, 'Active'),
-('facility-kolkata-5', 'Hedua Swimming Pool', 'Pool', 'Hedua Park, Kolkata', 'Kolkata', 'Hedua', 'A famous public swimming pool located in a historic park.', 4.40, 200, 0, 0, 'swimming pool historic', NULL, NULL, NULL, 'Active'),
-('facility-kolkata-master', 'Kolkata Sports Complex', 'Complex', 'Chowbaga Road, Dhapa, Kolkata', 'Kolkata', 'Dhapa', 'A modern, integrated sports complex offering a wide array of facilities for training and recreation.', 4.80, 2000, 1, 1, 'sports complex integrated', 'user-owner-1', NULL, NULL, 'Active'),
-('facility-mumbai-1', 'Andheri Sports Complex', 'Complex', 'Veera Desai Road, Andheri West, Mumbai', 'Mumbai', 'Andheri West', 'A well-known sports complex with facilities for various sports including football, swimming, and tennis.', 4.60, 1000, 1, 1, 'sports complex stadium', 'user-owner-1', NULL, NULL, 'Active'),
-('facility-mumbai-2', 'Dadar Shivaji Park', 'Field', 'Shivaji Park, Dadar West, Mumbai', 'Mumbai', 'Dadar', 'A historic ground famous for cricket, nurturing many legendary players.', 4.70, 500, 1, 0, 'cricket ground historic', NULL, NULL, NULL, 'Active'),
-('facility-mumbai-3', 'Juhu Box Strikers', 'Box Cricket', 'Juhu Tara Road, Juhu, Mumbai', 'Mumbai', 'Juhu', 'A premium box cricket facility popular among celebrities and locals alike.', 4.80, 30, 0, 0, 'box cricket premium', NULL, NULL, NULL, 'Active'),
-('facility-mumbai-4', 'Bandra Badminton Courts', 'Court', 'Pali Hill, Bandra West, Mumbai', 'Mumbai', 'Bandra', 'Indoor badminton courts that are a favorite among the Bandra crowd.', 4.50, 40, 0, 1, 'badminton court indoor', NULL, NULL, NULL, 'Active'),
-('facility-mumbai-5', 'Goregaon Turf Park', 'Field', 'Off Western Express Highway, Goregaon East, Mumbai', 'Mumbai', 'Goregaon', 'A popular football turf known for its excellent maintenance and accessibility.', 4.70, 120, 1, 0, 'football turf highway', 'user-owner-1', NULL, NULL, 'Active'),
-('facility-mumbai-master', 'Mumbai Sports Metropolis', 'Complex', 'BKC, Bandra East, Mumbai', 'Mumbai', 'BKC', 'A state-of-the-art multi-sport facility in the heart of Mumbai''s business district.', 4.90, 2500, 1, 1, 'sports complex futuristic', NULL, NULL, NULL, 'Active'),
-('facility-pune-1', 'Pune Elite Badminton Courts', 'Court', '123, FC Road, Pune', 'Pune', 'FC Road', 'Premium badminton courts with wooden flooring and excellent lighting. Perfect for competitive and recreational players.', 4.80, 40, 0, 1, 'badminton court indoor', 'user-owner-1', NULL, NULL, 'Active'),
-('facility-pune-2', 'Deccan Gymkhana', 'Complex', 'Prabhat Road, Pune', 'Pune', 'Deccan', 'A prestigious club offering a wide range of sports including tennis, swimming, and cricket.', 4.70, 500, 1, 1, 'sports club prestigious', NULL, NULL, NULL, 'Active'),
-('facility-pune-3', 'Kothrud Football Turf', 'Field', 'Paud Road, Kothrud, Pune', 'Pune', 'Kothrud', 'A high-quality artificial turf for 5-a-side and 7-a-side football, open till late.', 4.60, 100, 1, 0, 'football turf night', 'user-owner-1', NULL, NULL, 'Active'),
-('facility-pune-4', 'Viman Nagar Hoops', 'Court', 'Near Symbiosis College, Viman Nagar, Pune', 'Pune', 'Viman Nagar', 'A lively outdoor basketball court, popular with college students and young professionals.', 4.50, 30, 0, 0, 'basketball court outdoor', NULL, NULL, NULL, 'Active'),
-('facility-pune-5', 'Hinjewadi Box Cricket League', 'Box Cricket', 'Phase 1, Hinjewadi, Pune', 'Pune', 'Hinjewadi', 'A well-lit box cricket facility ideal for corporate matches and weekend fun.', 4.70, 25, 0, 0, 'box cricket corporate', NULL, NULL, NULL, 'Active'),
-('facility-pune-master', 'Pune Sportsdome', 'Complex', 'Baner-Balewadi High Street, Pune', 'Pune', 'Balewadi', 'A massive multi-sport complex with international standard facilities for various sports, including athletics, swimming, and indoor games.', 4.90, 20000, 1, 1, 'sports stadium modern', NULL, NULL, NULL, 'Active');
+('facility-ahmedabad-1', 'Sanskarinagar Sports Complex', 'Complex', 'Near Shreyas Crossing, Ambawadi', 'Ahmedabad', 'Ambawadi', 'A large complex offering a variety of sports facilities including a swimming pool and tennis courts.', '4.60', 500, 1, 0, 'sports complex', 'user-bob', NULL, NULL, 'Active'),
+('facility-ahmedabad-2', 'Gujarat University Ground', 'Field', 'Navrangpura, Ahmedabad', 'Ahmedabad', 'Navrangpura', 'A massive open field, ideal for cricket, football, and athletic events. Well-maintained pitch.', '4.30', 1000, 0, 0, 'cricket field', NULL, NULL, NULL, 'Active'),
+('facility-ahmedabad-3', 'Rising Star Badminton Academy', 'Court', 'Bopal, Ahmedabad', 'Ahmedabad', 'Bopal', 'State-of-the-art indoor badminton courts with wooden flooring and excellent lighting.', '4.80', 50, 1, 1, 'badminton court', NULL, NULL, NULL, 'Active'),
+('facility-ahmedabad-4', 'The Grid Box Cricket', 'Box Cricket', 'SG Highway, Thaltej', 'Ahmedabad', 'Thaltej', 'A premium box cricket facility with high-quality turf and a fast-paced gaming experience.', '4.50', 20, 1, 1, 'box cricket', NULL, NULL, NULL, 'Active'),
+('facility-ahmedabad-5', 'Eklavya Sports Academy', 'Complex', 'Thaltej, Ahmedabad', 'Ahmedabad', 'Thaltej', 'Professional training academy with facilities for multiple sports, focusing on youth development.', '4.70', 200, 0, 1, 'sports academy', NULL, NULL, NULL, 'Active'),
+('facility-ahmedabad-6', 'Rajpath Club', 'Complex', 'S G Highway, Bodakdev', 'Ahmedabad', 'Bodakdev', 'An exclusive club with top-tier facilities for tennis, swimming, and gym activities.', '4.90', 300, 1, 1, 'luxury club', 'user-bob', NULL, NULL, 'Active'),
+('facility-bengaluru-1', 'Prakash Padukone Badminton Academy', 'Complex', 'Koramangala, Bengaluru', 'Bengaluru', 'Koramangala', 'World-class badminton training facility founded by the legend himself. Multiple courts available.', '4.90', 100, 1, 1, 'badminton academy', NULL, NULL, NULL, 'Active'),
+('facility-bengaluru-2', 'Kanteerava Indoor Stadium', 'Complex', 'Sampangi Rama Nagara, Bengaluru', 'Bengaluru', 'City Center', 'A large indoor stadium hosting various sports events, known for basketball and volleyball.', '4.40', 2000, 1, 1, 'indoor stadium', NULL, NULL, NULL, 'Active'),
+('facility-bengaluru-3', 'Tiento Sports', 'Field', 'Bellandur, Bengaluru', 'Bengaluru', 'Bellandur', 'Modern 5-a-side and 7-a-side football turfs with excellent amenities and evening slots.', '4.70', 100, 1, 0, 'football turf', NULL, NULL, NULL, 'Active'),
+('facility-bengaluru-4', 'Karnataka State Lawn Tennis Association', 'Court', 'Cubbon Park, Bengaluru', 'Bengaluru', 'Cubbon Park', 'Premier tennis destination with clay and hard courts, hosting national tournaments.', '4.60', 150, 0, 0, 'tennis courts', NULL, NULL, NULL, 'Active'),
+('facility-bengaluru-5', 'Play Arena', 'Complex', 'Sarjapur Road, Bengaluru', 'Bengaluru', 'Sarjapur', 'A one-stop destination for adventure and sports, including football, paintball, and go-karting.', '4.50', 300, 1, 0, 'sports park', NULL, NULL, NULL, 'Active'),
+('facility-bengaluru-6', 'The Bohemian House', 'Studio', 'Indiranagar, Bengaluru', 'Bengaluru', 'Indiranagar', 'A chic studio space perfect for yoga, dance, and fitness workshops.', '4.80', 30, 0, 1, 'yoga studio', NULL, NULL, NULL, 'Active'),
+('facility-chandigarh-1', 'Chandigarh Lake Sports Complex', 'Complex', 'Sukhna Lake, Sector 1', 'Chandigarh', 'Sukhna Lake', 'Offers water sports like rowing and kayaking, with beautiful views of the lake.', '4.70', 100, 1, 0, 'rowing lake', 'user-bob', NULL, NULL, 'Active'),
+('facility-chandigarh-2', 'Chandigarh Golf Club', 'Field', 'Sector 6, Chandigarh', 'Chandigarh', 'Sector 6', 'A lush green, 18-hole golf course known for its challenging layout and pristine condition.', '4.80', 200, 1, 0, 'golf course', NULL, NULL, NULL, 'Active'),
+('facility-chandigarh-3', 'Sector 42 Sports Complex', 'Complex', 'Sector 42, Chandigarh', 'Chandigarh', 'Sector 42', 'A large government-run complex with facilities for hockey, athletics, and football.', '4.20', 500, 0, 0, 'hockey field', NULL, NULL, NULL, 'Active'),
+('facility-chandigarh-4', 'Smashers Badminton Arena', 'Court', 'Zirakpur, Chandigarh', 'Chandigarh', 'Zirakpur', 'Indoor badminton facility with synthetic courts and professional coaching available.', '4.50', 40, 0, 1, 'badminton hall', NULL, NULL, NULL, 'Active'),
+('facility-chandigarh-5', 'The Dugout Box Cricket', 'Box Cricket', 'Industrial Area Phase 1', 'Chandigarh', 'Industrial Area', 'Modern box cricket arena perfect for corporate matches and friendly games.', '4.40', 25, 1, 1, 'indoor cricket', NULL, NULL, NULL, 'Active'),
+('facility-chandigarh-6', 'Fit\'s Studio', 'Studio', 'Sector 8, Chandigarh', 'Chandigarh', 'Sector 8', 'A trendy fitness studio offering Zumba, Aerobics, and personal training sessions.', '4.60', 30, 0, 1, 'fitness studio', NULL, NULL, NULL, 'Active'),
+('facility-chennai-1', 'Jawaharlal Nehru Stadium', 'Complex', 'Periyamet, Chennai', 'Chennai', 'Periyamet', 'A major multi-purpose stadium, primarily used for football and athletic events. Features a running track.', '4.50', 4000, 1, 0, 'athletics stadium', NULL, NULL, NULL, 'Active'),
+('facility-chennai-2', 'Marina Beach', 'Field', 'Marina Beach, Chennai', 'Chennai', 'Marina', 'The famous Marina beach offers ample space for beach volleyball and cricket.', '4.30', 1000, 1, 0, 'beach volleyball', NULL, NULL, NULL, 'Active'),
+('facility-chennai-3', 'SDAT Tennis Stadium', 'Court', 'Nungambakkam, Chennai', 'Chennai', 'Nungambakkam', 'Host of the Chennai Open, this facility has world-class hard courts for tennis enthusiasts.', '4.70', 200, 1, 0, 'tennis stadium', NULL, NULL, NULL, 'Active'),
+('facility-chennai-4', 'Turf 137', 'Field', 'OMR, Chennai', 'Chennai', 'OMR', 'A popular rooftop football turf offering a unique playing experience with city views.', '4.60', 50, 1, 0, 'rooftop football', NULL, NULL, NULL, 'Active'),
+('facility-chennai-5', 'YMCA College of Physical Education', 'Complex', 'Nandanam, Chennai', 'Chennai', 'Nandanam', 'A prestigious institution with extensive grounds for various sports, including hockey and basketball.', '4.40', 300, 0, 0, 'college sports ground', NULL, NULL, NULL, 'Active'),
+('facility-chennai-6', 'Velachery Aquatic Complex', 'Pool', 'Velachery, Chennai', 'Chennai', 'Velachery', 'An Olympic-standard swimming facility with multiple pools for competitive and recreational swimming.', '4.80', 250, 1, 1, 'olympic swimming pool', 'user-bob', NULL, NULL, 'Active'),
+('facility-delhi-1', 'Siri Fort Sports Complex', 'Complex', 'Siri Fort, New Delhi', 'Delhi', 'South Delhi', 'One of DDA\'s premier complexes, offering facilities for tennis, badminton, swimming, and more.', '4.50', 500, 1, 1, 'sports complex', NULL, NULL, NULL, 'Active'),
+('facility-delhi-2', 'Thyagaraj Sports Complex', 'Complex', 'INA Colony, New Delhi', 'Delhi', 'South Delhi', 'A green and eco-friendly indoor stadium, famous for its wooden basketball court and athletics track.', '4.60', 1500, 1, 1, 'indoor stadium green', NULL, NULL, NULL, 'Active'),
+('facility-delhi-3', 'Jawaharlal Nehru Stadium', 'Complex', 'Pragati Vihar, New Delhi', 'Delhi', 'Central Delhi', 'The main stadium for the 2010 Commonwealth Games, now open for public use for athletics and football.', '4.40', 5000, 1, 0, 'large stadium athletics', NULL, NULL, NULL, 'Active'),
+('facility-delhi-4', 'Tricky Taka', 'Field', 'Vasant Kunj, New Delhi', 'Delhi', 'Vasant Kunj', 'A popular 5-a-side football facility with high-quality artificial turf.', '4.70', 60, 1, 0, 'football five-a-side', NULL, NULL, NULL, 'Active'),
+('facility-delhi-5', 'R.K. Khanna Tennis Complex', 'Court', 'Africa Avenue, New Delhi', 'Delhi', 'South Delhi', 'The national tennis center of India, with numerous hard and clay courts.', '4.50', 300, 0, 0, 'tennis courts complex', NULL, NULL, NULL, 'Active'),
+('facility-delhi-6', 'DDA Squash & Badminton Stadium', 'Court', 'Siri Fort, New Delhi', 'Delhi', 'South Delhi', 'Dedicated facility for squash and badminton with multiple courts and coaching.', '4.80', 100, 0, 1, 'squash court', 'user-bob', NULL, NULL, 'Active'),
+('facility-hyderabad-1', 'Gachibowli Indoor Stadium', 'Complex', 'Gachibowli, Hyderabad', 'Hyderabad', 'Gachibowli', 'A world-class indoor stadium with facilities for badminton, table tennis, and gymnastics.', '4.70', 1800, 1, 1, 'modern indoor stadium', NULL, NULL, NULL, 'Active'),
+('facility-hyderabad-2', 'L.B. Stadium', 'Complex', 'Basheerbagh, Hyderabad', 'Hyderabad', 'Basheerbagh', 'A historic stadium in the heart of the city, mainly used for cricket and football matches.', '4.20', 2500, 0, 0, 'old cricket stadium', NULL, NULL, NULL, 'Active'),
+('facility-hyderabad-3', 'Hot-Shotz Box Cricket', 'Box Cricket', 'Madhapur, Hyderabad', 'Hyderabad', 'Madhapur', 'Rooftop box cricket arena with a great atmosphere, perfect for evening games.', '4.60', 20, 1, 1, 'rooftop cricket', NULL, NULL, NULL, 'Active'),
+('facility-hyderabad-4', 'SAAP Tennis Complex', 'Court', 'LB Stadium, Hyderabad', 'Hyderabad', 'Basheerbagh', 'A well-maintained tennis complex with several hard courts available for public booking.', '4.40', 80, 0, 0, 'public tennis courts', NULL, NULL, NULL, 'Active'),
+('facility-hyderabad-5', 'Pullela Gopichand Badminton Academy', 'Complex', 'Gachibowli, Hyderabad', 'Hyderabad', 'Gachibowli', 'Premier badminton academy in India, home to numerous national champions. Courts are available for booking.', '4.90', 150, 1, 1, 'professional badminton hall', NULL, NULL, NULL, 'Active'),
+('facility-hyderabad-6', 'Astro Park', 'Field', 'Jubilee Hills, Hyderabad', 'Hyderabad', 'Jubilee Hills', 'High-quality football turf with multiple pitch sizes available for 5v5, 6v6 and 7v7 games.', '4.50', 80, 1, 0, 'football astro turf', 'user-bob', NULL, NULL, 'Active'),
+('facility-jaipur-1', 'Sawai Mansingh Stadium', 'Complex', 'Rambagh, Jaipur', 'Jaipur', 'Rambagh', 'An international cricket stadium, which also houses facilities for tennis and other sports.', '4.60', 3000, 1, 0, 'cricket stadium', NULL, NULL, NULL, 'Active'),
+('facility-jaipur-2', 'Chitrakoot Stadium', 'Complex', 'Chitrakoot, Vaishali Nagar', 'Jaipur', 'Vaishali Nagar', 'A multi-purpose sports facility with grounds for cricket, football and courts for basketball.', '4.10', 400, 0, 0, 'community sports ground', NULL, NULL, NULL, 'Active'),
+('facility-jaipur-3', 'PlaySpace', 'Field', 'Mansarovar, Jaipur', 'Jaipur', 'Mansarovar', 'A modern sports arena with turfs for football and box cricket.', '4.50', 50, 1, 0, 'sports turf area', NULL, NULL, NULL, 'Active'),
+('facility-jaipur-4', 'Rajasthan Badminton Association Hall', 'Court', 'SMS Investment Ground, Jaipur', 'Jaipur', 'Rambagh', 'Dedicated indoor hall for badminton with multiple synthetic courts.', '4.40', 60, 0, 1, 'badminton hall lights', NULL, NULL, NULL, 'Active'),
+('facility-jaipur-5', 'Jaipur Club', 'Complex', 'Jacob Road, Civil Lines', 'Jaipur', 'Civil Lines', 'A historic club with excellent facilities for swimming, tennis, and billiards.', '4.70', 200, 1, 1, 'vintage sports club', NULL, NULL, NULL, 'Active'),
+('facility-jaipur-6', 'Funkick', 'Box Cricket', 'Sirsi Road, Jaipur', 'Jaipur', 'Sirsi Road', 'An exciting venue for box cricket and football with a lively atmosphere.', '4.30', 30, 1, 1, 'box cricket night', 'user-bob', NULL, NULL, 'Active'),
+('facility-kolkata-1', 'Eden Gardens', 'Field', 'B. B. D. Bagh, Kolkata', 'Kolkata', 'BBD Bagh', 'One of the most iconic cricket stadiums in the world. A must-visit for any cricket fan.', '4.80', 6800, 1, 0, 'iconic cricket stadium', NULL, NULL, NULL, 'Active'),
+('facility-kolkata-2', 'Salt Lake Stadium (Vivekananda Yuba Bharati Krirangan)', 'Complex', 'Salt Lake, Kolkata', 'Kolkata', 'Salt Lake', 'The second largest stadium in India, primarily used for football matches. Features an athletics track.', '4.60', 8500, 1, 0, 'massive football stadium', NULL, NULL, NULL, 'Active'),
+('facility-kolkata-3', 'Calcutta Cricket & Football Club (CC&FC)', 'Complex', 'Ballygunge, Kolkata', 'Kolkata', 'Ballygunge', 'One of the oldest sports clubs in the world, with a rich history and excellent grounds for cricket and rugby.', '4.70', 500, 1, 0, 'old sports club', NULL, NULL, NULL, 'Active'),
+('facility-kolkata-4', 'New Town Business Club', 'Pool', 'New Town, Kolkata', 'Kolkata', 'New Town', 'Features a modern, clean swimming pool with dedicated lanes for lap swimming.', '4.50', 100, 0, 0, 'modern swimming pool', NULL, NULL, NULL, 'Active'),
+('facility-kolkata-5', 'Sports Square', 'Field', 'New Town, Kolkata', 'Kolkata', 'New Town', 'A popular multi-sport turf for 5-a-side football and box cricket.', '4.40', 60, 1, 0, 'football turf night', NULL, NULL, NULL, 'Active'),
+('facility-kolkata-6', 'Bengal Tennis Association Complex', 'Court', 'Salt Lake, Kolkata', 'Kolkata', 'Salt Lake', 'The premier tennis facility in West Bengal with numerous hard courts and coaching facilities.', '4.60', 150, 0, 0, 'tennis complex day', 'user-bob', NULL, NULL, 'Active'),
+('facility-mumbai-1', 'Wankhede Stadium', 'Field', 'Churchgate, Mumbai', 'Mumbai', 'Churchgate', 'An iconic international cricket stadium, home to many historic matches.', '4.80', 3300, 1, 0, 'cricket stadium crowd', NULL, NULL, NULL, 'Active'),
+('facility-mumbai-2', 'Andheri Sports Complex', 'Complex', 'Andheri West, Mumbai', 'Mumbai', 'Andheri', 'A multi-purpose facility with a football stadium, swimming pool, and indoor courts.', '4.40', 1000, 1, 1, 'sports complex aerial', 'user-bob', NULL, NULL, 'Active'),
+('facility-mumbai-3', 'Dadar Club', 'Pool', 'Dadar, Mumbai', 'Mumbai', 'Dadar', 'A well-maintained swimming pool in the heart of the city, perfect for a refreshing swim.', '4.60', 100, 0, 0, 'swimming pool lanes', NULL, NULL, NULL, 'Active'),
+('facility-mumbai-4', 'Juhu Turf', 'Field', 'Juhu, Mumbai', 'Mumbai', 'Juhu', 'A popular 5-a-side football turf located near the beach, great for evening games.', '4.50', 50, 1, 0, 'football turf sunset', NULL, NULL, NULL, 'Active'),
+('facility-mumbai-5', 'Matunga Gymkhana', 'Court', 'Matunga, Mumbai', 'Mumbai', 'Matunga', 'A classic gymkhana with excellent tennis and badminton courts.', '4.70', 200, 0, 0, 'tennis court classic', NULL, NULL, NULL, 'Active'),
+('facility-mumbai-6', 'Urban Sports', 'Box Cricket', 'Goregaon, Mumbai', 'Mumbai', 'Goregaon', 'A top-notch box cricket facility with great lighting and equipment.', '4.60', 25, 1, 1, 'box cricket action', NULL, NULL, NULL, 'Active'),
+('facility-pune-1', 'Deccan Gymkhana Club', 'Complex', 'Deccan Gymkhana, Pune', 'Pune', 'Deccan', 'A premier club in Pune with top-notch facilities for Tennis, Swimming, and Basketball.', '4.70', 300, 1, 0, 'clubhouse exterior', NULL, '[]', NULL, 'Active'),
+('facility-pune-2', 'Hotfut Football', 'Field', 'Koregaon Park, Pune', 'Pune', 'Koregaon Park', 'State-of-the-art 5-a-side football turf with excellent floodlights for night games.', '4.80', 50, 1, 0, 'football turf night', NULL, '[]', NULL, 'Active'),
+('facility-pune-3', 'PYC Hindu Gymkhana', 'Court', 'Deccan Gymkhana, Pune', 'Pune', 'Deccan', 'Known for its well-maintained badminton and tennis courts. A hub for racquet sports.', '4.60', 150, 0, 1, 'badminton court action', NULL, '[]', NULL, 'Active'),
+('facility-pune-4', 'Shree Shiv Chhatrapati Sports Complex', 'Complex', 'Balewadi, Pune', 'Pune', 'Balewadi', 'An international standard sports complex that has hosted numerous national and international events.', '4.50', 5000, 1, 1, 'large sports stadium', 'user-bob', '[]', NULL, 'Active'),
+('facility-pune-5', 'Legends United', 'Box Cricket', 'Kharadi, Pune', 'Pune', 'Kharadi', 'A popular spot for box cricket enthusiasts with a lively atmosphere and competitive games.', '4.40', 30, 1, 1, 'box cricket game', NULL, '[]', NULL, 'Active'),
+('facility-pune-6', 'Champions Sport Club', 'Pool', 'Magarpatta, Pune', 'Pune', 'Magarpatta', 'A modern swimming pool with clean water and dedicated lanes for all levels of swimmers.', '4.60', 80, 0, 0, 'swimming pool clear', NULL, '[]', NULL, 'Active');
 
 -- --------------------------------------------------------
 
@@ -260,21 +262,55 @@ INSERT INTO `facilities` (`id`, `name`, `type`, `address`, `city`, `location`, `
 --
 
 CREATE TABLE `facility_amenities` (
-  `facilityId` VARCHAR(255) NOT NULL,
-  `amenityId` VARCHAR(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `facilityId` varchar(255) NOT NULL,
+  `amenityId` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `facility_amenities`
 --
 
 INSERT INTO `facility_amenities` (`facilityId`, `amenityId`) VALUES
-('facility-pune-master', 'amenity-1'), ('facility-pune-master', 'amenity-2'), ('facility-pune-master', 'amenity-3'), ('facility-pune-master', 'amenity-4'), ('facility-pune-master', 'amenity-5'), ('facility-pune-master', 'amenity-6'), ('facility-pune-master', 'amenity-7'), ('facility-pune-master', 'amenity-8'),
-('facility-mumbai-master', 'amenity-1'), ('facility-mumbai-master', 'amenity-2'), ('facility-mumbai-master', 'amenity-3'), ('facility-mumbai-master', 'amenity-4'), ('facility-mumbai-master', 'amenity-5'), ('facility-mumbai-master', 'amenity-6'), ('facility-mumbai-master', 'amenity-7'), ('facility-mumbai-master', 'amenity-8'),
-('facility-pune-1', 'amenity-1'), ('facility-pune-1', 'amenity-2'), ('facility-pune-1', 'amenity-4'),
-('facility-pune-3', 'amenity-1'), ('facility-pune-3', 'amenity-6'), ('facility-pune-3', 'amenity-8'),
-('facility-bangalore-3', 'amenity-1'), ('facility-bangalore-3', 'amenity-3'), ('facility-bangalore-3', 'amenity-6'), ('facility-bangalore-3', 'amenity-8'),
-('facility-ahmedabad-master', 'amenity-1'), ('facility-ahmedabad-master', 'amenity-2'), ('facility-ahmedabad-master', 'amenity-3'), ('facility-ahmedabad-master', 'amenity-4');
+('facility-pune-1', 'amenity-1'),
+('facility-pune-1', 'amenity-2'),
+('facility-pune-1', 'amenity-4'),
+('facility-pune-2', 'amenity-1'),
+('facility-pune-2', 'amenity-6'),
+('facility-pune-2', 'amenity-8'),
+('facility-pune-3', 'amenity-2'),
+('facility-pune-3', 'amenity-3'),
+('facility-pune-4', 'amenity-1'),
+('facility-pune-4', 'amenity-2'),
+('facility-pune-4', 'amenity-5'),
+('facility-pune-4', 'amenity-6'),
+('facility-pune-5', 'amenity-1'),
+('facility-pune-5', 'amenity-7'),
+('facility-pune-6', 'amenity-1'),
+('facility-pune-6', 'amenity-2'),
+('facility-pune-6', 'amenity-4'),
+('facility-mumbai-1', 'amenity-1'),
+('facility-mumbai-1', 'amenity-2'),
+('facility-mumbai-2', 'amenity-1'),
+('facility-mumbai-2', 'amenity-4'),
+('facility-mumbai-2', 'amenity-5'),
+('facility-delhi-1', 'amenity-1'),
+('facility-delhi-1', 'amenity-2'),
+('facility-delhi-1', 'amenity-3'),
+('facility-delhi-1', 'amenity-4'),
+('facility-bengaluru-1', 'amenity-2'),
+('facility-bengaluru-1', 'amenity-4'),
+('facility-bengaluru-1', 'amenity-8');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `facility_equipment`
+--
+
+CREATE TABLE `facility_equipment` (
+  `facilityId` varchar(255) NOT NULL,
+  `equipmentId` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -283,19 +319,45 @@ INSERT INTO `facility_amenities` (`facilityId`, `amenityId`) VALUES
 --
 
 CREATE TABLE `facility_operating_hours` (
-  `facilityId` VARCHAR(255) NOT NULL,
-  `day` ENUM('Mon','Tue','Wed','Thu','Fri','Sat','Sun') NOT NULL,
-  `open` TIME NOT NULL,
-  `close` TIME NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `facilityId` varchar(255) NOT NULL,
+  `day` enum('Mon','Tue','Wed','Thu','Fri','Sat','Sun') NOT NULL,
+  `open` varchar(255) NOT NULL,
+  `close` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `facility_operating_hours`
 --
 
 INSERT INTO `facility_operating_hours` (`facilityId`, `day`, `open`, `close`) VALUES
-('facility-pune-master', 'Mon', '06:00:00', '23:00:00'), ('facility-pune-master', 'Tue', '06:00:00', '23:00:00'), ('facility-pune-master', 'Wed', '06:00:00', '23:00:00'), ('facility-pune-master', 'Thu', '06:00:00', '23:00:00'), ('facility-pune-master', 'Fri', '06:00:00', '23:59:00'), ('facility-pune-master', 'Sat', '06:00:00', '23:59:00'), ('facility-pune-master', 'Sun', '06:00:00', '23:00:00'),
-('facility-mumbai-master', 'Mon', '07:00:00', '22:00:00'), ('facility-mumbai-master', 'Tue', '07:00:00', '22:00:00'), ('facility-mumbai-master', 'Wed', '07:00:00', '22:00:00'), ('facility-mumbai-master', 'Thu', '07:00:00', '22:00:00'), ('facility-mumbai-master', 'Fri', '07:00:00', '23:00:00'), ('facility-mumbai-master', 'Sat', '08:00:00', '23:00:00'), ('facility-mumbai-master', 'Sun', '08:00:00', '22:00:00');
+('facility-ahmedabad-1', 'Mon', '08:00', '22:00'),
+('facility-ahmedabad-1', 'Tue', '08:00', '22:00'),
+('facility-ahmedabad-1', 'Wed', '08:00', '22:00'),
+('facility-ahmedabad-1', 'Thu', '08:00', '22:00'),
+('facility-ahmedabad-1', 'Fri', '08:00', '23:00'),
+('facility-ahmedabad-1', 'Sat', '09:00', '23:00'),
+('facility-ahmedabad-1', 'Sun', '09:00', '20:00'),
+('facility-pune-1', 'Mon', '07:00', '21:00'),
+('facility-pune-1', 'Tue', '07:00', '21:00'),
+('facility-pune-1', 'Wed', '07:00', '21:00'),
+('facility-pune-1', 'Thu', '07:00', '21:00'),
+('facility-pune-1', 'Fri', '07:00', '22:00'),
+('facility-pune-1', 'Sat', '08:00', '22:00'),
+('facility-pune-1', 'Sun', '08:00', '20:00'),
+('facility-pune-2', 'Mon', '06:00', '23:00'),
+('facility-pune-2', 'Tue', '06:00', '23:00'),
+('facility-pune-2', 'Wed', '06:00', '23:00'),
+('facility-pune-2', 'Thu', '06:00', '23:00'),
+('facility-pune-2', 'Fri', '06:00', '23:59'),
+('facility-pune-2', 'Sat', '06:00', '23:59'),
+('facility-pune-2', 'Sun', '06:00', '23:00'),
+('facility-pune-3', 'Mon', '08:00', '22:00'),
+('facility-pune-3', 'Tue', '08:00', '22:00'),
+('facility-pune-3', 'Wed', '08:00', '22:00'),
+('facility-pune-3', 'Thu', '08:00', '22:00'),
+('facility-pune-3', 'Fri', '08:00', '22:00'),
+('facility-pune-3', 'Sat', '08:00', '22:00'),
+('facility-pune-3', 'Sun', '08:00', '18:00');
 
 -- --------------------------------------------------------
 
@@ -304,28 +366,97 @@ INSERT INTO `facility_operating_hours` (`facilityId`, `day`, `open`, `close`) VA
 --
 
 CREATE TABLE `facility_sports` (
-  `facilityId` VARCHAR(255) NOT NULL,
-  `sportId` VARCHAR(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `facilityId` varchar(255) NOT NULL,
+  `sportId` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `facility_sports`
 --
 
 INSERT INTO `facility_sports` (`facilityId`, `sportId`) VALUES
-('facility-pune-master', 'sport-1'), ('facility-pune-master', 'sport-2'), ('facility-pune-master', 'sport-3'), ('facility-pune-master', 'sport-4'), ('facility-pune-master', 'sport-5'), ('facility-pune-master', 'sport-6'),
-('facility-mumbai-master', 'sport-1'), ('facility-mumbai-master', 'sport-2'), ('facility-mumbai-master', 'sport-3'),
-('facility-pune-1', 'sport-2'),
-('facility-pune-2', 'sport-1'), ('facility-pune-2', 'sport-5'), ('facility-pune-2', 'sport-6'),
-('facility-pune-3', 'sport-3'),
-('facility-pune-4', 'sport-4'),
-('facility-pune-5', 'sport-1'),
 ('facility-ahmedabad-1', 'sport-2'),
+('facility-ahmedabad-1', 'sport-3'),
 ('facility-ahmedabad-2', 'sport-1'),
-('facility-ahmedabad-3', 'sport-3'),
-('facility-ahmedabad-4', 'sport-5'),
-('facility-ahmedabad-5', 'sport-6'),
-('facility-ahmedabad-master', 'sport-3'), ('facility-ahmedabad-master', 'sport-4');
+('facility-ahmedabad-2', 'sport-5'),
+('facility-ahmedabad-3', 'sport-4'),
+('facility-ahmedabad-4', 'sport-1'),
+('facility-ahmedabad-5', 'sport-1'),
+('facility-ahmedabad-5', 'sport-4'),
+('facility-ahmedabad-6', 'sport-2'),
+('facility-ahmedabad-6', 'sport-3'),
+('facility-bengaluru-1', 'sport-4'),
+('facility-bengaluru-2', 'sport-6'),
+('facility-bengaluru-2', 'sport-7'),
+('facility-bengaluru-3', 'sport-5'),
+('facility-bengaluru-4', 'sport-2'),
+('facility-bengaluru-5', 'sport-5'),
+('facility-bengaluru-6', 'sport-8'),
+('facility-chandigarh-1', 'sport-3'),
+('facility-chandigarh-2', 'sport-1'),
+('facility-chandigarh-3', 'sport-5'),
+('facility-chandigarh-4', 'sport-4'),
+('facility-chandigarh-5', 'sport-1'),
+('facility-chandigarh-6', 'sport-8'),
+('facility-chennai-1', 'sport-5'),
+('facility-chennai-2', 'sport-1'),
+('facility-chennai-3', 'sport-2'),
+('facility-chennai-4', 'sport-5'),
+('facility-chennai-5', 'sport-6'),
+('facility-chennai-6', 'sport-3'),
+('facility-delhi-1', 'sport-2'),
+('facility-delhi-1', 'sport-3'),
+('facility-delhi-1', 'sport-4'),
+('facility-delhi-2', 'sport-6'),
+('facility-delhi-3', 'sport-5'),
+('facility-delhi-4', 'sport-5'),
+('facility-delhi-5', 'sport-2'),
+('facility-delhi-6', 'sport-4'),
+('facility-hyderabad-1', 'sport-4'),
+('facility-hyderabad-1', 'sport-7'),
+('facility-hyderabad-2', 'sport-1'),
+('facility-hyderabad-2', 'sport-5'),
+('facility-hyderabad-3', 'sport-1'),
+('facility-hyderabad-4', 'sport-2'),
+('facility-hyderabad-5', 'sport-4'),
+('facility-hyderabad-6', 'sport-5'),
+('facility-jaipur-1', 'sport-1'),
+('facility-jaipur-2', 'sport-1'),
+('facility-jaipur-2', 'sport-5'),
+('facility-jaipur-2', 'sport-6'),
+('facility-jaipur-3', 'sport-5'),
+('facility-jaipur-4', 'sport-4'),
+('facility-jaipur-5', 'sport-2'),
+('facility-jaipur-5', 'sport-3'),
+('facility-jaipur-6', 'sport-1'),
+('facility-kolkata-1', 'sport-1'),
+('facility-kolkata-2', 'sport-5'),
+('facility-kolkata-3', 'sport-1'),
+('facility-kolkata-4', 'sport-3'),
+('facility-kolkata-5', 'sport-1'),
+('facility-kolkata-5', 'sport-5'),
+('facility-kolkata-6', 'sport-2'),
+('facility-mumbai-1', 'sport-1'),
+('facility-mumbai-2', 'sport-3'),
+('facility-mumbai-2', 'sport-5'),
+('facility-mumbai-3', 'sport-3'),
+('facility-mumbai-4', 'sport-5'),
+('facility-mumbai-5', 'sport-2'),
+('facility-mumbai-5', 'sport-4'),
+('facility-mumbai-6', 'sport-1'),
+('facility-pune-1', 'sport-2'),
+('facility-pune-1', 'sport-3'),
+('facility-pune-1', 'sport-6'),
+('facility-pune-2', 'sport-5'),
+('facility-pune-3', 'sport-2'),
+('facility-pune-3', 'sport-4'),
+('facility-pune-4', 'sport-2'),
+('facility-pune-4', 'sport-3'),
+('facility-pune-4', 'sport-4'),
+('facility-pune-4', 'sport-5'),
+('facility-pune-4', 'sport-6'),
+('facility-pune-5', 'sport-1'),
+('facility-pune-6', 'sport-3');
 
 -- --------------------------------------------------------
 
@@ -334,23 +465,30 @@ INSERT INTO `facility_sports` (`facilityId`, `sportId`) VALUES
 --
 
 CREATE TABLE `facility_sport_prices` (
-  `facilityId` VARCHAR(255) NOT NULL,
-  `sportId` VARCHAR(255) NOT NULL,
-  `price` DECIMAL(10,2) NOT NULL,
-  `pricingModel` VARCHAR(50) NOT NULL DEFAULT 'per_hour_flat'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `facilityId` varchar(255) NOT NULL,
+  `sportId` varchar(255) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `pricingModel` enum('per_hour_flat','per_hour_per_person') NOT NULL DEFAULT 'per_hour_flat'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `facility_sport_prices`
 --
 
 INSERT INTO `facility_sport_prices` (`facilityId`, `sportId`, `price`, `pricingModel`) VALUES
-('facility-pune-master', 'sport-1', 1500.00, 'per_hour_flat'), ('facility-pune-master', 'sport-2', 800.00, 'per_hour_flat'), ('facility-pune-master', 'sport-3', 1800.00, 'per_hour_flat'), ('facility-pune-master', 'sport-4', 1000.00, 'per_hour_flat'), ('facility-pune-master', 'sport-5', 500.00, 'per_hour_per_person'), ('facility-pune-master', 'sport-6', 900.00, 'per_hour_flat'),
-('facility-pune-1', 'sport-2', 600.00, 'per_hour_flat'),
-('facility-pune-3', 'sport-3', 900.00, 'per_hour_flat'),
-('facility-mumbai-master', 'sport-1', 2000.00, 'per_hour_flat'), ('facility-mumbai-master', 'sport-3', 2500.00, 'per_hour_flat'),
-('facility-ahmedabad-1', 'sport-2', 500.00, 'per_hour_flat'),
-('facility-ahmedabad-3', 'sport-3', 1000.00, 'per_hour_flat');
+('facility-ahmedabad-1', 'sport-2', '900.00', 'per_hour_flat'),
+('facility-ahmedabad-1', 'sport-3', '400.00', 'per_hour_per_person'),
+('facility-pune-1', 'sport-2', '1000.00', 'per_hour_flat'),
+('facility-pune-1', 'sport-3', '300.00', 'per_hour_per_person'),
+('facility-pune-1', 'sport-6', '1200.00', 'per_hour_flat'),
+('facility-pune-2', 'sport-5', '2000.00', 'per_hour_flat'),
+('facility-pune-3', 'sport-2', '900.00', 'per_hour_flat'),
+('facility-pune-3', 'sport-4', '800.00', 'per_hour_flat'),
+('facility-pune-4', 'sport-3', '400.00', 'per_hour_per_person'),
+('facility-pune-5', 'sport-1', '1500.00', 'per_hour_flat'),
+('facility-pune-6', 'sport-3', '350.00', 'per_hour_per_person'),
+('facility-mumbai-2', 'sport-3', '500.00', 'per_hour_per_person'),
+('facility-delhi-1', 'sport-4', '700.00', 'per_hour_flat');
 
 -- --------------------------------------------------------
 
@@ -359,27 +497,27 @@ INSERT INTO `facility_sport_prices` (`facilityId`, `sportId`, `price`, `pricingM
 --
 
 CREATE TABLE `lfg_requests` (
-  `id` VARCHAR(255) NOT NULL,
-  `userId` VARCHAR(255) NOT NULL,
-  `sportId` VARCHAR(255) NOT NULL,
-  `facilityId` VARCHAR(255) NOT NULL,
-  `facilityName` VARCHAR(255) NOT NULL,
-  `notes` TEXT NOT NULL,
-  `createdAt` DATETIME NOT NULL DEFAULT current_timestamp(),
-  `status` ENUM('open','closed') NOT NULL DEFAULT 'open',
-  `interestedUserIds` JSON DEFAULT NULL,
-  `skillLevel` ENUM('Any','Beginner','Intermediate','Advanced') DEFAULT 'Any',
-  `playersNeeded` INT DEFAULT NULL,
-  `preferredTime` VARCHAR(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `userId` varchar(255) NOT NULL,
+  `sportId` varchar(255) NOT NULL,
+  `facilityId` varchar(255) NOT NULL,
+  `facilityName` varchar(255) NOT NULL,
+  `notes` text NOT NULL,
+  `createdAt` varchar(255) NOT NULL,
+  `status` enum('open','closed') NOT NULL DEFAULT 'open',
+  `interestedUserIds` text DEFAULT NULL,
+  `skillLevel` enum('Any','Beginner','Intermediate','Advanced') DEFAULT 'Any',
+  `playersNeeded` int(11) DEFAULT NULL,
+  `preferredTime` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `lfg_requests`
 --
 
 INSERT INTO `lfg_requests` (`id`, `userId`, `sportId`, `facilityId`, `facilityName`, `notes`, `createdAt`, `status`, `interestedUserIds`, `skillLevel`, `playersNeeded`, `preferredTime`) VALUES
-('lfg-1', 'user-1', 'sport-3', 'facility-pune-3', 'Kothrud Football Turf', 'Need 2 more players for a 5-a-side friendly match this Saturday evening. Let''s have some fun!', '2024-07-10 18:00:00', 'open', '[\"user-3\"]', 'Intermediate', 2, 'Saturday Evening'),
-('lfg-2', 'user-4', 'sport-4', 'facility-bangalore-2', 'The Net Rippers (Bangalore)', 'Looking for people to shoot some hoops. Casual game, all skill levels welcome.', '2024-07-11 11:30:00', 'open', '[]', 'Any', 3, 'Weekdays after 6 PM');
+('lfg-1', 'user-charlie', 'sport-1', 'facility-pune-5', 'Legends United', 'Need 5 players for a box cricket match this Saturday evening. Let\'s have a fun game!', '2023-08-11T18:00:00.000Z', 'open', '[\"user-diana\"]', 'Intermediate', 5, 'Saturday Evening'),
+('lfg-2', 'user-diana', 'sport-5', 'facility-pune-2', 'Hotfut Football', 'Looking for a goalkeeper for our 5-a-side team. We play every Friday night.', '2023-08-10T14:00:00.000Z', 'open', '[]', 'Advanced', 1, 'Friday Nights');
 
 -- --------------------------------------------------------
 
@@ -388,20 +526,41 @@ INSERT INTO `lfg_requests` (`id`, `userId`, `sportId`, `facilityId`, `facilityNa
 --
 
 CREATE TABLE `membership_plans` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(100) NOT NULL,
-  `pricePerMonth` DECIMAL(10,2) NOT NULL,
-  `benefits` JSON NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `pricePerMonth` decimal(10,2) NOT NULL,
+  `benefits` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `membership_plans`
 --
 
 INSERT INTO `membership_plans` (`id`, `name`, `pricePerMonth`, `benefits`) VALUES
-('plan-1', 'Basic', 0.00, '[\"Access to all facility listings\", \"Standard booking features\"]'),
-('plan-2', 'Premium', 499.00, '[\"All Basic benefits\", \"10% discount on all bookings\", \"Early access to event registrations\", \"Priority customer support\"]'),
-('plan-3', 'Pro', 999.00, '[\"All Premium benefits\", \"20% discount on all bookings\", \"Free equipment rentals\", \"Access to exclusive Pro-level tournaments\"]');
+('plan-1', 'Basic', '0.00', '[\"Access to all facility listings\",\"Standard booking rates\",\"Basic community access\"]'),
+('plan-2', 'Premium', '999.00', '[\"5% discount on all bookings\",\"Priority booking for new slots\",\"Access to member-only events\",\"Advanced profile customization\"]'),
+('plan-3', 'Pro', '2499.00', '[\"15% discount on all bookings\",\"Free equipment rentals\",\"Pro badge on your profile\",\"Priority customer support\"]');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `owner_verification_requests`
+--
+
+CREATE TABLE `owner_verification_requests` (
+  `id` int(11) NOT NULL,
+  `userId` varchar(255) NOT NULL,
+  `fullName` varchar(255) NOT NULL,
+  `phone` varchar(20) NOT NULL,
+  `idNumber` varchar(50) NOT NULL,
+  `facilityName` varchar(255) NOT NULL,
+  `facilityAddress` text NOT NULL,
+  `identityProofPath` varchar(255) NOT NULL,
+  `addressProofPath` varchar(255) NOT NULL,
+  `ownershipProofPath` varchar(255) NOT NULL,
+  `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -410,26 +569,26 @@ INSERT INTO `membership_plans` (`id`, `name`, `pricePerMonth`, `benefits`) VALUE
 --
 
 CREATE TABLE `pricing_rules` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `description` TEXT DEFAULT NULL,
-  `facilityIds` JSON DEFAULT NULL,
-  `daysOfWeek` JSON DEFAULT NULL,
-  `timeRange` JSON DEFAULT NULL,
-  `dateRange` JSON DEFAULT NULL,
-  `adjustmentType` ENUM('percentage_increase','percentage_decrease','fixed_increase','fixed_decrease','fixed_price') NOT NULL,
-  `value` DECIMAL(10,2) NOT NULL,
-  `priority` INT DEFAULT NULL,
-  `isActive` TINYINT(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `facilityIds` text DEFAULT NULL,
+  `daysOfWeek` text DEFAULT NULL,
+  `timeRange` text DEFAULT NULL,
+  `dateRange` text DEFAULT NULL,
+  `adjustmentType` enum('percentage_increase','percentage_decrease','fixed_increase','fixed_decrease','fixed_price') NOT NULL,
+  `value` decimal(10,2) NOT NULL,
+  `priority` int(11) DEFAULT NULL,
+  `isActive` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `pricing_rules`
 --
 
 INSERT INTO `pricing_rules` (`id`, `name`, `description`, `facilityIds`, `daysOfWeek`, `timeRange`, `dateRange`, `adjustmentType`, `value`, `priority`, `isActive`) VALUES
-('rule-1', 'Weekend Evening Surge', 'Increase price for all facilities on weekend evenings.', NULL, '[\"Sat\", \"Sun\"]', '{\"start\": \"17:00\", \"end\": \"22:00\"}', NULL, 'percentage_increase', 20.00, 10, 1),
-('rule-2', 'Weekday Morning Discount', 'Discount for early birds on weekdays.', NULL, '[\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\"]', '{\"start\": \"08:00\", \"end\": \"11:00\"}', NULL, 'percentage_decrease', 15.00, 10, 1);
+('rule-1', 'Weekend Evening Surge', 'Increase price for popular weekend evening slots.', '[]', '[\"Fri\",\"Sat\"]', '{\"start\":\"18:00\",\"end\":\"22:00\"}', NULL, 'percentage_increase', '20.00', 10, 1),
+('rule-2', 'Weekday Morning Discount', 'Discount for off-peak morning hours on weekdays.', '[]', '[\"Mon\",\"Tue\",\"Wed\",\"Thu\",\"Fri\"]', '{\"start\":\"08:00\",\"end\":\"11:00\"}', NULL, 'percentage_decrease', '15.00', 10, 1);
 
 -- --------------------------------------------------------
 
@@ -438,26 +597,42 @@ INSERT INTO `pricing_rules` (`id`, `name`, `description`, `facilityIds`, `daysOf
 --
 
 CREATE TABLE `promotion_rules` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `description` TEXT DEFAULT NULL,
-  `code` VARCHAR(50) DEFAULT NULL,
-  `discountType` ENUM('percentage','fixed_amount') NOT NULL,
-  `discountValue` DECIMAL(10,2) NOT NULL,
-  `startDate` DATE DEFAULT NULL,
-  `endDate` DATE DEFAULT NULL,
-  `usageLimit` INT DEFAULT NULL,
-  `usageLimitPerUser` INT DEFAULT NULL,
-  `isActive` TINYINT(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `code` varchar(255) DEFAULT NULL,
+  `discountType` enum('percentage','fixed_amount') NOT NULL,
+  `discountValue` decimal(10,2) NOT NULL,
+  `startDate` varchar(255) DEFAULT NULL,
+  `endDate` varchar(255) DEFAULT NULL,
+  `usageLimit` int(11) DEFAULT NULL,
+  `usageLimitPerUser` int(11) DEFAULT NULL,
+  `isActive` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `promotion_rules`
 --
 
 INSERT INTO `promotion_rules` (`id`, `name`, `description`, `code`, `discountType`, `discountValue`, `startDate`, `endDate`, `usageLimit`, `usageLimitPerUser`, `isActive`) VALUES
-('promo-1', 'First Booking Discount', 'A 50 INR discount for new users on their first booking.', 'FIRSTBOOK', 'fixed_amount', 50.00, NULL, NULL, NULL, 1, 1),
-('promo-2', 'Monsoon Mania', '15% off on all bookings during the monsoon season.', 'MONSOON15', 'percentage', 15.00, '2024-07-01', '2024-08-31', NULL, NULL, 1);
+('promo-1', 'First Booking Discount', 'A special 20% discount for all new users on their first booking.', 'FIRST20', 'percentage', '20.00', NULL, NULL, NULL, 1, 1),
+('promo-2', 'Monsoon Mania', 'A fixed 200 INR off on all bookings made during the monsoon season.', 'MONSOON200', 'fixed_amount', '200.00', '2023-07-01', '2023-09-30', NULL, NULL, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rental_equipment`
+--
+
+CREATE TABLE `rental_equipment` (
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `pricePerItem` decimal(10,2) NOT NULL,
+  `priceType` enum('per_booking','per_hour') NOT NULL,
+  `stock` int(11) NOT NULL,
+  `sportIds` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -466,24 +641,24 @@ INSERT INTO `promotion_rules` (`id`, `name`, `description`, `code`, `discountTyp
 --
 
 CREATE TABLE `reviews` (
-  `id` VARCHAR(255) NOT NULL,
-  `facilityId` VARCHAR(255) NOT NULL,
-  `userId` VARCHAR(255) NOT NULL,
-  `userName` VARCHAR(255) NOT NULL,
-  `userAvatar` VARCHAR(255) DEFAULT NULL,
-  `isPublicProfile` TINYINT(1) DEFAULT 0,
-  `rating` INT NOT NULL,
-  `comment` TEXT NOT NULL,
-  `createdAt` DATETIME NOT NULL DEFAULT current_timestamp(),
-  `bookingId` VARCHAR(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `facilityId` varchar(255) NOT NULL,
+  `userId` varchar(255) NOT NULL,
+  `userName` varchar(255) NOT NULL,
+  `userAvatar` varchar(255) DEFAULT NULL,
+  `isPublicProfile` tinyint(1) DEFAULT 0,
+  `rating` int(11) NOT NULL,
+  `comment` text NOT NULL,
+  `createdAt` varchar(255) NOT NULL,
+  `bookingId` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `reviews`
 --
 
 INSERT INTO `reviews` (`id`, `facilityId`, `userId`, `userName`, `userAvatar`, `isPublicProfile`, `rating`, `comment`, `createdAt`, `bookingId`) VALUES
-('review-1', 'facility-pune-3', 'user-3', 'Charlie Brown', 'https://i.pravatar.cc/150?u=charlie', 1, 5, 'Amazing turf quality and the floodlights are top-notch. Had a great time playing here with my friends. Will definitely visit again!', '2024-06-16 10:00:00', 'booking-3');
+('review-1', 'facility-pune-1', 'user-charlie', 'Charlie Davis', 'https://randomuser.me/api/portraits/men/11.jpg', 1, 5, 'Excellent tennis courts, well-maintained and the lighting is perfect for evening games. Staff is very helpful too!', '2023-08-16T12:00:00.000Z', 'booking-1');
 
 -- --------------------------------------------------------
 
@@ -492,26 +667,26 @@ INSERT INTO `reviews` (`id`, `facilityId`, `userId`, `userName`, `userAvatar`, `
 --
 
 CREATE TABLE `sports` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `iconName` VARCHAR(255) DEFAULT NULL,
-  `imageUrl` VARCHAR(255) DEFAULT NULL,
-  `imageDataAiHint` VARCHAR(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `iconName` varchar(255) DEFAULT NULL,
+  `imageUrl` varchar(255) DEFAULT NULL,
+  `imageDataAiHint` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `sports`
 --
 
 INSERT INTO `sports` (`id`, `name`, `iconName`, `imageUrl`, `imageDataAiHint`) VALUES
-('sport-1', 'Cricket', 'Dribbble', 'https://picsum.photos/seed/cricket/400/300', 'cricket stadium grass'),
-('sport-2', 'Badminton', 'Feather', 'https://picsum.photos/seed/badminton/400/300', 'badminton court shuttlecock'),
-('sport-3', 'Football', 'Goal', 'https://picsum.photos/seed/football/400/300', 'football on turf'),
-('sport-4', 'Basketball', 'Dribbble', 'https://picsum.photos/seed/basketball/400/300', 'basketball court hoop'),
-('sport-5', 'Swimming', 'Wind', 'https://picsum.photos/seed/swimming/400/300', 'swimming pool water'),
-('sport-6', 'Tennis', 'Dices', 'https://picsum.photos/seed/tennis/400/300', 'tennis court racket'),
-('sport-7', 'Table Tennis', 'Dices', 'https://picsum.photos/seed/tabletennis/400/300', 'table tennis paddle'),
-('sport-8', 'Squash', 'Square', 'https://picsum.photos/seed/squash/400/300', 'squash court inside');
+('sport-1', 'Cricket', 'Dribbble', 'https://picsum.photos/seed/cricket/400/300', 'cricket sport'),
+('sport-2', 'Tennis', 'Activity', 'https://picsum.photos/seed/tennis/400/300', 'tennis sport'),
+('sport-3', 'Swimming', 'Wind', 'https://picsum.photos/seed/swimming/400/300', 'swimming sport'),
+('sport-4', 'Badminton', 'Feather', 'https://picsum.photos/seed/badminton/400/300', 'badminton sport'),
+('sport-5', 'Football', 'Goal', 'https://picsum.photos/seed/football/400/300', 'football sport'),
+('sport-6', 'Basketball', 'Dribbble', 'https://picsum.photos/seed/basketball/400/300', 'basketball sport'),
+('sport-7', 'Table Tennis', 'Disc', 'https://picsum.photos/seed/tabletennis/400/300', 'table tennis'),
+('sport-8', 'Yoga', 'PersonStanding', 'https://picsum.photos/seed/yoga/400/300', 'yoga fitness');
 
 -- --------------------------------------------------------
 
@@ -520,20 +695,19 @@ INSERT INTO `sports` (`id`, `name`, `iconName`, `imageUrl`, `imageDataAiHint`) V
 --
 
 CREATE TABLE `teams` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `sportId` VARCHAR(255) NOT NULL,
-  `captainId` VARCHAR(255) NOT NULL,
-  `memberIds` JSON NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `sportId` varchar(255) NOT NULL,
+  `captainId` varchar(255) NOT NULL,
+  `memberIds` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `teams`
 --
 
 INSERT INTO `teams` (`id`, `name`, `sportId`, `captainId`, `memberIds`) VALUES
-('team-1', 'The Pune Panthers', 'sport-1', 'user-1', '[\"user-1\", \"user-2\"]'),
-('team-2', 'Mumbai Mavericks', 'sport-3', 'user-3', '[\"user-3\", \"user-4\"]');
+('team-1', 'Pune Smashers', 'sport-4', 'user-charlie', '[\"user-charlie\", \"user-diana\"]');
 
 -- --------------------------------------------------------
 
@@ -542,156 +716,196 @@ INSERT INTO `teams` (`id`, `name`, `sportId`, `captainId`, `memberIds`) VALUES
 --
 
 CREATE TABLE `users` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `email` VARCHAR(255) NOT NULL,
-  `password` VARCHAR(255) NOT NULL,
-  `phone` VARCHAR(20) DEFAULT NULL,
-  `profilePictureUrl` VARCHAR(255) DEFAULT NULL,
-  `dataAiHint` VARCHAR(255) DEFAULT NULL,
-  `preferredSports` JSON DEFAULT NULL,
-  `favoriteFacilities` JSON DEFAULT NULL,
-  `membershipLevel` ENUM('Basic','Premium','Pro') DEFAULT 'Basic',
-  `loyaltyPoints` INT DEFAULT 0,
-  `achievements` JSON DEFAULT NULL,
-  `bio` TEXT DEFAULT NULL,
-  `preferredPlayingTimes` VARCHAR(255) DEFAULT NULL,
-  `skillLevels` JSON DEFAULT NULL,
-  `role` ENUM('Admin','FacilityOwner','User') NOT NULL,
-  `status` ENUM('Active','Suspended','PendingApproval') NOT NULL DEFAULT 'Active',
-  `joinedAt` DATETIME NOT NULL,
-  `teamIds` JSON DEFAULT NULL,
-  `isProfilePublic` TINYINT(1) DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `phone` varchar(255) DEFAULT NULL,
+  `profilePictureUrl` varchar(255) DEFAULT NULL,
+  `dataAiHint` varchar(255) DEFAULT NULL,
+  `preferredSports` text DEFAULT NULL,
+  `favoriteFacilities` text DEFAULT NULL,
+  `membershipLevel` enum('Basic','Premium','Pro') DEFAULT 'Basic',
+  `loyaltyPoints` int(11) DEFAULT 0,
+  `achievements` text DEFAULT NULL,
+  `bio` text DEFAULT NULL,
+  `preferredPlayingTimes` varchar(255) DEFAULT NULL,
+  `skillLevels` text DEFAULT NULL,
+  `role` enum('Admin','FacilityOwner','User') NOT NULL DEFAULT 'User',
+  `status` enum('Active','Suspended','PendingApproval') NOT NULL DEFAULT 'Active',
+  `joinedAt` varchar(255) NOT NULL,
+  `teamIds` text DEFAULT NULL,
+  `isProfilePublic` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `users`
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `profilePictureUrl`, `dataAiHint`, `preferredSports`, `favoriteFacilities`, `membershipLevel`, `loyaltyPoints`, `achievements`, `bio`, `preferredPlayingTimes`, `skillLevels`, `role`, `status`, `joinedAt`, `teamIds`, `isProfilePublic`) VALUES
-('user-admin', 'Admin Alice', 'admin@sportsarena.com', 'admin123', '9876543210', 'https://i.pravatar.cc/150?u=alice', 'female administrator avatar', NULL, '[]', 'Pro', 1000, NULL, 'Keeping the Arena running smoothly.', '24/7', NULL, 'Admin', 'Active', '2024-01-01 12:00:00', NULL, 1),
-('user-owner-1', 'Owner Oscar', 'owner@sportsarena.com', 'owner123', '9876543211', 'https://i.pravatar.cc/150?u=oscar', 'male business owner avatar', NULL, '[]', 'Premium', 500, NULL, 'Proud owner of multiple premium sports facilities.', 'Business Hours', NULL, 'FacilityOwner', 'Active', '2024-02-15 10:00:00', NULL, 1),
-('user-1', 'Bob Johnson', 'bob@example.com', 'bob123', '9876543210', 'https://i.pravatar.cc/150?u=bob', 'male user avatar', '[{\"id\": \"sport-1\", \"name\": \"Cricket\"}, {\"id\": \"sport-2\", \"name\": \"Badminton\"}]', '[\"facility-pune-master\", \"facility-mumbai-master\"]', 'Premium', 250, '[{\"id\": \"ach-1\", \"name\": \"First Booking\", \"description\": \"Make your first booking.\", \"iconName\": \"Gift\", \"unlockedAt\": \"2024-07-01T11:05:00Z\"}]', 'Weekend warrior, loves cricket and badminton.', 'Weekends', '[{\"sportId\": \"sport-1\", \"sportName\": \"Cricket\", \"level\": \"Intermediate\"}]', 'User', 'Active', '2024-03-01 09:00:00', '[\"team-1\"]', 1),
-('user-2', 'Charlie Brown', 'charlie@example.com', 'charlie123', '9876543212', 'https://i.pravatar.cc/150?u=charlie', 'male user avatar cartoon', '[]', '[]', 'Basic', 120, NULL, 'Football enthusiast and team player.', 'Evenings', '[{\"sportId\": \"sport-3\", \"sportName\": \"Football\", \"level\": \"Advanced\"}]', 'User', 'Active', '2024-04-20 15:30:00', '[\"team-1\"]', 1),
-('user-3', 'Diana Prince', 'diana@example.com', 'diana123', '9876543213', 'https://i.pravatar.cc/150?u=diana', 'female user avatar powerful', '[]', '[\"facility-delhi-1\"]', 'Premium', 800, NULL, 'Passionate about tennis and competitive matches.', 'Mornings', '[{\"sportId\": \"sport-6\", \"sportName\": \"Tennis\", \"level\": \"Advanced\"}]', 'User', 'Active', '2024-05-05 11:11:00', '[\"team-2\"]', 1),
-('user-4', 'Ethan Hunt', 'ethan@example.com', 'ethan123', '9876543214', 'https://i.pravatar.cc/150?u=ethan', 'male user avatar agent', '[]', '[]', 'Basic', 50, NULL, NULL, NULL, NULL, 'User', 'Suspended', '2024-06-10 20:00:00', '[\"team-2\"]', 1),
-('user-5', 'Fiona Glenanne', 'fiona@example.com', 'fiona123', '9876543215', 'https://i.pravatar.cc/150?u=fiona', 'female user avatar tough', '[]', '[]', 'Basic', 75, NULL, 'Just here to swim and relax.', 'Anytime', '[{\"sportId\": \"sport-5\", \"sportName\": \"Swimming\", \"level\": \"Beginner\"}]', 'User', 'Active', '2024-07-01 08:00:00', NULL, 0);
+('user-alice', 'Alice Johnson', 'alice@example.com', 'password123', '9876543210', 'https://randomuser.me/api/portraits/women/1.jpg', 'woman smiling', '[]', '[]', 'Basic', 150, '[]', 'Just here to play and have fun!', 'Weekends', '[]', 'Admin', 'Active', '2023-01-15T10:00:00.000Z', '[]', 1),
+('user-bob', 'Bob Williams', 'bob@example.com', 'password123', '9876543211', 'https://randomuser.me/api/portraits/men/2.jpg', 'man with glasses', '[]', '[\"facility-pune-1\",\"facility-mumbai-2\"]', 'Premium', 1250, '[]', 'Managing top-tier sports facilities across the country.', 'Anytime', '[]', 'FacilityOwner', 'Active', '2023-02-20T11:00:00.000Z', '[]', 1),
+('user-charlie', 'Charlie Davis', 'charlie@example.com', 'password123', '9876543212', 'https://randomuser.me/api/portraits/men/11.jpg', 'man outside', '[{\"id\":\"sport-2\",\"name\":\"Tennis\"},{\"id\":\"sport-4\",\"name\":\"Badminton\"}]', '[\"facility-pune-1\",\"facility-pune-3\"]', 'Premium', 850, '[{\"id\":\"ach-1\",\"name\":\"First Booking\",\"description\":\"Made your first booking on the platform\",\"iconName\":\"Gift\",\"unlockedAt\":\"2023-08-01T10:00:00.000Z\"}]', 'Competitive player, always up for a challenge.', 'Weekends', '[{\"sportId\":\"sport-2\",\"sportName\":\"Tennis\",\"level\":\"Advanced\"}]', 'User', 'Active', '2023-03-10T14:30:00.000Z', '[\"team-1\"]', 1),
+('user-diana', 'Diana Miller', 'diana@example.com', 'password123', '9876543213', 'https://randomuser.me/api/portraits/women/22.jpg', 'woman with hat', '[]', '[]', 'Basic', 200, '[]', NULL, NULL, '[]', 'User', 'Active', '2023-04-05T18:00:00.000Z', '[\"team-1\"]', 0);
+
 
 --
 -- Indexes for dumped tables
 --
 
+--
+-- Indexes for table `amenities`
+--
 ALTER TABLE `amenities`
   ADD PRIMARY KEY (`id`);
 
+--
+-- Indexes for table `blog_posts`
+--
 ALTER TABLE `blog_posts`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `slug` (`slug`);
 
+--
+-- Indexes for table `bookings`
+--
 ALTER TABLE `bookings`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `facilityId` (`facilityId`),
   ADD KEY `userId` (`userId`),
-  ADD KEY `date` (`date`);
-
-ALTER TABLE `challenges`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `challengerId` (`challengerId`),
   ADD KEY `facilityId` (`facilityId`);
 
+--
+-- Indexes for table `challenges`
+--
+ALTER TABLE `challenges`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `challengerId` (`challengerId`);
+
+--
+-- Indexes for table `events`
+--
 ALTER TABLE `events`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `facilityId` (`facilityId`),
-  ADD KEY `sportId` (`sportId`);
+  ADD KEY `facilityId` (`facilityId`);
 
+--
+-- Indexes for table `facilities`
+--
 ALTER TABLE `facilities`
   ADD PRIMARY KEY (`id`),
   ADD KEY `ownerId` (`ownerId`);
 
+--
+-- Indexes for table `facility_amenities`
+--
 ALTER TABLE `facility_amenities`
   ADD PRIMARY KEY (`facilityId`,`amenityId`),
   ADD KEY `amenityId` (`amenityId`);
 
+--
+-- Indexes for table `facility_equipment`
+--
+ALTER TABLE `facility_equipment`
+  ADD PRIMARY KEY (`facilityId`,`equipmentId`),
+  ADD KEY `equipmentId` (`equipmentId`);
+
+--
+-- Indexes for table `facility_operating_hours`
+--
 ALTER TABLE `facility_operating_hours`
   ADD PRIMARY KEY (`facilityId`,`day`);
 
+--
+-- Indexes for table `facility_sports`
+--
 ALTER TABLE `facility_sports`
   ADD PRIMARY KEY (`facilityId`,`sportId`),
   ADD KEY `sportId` (`sportId`);
 
+--
+-- Indexes for table `facility_sport_prices`
+--
 ALTER TABLE `facility_sport_prices`
-  ADD PRIMARY KEY (`facilityId`,`sportId`),
-  ADD KEY `sportId` (`sportId`);
+  ADD PRIMARY KEY (`facilityId`,`sportId`);
 
+--
+-- Indexes for table `lfg_requests`
+--
 ALTER TABLE `lfg_requests`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `userId` (`userId`),
-  ADD KEY `facilityId` (`facilityId`);
+  ADD KEY `userId` (`userId`);
 
+--
+-- Indexes for table `membership_plans`
+--
 ALTER TABLE `membership_plans`
   ADD PRIMARY KEY (`id`);
 
+--
+-- Indexes for table `owner_verification_requests`
+--
+ALTER TABLE `owner_verification_requests`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `userId` (`userId`);
+
+--
+-- Indexes for table `pricing_rules`
+--
 ALTER TABLE `pricing_rules`
   ADD PRIMARY KEY (`id`);
 
+--
+-- Indexes for table `promotion_rules`
+--
 ALTER TABLE `promotion_rules`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `code` (`code`);
 
+--
+-- Indexes for table `rental_equipment`
+--
+ALTER TABLE `rental_equipment`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `reviews`
+--
 ALTER TABLE `reviews`
   ADD PRIMARY KEY (`id`),
   ADD KEY `facilityId` (`facilityId`),
   ADD KEY `userId` (`userId`);
 
+--
+-- Indexes for table `sports`
+--
 ALTER TABLE `sports`
   ADD PRIMARY KEY (`id`);
 
+--
+-- Indexes for table `teams`
+--
 ALTER TABLE `teams`
   ADD PRIMARY KEY (`id`),
   ADD KEY `captainId` (`captainId`);
 
+--
+-- Indexes for table `users`
+--
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
 
+--
+-- AUTO_INCREMENT for dumped tables
+--
 
-ALTER TABLE `bookings`
-  ADD CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `challenges`
-  ADD CONSTRAINT `challenges_ibfk_1` FOREIGN KEY (`challengerId`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `challenges_ibfk_2` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `events`
-  ADD CONSTRAINT `events_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `events_ibfk_2` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `facilities`
-  ADD CONSTRAINT `facilities_ibfk_1` FOREIGN KEY (`ownerId`) REFERENCES `users` (`id`) ON DELETE SET NULL;
-
-ALTER TABLE `facility_amenities`
-  ADD CONSTRAINT `facility_amenities_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `facility_amenities_ibfk_2` FOREIGN KEY (`amenityId`) REFERENCES `amenities` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `facility_operating_hours`
-  ADD CONSTRAINT `facility_operating_hours_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `facility_sports`
-  ADD CONSTRAINT `facility_sports_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `facility_sports_ibfk_2` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `facility_sport_prices`
-  ADD CONSTRAINT `facility_sport_prices_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `facility_sport_prices_ibfk_2` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `lfg_requests`
-  ADD CONSTRAINT `lfg_requests_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `lfg_requests_ibfk_2` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `reviews`
-  ADD CONSTRAINT `reviews_ibfk_1` FOREIGN KEY (`facilityId`) REFERENCES `facilities` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `teams`
-  ADD CONSTRAINT `teams_ibfk_1` FOREIGN KEY (`captainId`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+--
+-- AUTO_INCREMENT for table `owner_verification_requests`
+--
+ALTER TABLE `owner_verification_requests`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
