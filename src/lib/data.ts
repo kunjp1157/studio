@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type {
@@ -89,7 +90,14 @@ export async function getAllEventsAction(): Promise<SportEvent[]> {
 export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
     noStore();
     const [rows] = await query('SELECT * FROM membership_plans');
-    return rows as MembershipPlan[];
+    const plans = rows as MembershipPlan[];
+    // The 'benefits' column is stored as a JSON string, so we need to parse it.
+    return plans.map(plan => {
+        if (typeof (plan as any).benefits === 'string') {
+            plan.benefits = JSON.parse((plan as any).benefits);
+        }
+        return plan;
+    });
 }
 
 export async function getAllPricingRulesAction(): Promise<PricingRule[]> {
@@ -742,4 +750,38 @@ export async function registerForEvent(eventId: string): Promise<boolean> {
         return true;
     }
     return false;
+}
+
+export async function getFacilitiesAction(): Promise<Facility[]> {
+  noStore();
+  return await dbGetAllFacilities();
+}
+export async function getUsersAction(): Promise<UserProfile[]> {
+  noStore();
+  return await dbGetAllUsers();
+}
+export async function getBookingsByUserIdAction(): Promise<Booking[]> {
+  noStore();
+  // This needs a user ID. In a real app, you'd get this from the session.
+  // For now, let's assume a mock user ID or fetch for all users if needed for some views.
+  return []; 
+}
+export async function getFacilitiesByIds(ids: string[]): Promise<Facility[]> {
+    noStore();
+    if (ids.length === 0) return [];
+    const placeholders = ids.map(() => '?').join(',');
+    const [rows] = await query(`SELECT * FROM facilities WHERE id IN (${placeholders})`, ids);
+    const facilities = rows as Facility[];
+    for (const facility of facilities) {
+        await enrichFacility(facility);
+    }
+    return facilities;
+}
+export async function getSportById(id: string): Promise<Sport | undefined> {
+    noStore();
+    return dbGetSportById(id);
+}
+export async function updateEventAction(data: SportEvent): Promise<void> {
+    noStore();
+    return dbUpdateEvent(data);
 }
