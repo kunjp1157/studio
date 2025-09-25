@@ -685,7 +685,11 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefi
 export async function dbGetMembershipPlanById(id: string): Promise<MembershipPlan | undefined> { 
     noStore();
     const [rows] = await query('SELECT * FROM membership_plans WHERE id = ?', [id]);
-    return (rows as MembershipPlan[])[0];
+    const plan = (rows as MembershipPlan[])[0];
+    if (plan && typeof (plan as any).benefits === 'string') {
+        plan.benefits = JSON.parse((plan as any).benefits);
+    }
+    return plan;
 }
 export async function dbGetTeamById(id: string): Promise<Team | undefined> { 
     noStore();
