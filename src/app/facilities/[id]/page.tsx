@@ -334,6 +334,8 @@ export default function FacilityDetailPage() {
     notFound();
   }
 
+  const ratingValue = Number(facility.rating);
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <PageTitle title={facility.name} description={facility.description} />
@@ -364,8 +366,8 @@ export default function FacilityDetailPage() {
                 <span className="text-xs text-muted-foreground">Capacity</span>
               </div>
               <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-muted/50">
-                <StarDisplay rating={facility.rating} starSize={24} />
-                <span className="text-sm font-semibold">{facility.rating.toFixed(1)} / 5.0</span>
+                <StarDisplay rating={ratingValue} starSize={24} />
+                <span className="text-sm font-semibold">{ratingValue.toFixed(1)} / 5.0</span>
                 <span className="text-xs text-muted-foreground">{facility.reviews?.length || 0} reviews</span>
               </div>
             </CardContent>
