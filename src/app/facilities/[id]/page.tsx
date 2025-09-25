@@ -499,18 +499,26 @@ export default function FacilityDetailPage() {
                <div>
                  <Label>Time Slot</Label>
                  {isSlotsLoading ? (
-                    <div className="flex items-center justify-center h-10 border rounded-md"><LoadingSpinner size={20}/></div>
-                 ) : (
-                    <Select onValueChange={(value) => setSelectedSlot(timeSlots.find(s => s.startTime === value))} value={selectedSlot?.startTime}>
-                    <SelectTrigger><SelectValue placeholder="Select a time" /></SelectTrigger>
-                    <SelectContent>
+                    <div className="flex items-center justify-center h-24 border rounded-md"><LoadingSpinner size={24}/></div>
+                 ) : timeSlots.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2 mt-2">
                         {timeSlots.map(slot => (
-                        <SelectItem key={slot.startTime} value={slot.startTime} disabled={!slot.isAvailable}>
-                            {slot.startTime} - {slot.endTime} {!slot.isAvailable && " (Booked)"}
-                        </SelectItem>
+                            <Button 
+                                key={slot.startTime}
+                                variant={selectedSlot?.startTime === slot.startTime ? 'default' : 'outline'}
+                                disabled={!slot.isAvailable}
+                                onClick={() => setSelectedSlot(slot)}
+                                className={cn("flex-col h-auto py-2", !slot.isAvailable && "line-through text-muted-foreground")}
+                            >
+                                <span className="font-semibold">{slot.startTime}</span>
+                                <span className="text-xs">{!slot.isAvailable ? 'Booked' : 'Available'}</span>
+                            </Button>
                         ))}
-                    </SelectContent>
-                    </Select>
+                    </div>
+                 ) : (
+                     <div className="flex items-center justify-center h-24 border rounded-md text-sm text-muted-foreground">
+                         No slots available for this day.
+                     </div>
                  )}
                </div>
                
@@ -541,3 +549,4 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
+
