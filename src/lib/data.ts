@@ -131,15 +131,18 @@ export async function dbGetFacilityById(id: string): Promise<Facility | undefine
 export async function dbGetUserById(id: string): Promise<UserProfile | undefined> {
     noStore();
     const [rows] = await query('SELECT * FROM users WHERE id = ?', [id]);
+    if ((rows as any[]).length === 0) return undefined;
+    
     const user = (rows as UserProfile[])[0];
+
     if (user && typeof user.favoriteFacilities === 'string') {
-        user.favoriteFacilities = JSON.parse(user.favoriteFacilities);
+        try { user.favoriteFacilities = JSON.parse(user.favoriteFacilities); } catch (e) { console.error("Failed to parse favoriteFacilities", e); user.favoriteFacilities = []; }
     }
     if (user && typeof user.achievements === 'string') {
-        user.achievements = JSON.parse(user.achievements);
+        try { user.achievements = JSON.parse(user.achievements); } catch (e) { console.error("Failed to parse achievements", e); user.achievements = []; }
     }
     if (user && typeof user.skillLevels === 'string') {
-        user.skillLevels = JSON.parse(user.skillLevels);
+        try { user.skillLevels = JSON.parse(user.skillLevels); } catch (e) { console.error("Failed to parse skillLevels", e); user.skillLevels = []; }
     }
     return user;
 }
@@ -685,6 +688,8 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefi
 export async function dbGetMembershipPlanById(id: string): Promise<MembershipPlan | undefined> { 
     noStore();
     const [rows] = await query('SELECT * FROM membership_plans WHERE id = ?', [id]);
+    if ((rows as any[]).length === 0) return undefined;
+
     const plan = (rows as MembershipPlan[])[0];
     if (plan && typeof (plan as any).benefits === 'string') {
         plan.benefits = JSON.parse((plan as any).benefits);
