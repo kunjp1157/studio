@@ -38,10 +38,28 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [allSports, setAllSports] = useState<Sport[]>([]);
 
+  const parseUserJSONFields = (user: UserProfileType): UserProfileType => {
+    const parsedUser = { ...user };
+    if (typeof parsedUser.skillLevels === 'string') {
+      try { parsedUser.skillLevels = JSON.parse(parsedUser.skillLevels as any); } catch { parsedUser.skillLevels = []; }
+    }
+    if (typeof parsedUser.achievements === 'string') {
+      try { parsedUser.achievements = JSON.parse(parsedUser.achievements as any); } catch { parsedUser.achievements = []; }
+    }
+    if (typeof parsedUser.favoriteFacilities === 'string') {
+      try { parsedUser.favoriteFacilities = JSON.parse(parsedUser.favoriteFacilities as any); } catch { parsedUser.favoriteFacilities = []; }
+    }
+     if (typeof parsedUser.preferredSports === 'string') {
+      try { parsedUser.preferredSports = JSON.parse(parsedUser.preferredSports as any); } catch { parsedUser.preferredSports = []; }
+    }
+    return parsedUser;
+  };
+
   useEffect(() => {
     const activeUserStr = sessionStorage.getItem('activeUser');
     if (activeUserStr) {
-        setUser(JSON.parse(activeUserStr));
+        const userObject = JSON.parse(activeUserStr);
+        setUser(parseUserJSONFields(userObject));
     }
     const fetchSports = async () => {
         const sports = await getAllSportsAction();
@@ -55,7 +73,8 @@ export default function ProfilePage() {
     const handleUserUpdate = () => {
         const activeUserStr = sessionStorage.getItem('activeUser');
         if (activeUserStr) {
-            setUser(JSON.parse(activeUserStr));
+            const userObject = JSON.parse(activeUserStr);
+            setUser(parseUserJSONFields(userObject));
         }
     };
     window.addEventListener('userChanged', handleUserUpdate);
