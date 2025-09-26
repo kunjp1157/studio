@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -39,25 +38,25 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogClose,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import type { UserProfile, UserRole, UserStatus, Facility } from '@/lib/types';
-import { getFacilitiesByOwnerIdAction, getUsersAction, updateUserAction, addNotificationAction } from '@/app/actions';
-import { Users, MoreHorizontal, Eye, Edit, Trash2, ToggleLeft, ToggleRight, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX, Building2 } from 'lucide-react';
+import type { UserProfile, UserRole, UserStatus, Facility, OwnerVerificationRequest } from '@/lib/types';
+import { getFacilitiesByOwnerIdAction, getUsersAction, updateUserAction, addNotificationAction, getPendingOwnerRequestsAction, approveOwnerRequestAction, rejectOwnerRequestAction } from '@/app/actions';
+import { Users, MoreHorizontal, Eye, Edit, Trash2, Search, FilterX, ShieldCheck, UserCircle, Mail, Phone, UserCheck, UserX, Building2, Fingerprint, FileText, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { format, parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormItem, FormField } from '@/components/ui/form';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const userFormSchema = z.object({
@@ -73,11 +72,14 @@ type UserFormValues = z.infer<typeof userFormSchema>;
 export default function AdminUsersPage() {
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<OwnerVerificationRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<OwnerVerificationRequest | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [ownedFacilities, setOwnedFacilities] = useState<Facility[]>([]);
 
   const { toast } = useToast();
@@ -85,25 +87,29 @@ export default function AdminUsersPage() {
     resolver: zodResolver(userFormSchema),
   });
 
-  const fetchUsers = async () => {
+  const fetchUsersAndRequests = async () => {
       setIsLoading(true);
       try {
-          const usersData = await getUsersAction();
+          const [usersData, requestsData] = await Promise.all([
+            getUsersAction(),
+            getPendingOwnerRequestsAction()
+          ]);
           setAllUsers(usersData);
+          setPendingRequests(requestsData);
       } catch (error) {
-           toast({ title: "Error", description: "Could not load user data.", variant: "destructive" });
+           toast({ title: "Error", description: "Could not load user and request data.", variant: "destructive" });
       } finally {
           setIsLoading(false);
       }
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsersAndRequests();
   }, [toast]);
 
 
   useEffect(() => {
-    let results = allUsers;
+    let results = allUsers.filter(u => u.status !== 'PendingApproval');
     if (searchTerm) {
       results = results.filter(user =>
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,6 +130,14 @@ export default function AdminUsersPage() {
     }
     setIsViewModalOpen(true);
   };
+  
+  const handleViewVerificationRequest = (request: OwnerVerificationRequest) => {
+    const user = allUsers.find(u => u.id === request.userId);
+    setSelectedUser(user || null);
+    setSelectedRequest(request);
+    setIsVerificationModalOpen(true);
+  };
+
 
   const handleEditUser = (user: UserProfile) => {
     setSelectedUser(user);
@@ -152,10 +166,35 @@ export default function AdminUsersPage() {
             message: `Your account status has been updated to ${newStatus} by an administrator.`,
             link: '/account/profile',
         });
-        fetchUsers();
+        fetchUsersAndRequests();
     } catch (error) {
         toast({ title: "Error", description: "Failed to update user status.", variant: "destructive" });
     }
+  };
+  
+  const handleVerificationAction = async (action: 'approve' | 'reject') => {
+      if (!selectedRequest) return;
+
+      try {
+          if (action === 'approve') {
+              await approveOwnerRequestAction(selectedRequest.id, selectedRequest.userId);
+              toast({ title: 'Request Approved', description: `${selectedUser?.name} is now a Facility Owner.` });
+          } else {
+              await rejectOwnerRequestAction(selectedRequest.id, selectedRequest.userId);
+              toast({ title: 'Request Rejected', description: `The request for ${selectedUser?.name} has been rejected.` });
+          }
+          await addNotificationAction(selectedRequest.userId, {
+              type: 'general',
+              title: `Owner Request ${action === 'approve' ? 'Approved' : 'Rejected'}`,
+              message: `Your request to become a facility owner has been ${action === 'approve' ? 'approved' : 'rejected'}.`,
+              link: '/account/profile',
+          });
+
+          setIsVerificationModalOpen(false);
+          fetchUsersAndRequests();
+      } catch (error) {
+           toast({ title: "Error", description: `Failed to ${action} request.`, variant: "destructive" });
+      }
   };
 
   const onEditSubmit = async (data: UserFormValues) => {
@@ -181,7 +220,7 @@ export default function AdminUsersPage() {
             link: '/account/profile',
         });
         setIsEditModalOpen(false);
-        fetchUsers();
+        fetchUsersAndRequests();
     } catch (error) {
          toast({ title: "Error", description: "Failed to update user.", variant: "destructive"});
     }
@@ -216,97 +255,146 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-8">
       <PageTitle title="User Management" description="Oversee and manage user accounts on the platform." />
+      
+        <Tabs defaultValue="allUsers">
+            <TabsList>
+                <TabsTrigger value="allUsers">All Users</TabsTrigger>
+                <TabsTrigger value="pendingApprovals">
+                    Pending Owner Approvals
+                    {pendingRequests.length > 0 && <Badge className="ml-2">{pendingRequests.length}</Badge>}
+                </TabsTrigger>
+            </TabsList>
+            <TabsContent value="allUsers">
+                <Card className="shadow-lg">
+                    <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <CardTitle className="flex items-center"><Users className="mr-2 h-6 w-6 text-primary" />Registered Users</CardTitle>
+                        <CardDescription>View, edit details, and manage user statuses and roles.</CardDescription>
+                    </div>
+                    </CardHeader>
+                    <CardContent>
+                    <div className="mb-6 flex gap-4">
+                        <div className="relative flex-grow">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by Name, Email, or User ID..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 w-full"
+                        />
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setSearchTerm('')}
+                            disabled={!searchTerm}
+                        >
+                            <FilterX className="mr-2 h-4 w-4" /> Clear Search
+                        </Button>
+                    </div>
 
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <CardTitle className="flex items-center"><Users className="mr-2 h-6 w-6 text-primary" />Registered Users</CardTitle>
-            <CardDescription>View, edit details, and manage user statuses and roles.</CardDescription>
-          </div>
-          {/* Add User button can be added here later */}
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6 flex gap-4">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search by Name, Email, or User ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full"
-              />
-            </div>
-            <Button 
-                variant="outline" 
-                onClick={() => setSearchTerm('')}
-                disabled={!searchTerm}
-            >
-                <FilterX className="mr-2 h-4 w-4" /> Clear Search
-            </Button>
-          </div>
-
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">Avatar</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">No users match your search.</TableCell></TableRow>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={user.profilePictureUrl} alt={user.name} data-ai-hint="user avatar" />
-                          <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell><Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge></TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeVariant(user.status)} className={user.status === 'Active' ? 'bg-green-500 text-white hover:bg-green-600' : ''}>
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{format(parseISO(user.joinedAt), 'MMM d, yyyy')}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleViewDetails(user)}><Eye className="mr-2 h-4 w-4" /> View Details</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditUser(user)}><Edit className="mr-2 h-4 w-4" /> Edit User</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleToggleStatus(user)} className={user.status === 'Active' ? "text-orange-600 focus:text-orange-600 focus:bg-orange-50" : "text-green-600 focus:text-green-600 focus:bg-green-50"}>
-                              {user.status === 'Active' ? <UserX className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                              {user.status === 'Active' ? 'Suspend User' : 'Activate User'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => toast({ title: "Feature Coming Soon", description: "User deletion will be available soon."})}>
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete User
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* View User Details Modal */}
+                    <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                        <TableHeader>
+                            <TableRow>
+                            <TableHead className="w-12">Avatar</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Joined</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredUsers.length === 0 ? (
+                            <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">No users match your search.</TableCell></TableRow>
+                            ) : (
+                            filteredUsers.map((user) => (
+                                <TableRow key={user.id}>
+                                <TableCell>
+                                    <Avatar className="h-9 w-9">
+                                    <AvatarImage src={user.profilePictureUrl} alt={user.name} data-ai-hint="user avatar" />
+                                    <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                    </Avatar>
+                                </TableCell>
+                                <TableCell className="font-medium">{user.name}</TableCell>
+                                <TableCell>{user.email}</TableCell>
+                                <TableCell><Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge></TableCell>
+                                <TableCell>
+                                    <Badge variant={getStatusBadgeVariant(user.status)} className={user.status === 'Active' ? 'bg-green-500 text-white hover:bg-green-600' : ''}>
+                                    {user.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>{format(parseISO(user.joinedAt), 'MMM d, yyyy')}</TableCell>
+                                <TableCell className="text-right">
+                                    <DropdownMenu>
+                                    <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => handleViewDetails(user)}><Eye className="mr-2 h-4 w-4" /> View Details</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleEditUser(user)}><Edit className="mr-2 h-4 w-4" /> Edit User</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => handleToggleStatus(user)} className={user.status === 'Active' ? "text-orange-600 focus:text-orange-600 focus:bg-orange-50" : "text-green-600 focus:text-green-600 focus:bg-green-50"}>
+                                        {user.status === 'Active' ? <UserX className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                                        {user.status === 'Active' ? 'Suspend User' : 'Activate User'}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => toast({ title: "Feature Coming Soon", description: "User deletion will be available soon."})}>
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                                </TableRow>
+                            ))
+                            )}
+                        </TableBody>
+                        </Table>
+                    </div>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+             <TabsContent value="pendingApprovals">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Pending Owner Requests</CardTitle>
+                        <CardDescription>Review and process requests from users who want to become facility owners.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="border rounded-lg overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>User</TableHead>
+                                        <TableHead>Requested Facility</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {pendingRequests.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">No pending requests.</TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        pendingRequests.map(request => (
+                                            <TableRow key={request.id}>
+                                                <TableCell>{allUsers.find(u => u.id === request.userId)?.name || 'Unknown User'}</TableCell>
+                                                <TableCell>{request.facilityName}</TableCell>
+                                                <TableCell>{format(new Date(request.createdAt), 'MMM d, yyyy')}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button onClick={() => handleViewVerificationRequest(request)}>View Details</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
+             </TabsContent>
+        </Tabs>
+      
       {selectedUser && (
         <AlertDialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
           <AlertDialogContent className="max-w-xl">
@@ -355,7 +443,6 @@ export default function AdminUsersPage() {
         </AlertDialog>
       )}
 
-    {/* Edit User Modal */}
     {selectedUser && (
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
             <DialogContent className="sm:max-w-[525px]">
@@ -431,6 +518,36 @@ export default function AdminUsersPage() {
                         </DialogFooter>
                     </form>
                 </Form>
+            </DialogContent>
+        </Dialog>
+    )}
+    
+    {selectedRequest && selectedUser && (
+        <Dialog open={isVerificationModalOpen} onOpenChange={setIsVerificationModalOpen}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Owner Verification Request</DialogTitle>
+                    <DialogDescription>Review the details submitted by {selectedUser.name}.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4 text-sm max-h-[70vh] overflow-y-auto">
+                    <p><strong>Applicant:</strong> {selectedRequest.fullName} ({selectedUser.email})</p>
+                    <p><strong>Phone:</strong> {selectedRequest.phone}</p>
+                    <p><strong>Facility Name:</strong> {selectedRequest.facilityName}</p>
+                    <p><strong>Facility Address:</strong> {selectedRequest.facilityAddress}</p>
+                    <div className="flex items-center gap-2"><Fingerprint className="h-4 w-4 text-muted-foreground" /> <strong>ID Number (PAN/Aadhar):</strong> {selectedRequest.idNumber}</div>
+
+                    <h4 className="font-semibold text-md mt-4 border-t pt-4">Submitted Documents</h4>
+                    <p className="text-xs text-muted-foreground">In a real application, these would be secure links to uploaded files.</p>
+                    <ul className="space-y-2">
+                        <li className="flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" /> Identity Proof: <Button variant="link" size="sm" className="p-0 h-auto">{selectedRequest.identityProofPath}</Button></li>
+                        <li className="flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" /> Address Proof: <Button variant="link" size="sm" className="p-0 h-auto">{selectedRequest.addressProofPath}</Button></li>
+                        <li className="flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" /> Ownership Proof: <Button variant="link" size="sm" className="p-0 h-auto">{selectedRequest.ownershipProofPath}</Button></li>
+                    </ul>
+                </div>
+                 <DialogFooter>
+                    <Button variant="destructive" onClick={() => handleVerificationAction('reject')}><X className="mr-2 h-4 w-4"/>Reject Request</Button>
+                    <Button onClick={() => handleVerificationAction('approve')} className="bg-green-600 hover:bg-green-700"><Check className="mr-2 h-4 w-4"/>Approve Request</Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )}

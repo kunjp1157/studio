@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import type {
@@ -55,7 +54,21 @@ export async function dbGetAllFacilities(): Promise<Facility[]> {
 export async function dbGetAllUsers(): Promise<UserProfile[]> {
     noStore();
     const [rows] = await query('SELECT * FROM users');
-    return rows as UserProfile[];
+    return (rows as UserProfile[]).map(user => {
+        if (user && typeof user.favoriteFacilities === 'string') {
+            try { user.favoriteFacilities = JSON.parse(user.favoriteFacilities); } catch (e) { user.favoriteFacilities = []; }
+        }
+        if (user && typeof user.achievements === 'string') {
+            try { user.achievements = JSON.parse(user.achievements); } catch (e) { user.achievements = []; }
+        }
+        if (user && typeof user.skillLevels === 'string') {
+            try { user.skillLevels = JSON.parse(user.skillLevels); } catch (e) { user.skillLevels = []; }
+        }
+        if (user && typeof user.preferredSports === 'string') {
+            try { user.preferredSports = JSON.parse(user.preferredSports); } catch (e) { user.preferredSports = []; }
+        }
+        return user;
+    });
 }
 
 export async function dbGetAllBookings(): Promise<Booking[]> {
@@ -91,7 +104,6 @@ export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
     noStore();
     const [rows] = await query('SELECT * FROM membership_plans');
     const plans = rows as MembershipPlan[];
-    // The 'benefits' column is stored as a JSON string, so we need to parse it.
     return plans.map(plan => {
         if (typeof (plan as any).benefits === 'string') {
             plan.benefits = JSON.parse((plan as any).benefits);
@@ -141,8 +153,11 @@ export async function dbGetUserById(id: string): Promise<UserProfile | undefined
     if (user && typeof user.achievements === 'string') {
         try { user.achievements = JSON.parse(user.achievements); } catch (e) { console.error("Failed to parse achievements", e); user.achievements = []; }
     }
-    if (user && typeof user.skillLevels === 'string') {
+     if (user && typeof user.skillLevels === 'string') {
         try { user.skillLevels = JSON.parse(user.skillLevels); } catch (e) { console.error("Failed to parse skillLevels", e); user.skillLevels = []; }
+    }
+    if (user && typeof user.preferredSports === 'string') {
+        try { user.preferredSports = JSON.parse(user.preferredSports); } catch (e) { console.error("Failed to parse preferredSports", e); user.preferredSports = []; }
     }
     return user;
 }
@@ -411,6 +426,7 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
     if (updates.favoriteFacilities) updateData.favoriteFacilities = JSON.stringify(updates.favoriteFacilities);
     if (updates.achievements) updateData.achievements = JSON.stringify(updates.achievements);
     if (updates.skillLevels) updateData.skillLevels = JSON.stringify(updates.skillLevels);
+    if (updates.preferredSports) updateData.preferredSports = JSON.stringify(updates.preferredSports);
 
     const setClauses = Object.keys(updateData).map((k) => `\`${k}\` = ?`).join(', ');
     const values = [...Object.values(updateData), userId];
@@ -672,6 +688,24 @@ export async function dbAcceptChallenge(challengeId: string, opponentId: string)
      await query('UPDATE challenges SET opponentId = ?, status = \'accepted\' WHERE id = ?', [opponentId, challengeId]);
      return dbGetChallengeById(challengeId);
 }
+export async function getPendingOwnerRequestsAction(): Promise<OwnerVerificationRequest[]> {
+  noStore();
+  const [rows] = await query('SELECT * FROM owner_verification_requests WHERE status = \'pending\'');
+  return rows as OwnerVerificationRequest[];
+}
+
+export async function approveOwnerRequestAction(requestId: number, userId: string): Promise<void> {
+  noStore();
+  await query('UPDATE users SET role = \'FacilityOwner\', status = \'Active\' WHERE id = ?', [userId]);
+  await query('UPDATE owner_verification_requests SET status = \'approved\' WHERE id = ?', [requestId]);
+}
+
+export async function rejectOwnerRequestAction(requestId: number, userId: string): Promise<void> {
+  noStore();
+  await query('UPDATE users SET status = \'Active\' WHERE id = ?', [userId]);
+  await query('UPDATE owner_verification_requests SET status = \'rejected\' WHERE id = ?', [requestId]);
+}
+
 
 
 // These are needed for other actions that depend on them

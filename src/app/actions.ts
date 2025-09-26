@@ -73,7 +73,10 @@ import {
     updatePromotionRule as dbUpdatePromotionRule,
     addPromotionRule as dbAddPromotionRule,
     getPromotionRuleById,
-    dbRequestOwnerRole
+    dbRequestOwnerRole,
+    getPendingOwnerRequestsAction as dbGetPendingOwnerRequests,
+    approveOwnerRequestAction as dbApproveOwnerRequest,
+    rejectOwnerRequestAction as dbRejectOwnerRequest
 } from '@/lib/data';
 import type { Facility, UserProfile, Booking, SiteSettings, SportEvent, MembershipPlan, PricingRule, PromotionRule, AppNotification, BlockedSlot, Sport, Review, BlogPost, LfgRequest, Challenge, Team, Amenity, OwnerVerificationRequest } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
@@ -539,4 +542,19 @@ export async function acceptChallengeAction(challengeId: string, opponentId: str
         revalidatePath('/challenges');
     }
     return updatedChallenge;
+}
+
+// Admin Actions for Owner Verification
+export async function getPendingOwnerRequestsAction(): Promise<OwnerVerificationRequest[]> {
+    return await dbGetPendingOwnerRequests();
+}
+
+export async function approveOwnerRequestAction(requestId: number, userId: string): Promise<void> {
+    await dbApproveOwnerRequest(requestId, userId);
+    revalidatePath('/admin/users');
+}
+
+export async function rejectOwnerRequestAction(requestId: number, userId: string): Promise<void> {
+    await dbRejectOwnerRequest(requestId, userId);
+    revalidatePath('/admin/users');
 }
