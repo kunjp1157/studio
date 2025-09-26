@@ -9,6 +9,37 @@ import type {
 import { query } from './db';
 import { unstable_noStore as noStore } from 'next/cache';
 
+// Mock settings as we don't have a settings table
+let siteSettings: SiteSettings = {
+    siteName: 'Sports Arena',
+    defaultCurrency: 'INR',
+    timezone: 'Asia/Kolkata',
+    maintenanceMode: false,
+    notificationTemplates: [
+        {
+          type: 'booking_confirmed',
+          label: 'Booking Confirmed',
+          description: 'Sent when a user successfully books a slot.',
+          emailEnabled: true,
+          smsEnabled: true,
+          emailSubject: 'Your Booking is Confirmed!',
+          emailBody: 'Hi {{userName}}, your booking for {{facilityName}} on {{date}} at {{time}} is confirmed. Booking ID: {{bookingId}}.',
+          smsBody: 'Booking Confirmed: {{facilityName}} on {{date}} at {{time}}. ID: {{bookingId}}',
+        },
+        {
+          type: 'booking_cancelled',
+          label: 'Booking Cancelled',
+          description: 'Sent when a booking is cancelled by a user or admin.',
+          emailEnabled: true,
+          smsEnabled: false,
+          emailSubject: 'Booking Cancellation Notice',
+          emailBody: 'Hi {{userName}}, your booking for {{facilityName}} on {{date}} at {{time}} has been cancelled.',
+          smsBody: 'Booking Cancelled: {{facilityName}} on {{date}} at {{time}}.',
+        },
+    ]
+};
+
+
 // ========== READ ==========
 
 async function enrichFacility(facility: Facility): Promise<void> {
@@ -105,7 +136,7 @@ export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
     const [rows] = await query('SELECT * FROM membership_plans');
     const plans = rows as MembershipPlan[];
     return plans.map(plan => {
-        if (typeof (plan as any).benefits === 'string') {
+        if (plan && typeof (plan as any).benefits === 'string') {
             plan.benefits = JSON.parse((plan as any).benefits);
         }
         return plan;
@@ -249,16 +280,17 @@ export async function getChallengesByFacilityIds(facilityIds: string[]): Promise
     return rows as Challenge[];
 }
 
-export async function getSiteSettings(): Promise<SiteSettings> {
+export async function getSiteSettingsAction(): Promise<SiteSettings> {
     noStore();
-    // In a real app, this would come from a database table.
-    return {
-        siteName: 'Sports Arena',
-        defaultCurrency: 'INR',
-        timezone: 'Asia/Kolkata',
-        maintenanceMode: false,
-    };
+    return siteSettings;
 }
+
+// ========== WRITE ==========
+export async function updateSiteSettings(newSettings: SiteSettings) {
+    noStore();
+    siteSettings = newSettings;
+}
+
 
 export async function dbAddFacility(facilityData: any): Promise<Facility> {
     noStore();

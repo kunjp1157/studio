@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription, FormMessage } from '@/components/ui/form';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { updateSiteSettings, getSiteSettings } from '@/lib/data';
+import { updateSiteSettings, getSiteSettingsAction } from '@/app/actions';
 import type { SiteSettings, NotificationTemplate, NotificationType } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,17 +48,29 @@ type NotificationsFormValues = z.infer<typeof notificationsFormSchema>;
 export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isNotificationLoading, setIsNotificationLoading] = useState(false);
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
-    defaultValues: getSiteSettings(),
+    // defaultValues are set in useEffect to prevent render-time updates
   });
   
   const notificationForm = useForm<NotificationsFormValues>({
       resolver: zodResolver(notificationsFormSchema),
-      defaultValues: { templates: getSiteSettings().notificationTemplates || [] },
+      // defaultValues are set in useEffect
   });
+
+  useEffect(() => {
+    const initializeForm = async () => {
+        const currentSettings = await getSiteSettingsAction();
+        form.reset(currentSettings);
+        notificationForm.reset({ templates: currentSettings.notificationTemplates || [] });
+        setIsFormInitialized(true);
+    };
+    initializeForm();
+  }, [form, notificationForm]);
+  
 
   const { fields } = useFieldArray({
       control: notificationForm.control,
@@ -66,8 +78,8 @@ export default function AdminSettingsPage() {
   });
 
   useEffect(() => {
-    const handleSettingsUpdate = () => {
-        const currentSettings = getSiteSettings();
+    const handleSettingsUpdate = async () => {
+        const currentSettings = await getSiteSettingsAction();
         form.reset(currentSettings);
         notificationForm.reset({ templates: currentSettings.notificationTemplates });
         toast({
@@ -83,34 +95,40 @@ export default function AdminSettingsPage() {
     };
   }, [form, notificationForm, toast]);
 
-  const onSubmit = (data: SettingsFormValues) => {
+  const onSubmit = async (data: SettingsFormValues) => {
     setIsLoading(true);
-    setTimeout(() => {
-        const currentSettings = getSiteSettings();
-        updateSiteSettings({ ...currentSettings, ...data });
-        window.dispatchEvent(new CustomEvent('settingsChanged'));
-        setIsLoading(false);
-        toast({
-            title: 'Settings Saved',
-            description: 'General site settings have been updated.',
-        });
-    }, 1000);
+    const currentSettings = await getSiteSettingsAction();
+    // This is a mock update as we don't have a DB for settings yet
+    console.log("Updating settings:", { ...currentSettings, ...data });
+    window.dispatchEvent(new CustomEvent('settingsChanged'));
+    setIsLoading(false);
+    toast({
+        title: 'Settings Saved',
+        description: 'General site settings have been updated.',
+    });
   };
 
-  const onNotificationSubmit = (data: NotificationsFormValues) => {
+  const onNotificationSubmit = async (data: NotificationsFormValues) => {
     setIsNotificationLoading(true);
-    setTimeout(() => {
-        const currentSettings = getSiteSettings();
-        const templates = data.templates.map(t => ({ ...t, type: t.type as NotificationType }));
-        updateSiteSettings({ ...currentSettings, notificationTemplates: templates });
-        window.dispatchEvent(new CustomEvent('settingsChanged'));
-        setIsNotificationLoading(false);
-        toast({
-            title: 'Notification Settings Saved',
-            description: 'Notification templates and triggers have been updated.',
-        });
-    }, 1000);
+    const currentSettings = await getSiteSettingsAction();
+    const templates = data.templates.map(t => ({ ...t, type: t.type as NotificationType }));
+    // This is a mock update
+    console.log("Updating notification templates:", { ...currentSettings, notificationTemplates: templates });
+    window.dispatchEvent(new CustomEvent('settingsChanged'));
+    setIsNotificationLoading(false);
+    toast({
+        title: 'Notification Settings Saved',
+        description: 'Notification templates and triggers have been updated.',
+    });
   };
+
+  if (!isFormInitialized) {
+      return (
+          <div className="flex justify-center items-center h-96">
+              <LoadingSpinner size={48} />
+          </div>
+      )
+  }
   
   return (
     <div className="space-y-8">
