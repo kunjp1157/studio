@@ -40,20 +40,6 @@ export default function BecomeOwnerPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
-  useEffect(() => {
-    const activeUserStr = sessionStorage.getItem('activeUser');
-    if (activeUserStr) {
-      const user = JSON.parse(activeUserStr);
-      setCurrentUser(user);
-      form.reset({
-        fullName: user.name,
-        phone: user.phone || '',
-      });
-    } else {
-      router.push('/account/login');
-    }
-  }, [router]);
-
   const form = useForm<OwnerVerificationFormValues>({
     resolver: zodResolver(ownerVerificationSchema),
     defaultValues: {
@@ -64,6 +50,23 @@ export default function BecomeOwnerPage() {
       facilityAddress: '',
     },
   });
+
+  useEffect(() => {
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+      const user = JSON.parse(activeUserStr);
+      setCurrentUser(user);
+      form.reset({
+        fullName: user.name || '',
+        phone: user.phone || '',
+        idNumber: '',
+        facilityName: '',
+        facilityAddress: '',
+      });
+    } else {
+      router.push('/account/login');
+    }
+  }, [router, form]);
 
   const onSubmit = async (data: OwnerVerificationFormValues) => {
     if (!currentUser) {
