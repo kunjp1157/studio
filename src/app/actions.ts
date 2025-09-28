@@ -10,7 +10,7 @@ import {
     dbDeleteFacility,
     dbGetAllUsers, 
     dbGetAllBookings, 
-    getSiteSettings,
+    getSiteSettingsAction as dbGetSiteSettingsAction,
     dbGetFacilitiesByOwnerId,
     getEventById,
     getAllEventsAction as getAllEvents,
@@ -183,7 +183,7 @@ export async function getAllBookingsAction(): Promise<Booking[]> {
 }
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
-    return getSiteSettings();
+    return dbGetSiteSettingsAction();
 }
 
 export async function getFacilitiesByOwnerIdAction(ownerId: string): Promise<Facility[]> {
@@ -558,3 +558,5 @@ export async function rejectOwnerRequestAction(requestId: number, userId: string
     await dbRejectOwnerRequest(requestId, userId);
     revalidatePath('/admin/users');
 }
+
+    
