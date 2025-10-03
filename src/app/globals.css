@@ -70,6 +70,21 @@
   body {
     @apply bg-background text-foreground;
   }
+  .letter {
+      display: inline-block;
+      transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s;
+      transform-origin: bottom;
+  }
+
+  .letter.fall {
+      transform: translateY(0) scaleY(1);
+      opacity: 1;
+  }
+
+  .auth-page .letter {
+      transform: translateY(-100px) scaleY(2.5);
+      opacity: 0;
+  }
 }
 
 @layer utilities {
@@ -88,6 +103,10 @@
   .animation-delay-200 { animation-delay: 200ms; }
   .animation-delay-400 { animation-delay: 400ms; }
   .animation-delay-600 { animation-delay: 600ms; }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
 }
 
 .auth-page {
@@ -216,5 +235,3 @@
   color: #c72c7d;
   text-decoration: underline;
 }
-
-    

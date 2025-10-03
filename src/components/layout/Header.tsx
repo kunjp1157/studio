@@ -59,7 +59,7 @@ const AnimatedLogo = ({ text }: { text: string }) => {
         <span ref={containerRef} className="text-xl font-bold font-headline transition-colors group-hover:text-primary/80">
             {letters.map((char, index) => (
                 <span key={`${char}-${index}`} className="letter">
-                    {char === ' ' ? ' ' : char}
+                    {char === ' ' ? '\u00A0' : char}
                 </span>
             ))}
         </span>
