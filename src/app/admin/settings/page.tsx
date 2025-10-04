@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription, FormMessage } from '@/components/ui/form';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { updateSiteSettings, getSiteSettingsAction } from '@/app/actions';
+import { getSiteSettingsAction } from '@/app/actions';
 import type { SiteSettings, NotificationTemplate, NotificationType } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
@@ -187,7 +187,7 @@ export default function AdminSettingsPage() {
                             <FormItem>
                                 <FormLabel>Email Body</FormLabel>
                                 <FormControl><Textarea placeholder="Body of the email. You can use placeholders like {{userName}}." {...field} rows={4} /></FormControl>
-                                <FormDescription className="text-xs">Available placeholders: {{userName}}, {{facilityName}}, {{date}}, {{time}}, {{bookingId}}</FormDescription>
+                                <FormDescription className="text-xs">Available placeholders: {"{{userName}}"}, {"{{facilityName}}"}, {"{{date}}"}, {"{{time}}"}, {"{{bookingId}}}"</FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )} />
