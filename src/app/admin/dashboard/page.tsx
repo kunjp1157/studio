@@ -12,12 +12,14 @@ import {
   getSiteSettingsAction
 } from '@/app/actions';
 import { getAllBookingsAction, getUsersAction, getFacilitiesAction } from '@/app/actions';
-import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus } from 'lucide-react';
+import { DollarSign, Users, TrendingUp, Ticket, Building2, Activity, UserPlus, Clock } from 'lucide-react';
 import type { ChartConfig } from '@/components/ui/chart';
-import { parseISO, getMonth, getYear, format, subMonths, formatDistanceToNow } from 'date-fns';
+import { parseISO, getMonth, getYear, format, subMonths, formatDistanceToNow, isSameDay, isWithinInterval } from 'date-fns';
 import type { Booking, UserProfile, Facility, SiteSettings } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+
 
 const revenueChartConfig = {
   revenue: { label: 'Revenue', color: 'hsl(var(--chart-1))' },
@@ -102,7 +104,9 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
-    setIsLoading(true);
+    // Keep loading state true only on initial fetch
+    if (facilities.length === 0) setIsLoading(true);
+
     const [facilitiesData, usersData, bookingsData, settingsData] = await Promise.all([
         getFacilitiesAction(),
         getUsersAction(),
@@ -117,14 +121,18 @@ export default function AdminDashboardPage() {
   }
     
   useEffect(() => {
-    fetchData();
-    window.addEventListener('dataChanged', fetchData);
+    fetchData(); // Initial fetch
+    const intervalId = setInterval(fetchData, 10000); // Refresh every 10 seconds
+
+    window.addEventListener('dataChanged', fetchData); // Also listen for manual triggers
+    
     return () => {
+        clearInterval(intervalId);
         window.removeEventListener('dataChanged', fetchData);
     };
   }, []);
 
-  const { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed } = useMemo(() => {
+  const { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed, liveOccupancy } = useMemo(() => {
     const now = new Date();
     
     const totalFacilities = facilities.length;
@@ -184,8 +192,21 @@ export default function AdminDashboardPage() {
             return dateB.getTime() - dateA.getTime();
         })
         .slice(0, 10);
+    
+    const liveBookings = bookings.filter(b => {
+        const bookingDate = parseISO(b.date);
+        if (!isSameDay(now, bookingDate)) return false;
+        
+        const [startHour, startMinute] = b.startTime.split(':').map(Number);
+        const [endHour, endMinute] = b.endTime.split(':').map(Number);
+        const startTime = new Date(bookingDate).setHours(startHour, startMinute, 0, 0);
+        const endTime = new Date(bookingDate).setHours(endHour, endMinute, 0, 0);
 
-    return { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed: combinedFeed };
+        return b.status === 'Confirmed' && isWithinInterval(now, { start: startTime, end: endTime });
+    }).map(booking => ({...booking, user: users.find(u => u.id === booking.userId)}));
+
+
+    return { totalFacilities, activeUsers, totalBookings, totalRevenue, monthlyRevenueData, popularSportsData, activityFeed: combinedFeed, liveOccupancy: liveBookings };
   }, [facilities, users, bookings]);
 
 
@@ -256,8 +277,62 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center"><Clock className="mr-2 h-5 w-5 text-primary" /> Live Occupancy Status</CardTitle>
+            <CardDescription>Facilities currently in use right now.</CardDescription>
+          </CardHeader>
+          <CardContent>
+             {liveOccupancy.length === 0 ? (
+                <div className="text-center text-muted-foreground py-10">
+                    <p>No facilities are currently occupied.</p>
+                </div>
+             ) : (
+                <div className="space-y-4">
+                    {liveOccupancy.map(booking => (
+                        <div key={booking.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                            <div>
+                                <p className="font-semibold">{booking.facilityName} - <span className="font-normal text-muted-foreground">{booking.sportName}</span></p>
+                                <p className="text-sm text-muted-foreground">Booked by: {booking.user?.name || "Unknown User"}</p>
+                            </div>
+                            <div className="text-right">
+                                <Badge variant="default" className="bg-green-500 hover:bg-green-600 animate-pulse">LIVE</Badge>
+                                <p className="text-xs text-muted-foreground mt-1">{booking.startTime} - {booking.endTime}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+             )}
+          </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center">
+                    <Activity className="mr-2 h-5 w-5" />
+                    Recent Activity
+                </CardTitle>
+                <CardDescription>
+                  Latest platform activities.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+               <div className="space-y-1 p-4 max-h-[350px] overflow-y-auto">
+                  {activityFeed.length > 0 ? (
+                      activityFeed.map((item, index) => <ActivityItem key={index} item={item} currency={currency} />)
+                  ) : (
+                      <p className="text-sm text-center text-muted-foreground py-8">
+                          No recent activity to display.
+                      </p>
+                  )}
+              </div>
+            </CardContent>
+        </Card>
+      </div>
+
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2">
             <AnalyticsChart
               title="Monthly Revenue"
               description="Revenue from last 6 months."
@@ -269,28 +344,6 @@ export default function AdminDashboardPage() {
             />
         </div>
         <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center">
-                        <Activity className="mr-2 h-5 w-5" />
-                        Recent Activity
-                    </CardTitle>
-                    <CardDescription>
-                      Latest platform activities.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                   <div className="space-y-1 p-4 max-h-[350px] overflow-y-auto">
-                      {activityFeed.length > 0 ? (
-                          activityFeed.map((item, index) => <ActivityItem key={index} item={item} currency={currency} />)
-                      ) : (
-                          <p className="text-sm text-center text-muted-foreground py-8">
-                              No recent activity to display.
-                          </p>
-                      )}
-                  </div>
-                </CardContent>
-            </Card>
             <AnalyticsChart
                 title="Popular Sports"
                 description="Top 5 sports by booking count."
@@ -305,3 +358,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
