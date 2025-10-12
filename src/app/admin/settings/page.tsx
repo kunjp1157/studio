@@ -187,7 +187,7 @@ export default function AdminSettingsPage() {
                             <FormItem>
                                 <FormLabel>Email Body</FormLabel>
                                 <FormControl><Textarea placeholder="Body of the email. You can use placeholders like {{userName}}." {...field} rows={4} /></FormControl>
-                                <FormDescription className="text-xs">Available placeholders: {"{{userName}}"}, {"{{facilityName}}"}, {"{{date}}"}, {"{{time}}"}, {"{{bookingId}}}"</FormDescription>
+                                <FormDescription className="text-xs">Available placeholders: {"{{userName}}"}, {"{{facilityName}}"}, {"{{date}}"}, {"{{time}}"}, {"{{bookingId}}"}</FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )} />
