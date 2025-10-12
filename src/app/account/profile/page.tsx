@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -81,17 +80,11 @@ export default function ProfilePage() {
 
   const parseUserJSONFields = (user: UserProfileType): UserProfileType => {
     const parsedUser = { ...user };
-    if (typeof parsedUser.skillLevels === 'string') {
-      try { parsedUser.skillLevels = JSON.parse(parsedUser.skillLevels as any); } catch { parsedUser.skillLevels = []; }
-    }
-    if (typeof parsedUser.achievements === 'string') {
-      try { parsedUser.achievements = JSON.parse(parsedUser.achievements as any); } catch { parsedUser.achievements = []; }
-    }
-    if (typeof parsedUser.favoriteFacilities === 'string') {
-      try { parsedUser.favoriteFacilities = JSON.parse(parsedUser.favoriteFacilities as any); } catch { parsedUser.favoriteFacilities = []; }
-    }
-     if (typeof parsedUser.preferredSports === 'string') {
-      try { parsedUser.preferredSports = JSON.parse(parsedUser.preferredSports as any); } catch { parsedUser.preferredSports = []; }
+    const fieldsToParse = ['skillLevels', 'achievements', 'favoriteFacilities', 'preferredSports'];
+    for (const field of fieldsToParse) {
+        if (typeof (parsedUser as any)[field] === 'string') {
+            try { (parsedUser as any)[field] = JSON.parse((parsedUser as any)[field]); } catch { (parsedUser as any)[field] = []; }
+        }
     }
     return parsedUser;
   };
@@ -138,7 +131,7 @@ export default function ProfilePage() {
     };
     window.addEventListener('userChanged', handleUserUpdate);
     return () => window.removeEventListener('userChanged', handleUserUpdate);
-  }, [form]);
+  }, []);
 
 
   const handlePreferredSportsChange = (sportId: string) => {
@@ -202,7 +195,8 @@ export default function ProfilePage() {
         const updatedUser = await updateUserAction(user.id, updates);
         
         if (updatedUser) {
-            sessionStorage.setItem('activeUser', JSON.stringify(updatedUser));
+            const parsedUser = parseUserJSONFields(updatedUser);
+            sessionStorage.setItem('activeUser', JSON.stringify(parsedUser));
             window.dispatchEvent(new Event('userChanged'));
             setIsEditing(false);
             toast({
@@ -213,7 +207,9 @@ export default function ProfilePage() {
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Could not update your profile.";
         toast({ title: "Error", description: errorMessage, variant: "destructive" });
-        form.setError("currentPassword", { type: "manual", message: errorMessage });
+        if (errorMessage.includes("password")) {
+          form.setError("currentPassword", { type: "manual", message: errorMessage });
+        }
     } finally {
         setIsLoading(false);
     }
@@ -242,38 +238,38 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 shadow-lg">
-          <CardHeader>
-            <div className="flex items-center space-x-6">
-              <div className="relative">
-                  <Avatar className="h-24 w-24 border-2 border-primary shadow-md">
-                  <AvatarImage src={user.profilePictureUrl} alt={user.name} />
-                  <AvatarFallback className="text-3xl">{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  {isEditing && (
-                      <Button variant="outline" size="icon" className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 bg-background hover:bg-muted" onClick={() => toast({title: "Feature Coming Soon!"})}>
-                          <UploadCloud className="h-4 w-4" />
-                          <span className="sr-only">Change photo</span>
-                      </Button>
-                  )}
-              </div>
-              <div>
-                <CardTitle className="text-3xl font-headline">{user.name}</CardTitle>
-                <CardDescription className="flex items-center text-base mt-1">
-                  <Mail className="mr-2 h-4 w-4 text-muted-foreground" /> {user.email}
-                </CardDescription>
-                {user.phone && 
-                  <CardDescription className="flex items-center text-base mt-1">
-                      <Phone className="mr-2 h-4 w-4 text-muted-foreground" /> {user.phone}
-                  </CardDescription>
-                }
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 mt-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <div className="flex items-center space-x-6">
+                  <div className="relative">
+                      <Avatar className="h-24 w-24 border-2 border-primary shadow-md">
+                      <AvatarImage src={user.profilePictureUrl} alt={user.name} />
+                      <AvatarFallback className="text-3xl">{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                      </Avatar>
+                      {isEditing && (
+                          <Button variant="outline" size="icon" className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 bg-background hover:bg-muted" onClick={() => toast({title: "Feature Coming Soon!"})}>
+                              <UploadCloud className="h-4 w-4" />
+                              <span className="sr-only">Change photo</span>
+                          </Button>
+                      )}
+                  </div>
+                  <div>
+                    <CardTitle className="text-3xl font-headline">{user.name}</CardTitle>
+                    <CardDescription className="flex items-center text-base mt-1">
+                      <Mail className="mr-2 h-4 w-4 text-muted-foreground" /> {user.email}
+                    </CardDescription>
+                    {user.phone && 
+                      <CardDescription className="flex items-center text-base mt-1">
+                          <Phone className="mr-2 h-4 w-4 text-muted-foreground" /> {user.phone}
+                      </CardDescription>
+                    }
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-8 mt-6">
                 <section>
                   <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><UserCircle className="mr-2 h-5 w-5 text-primary" />Basic Information</h3>
                   <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
@@ -430,7 +426,7 @@ export default function ProfilePage() {
                             <FormField
                                 control={form.control}
                                 name="isProfilePublic"
-                                render={({ field }) => (
+                                render={() => (
                                     <FormItem>
                                         <Label htmlFor="public-profile-switch" className="text-base font-normal">Public Profile</Label>
                                         <p className="text-sm text-muted-foreground">Allow other users to view your profile, achievements, and skill levels.</p>
@@ -486,24 +482,23 @@ export default function ProfilePage() {
                         </Card>
                     )}
                 </section>
+              </CardContent>
+            </Card>
 
-                {isEditing && (
-                  <div className="flex justify-end space-x-3 pt-4 border-t">
-                    <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); if(user) resetFormWithUserData(user); }}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isLoading} size="lg">
-                      {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
-                      Save Changes
-                    </Button>
-                  </div>
-                )}
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+            {isEditing && (
+              <div className="flex justify-end space-x-3 pt-4 border-t sticky bottom-0 bg-background py-4">
+                <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); if(user) resetFormWithUserData(user); }}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading} size="lg">
+                  {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
+                  Save Changes
+                </Button>
+              </div>
+            )}
+          </div>
 
-        <div className="space-y-8">
+          <div className="space-y-8 lg:col-span-1">
             <Card className="shadow-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center"><Gem className="mr-2 h-6 w-6 text-primary" /> Loyalty Points</CardTitle>
@@ -576,8 +571,11 @@ export default function ProfilePage() {
                     )}
                 </CardContent>
             </Card>
-        </div>
-      </div>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }
+
+    
