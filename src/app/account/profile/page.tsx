@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { updateUserAction, getAllSportsAction } from '@/app/actions';
 import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement, UserSkill, SkillLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
