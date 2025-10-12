@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { 
@@ -309,7 +310,7 @@ export async function unblockTimeSlot(facilityId: string, ownerId: string, date:
     return success;
 }
 
-export async function updateUserAction(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
+export async function updateUserAction(userId: string, updates: Partial<UserProfile> & { currentPassword?: string }): Promise<UserProfile | undefined> {
     const user = await dbUpdateUser(userId, updates);
     if (user) {
         revalidatePath(`/account/profile`);
@@ -558,5 +559,3 @@ export async function rejectOwnerRequestAction(requestId: number, userId: string
     await dbRejectOwnerRequest(requestId, userId);
     revalidatePath('/admin/users');
 }
-
-    

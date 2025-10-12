@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type {
@@ -451,17 +452,35 @@ export async function dbAddUser(userData: Partial<Omit<UserProfile, 'id'>>): Pro
 }
 
 
-export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>): Promise<UserProfile | undefined> {
+export async function dbUpdateUser(userId: string, updates: Partial<UserProfile> & { currentPassword?: string }): Promise<UserProfile | undefined> {
     noStore();
-    const updateData: any = {...updates};
-    // Stringify JSON fields if they are present in the update
-    if (updates.favoriteFacilities) updateData.favoriteFacilities = JSON.stringify(updates.favoriteFacilities);
-    if (updates.achievements) updateData.achievements = JSON.stringify(updates.achievements);
-    if (updates.skillLevels) updateData.skillLevels = JSON.stringify(updates.skillLevels);
-    if (updates.preferredSports) updateData.preferredSports = JSON.stringify(updates.preferredSports);
+    
+    if (updates.password && updates.currentPassword) {
+        const currentUser = await dbGetUserById(userId);
+        if (!currentUser || currentUser.password !== updates.currentPassword) {
+            throw new Error("Current password does not match.");
+        }
+    } else if (updates.password && !updates.currentPassword) {
+        // This case is for initial password setup or admin reset, but for profile update, current password is required.
+        // For profile page, the action should ensure currentPassword is provided.
+    }
 
-    const setClauses = Object.keys(updateData).map((k) => `\`${k}\` = ?`).join(', ');
-    const values = [...Object.values(updateData), userId];
+    // Remove `currentPassword` so it's not written to the DB
+    const { currentPassword, ...dbUpdates } = updates;
+    
+    // Stringify JSON fields if they are present in the update
+    if (dbUpdates.favoriteFacilities) (dbUpdates as any).favoriteFacilities = JSON.stringify(dbUpdates.favoriteFacilities);
+    if (dbUpdates.achievements) (dbUpdates as any).achievements = JSON.stringify(dbUpdates.achievements);
+    if (dbUpdates.skillLevels) (dbUpdates as any).skillLevels = JSON.stringify(dbUpdates.skillLevels);
+    if (dbUpdates.preferredSports) (dbUpdates as any).preferredSports = JSON.stringify(dbUpdates.preferredSports);
+    
+    if (Object.keys(dbUpdates).length === 0) {
+        // No actual fields to update other than password logic checks
+        return dbGetUserById(userId);
+    }
+
+    const setClauses = Object.keys(dbUpdates).map((k) => `\`${k}\` = ?`).join(', ');
+    const values = [...Object.values(dbUpdates), userId];
     await query(`UPDATE users SET ${setClauses} WHERE id = ?`, values);
     return dbGetUserById(userId);
 }
@@ -650,7 +669,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;

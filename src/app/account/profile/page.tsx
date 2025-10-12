@@ -3,6 +3,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { updateUserAction, getAllSportsAction } from '@/app/actions';
 import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement, UserSkill, SkillLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell, Shield, HandCoins } from 'lucide-react';
+import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell, Shield, HandCoins, KeyRound } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -31,12 +35,48 @@ const skillLevelsOptions: {value: SkillLevel | "Not Specified", label: string}[]
     { value: "Advanced", label: "Advanced" },
 ];
 
+const profileSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  bio: z.string().optional(),
+  preferredPlayingTimes: z.string().optional(),
+  isProfilePublic: z.boolean(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().optional(),
+  confirmPassword: z.string().optional(),
+}).refine(data => {
+    if (data.newPassword || data.confirmPassword) {
+        return data.newPassword === data.confirmPassword;
+    }
+    return true;
+}, {
+    message: "New passwords do not match.",
+    path: ["confirmPassword"],
+}).refine(data => {
+    if (data.newPassword && !data.currentPassword) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Current password is required to set a new one.",
+    path: ["currentPassword"],
+});
+
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
+
+
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfileType | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const [allSports, setAllSports] = useState<Sport[]>([]);
+
+  const form = useForm<ProfileFormValues>({
+      resolver: zodResolver(profileSchema),
+  });
 
   const parseUserJSONFields = (user: UserProfileType): UserProfileType => {
     const parsedUser = { ...user };
@@ -54,12 +94,28 @@ export default function ProfilePage() {
     }
     return parsedUser;
   };
+  
+  const resetFormWithUserData = (userData: UserProfileType) => {
+      form.reset({
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone || '',
+        bio: userData.bio || '',
+        preferredPlayingTimes: userData.preferredPlayingTimes || '',
+        isProfilePublic: userData.isProfilePublic || false,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+  };
 
   useEffect(() => {
     const activeUserStr = sessionStorage.getItem('activeUser');
     if (activeUserStr) {
         const userObject = JSON.parse(activeUserStr);
-        setUser(parseUserJSONFields(userObject));
+        const parsedUser = parseUserJSONFields(userObject);
+        setUser(parsedUser);
+        resetFormWithUserData(parsedUser);
     }
     const fetchSports = async () => {
         const sports = await getAllSportsAction();
@@ -74,19 +130,16 @@ export default function ProfilePage() {
         const activeUserStr = sessionStorage.getItem('activeUser');
         if (activeUserStr) {
             const userObject = JSON.parse(activeUserStr);
-            setUser(parseUserJSONFields(userObject));
+            const parsedUser = parseUserJSONFields(userObject);
+            setUser(parsedUser);
+            resetFormWithUserData(parsedUser);
         }
     };
     window.addEventListener('userChanged', handleUserUpdate);
     return () => window.removeEventListener('userChanged', handleUserUpdate);
-  }, []);
+  }, [form]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (!user) return;
-    const { name, value } = e.target;
-    setUser({ ...user, [name]: value });
-  };
-  
+
   const handlePreferredSportsChange = (sportId: string) => {
     if (!user) return;
     const currentPreferredSports = user.preferredSports || [];
@@ -123,19 +176,30 @@ export default function ProfilePage() {
     }
     setUser({ ...user, skillLevels: currentSkills });
   };
-  
-   const handleSwitchChange = (checked: boolean) => {
-    if (!user) return;
-    setUser({ ...user, isProfilePublic: checked });
-  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: ProfileFormValues) => {
     if(!user) return;
     setIsLoading(true);
     
     try {
-        const updatedUser = await updateUserAction(user.id, user);
+        const updates: Partial<UserProfileType> & { currentPassword?: string } = {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            bio: data.bio,
+            preferredPlayingTimes: data.preferredPlayingTimes,
+            isProfilePublic: data.isProfilePublic,
+            preferredSports: user.preferredSports,
+            skillLevels: user.skillLevels,
+        };
+        
+        if (data.newPassword) {
+            updates.password = data.newPassword;
+            updates.currentPassword = data.currentPassword;
+        }
+
+        const updatedUser = await updateUserAction(user.id, updates);
+        
         if (updatedUser) {
             sessionStorage.setItem('activeUser', JSON.stringify(updatedUser));
             window.dispatchEvent(new Event('userChanged'));
@@ -146,7 +210,9 @@ export default function ProfilePage() {
             });
         }
     } catch (error) {
-        toast({ title: "Error", description: "Could not update your profile.", variant: "destructive" });
+        const errorMessage = error instanceof Error ? error.message : "Could not update your profile.";
+        toast({ title: "Error", description: errorMessage, variant: "destructive" });
+        form.setError("currentPassword", { type: "manual", message: errorMessage });
     } finally {
         setIsLoading(false);
     }
@@ -205,21 +271,36 @@ export default function ProfilePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-8 mt-6">
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 mt-6">
               <section>
                 <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><UserCircle className="mr-2 h-5 w-5 text-primary" />Basic Information</h3>
                 <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
                     <div>
-                    <Label htmlFor="name" className="text-base">Full Name</Label>
-                    <Input id="name" name="name" value={user.name} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                        <FormField control={form.control} name="name" render={({ field }) => (
+                           <FormItem>
+                                <Label htmlFor="name" className="text-base">Full Name</Label>
+                                <Input id="name" {...field} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                                <small className="text-destructive">{form.formState.errors.name?.message}</small>
+                           </FormItem>
+                        )}/>
                     </div>
                     <div>
-                    <Label htmlFor="email" className="text-base">Email Address</Label>
-                    <Input id="email" name="email" type="email" value={user.email} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                        <FormField control={form.control} name="email" render={({ field }) => (
+                           <FormItem>
+                                <Label htmlFor="email" className="text-base">Email Address</Label>
+                                <Input id="email" type="email" {...field} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                                <small className="text-destructive">{form.formState.errors.email?.message}</small>
+                           </FormItem>
+                        )}/>
                     </div>
                     <div>
-                    <Label htmlFor="phone" className="text-base">Phone Number (Optional)</Label>
-                    <Input id="phone" name="phone" type="tel" value={user.phone || ''} onChange={handleInputChange} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                        <FormField control={form.control} name="phone" render={({ field }) => (
+                           <FormItem>
+                                <Label htmlFor="phone" className="text-base">Phone Number (Optional)</Label>
+                                <Input id="phone" type="tel" {...field} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                                <small className="text-destructive">{form.formState.errors.phone?.message}</small>
+                           </FormItem>
+                        )}/>
                     </div>
                     <div>
                         <Label htmlFor="membershipLevel" className="text-base flex items-center"><ShieldCheck className="inline mr-2 h-5 w-5 text-primary" />Membership Level</Label>
@@ -240,7 +321,12 @@ export default function ProfilePage() {
                  <div>
                   <Label htmlFor="bio" className="text-base">Bio (Optional)</Label>
                   {isEditing ? (
-                    <Textarea id="bio" name="bio" placeholder="Tell us a bit about yourself..." value={user.bio || ''} onChange={handleInputChange} className="mt-1 text-base p-3" rows={4}/>
+                     <FormField control={form.control} name="bio" render={({ field }) => (
+                        <FormItem>
+                            <Textarea id="bio" placeholder="Tell us a bit about yourself..." {...field} className="mt-1 text-base p-3" rows={4}/>
+                            <small className="text-destructive">{form.formState.errors.bio?.message}</small>
+                        </FormItem>
+                     )}/>
                   ) : (
                     <p className="mt-1 text-muted-foreground bg-muted/30 p-3 rounded-md min-h-[60px]">{user.bio || 'No bio provided.'}</p>
                   )}
@@ -248,7 +334,12 @@ export default function ProfilePage() {
                 <div className="mt-6">
                   <Label htmlFor="preferredPlayingTimes" className="text-base">Preferred Playing Times (Optional)</Label>
                   {isEditing ? (
-                    <Input id="preferredPlayingTimes" name="preferredPlayingTimes" placeholder="e.g., Weekends, Weekday evenings" value={user.preferredPlayingTimes || ''} onChange={handleInputChange} className="mt-1 text-base p-3"/>
+                     <FormField control={form.control} name="preferredPlayingTimes" render={({ field }) => (
+                        <FormItem>
+                           <Input id="preferredPlayingTimes" placeholder="e.g., Weekends, Weekday evenings" {...field} className="mt-1 text-base p-3"/>
+                           <small className="text-destructive">{form.formState.errors.preferredPlayingTimes?.message}</small>
+                        </FormItem>
+                     )}/>
                   ) : (
                     <p className="mt-1 text-muted-foreground bg-muted/30 p-3 rounded-md min-h-[40px]">{user.preferredPlayingTimes || 'Not specified.'}</p>
                   )}
@@ -338,25 +429,73 @@ export default function ProfilePage() {
               
               <Separator />
 
-              <section>
-                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Shield className="mr-2 h-5 w-5 text-primary" /> Privacy & Account Settings</h3>
-                 <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
-                    <div className="space-y-0.5">
-                        <Label htmlFor="public-profile-switch" className="text-base font-normal">Public Profile</Label>
-                        <p className="text-sm text-muted-foreground">Allow other users to view your profile, achievements, and skill levels.</p>
-                    </div>
-                    <Switch
-                        id="public-profile-switch"
-                        checked={user.isProfilePublic}
-                        onCheckedChange={handleSwitchChange}
-                        disabled={!isEditing}
-                    />
-                </div>
+               <section>
+                  <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Shield className="mr-2 h-5 w-5 text-primary" /> Privacy & Security</h3>
+                  <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
+                      <div className="space-y-0.5">
+                          <FormField
+                              control={form.control}
+                              name="isProfilePublic"
+                              render={({ field }) => (
+                                  <FormItem>
+                                      <Label htmlFor="public-profile-switch" className="text-base font-normal">Public Profile</Label>
+                                      <p className="text-sm text-muted-foreground">Allow other users to view your profile, achievements, and skill levels.</p>
+                                  </FormItem>
+                              )}
+                          />
+                      </div>
+                       <FormField
+                          control={form.control}
+                          name="isProfilePublic"
+                          render={({ field }) => (
+                              <Switch
+                                  id="public-profile-switch"
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  disabled={!isEditing}
+                              />
+                          )}
+                      />
+                  </div>
+
+                  {isEditing && (
+                      <Card className="mt-6">
+                          <CardHeader>
+                              <CardTitle className="flex items-center"><KeyRound className="mr-2 h-5 w-5 text-primary" />Change Password</CardTitle>
+                              <CardDescription>Leave fields blank to keep your current password.</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                              <FormField control={form.control} name="currentPassword" render={({ field }) => (
+                                  <FormItem>
+                                      <Label>Current Password</Label>
+                                      <Input type="password" {...field} />
+                                      <small className="text-destructive">{form.formState.errors.currentPassword?.message}</small>
+                                  </FormItem>
+                              )}/>
+                              <div className="grid md:grid-cols-2 gap-4">
+                                  <FormField control={form.control} name="newPassword" render={({ field }) => (
+                                      <FormItem>
+                                          <Label>New Password</Label>
+                                          <Input type="password" {...field} />
+                                          <small className="text-destructive">{form.formState.errors.newPassword?.message}</small>
+                                      </FormItem>
+                                  )}/>
+                                  <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                                      <FormItem>
+                                          <Label>Confirm New Password</Label>
+                                          <Input type="password" {...field} />
+                                          <small className="text-destructive">{form.formState.errors.confirmPassword?.message}</small>
+                                      </FormItem>
+                                  )}/>
+                              </div>
+                          </CardContent>
+                      </Card>
+                  )}
               </section>
 
               {isEditing && (
                 <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); setUser(user); /* Reset changes */ }}>
+                  <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); if(user) resetFormWithUserData(user); }}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isLoading} size="lg">
