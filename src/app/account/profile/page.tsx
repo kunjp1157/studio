@@ -272,240 +272,234 @@ export default function ProfilePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 mt-6">
-              <section>
-                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><UserCircle className="mr-2 h-5 w-5 text-primary" />Basic Information</h3>
-                <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
-                    <div>
-                        <FormField control={form.control} name="name" render={({ field }) => (
-                           <FormItem>
-                                <Label htmlFor="name" className="text-base">Full Name</Label>
-                                <Input id="name" {...field} disabled={!isEditing} className="mt-1 text-base p-3"/>
-                                <small className="text-destructive">{form.formState.errors.name?.message}</small>
-                           </FormItem>
-                        )}/>
-                    </div>
-                    <div>
-                        <FormField control={form.control} name="email" render={({ field }) => (
-                           <FormItem>
-                                <Label htmlFor="email" className="text-base">Email Address</Label>
-                                <Input id="email" type="email" {...field} disabled={!isEditing} className="mt-1 text-base p-3"/>
-                                <small className="text-destructive">{form.formState.errors.email?.message}</small>
-                           </FormItem>
-                        )}/>
-                    </div>
-                    <div>
-                        <FormField control={form.control} name="phone" render={({ field }) => (
-                           <FormItem>
-                                <Label htmlFor="phone" className="text-base">Phone Number (Optional)</Label>
-                                <Input id="phone" type="tel" {...field} disabled={!isEditing} className="mt-1 text-base p-3"/>
-                                <small className="text-destructive">{form.formState.errors.phone?.message}</small>
-                           </FormItem>
-                        )}/>
-                    </div>
-                    <div>
-                        <Label htmlFor="membershipLevel" className="text-base flex items-center"><ShieldCheck className="inline mr-2 h-5 w-5 text-primary" />Membership Level</Label>
-                        <Input 
-                            id="membershipLevel" 
-                            value={user.membershipLevel || 'Basic'} 
-                            disabled 
-                            className="mt-1 text-base p-3 bg-muted/50 font-medium"
-                        />
-                    </div>
-                </div>
-              </section>
-
-              <Separator />
-
-              <section>
-                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Sparkles className="mr-2 h-5 w-5 text-primary" />Personal Details</h3>
-                 <div>
-                  <Label htmlFor="bio" className="text-base">Bio (Optional)</Label>
-                  {isEditing ? (
-                     <FormField control={form.control} name="bio" render={({ field }) => (
-                        <FormItem>
-                            <Textarea id="bio" placeholder="Tell us a bit about yourself..." {...field} className="mt-1 text-base p-3" rows={4}/>
-                            <small className="text-destructive">{form.formState.errors.bio?.message}</small>
-                        </FormItem>
-                     )}/>
-                  ) : (
-                    <p className="mt-1 text-muted-foreground bg-muted/30 p-3 rounded-md min-h-[60px]">{user.bio || 'No bio provided.'}</p>
-                  )}
-                </div>
-                <div className="mt-6">
-                  <Label htmlFor="preferredPlayingTimes" className="text-base">Preferred Playing Times (Optional)</Label>
-                  {isEditing ? (
-                     <FormField control={form.control} name="preferredPlayingTimes" render={({ field }) => (
-                        <FormItem>
-                           <Input id="preferredPlayingTimes" placeholder="e.g., Weekends, Weekday evenings" {...field} className="mt-1 text-base p-3"/>
-                           <small className="text-destructive">{form.formState.errors.preferredPlayingTimes?.message}</small>
-                        </FormItem>
-                     )}/>
-                  ) : (
-                    <p className="mt-1 text-muted-foreground bg-muted/30 p-3 rounded-md min-h-[40px]">{user.preferredPlayingTimes || 'Not specified.'}</p>
-                  )}
-                </div>
-              </section>
-              
-              <Separator />
-
-              <section>
-                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Heart className="mr-2 h-5 w-5 text-primary" />Sports Preferences</h3>
-                <div>
-                  <Label className="text-base">Preferred Sports</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2 p-4 border rounded-md bg-muted/30">
-                    {allSports.map(sport => {
-                        const SportIcon = getIconComponent(sport.iconName) || Zap;
-                        return (
-                            <div key={sport.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-background transition-colors">
-                                <Checkbox
-                                id={`sport-${sport.id}`}
-                                checked={user.preferredSports?.some(s => s.id === sport.id) || false}
-                                onCheckedChange={() => handlePreferredSportsChange(sport.id)}
-                                disabled={!isEditing}
-                                className="h-5 w-5"
-                                />
-                                <Label htmlFor={`sport-${sport.id}`} className={`text-base font-normal cursor-pointer flex items-center ${isEditing ? '' : 'text-muted-foreground'}`}>
-                                    <SportIcon className="mr-2 h-5 w-5 text-primary" /> {sport.name}
-                                </Label>
-                            </div>
-                        );
-                    })}
-                  </div>
-                </div>
-              </section>
-
-              <Separator />
-
-              <section>
-                <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Dumbbell className="mr-2 h-5 w-5 text-primary" />Skill Levels</h3>
-                <div className="space-y-4 p-4 border rounded-md bg-muted/30">
-                {isEditing ? (
-                    allSports.map(sport => {
-                        const currentSkill = user.skillLevels?.find(s => s.sportId === sport.id)?.level || "Not Specified";
-                        const SportIcon = getIconComponent(sport.iconName) || Zap;
-                        return (
-                            <div key={`skill-${sport.id}`} className="grid grid-cols-[1fr_auto] items-center gap-4">
-                                <Label htmlFor={`skill-level-${sport.id}`} className="text-base font-normal flex items-center">
-                                   <SportIcon className="mr-2 h-5 w-5 text-primary" /> {sport.name}
-                                </Label>
-                                <Select 
-                                    value={currentSkill} 
-                                    onValueChange={(value) => handleSkillLevelChange(sport.id, sport.name, value)}
-                                >
-                                <SelectTrigger id={`skill-level-${sport.id}`} className="w-[180px] text-sm">
-                                    <SelectValue placeholder="Set level" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {skillLevelsOptions.map(option => (
-                                    <SelectItem key={option.value} value={option.value} className="text-sm">
-                                        {option.label}
-                                    </SelectItem>
-                                    ))}
-                                </SelectContent>
-                                </Select>
-                            </div>
-                        );
-                    })
-                ) : (
-                    user.skillLevels && user.skillLevels.length > 0 ? (
-                        <ul className="list-none space-y-2">
-                        {user.skillLevels.map(skill => {
-                            const sportDetails = allSports.find(s => s.id === skill.sportId);
-                            const SportIcon = getIconComponent(sportDetails?.iconName) || Zap;
-                            return (
-                                <li key={skill.sportId} className="flex items-center text-base text-muted-foreground">
-                                    <SportIcon className="mr-2 h-5 w-5 text-primary" />
-                                    {skill.sportName}: <span className="font-medium text-foreground ml-1">{skill.level}</span>
-                                </li>
-                            );
-                        })}
-                        </ul>
-                    ) : (
-                        <p className="text-muted-foreground text-sm">No skill levels specified.</p>
-                    )
-                )}
-                </div>
-              </section>
-              
-              <Separator />
-
-               <section>
-                  <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Shield className="mr-2 h-5 w-5 text-primary" /> Privacy & Security</h3>
-                  <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
-                      <div className="space-y-0.5">
-                          <FormField
-                              control={form.control}
-                              name="isProfilePublic"
-                              render={({ field }) => (
-                                  <FormItem>
-                                      <Label htmlFor="public-profile-switch" className="text-base font-normal">Public Profile</Label>
-                                      <p className="text-sm text-muted-foreground">Allow other users to view your profile, achievements, and skill levels.</p>
-                                  </FormItem>
-                              )}
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 mt-6">
+                <section>
+                  <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><UserCircle className="mr-2 h-5 w-5 text-primary" />Basic Information</h3>
+                  <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                      <FormField control={form.control} name="name" render={({ field }) => (
+                         <FormItem>
+                              <Label htmlFor="name" className="text-base">Full Name</Label>
+                              <Input id="name" {...field} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                              <small className="text-destructive">{form.formState.errors.name?.message}</small>
+                         </FormItem>
+                      )}/>
+                      <FormField control={form.control} name="email" render={({ field }) => (
+                         <FormItem>
+                              <Label htmlFor="email" className="text-base">Email Address</Label>
+                              <Input id="email" type="email" {...field} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                              <small className="text-destructive">{form.formState.errors.email?.message}</small>
+                         </FormItem>
+                      )}/>
+                      <FormField control={form.control} name="phone" render={({ field }) => (
+                         <FormItem>
+                              <Label htmlFor="phone" className="text-base">Phone Number (Optional)</Label>
+                              <Input id="phone" type="tel" {...field} disabled={!isEditing} className="mt-1 text-base p-3"/>
+                              <small className="text-destructive">{form.formState.errors.phone?.message}</small>
+                         </FormItem>
+                      )}/>
+                      <div>
+                          <Label htmlFor="membershipLevel" className="text-base flex items-center"><ShieldCheck className="inline mr-2 h-5 w-5 text-primary" />Membership Level</Label>
+                          <Input 
+                              id="membershipLevel" 
+                              value={user.membershipLevel || 'Basic'} 
+                              disabled 
+                              className="mt-1 text-base p-3 bg-muted/50 font-medium"
                           />
                       </div>
-                       <FormField
-                          control={form.control}
-                          name="isProfilePublic"
-                          render={({ field }) => (
-                              <Switch
-                                  id="public-profile-switch"
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  disabled={!isEditing}
-                              />
-                          )}
-                      />
                   </div>
+                </section>
 
-                  {isEditing && (
-                      <Card className="mt-6">
-                          <CardHeader>
-                              <CardTitle className="flex items-center"><KeyRound className="mr-2 h-5 w-5 text-primary" />Change Password</CardTitle>
-                              <CardDescription>Leave fields blank to keep your current password.</CardDescription>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                              <FormField control={form.control} name="currentPassword" render={({ field }) => (
-                                  <FormItem>
-                                      <Label>Current Password</Label>
-                                      <Input type="password" {...field} />
-                                      <small className="text-destructive">{form.formState.errors.currentPassword?.message}</small>
-                                  </FormItem>
-                              )}/>
-                              <div className="grid md:grid-cols-2 gap-4">
-                                  <FormField control={form.control} name="newPassword" render={({ field }) => (
-                                      <FormItem>
-                                          <Label>New Password</Label>
-                                          <Input type="password" {...field} />
-                                          <small className="text-destructive">{form.formState.errors.newPassword?.message}</small>
-                                      </FormItem>
-                                  )}/>
-                                  <FormField control={form.control} name="confirmPassword" render={({ field }) => (
-                                      <FormItem>
-                                          <Label>Confirm New Password</Label>
-                                          <Input type="password" {...field} />
-                                          <small className="text-destructive">{form.formState.errors.confirmPassword?.message}</small>
-                                      </FormItem>
-                                  )}/>
+                <Separator />
+
+                <section>
+                  <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Sparkles className="mr-2 h-5 w-5 text-primary" />Personal Details</h3>
+                   <FormField control={form.control} name="bio" render={({ field }) => (
+                      <FormItem>
+                          <Label htmlFor="bio" className="text-base">Bio (Optional)</Label>
+                          {isEditing ? (
+                              <Textarea id="bio" placeholder="Tell us a bit about yourself..." {...field} className="mt-1 text-base p-3" rows={4}/>
+                          ) : (
+                              <p className="mt-1 text-muted-foreground bg-muted/30 p-3 rounded-md min-h-[60px]">{user.bio || 'No bio provided.'}</p>
+                          )}
+                          <small className="text-destructive">{form.formState.errors.bio?.message}</small>
+                      </FormItem>
+                   )}/>
+                  <div className="mt-6">
+                     <FormField control={form.control} name="preferredPlayingTimes" render={({ field }) => (
+                        <FormItem>
+                             <Label htmlFor="preferredPlayingTimes" className="text-base">Preferred Playing Times (Optional)</Label>
+                             {isEditing ? (
+                                 <Input id="preferredPlayingTimes" placeholder="e.g., Weekends, Weekday evenings" {...field} className="mt-1 text-base p-3"/>
+                             ) : (
+                                 <p className="mt-1 text-muted-foreground bg-muted/30 p-3 rounded-md min-h-[40px]">{user.preferredPlayingTimes || 'Not specified.'}</p>
+                             )}
+                             <small className="text-destructive">{form.formState.errors.preferredPlayingTimes?.message}</small>
+                        </FormItem>
+                     )}/>
+                  </div>
+                </section>
+                
+                <Separator />
+
+                <section>
+                  <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Heart className="mr-2 h-5 w-5 text-primary" />Sports Preferences</h3>
+                  <div>
+                    <Label className="text-base">Preferred Sports</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2 p-4 border rounded-md bg-muted/30">
+                      {allSports.map(sport => {
+                          const SportIcon = getIconComponent(sport.iconName) || Zap;
+                          return (
+                              <div key={sport.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-background transition-colors">
+                                  <Checkbox
+                                  id={`sport-${sport.id}`}
+                                  checked={user.preferredSports?.some(s => s.id === sport.id) || false}
+                                  onCheckedChange={() => handlePreferredSportsChange(sport.id)}
+                                  disabled={!isEditing}
+                                  className="h-5 w-5"
+                                  />
+                                  <Label htmlFor={`sport-${sport.id}`} className={`text-base font-normal cursor-pointer flex items-center ${isEditing ? '' : 'text-muted-foreground'}`}>
+                                      <SportIcon className="mr-2 h-5 w-5 text-primary" /> {sport.name}
+                                  </Label>
                               </div>
-                          </CardContent>
-                      </Card>
-                  )}
-              </section>
+                          );
+                      })}
+                    </div>
+                  </div>
+                </section>
 
-              {isEditing && (
-                <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); if(user) resetFormWithUserData(user); }}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isLoading} size="lg">
-                    {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
-                    Save Changes
-                  </Button>
-                </div>
-              )}
-            </form>
+                <Separator />
+
+                <section>
+                  <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Dumbbell className="mr-2 h-5 w-5 text-primary" />Skill Levels</h3>
+                  <div className="space-y-4 p-4 border rounded-md bg-muted/30">
+                  {isEditing ? (
+                      allSports.map(sport => {
+                          const currentSkill = user.skillLevels?.find(s => s.sportId === sport.id)?.level || "Not Specified";
+                          const SportIcon = getIconComponent(sport.iconName) || Zap;
+                          return (
+                              <div key={`skill-${sport.id}`} className="grid grid-cols-[1fr_auto] items-center gap-4">
+                                  <Label htmlFor={`skill-level-${sport.id}`} className="text-base font-normal flex items-center">
+                                     <SportIcon className="mr-2 h-5 w-5 text-primary" /> {sport.name}
+                                  </Label>
+                                  <Select 
+                                      value={currentSkill} 
+                                      onValueChange={(value) => handleSkillLevelChange(sport.id, sport.name, value)}
+                                  >
+                                  <SelectTrigger id={`skill-level-${sport.id}`} className="w-[180px] text-sm">
+                                      <SelectValue placeholder="Set level" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      {skillLevelsOptions.map(option => (
+                                      <SelectItem key={option.value} value={option.value} className="text-sm">
+                                          {option.label}
+                                      </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                  </Select>
+                              </div>
+                          );
+                      })
+                  ) : (
+                      user.skillLevels && user.skillLevels.length > 0 ? (
+                          <ul className="list-none space-y-2">
+                          {user.skillLevels.map(skill => {
+                              const sportDetails = allSports.find(s => s.id === skill.sportId);
+                              const SportIcon = getIconComponent(sportDetails?.iconName) || Zap;
+                              return (
+                                  <li key={skill.sportId} className="flex items-center text-base text-muted-foreground">
+                                      <SportIcon className="mr-2 h-5 w-5 text-primary" />
+                                      {skill.sportName}: <span className="font-medium text-foreground ml-1">{skill.level}</span>
+                                  </li>
+                              );
+                          })}
+                          </ul>
+                      ) : (
+                          <p className="text-muted-foreground text-sm">No skill levels specified.</p>
+                      )
+                  )}
+                  </div>
+                </section>
+                
+                <Separator />
+
+                 <section>
+                    <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Shield className="mr-2 h-5 w-5 text-primary" /> Privacy & Security</h3>
+                    <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
+                        <div className="space-y-0.5">
+                            <FormField
+                                control={form.control}
+                                name="isProfilePublic"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <Label htmlFor="public-profile-switch" className="text-base font-normal">Public Profile</Label>
+                                        <p className="text-sm text-muted-foreground">Allow other users to view your profile, achievements, and skill levels.</p>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                         <FormField
+                            control={form.control}
+                            name="isProfilePublic"
+                            render={({ field }) => (
+                                <Switch
+                                    id="public-profile-switch"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    disabled={!isEditing}
+                                />
+                            )}
+                        />
+                    </div>
+
+                    {isEditing && (
+                        <Card className="mt-6">
+                            <CardHeader>
+                                <CardTitle className="flex items-center"><KeyRound className="mr-2 h-5 w-5 text-primary" />Change Password</CardTitle>
+                                <CardDescription>Leave fields blank to keep your current password.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField control={form.control} name="currentPassword" render={({ field }) => (
+                                    <FormItem>
+                                        <Label>Current Password</Label>
+                                        <Input type="password" {...field} />
+                                        <small className="text-destructive">{form.formState.errors.currentPassword?.message}</small>
+                                    </FormItem>
+                                )}/>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="newPassword" render={({ field }) => (
+                                        <FormItem>
+                                            <Label>New Password</Label>
+                                            <Input type="password" {...field} />
+                                            <small className="text-destructive">{form.formState.errors.newPassword?.message}</small>
+                                        </FormItem>
+                                    )}/>
+                                    <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                                        <FormItem>
+                                            <Label>Confirm New Password</Label>
+                                            <Input type="password" {...field} />
+                                            <small className="text-destructive">{form.formState.errors.confirmPassword?.message}</small>
+                                        </FormItem>
+                                    )}/>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+                </section>
+
+                {isEditing && (
+                  <div className="flex justify-end space-x-3 pt-4 border-t">
+                    <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); if(user) resetFormWithUserData(user); }}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isLoading} size="lg">
+                      {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
+                      Save Changes
+                    </Button>
+                  </div>
+                )}
+              </form>
+            </Form>
           </CardContent>
         </Card>
 
