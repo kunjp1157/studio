@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -73,6 +73,8 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const [allSports, setAllSports] = useState<Sport[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
       resolver: zodResolver(profileSchema),
@@ -101,6 +103,7 @@ export default function ProfilePage() {
         newPassword: '',
         confirmPassword: '',
       });
+      setImagePreview(null);
   };
 
   useEffect(() => {
@@ -132,6 +135,21 @@ export default function ProfilePage() {
     window.addEventListener('userChanged', handleUserUpdate);
     return () => window.removeEventListener('userChanged', handleUserUpdate);
   }, []);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+          toast({ title: 'File too large', description: 'Please select an image smaller than 2MB.', variant: 'destructive' });
+          return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
 
   const handlePreferredSportsChange = (sportId: string) => {
@@ -192,6 +210,10 @@ export default function ProfilePage() {
             updates.currentPassword = data.currentPassword;
         }
 
+        if (imagePreview) {
+          updates.profilePictureUrl = imagePreview;
+        }
+
         const updatedUser = await updateUserAction(user.id, updates);
         
         if (updatedUser) {
@@ -246,14 +268,23 @@ export default function ProfilePage() {
                 <div className="flex items-center space-x-6">
                   <div className="relative">
                       <Avatar className="h-24 w-24 border-2 border-primary shadow-md">
-                      <AvatarImage src={user.profilePictureUrl} alt={user.name} />
+                      <AvatarImage src={imagePreview || user.profilePictureUrl} alt={user.name} />
                       <AvatarFallback className="text-3xl">{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                       </Avatar>
                       {isEditing && (
-                          <Button variant="outline" size="icon" className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 bg-background hover:bg-muted" onClick={() => toast({title: "Feature Coming Soon!"})}>
-                              <UploadCloud className="h-4 w-4" />
-                              <span className="sr-only">Change photo</span>
-                          </Button>
+                          <>
+                            <Input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={handleFileChange}
+                              className="hidden"
+                              accept="image/png, image/jpeg, image/gif"
+                            />
+                            <Button type="button" variant="outline" size="icon" className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 bg-background hover:bg-muted" onClick={() => fileInputRef.current?.click()}>
+                                <UploadCloud className="h-4 w-4" />
+                                <span className="sr-only">Change photo</span>
+                            </Button>
+                          </>
                       )}
                   </div>
                   <div>
@@ -577,5 +608,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
