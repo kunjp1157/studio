@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -129,12 +128,14 @@ export default function ProfilePage() {
             const userObject = JSON.parse(activeUserStr);
             const parsedUser = parseUserJSONFields(userObject);
             setUser(parsedUser);
-            resetFormWithUserData(parsedUser);
+            if (!isEditing) {
+              resetFormWithUserData(parsedUser);
+            }
         }
     };
     window.addEventListener('userChanged', handleUserUpdate);
     return () => window.removeEventListener('userChanged', handleUserUpdate);
-  }, []);
+  }, [isEditing]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -515,18 +516,6 @@ export default function ProfilePage() {
                 </section>
               </CardContent>
             </Card>
-
-            {isEditing && (
-              <div className="flex justify-end space-x-3 pt-4 border-t sticky bottom-0 bg-background py-4">
-                <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); if(user) resetFormWithUserData(user); }}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isLoading} size="lg">
-                  {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
-                  Save Changes
-                </Button>
-              </div>
-            )}
           </div>
 
           <div className="space-y-8 lg:col-span-1">
@@ -603,6 +592,18 @@ export default function ProfilePage() {
                 </CardContent>
             </Card>
           </div>
+          
+          {isEditing && (
+              <div className="lg:col-span-3 flex justify-end space-x-3 pt-4 border-t sticky bottom-0 bg-background py-4">
+                <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); if(user) resetFormWithUserData(user); }}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading} size="lg">
+                  {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
+                  Save Changes
+                </Button>
+              </div>
+            )}
         </form>
       </Form>
     </div>
