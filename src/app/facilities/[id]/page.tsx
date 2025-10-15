@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -19,7 +18,7 @@ import { formatCurrency } from '@/lib/utils';
 import { format, parseISO, startOfDay, differenceInHours, parse } from 'date-fns';
 import {
   MapPin, CalendarDays, Clock, Users, SunMoon, DollarSign, Sparkles, Heart,
-  ThumbsUp, ThumbsDown, PackageSearch, Minus, Plus
+  ThumbsUp, ThumbsDown, PackageSearch, Minus, Plus, List, AlertCircle
 } from 'lucide-react';
 import type { Facility, Review, Sport, TimeSlot, SiteSettings, UserProfile, Booking, RentedItemInfo, RentalEquipment } from '@/lib/types';
 import { getSiteSettingsAction, getFacilityByIdAction, toggleFavoriteFacilityAction, getBookingsForFacilityOnDateAction } from '@/app/actions';
@@ -28,47 +27,9 @@ import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/summar
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Input } from '@/components/ui/input';
+import { Alert } from '@/components/ui/alert';
 
-
-const generateTimeSlots = (
-  facility: Facility,
-  selectedDate: Date | undefined,
-  bookingsOnDate: Booking[],
-): TimeSlot[] => {
-  if (!selectedDate || !facility.operatingHours) return [];
-  
-  const dayOfWeek = format(selectedDate, 'E').slice(0, 3) as 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
-  const hours = facility.operatingHours.find(h => h.day === dayOfWeek);
-
-  if (!hours) return [];
-
-  const slots: TimeSlot[] = [];
-  const startHour = parseInt(hours.open.split(':')[0]);
-  const endHour = parseInt(hours.close.split(':')[0]);
-
-  const bookedStartTimes = bookingsOnDate.map(b => b.startTime);
-  const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-  const dateSpecificBlockedSlots = facility.blockedSlots?.filter(s => s.date === formattedDate) || [];
-
-  for (let i = startHour; i < endHour; i++) {
-    const startTime = `${String(i).padStart(2, '0')}:00`;
-    const endTime = `${String(i + 1).padStart(2, '0')}:00`;
-    
-    let isAvailable = !bookedStartTimes.includes(startTime);
-
-    if(isAvailable) {
-        for (const blocked of dateSpecificBlockedSlots) {
-            if (startTime < blocked.endTime && endTime > blocked.startTime) {
-                isAvailable = false;
-                break; 
-            }
-        }
-    }
-
-    slots.push({ startTime, endTime, isAvailable });
-  }
-  return slots;
-};
 
 export default function FacilityDetailPage() {
   const params = useParams();
@@ -83,10 +44,13 @@ export default function FacilityDetailPage() {
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedSport, setSelectedSport] = useState<Sport | undefined>(undefined);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | undefined>(undefined);
+  
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+
   const [selectedEquipment, setSelectedEquipment] = useState<Record<string, number>>({});
   
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [bookingsOnDate, setBookingsOnDate] = useState<Booking[]>([]);
   const [isSlotsLoading, setIsSlotsLoading] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
@@ -122,37 +86,25 @@ export default function FacilityDetailPage() {
       }
   }, [currentUser, facility]);
 
-  const fetchSlots = useCallback(async () => {
+  const fetchBookings = useCallback(async () => {
       if (facility && selectedDate) {
           setIsSlotsLoading(true);
           const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-          const bookingsOnDate = await getBookingsForFacilityOnDateAction(facility.id, formattedDate);
-          const slots = generateTimeSlots(facility, selectedDate, bookingsOnDate);
-          setTimeSlots(slots);
-          
-          // If the currently selected slot is now booked, deselect it
-          if (selectedSlot && !slots.find(s => s.startTime === selectedSlot.startTime)?.isAvailable) {
-              setSelectedSlot(undefined);
-              toast({
-                  title: 'Slot Just Booked',
-                  description: `The time slot ${selectedSlot.startTime} is no longer available. Please select another time.`,
-                  variant: 'destructive'
-              });
-          }
-
+          const bookings = await getBookingsForFacilityOnDateAction(facility.id, formattedDate);
+          setBookingsOnDate(bookings.sort((a,b) => a.startTime.localeCompare(b.startTime)));
           setIsSlotsLoading(false);
       }
-  }, [facility, selectedDate, selectedSlot, toast]);
+  }, [facility, selectedDate]);
 
 
   useEffect(() => {
-    fetchSlots(); // Initial fetch
+    fetchBookings(); // Initial fetch
     
     // Set up polling for live availability
-    const intervalId = setInterval(fetchSlots, 5000); // Poll every 5 seconds
+    const intervalId = setInterval(fetchBookings, 5000); // Poll every 5 seconds
 
     return () => clearInterval(intervalId); // Cleanup on component unmount
-  }, [fetchSlots]);
+  }, [fetchBookings]);
   
   const handleGenerateSummary = useCallback(async () => {
     if (!facility || !facility.reviews || facility.reviews.length < 3) return;
@@ -168,13 +120,20 @@ export default function FacilityDetailPage() {
   }, [facility, toast]);
 
   const bookingDurationHours = useMemo(() => {
-    if (selectedSlot) {
-      const startTime = parse(selectedSlot.startTime, 'HH:mm', new Date());
-      const endTime = parse(selectedSlot.endTime, 'HH:mm', new Date());
-      return differenceInHours(endTime, startTime) || 1;
+    if (startTime && endTime) {
+      try {
+        const start = parse(startTime, 'HH:mm', new Date());
+        const end = parse(endTime, 'HH:mm', new Date());
+        if (isValid(start) && isValid(end) && end > start) {
+           const diff = differenceInHours(end, start);
+           return diff > 0 ? diff : 1; // Minimum 1 hour charge even for less than 1 hour booking
+        }
+      } catch (error) {
+          return 1;
+      }
     }
     return 1;
-  }, [selectedSlot]);
+  }, [startTime, endTime]);
   
   const sportSpecificEquipment = useMemo(() => {
     if (!facility?.availableEquipment || !selectedSport) {
@@ -203,11 +162,11 @@ export default function FacilityDetailPage() {
   }, [selectedEquipment, sportSpecificEquipment, bookingDurationHours]);
 
   const dynamicPrice = useMemo(() => {
-    if (facility && selectedSport && selectedDate && selectedSlot) {
+    if (facility && selectedSport && selectedDate && startTime && endTime) {
       const sportPriceInfo = facility.sportPrices.find(p => p.sportId === selectedSport.id);
       if (!sportPriceInfo) return null;
       
-      const priceResult = calculateDynamicPrice(sportPriceInfo.price, selectedDate, selectedSlot, bookingDurationHours);
+      const priceResult = calculateDynamicPrice(sportPriceInfo.price, selectedDate, { startTime, endTime, isAvailable: true }, bookingDurationHours);
       
       return {
           ...priceResult,
@@ -216,7 +175,7 @@ export default function FacilityDetailPage() {
       };
     }
     return null;
-  }, [facility, selectedSport, selectedDate, selectedSlot, bookingDurationHours, equipmentRentalCost]);
+  }, [facility, selectedSport, selectedDate, startTime, endTime, bookingDurationHours, equipmentRentalCost]);
   
   const handleEquipmentQuantityChange = (equipmentId: string, change: 1 | -1) => {
     setSelectedEquipment(prev => {
@@ -243,9 +202,27 @@ export default function FacilityDetailPage() {
   };
   
   const handleBooking = () => {
-    if (!facility || !selectedSport || !selectedDate || !selectedSlot || !dynamicPrice) {
-        toast({ title: "Incomplete Selection", description: "Please select a sport, date, and available time slot.", variant: "destructive"});
+    if (!facility || !selectedSport || !selectedDate || !startTime || !endTime || !dynamicPrice) {
+        toast({ title: "Incomplete Selection", description: "Please select a sport, date, and valid start/end times.", variant: "destructive"});
         return;
+    }
+
+    const start = parse(startTime, 'HH:mm', selectedDate);
+    const end = parse(endTime, 'HH:mm', selectedDate);
+
+    if (!isValid(start) || !isValid(end) || end <= start) {
+        toast({ title: "Invalid Time", description: "Please enter a valid start and end time. End time must be after start time.", variant: "destructive"});
+        return;
+    }
+
+    // Check for overlaps with existing bookings
+    for (const booking of bookingsOnDate) {
+        const existingStart = parse(booking.startTime, 'HH:mm', selectedDate);
+        const existingEnd = parse(booking.endTime, 'HH:mm', selectedDate);
+        if (start < existingEnd && end > existingStart) {
+            toast({ title: "Slot Unavailable", description: `The selected time overlaps with an existing booking from ${booking.startTime} to ${booking.endTime}.`, variant: "destructive"});
+            return;
+        }
     }
 
     const rentedItems: RentedItemInfo[] = Object.entries(selectedEquipment)
@@ -274,8 +251,8 @@ export default function FacilityDetailPage() {
       sportId: selectedSport.id,
       sportName: selectedSport.name,
       date: format(selectedDate, 'yyyy-MM-dd'),
-      startTime: selectedSlot.startTime,
-      endTime: selectedSlot.endTime,
+      startTime: startTime,
+      endTime: endTime,
       totalPrice: dynamicPrice.finalPrice,
       baseFacilityPrice: dynamicPrice.finalPrice - equipmentRentalCost,
       equipmentRentalCost: equipmentRentalCost,
@@ -496,30 +473,16 @@ export default function FacilityDetailPage() {
                     </SelectContent>
                   </Select>
                </div>
-               <div>
-                 <Label>Time Slot</Label>
-                 {isSlotsLoading ? (
-                    <div className="flex items-center justify-center h-24 border rounded-md"><LoadingSpinner size={24}/></div>
-                 ) : timeSlots.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                        {timeSlots.map(slot => (
-                            <Button 
-                                key={slot.startTime}
-                                variant={selectedSlot?.startTime === slot.startTime ? 'default' : 'outline'}
-                                disabled={!slot.isAvailable}
-                                onClick={() => setSelectedSlot(slot)}
-                                className={cn("flex-col h-auto py-2", !slot.isAvailable && "line-through text-muted-foreground")}
-                            >
-                                <span className="font-semibold">{slot.startTime}</span>
-                                <span className="text-xs">{!slot.isAvailable ? 'Booked' : 'Available'}</span>
-                            </Button>
-                        ))}
-                    </div>
-                 ) : (
-                     <div className="flex items-center justify-center h-24 border rounded-md text-sm text-muted-foreground">
-                         No slots available for this day.
-                     </div>
-                 )}
+               
+               <div className="grid grid-cols-2 gap-2">
+                 <div>
+                    <Label htmlFor="start-time">Start Time</Label>
+                    <Input id="start-time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+                 </div>
+                 <div>
+                    <Label htmlFor="end-time">End Time</Label>
+                    <Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+                 </div>
                </div>
                
                {dynamicPrice && siteSettings ? (
@@ -528,13 +491,34 @@ export default function FacilityDetailPage() {
                         <p className="text-2xl font-bold text-primary">{formatCurrency(dynamicPrice.finalPrice, siteSettings.defaultCurrency)}</p>
                     </div>
                ) : (
-                   selectedSlot && <div className="p-3 text-center"><Skeleton className="h-12 w-32 mx-auto" /></div>
+                   startTime && endTime && <div className="p-3 text-center"><Skeleton className="h-12 w-32 mx-auto" /></div>
                )}
+
+              <Card className="bg-muted/30">
+                <CardHeader className="p-3">
+                  <CardTitle className="text-base flex items-center"><List className="mr-2 h-4 w-4" /> Today's Bookings</CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 pt-0 max-h-40 overflow-y-auto">
+                    {isSlotsLoading ? <div className="flex justify-center"><LoadingSpinner size={24}/></div> : (
+                      bookingsOnDate.length > 0 ? (
+                        <ul className="space-y-1">
+                          {bookingsOnDate.map(b => (
+                            <li key={b.id} className="text-sm text-muted-foreground p-1 rounded-md bg-background/50 flex justify-between">
+                              <span>{b.startTime} - {b.endTime}</span>
+                              <span className="font-semibold text-destructive">Booked</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : <p className="text-sm text-muted-foreground text-center">No bookings for this date yet.</p>
+                    )}
+                </CardContent>
+              </Card>
+
             </CardContent>
             
 
             <CardFooter className="flex-col gap-2 pt-6">
-              <Button className="w-full" onClick={handleBooking} disabled={!selectedSlot || !selectedSport || isBooking}>
+              <Button className="w-full" onClick={handleBooking} disabled={!startTime || !endTime || !selectedSport || isBooking}>
                 {isBooking ? <LoadingSpinner size={20} className="mr-2" /> : <CalendarDays className="mr-2 h-4 w-4" />}
                 {isBooking ? 'Processing...' : 'Book Now'}
               </Button>
@@ -549,4 +533,3 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
-

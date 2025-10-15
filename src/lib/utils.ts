@@ -2,6 +2,8 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { TimeSlot, PricingRule } from './types';
+import { differenceInMinutes, parse, isValid } from 'date-fns';
+
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -30,4 +32,15 @@ export function formatCurrency(amount: number, currency: 'USD' | 'EUR' | 'GBP' |
   }
 }
 
-export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => ({ finalPrice: basePricePerHour * durationHours });
+export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => {
+    // Placeholder for actual dynamic pricing logic
+    // In a real app, this would check pricing rules against the date and time.
+    
+    // For now, it just calculates based on duration.
+    if(durationHours > 0) {
+      return { finalPrice: basePricePerHour * durationHours };
+    }
+    
+    // Fallback to base price if duration is invalid
+    return { finalPrice: basePricePerHour };
+};
