@@ -321,15 +321,14 @@ export async function dbAddFacility(facilityData: any): Promise<Facility> {
         city: mainData.city,
         location: mainData.location,
         description: mainData.description,
-        isIndoor: mainData.isIndoor,
-        isPopular: mainData.isPopular,
-        capacity: mainData.capacity,
+        isIndoor: mainData.isIndoor || false,
+        isPopular: mainData.isPopular || false,
+        capacity: mainData.capacity || null,
         imageUrl: mainData.imageUrl,
         dataAiHint: mainData.imageDataAiHint,
         ownerId: mainData.ownerId,
-        status: mainData.status,
+        status: mainData.status || 'Active',
         rating: 4.5, // Default rating
-        blockedSlots: JSON.stringify(mainData.blockedSlots || []),
     };
 
     const columns = Object.keys(facilityToInsert).map(k => `\`${k}\``).join(', ');
@@ -378,7 +377,6 @@ export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
         dataAiHint: mainData.imageDataAiHint,
         ownerId: mainData.ownerId,
         status: mainData.status,
-        blockedSlots: JSON.stringify(mainData.blockedSlots || []),
     };
 
     const setClauses = Object.keys(facilityToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
@@ -677,7 +675,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;
