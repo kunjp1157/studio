@@ -52,7 +52,16 @@ async function enrichFacility(facility: Facility): Promise<void> {
     const [hoursRes] = await query('SELECT day, open, close FROM facility_operating_hours WHERE facilityId = ?', [facility.id]);
     const [pricesRes] = await query('SELECT sportId, price, pricingModel FROM facility_sport_prices WHERE facilityId = ?', [facility.id]);
     const [reviewsRes] = await query('SELECT r.*, u.name as userName, u.profilePictureUrl as userAvatar, u.isProfilePublic FROM reviews r JOIN users u ON r.userId = u.id WHERE r.facilityId = ? ORDER BY r.createdAt DESC', [facility.id]);
-    const [equipmentRes] = await query('SELECT re.* FROM rental_equipment re JOIN facility_equipment fe ON re.id = fe.equipmentId WHERE fe.facilityId = ?', [facility.id]);
+    
+    // Fetch equipment IDs associated with the facility
+    const [facilityEquipmentRes] = await query('SELECT equipmentId FROM facility_equipment WHERE facilityId = ?', [facility.id]);
+    const equipmentIds = (facilityEquipmentRes as any[]).map(fe => fe.equipmentId);
+
+    let equipmentRes: any[] = [];
+    if (equipmentIds.length > 0) {
+        const placeholders = equipmentIds.map(() => '?').join(',');
+        [equipmentRes] = await query(`SELECT * FROM rental_equipment WHERE id IN (${placeholders})`, equipmentIds);
+    }
     
     const sports = sportsRes as Sport[];
     facility.sports = sports;
@@ -70,10 +79,10 @@ async function enrichFacility(facility: Facility): Promise<void> {
 
     // JSON fields from the facility table itself need parsing
     if (typeof facility.blockedSlots === 'string') {
-        facility.blockedSlots = JSON.parse(facility.blockedSlots);
+        try { facility.blockedSlots = JSON.parse(facility.blockedSlots); } catch { facility.blockedSlots = []; }
     }
     if (typeof facility.maintenanceSchedules === 'string') {
-        facility.maintenanceSchedules = JSON.parse(facility.maintenanceSchedules);
+       try { facility.maintenanceSchedules = JSON.parse(facility.maintenanceSchedules); } catch { facility.maintenanceSchedules = []; }
     }
 }
 
@@ -302,117 +311,109 @@ export async function updateSiteSettings(newSettings: SiteSettings) {
 
 export async function dbAddFacility(facilityData: any): Promise<Facility> {
     noStore();
-    const { sports, amenities, sportPrices, operatingHours, availableEquipment, ...mainData } = facilityData;
-    
-    // Convert arrays to JSON strings for storage
-    mainData.blockedSlots = JSON.stringify(mainData.blockedSlots || []);
+    const { sports, amenities, sportPrices, operatingHours, ...mainData } = facilityData;
 
-    const columns = Object.keys(mainData).map(k => `\`${k}\``).join(', ');
-    const values = Object.values(mainData);
+    // Prepare main facility data
+    const facilityToInsert = {
+        name: mainData.name,
+        type: mainData.type,
+        address: mainData.address,
+        city: mainData.city,
+        location: mainData.location,
+        description: mainData.description,
+        isIndoor: mainData.isIndoor,
+        isPopular: mainData.isPopular,
+        capacity: mainData.capacity,
+        imageUrl: mainData.imageUrl,
+        dataAiHint: mainData.imageDataAiHint,
+        ownerId: mainData.ownerId,
+        status: mainData.status,
+        rating: 4.5, // Default rating
+        blockedSlots: JSON.stringify(mainData.blockedSlots || []),
+    };
+
+    const columns = Object.keys(facilityToInsert).map(k => `\`${k}\``).join(', ');
+    const values = Object.values(facilityToInsert);
     const valuePlaceholders = values.map(() => '?').join(', ');
-
+    
     const [result] = await query(`INSERT INTO facilities (${columns}) VALUES (${valuePlaceholders})`, values);
     const newId = (result as any).insertId;
-    mainData.id = newId;
-    
+
     // Handle relationships
-    if (sports) {
-        for (const sportId of sports) {
-            await query('INSERT INTO facility_sports (facilityId, sportId) VALUES (?, ?)', [newId, sportId]);
-        }
+    if (sports && sports.length > 0) {
+        const sportValues = sports.map((sportId: string) => [newId, sportId]);
+        await query('INSERT INTO facility_sports (facilityId, sportId) VALUES ?', [sportValues]);
     }
-    if (amenities) {
-         for (const amenityId of amenities) {
-            await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES (?, ?)', [newId, amenityId]);
-        }
+    if (amenities && amenities.length > 0) {
+        const amenityValues = amenities.map((amenityId: string) => [newId, amenityId]);
+        await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES ?', [amenityValues]);
     }
-    if (operatingHours) {
-        for (const oh of operatingHours) {
-            await query('INSERT INTO facility_operating_hours (facilityId, day, open, close) VALUES (?, ?, ?, ?)', [newId, oh.day, oh.open, oh.close]);
-        }
+    if (operatingHours && operatingHours.length > 0) {
+        const hourValues = operatingHours.map((oh: any) => [newId, oh.day, oh.open, oh.close]);
+        await query('INSERT INTO facility_operating_hours (facilityId, day, open, close) VALUES ?', [hourValues]);
     }
-    if (sportPrices) {
-        for (const sp of sportPrices) {
-            await query('INSERT INTO facility_sport_prices (facilityId, sportId, price, pricingModel) VALUES (?, ?, ?, ?)', [newId, sp.sportId, sp.price, sp.pricingModel]);
-        }
-    }
-     if (availableEquipment) {
-        for (const eq of availableEquipment) {
-             const [eqResult] = await query('INSERT INTO rental_equipment (name, description, pricePerItem, priceType, stock, sportIds) VALUES (?, ?, ?, ?, ?, ?)', [eq.name, eq.description, eq.pricePerItem, eq.priceType, eq.stock, JSON.stringify(eq.sportIds)]);
-             const eqId = (eqResult as any).insertId;
-             await query('INSERT INTO facility_equipment (facilityId, equipmentId) VALUES (?, ?)', [newId, eqId]);
-        }
+    if (sportPrices && sportPrices.length > 0) {
+        const priceValues = sportPrices.map((sp: any) => [newId, sp.sportId, sp.price, sp.pricingModel]);
+        await query('INSERT INTO facility_sport_prices (facilityId, sportId, price, pricingModel) VALUES ?', [priceValues]);
     }
 
-    return (await dbGetFacilityById(newId))!;
+    return (await dbGetFacilityById(newId.toString()))!;
 }
 
 export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
     noStore();
-    const { id, sports, amenities, sportPrices, operatingHours, availableEquipment, ...mainData } = facilityData;
-    
-    // Convert arrays to JSON strings for storage
-    mainData.blockedSlots = JSON.stringify(mainData.blockedSlots || []);
-    
-    const setClauses = Object.keys(mainData).map((k) => `\`${k}\` = ?`).join(', ');
-    const values = [...Object.values(mainData), id];
+    const { id, sports, amenities, sportPrices, operatingHours, ...mainData } = facilityData;
+
+    const facilityToUpdate = {
+        name: mainData.name,
+        type: mainData.type,
+        address: mainData.address,
+        city: mainData.city,
+        location: mainData.location,
+        description: mainData.description,
+        isIndoor: mainData.isIndoor,
+        isPopular: mainData.isPopular,
+        capacity: mainData.capacity,
+        imageUrl: mainData.imageUrl,
+        dataAiHint: mainData.imageDataAiHint,
+        ownerId: mainData.ownerId,
+        status: mainData.status,
+        blockedSlots: JSON.stringify(mainData.blockedSlots || []),
+    };
+
+    const setClauses = Object.keys(facilityToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
+    const values = [...Object.values(facilityToUpdate), id];
     
     await query(`UPDATE facilities SET ${setClauses} WHERE id = ?`, values);
 
-    // Simplistic relationship update: delete old, insert new
+    // Update relationships by deleting old and inserting new
     await query('DELETE FROM facility_sports WHERE facilityId = ?', [id]);
-    if (sports) {
-        for (const sportId of sports) {
-            await query('INSERT INTO facility_sports (facilityId, sportId) VALUES (?, ?)', [id, sportId]);
-        }
+    if (sports && sports.length > 0) {
+        const sportValues = sports.map((sportId: string) => [id, sportId]);
+        await query('INSERT INTO facility_sports (facilityId, sportId) VALUES ?', [sportValues]);
     }
+
     await query('DELETE FROM facility_amenities WHERE facilityId = ?', [id]);
-    if (amenities) {
-        for (const amenityId of amenities) {
-            await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES (?, ?)', [id, amenityId]);
-        }
+    if (amenities && amenities.length > 0) {
+        const amenityValues = amenities.map((amenityId: string) => [id, amenityId]);
+        await query('INSERT INTO facility_amenities (facilityId, amenityId) VALUES ?', [amenityValues]);
     }
+
     await query('DELETE FROM facility_operating_hours WHERE facilityId = ?', [id]);
-    if (operatingHours) {
-        for (const oh of operatingHours) {
-            await query('INSERT INTO facility_operating_hours (facilityId, day, open, close) VALUES (?, ?, ?, ?)', [id, oh.day, oh.open, oh.close]);
-        }
+    if (operatingHours && operatingHours.length > 0) {
+        const hourValues = operatingHours.map((oh: any) => [id, oh.day, oh.open, oh.close]);
+        await query('INSERT INTO facility_operating_hours (facilityId, day, open, close) VALUES ?', [hourValues]);
     }
+
     await query('DELETE FROM facility_sport_prices WHERE facilityId = ?', [id]);
-    if (sportPrices) {
-        for (const sp of sportPrices) {
-            await query('INSERT INTO facility_sport_prices (facilityId, sportId, price, pricingModel) VALUES (?, ?, ?, ?)', [id, sp.sportId, sp.price, sp.pricingModel]);
-        }
+    if (sportPrices && sportPrices.length > 0) {
+        const priceValues = sportPrices.map((sp: any) => [id, sp.sportId, sp.price, sp.pricingModel]);
+        await query('INSERT INTO facility_sport_prices (facilityId, sportId, price, pricingModel) VALUES ?', [priceValues]);
     }
     
-    // For equipment, a more complex logic is needed: update existing, delete removed, add new
-    const [existingEqIdsRes] = await query('SELECT equipmentId FROM facility_equipment WHERE facilityId = ?', [id]);
-    const existingEqIds = (existingEqIdsRes as any[]).map(r => r.equipmentId);
-    
-    const incomingEqIds = (availableEquipment || []).map((eq: any) => eq.id).filter(Boolean);
-
-    // Delete equipment no longer associated
-    const toDelete = existingEqIds.filter(eid => !incomingEqIds.includes(eid));
-    if(toDelete.length > 0) {
-        await query('DELETE FROM facility_equipment WHERE facilityId = ? AND equipmentId IN (?)', [id, toDelete]);
-        await query('DELETE FROM rental_equipment WHERE id IN (?)', [toDelete]);
-    }
-
-    // Update or Insert equipment
-    if (availableEquipment) {
-        for (const eq of availableEquipment) {
-            if (eq.id && existingEqIds.includes(eq.id)) { // Update
-                await query('UPDATE rental_equipment SET name=?, description=?, pricePerItem=?, priceType=?, stock=?, sportIds=? WHERE id=?', [eq.name, eq.description, eq.pricePerItem, eq.priceType, eq.stock, JSON.stringify(eq.sportIds), eq.id]);
-            } else { // Insert
-                const [eqResult] = await query('INSERT INTO rental_equipment (name, description, pricePerItem, priceType, stock, sportIds) VALUES (?, ?, ?, ?, ?, ?)', [eq.name, eq.description, eq.pricePerItem, eq.priceType, eq.stock, JSON.stringify(eq.sportIds)]);
-                const eqId = (eqResult as any).insertId;
-                await query('INSERT INTO facility_equipment (facilityId, equipmentId) VALUES (?, ?)', [id, eqId]);
-            }
-        }
-    }
-
     return (await dbGetFacilityById(id))!;
 }
+
 
 export async function dbDeleteFacility(facilityId: string): Promise<void> {
     noStore();
@@ -513,7 +514,7 @@ export async function blockTimeSlot(facilityId: string, ownerId: string, newBloc
     if (!facility || facility.ownerId !== ownerId) return false;
 
     const newBlockedSlots = [...(facility.blockedSlots || []), newBlock];
-    await dbUpdateFacility({ ...facility, blockedSlots: newBlockedSlots });
+    await dbUpdateFacility({ id: facility.id, blockedSlots: newBlockedSlots });
     return true;
 }
 
@@ -525,7 +526,7 @@ export async function unblockTimeSlot(facilityId: string, ownerId: string, date:
     const newBlockedSlots = facility.blockedSlots.filter(
         slot => !(slot.date === date && slot.startTime === startTime)
     );
-    await dbUpdateFacility({ ...facility, blockedSlots: newBlockedSlots });
+    await dbUpdateFacility({ id: facility.id, blockedSlots: newBlockedSlots });
     return true;
 }
 
@@ -676,7 +677,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;
