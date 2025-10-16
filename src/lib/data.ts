@@ -53,15 +53,13 @@ async function enrichFacility(facility: Facility): Promise<void> {
     const [pricesRes] = await query('SELECT sportId, price, pricingModel FROM facility_sport_prices WHERE facilityId = ?', [facility.id]);
     const [reviewsRes] = await query('SELECT r.*, u.name as userName, u.profilePictureUrl as userAvatar, u.isProfilePublic FROM reviews r JOIN users u ON r.userId = u.id WHERE r.facilityId = ? ORDER BY r.createdAt DESC', [facility.id]);
     
-    // Fetch equipment IDs associated with the facility
-    const [facilityEquipmentRes] = await query('SELECT equipmentId FROM facility_equipment WHERE facilityId = ?', [facility.id]);
-    const equipmentIds = (facilityEquipmentRes as any[]).map(fe => fe.equipmentId);
-
-    let equipmentRes: any[] = [];
-    if (equipmentIds.length > 0) {
-        const placeholders = equipmentIds.map(() => '?').join(',');
-        [equipmentRes] = await query(`SELECT * FROM rental_equipment WHERE id IN (${placeholders})`, equipmentIds);
-    }
+    // Fetch equipment for the facility
+    const [equipmentRes] = await query(`
+        SELECT re.* 
+        FROM rental_equipment re
+        JOIN facility_equipment fe ON re.id = fe.equipmentId
+        WHERE fe.facilityId = ?
+    `, [facility.id]);
     
     const sports = sportsRes as Sport[];
     facility.sports = sports;
@@ -80,9 +78,6 @@ async function enrichFacility(facility: Facility): Promise<void> {
     // JSON fields from the facility table itself need parsing
     if (typeof facility.blockedSlots === 'string') {
         try { facility.blockedSlots = JSON.parse(facility.blockedSlots); } catch { facility.blockedSlots = []; }
-    }
-    if (typeof facility.maintenanceSchedules === 'string') {
-       try { facility.maintenanceSchedules = JSON.parse(facility.maintenanceSchedules); } catch { facility.maintenanceSchedules = []; }
     }
 }
 
@@ -329,6 +324,7 @@ export async function dbAddFacility(facilityData: any): Promise<Facility> {
         ownerId: mainData.ownerId,
         status: mainData.status || 'Active',
         rating: 4.5, // Default rating
+        blockedSlots: JSON.stringify(mainData.blockedSlots || []),
     };
 
     const columns = Object.keys(facilityToInsert).map(k => `\`${k}\``).join(', ');
@@ -377,6 +373,7 @@ export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
         dataAiHint: mainData.imageDataAiHint,
         ownerId: mainData.ownerId,
         status: mainData.status,
+        blockedSlots: JSON.stringify(mainData.blockedSlots || []),
     };
 
     const setClauses = Object.keys(facilityToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
