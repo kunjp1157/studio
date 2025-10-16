@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -116,8 +117,15 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-bold mb-4 font-headline">Featured Facility</h2>
             {featuredFacility ? (
                 <Link href={`/facilities/${featuredFacility.id}`}>
-                    <Card className="group overflow-hidden relative shadow-lg hover:shadow-xl transition-all duration-300">
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"/>
+                    <Card className="group overflow-hidden relative shadow-lg hover:shadow-xl transition-all duration-300 aspect-video rounded-2xl">
+                         <Image
+                            src={`https://picsum.photos/seed/${featuredFacility.id}/1200/675`}
+                            alt={featuredFacility.name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            data-ai-hint={featuredFacility.dataAiHint || 'sports facility'}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"/>
                         <CardHeader className="absolute bottom-0 left-0 p-6 text-white">
                             <CardTitle className="text-3xl font-headline group-hover:text-primary transition-colors">{featuredFacility.name}</CardTitle>
                             <CardDescription className="text-white/80 flex items-center mt-1">
