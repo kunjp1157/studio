@@ -1,3 +1,5 @@
+
+
 --
 -- Database: `sports_arena`
 --
@@ -169,7 +171,7 @@ CREATE TABLE `facilities` (
   `capacity` int(11) DEFAULT 0,
   `isPopular` tinyint(1) DEFAULT 0,
   `isIndoor` tinyint(1) DEFAULT 0,
-  `imageUrl` TEXT DEFAULT NULL,
+  `imageUrl` text DEFAULT NULL,
   `dataAiHint` varchar(255) DEFAULT NULL,
   `ownerId` varchar(255) DEFAULT NULL,
   `blockedSlots` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
@@ -180,15 +182,15 @@ CREATE TABLE `facilities` (
 -- Dumping data for table `facilities`
 --
 
-INSERT INTO `facilities` (`id`, `name`, `type`, `address`, `city`, `location`, `description`, `rating`, `capacity`, `isPopular`, `isIndoor`, `dataAiHint`, `ownerId`, `blockedSlots`, `status`) VALUES
-('facility-pune-01', 'Pune Nets Arena', 'Box Cricket', 'Viman Nagar, Pune', 'Pune', 'Viman Nagar', 'State-of-the-art box cricket facility with electronic scoring and night lights.', 4.8, 15, 1, 1, 'box cricket night', 'user-bob', '[]', 'Active'),
-('facility-pune-02', 'Serve & Volley Pune', 'Court', 'Koregaon Park, Pune', 'Pune', 'Koregaon Park', 'Professional tennis courts with clay and hard surfaces. Coaching available.', 4.5, 4, 0, 0, 'tennis court day', 'user-bob', '[]', 'Active'),
-('facility-mumbai-02', 'Mumbai Smash Court', 'Court', 'Andheri, Mumbai', 'Mumbai', 'Andheri', 'Premier badminton courts with wooden flooring and excellent lighting.', 4.7, 6, 1, 1, 'badminton court indoor', NULL, '[]', 'Active'),
-('facility-delhi-03', 'Delhi Goals', 'Field', 'Saket, New Delhi', 'Delhi', 'Saket', 'A 5-a-side football turf with premium artificial grass.', 4.6, 20, 1, 0, 'football turf kids', NULL, '[]', 'Active'),
-('facility-pune-master', 'Pune Mega Sports Complex', 'Complex', 'Baner, Pune', 'Pune', 'Baner', 'A multi-sport complex offering cricket, football, and swimming facilities.', 4.9, 200, 1, 0, 'sports complex aerial', 'user-bob', '[]', 'Active'),
-('facility-mumbai-master', 'Mumbai Arena Complex', 'Complex', 'Bandra, Mumbai', 'Mumbai', 'Bandra', 'The biggest sports complex in Mumbai with facilities for all major sports.', 4.8, 500, 1, 1, 'large stadium indoor', NULL, '[]', 'Active'),
-('facility-jaipur-01', 'Pink City Racquets', 'Court', 'C-Scheme, Jaipur', 'Jaipur', 'C-Scheme', 'Centrally located badminton and squash courts.', 4.5, 20, 0, 1, 'badminton court', NULL, '[]', 'Active'),
-('facility-jaipur-master', 'Rajwada Sports Hub', 'Complex', 'Mansarovar, Jaipur', 'Jaipur', 'Mansarovar', 'A modern sports hub with cricket nets, football turf, and a swimming pool.', 4.7, 150, 1, 0, 'sports complex modern', NULL, '[]', 'Active');
+INSERT INTO `facilities` (`id`, `name`, `type`, `address`, `city`, `location`, `description`, `rating`, `capacity`, `isPopular`, `isIndoor`, `imageUrl`, `dataAiHint`, `ownerId`, `blockedSlots`, `status`) VALUES
+('facility-pune-01', 'Pune Nets Arena', 'Box Cricket', 'Viman Nagar, Pune', 'Pune', 'Viman Nagar', 'State-of-the-art box cricket facility with electronic scoring and night lights.', 4.8, 15, 1, 1, 'https://picsum.photos/seed/facility-pune-01/400/300', 'box cricket night', 'user-bob', '[]', 'Active'),
+('facility-pune-02', 'Serve & Volley Pune', 'Court', 'Koregaon Park, Pune', 'Pune', 'Koregaon Park', 'Professional tennis courts with clay and hard surfaces. Coaching available.', 4.5, 4, 0, 0, 'https://picsum.photos/seed/facility-pune-02/400/300', 'tennis court day', 'user-bob', '[]', 'Active'),
+('facility-mumbai-02', 'Mumbai Smash Court', 'Court', 'Andheri, Mumbai', 'Mumbai', 'Andheri', 'Premier badminton courts with wooden flooring and excellent lighting.', 4.7, 6, 1, 1, 'https://picsum.photos/seed/facility-mumbai-02/400/300', 'badminton court indoor', NULL, '[]', 'Active'),
+('facility-delhi-03', 'Delhi Goals', 'Field', 'Saket, New Delhi', 'Delhi', 'Saket', 'A 5-a-side football turf with premium artificial grass.', 4.6, 20, 1, 0, 'https://picsum.photos/seed/facility-delhi-03/400/300', 'football turf kids', NULL, '[]', 'Active'),
+('facility-pune-master', 'Pune Mega Sports Complex', 'Complex', 'Baner, Pune', 'Pune', 'Baner', 'A multi-sport complex offering cricket, football, and swimming facilities.', 4.9, 200, 1, 0, 'https://picsum.photos/seed/facility-pune-master/400/300', 'sports complex aerial', 'user-bob', '[]', 'Active'),
+('facility-mumbai-master', 'Mumbai Arena Complex', 'Complex', 'Bandra, Mumbai', 'Mumbai', 'Bandra', 'The biggest sports complex in Mumbai with facilities for all major sports.', 4.8, 500, 1, 1, 'https://picsum.photos/seed/facility-mumbai-master/400/300', 'large stadium indoor', NULL, '[]', 'Active'),
+('facility-jaipur-01', 'Pink City Racquets', 'Court', 'C-Scheme, Jaipur', 'Jaipur', 'C-Scheme', 'Centrally located badminton and squash courts.', 4.5, 20, 0, 1, 'https://picsum.photos/seed/facility-jaipur-01/400/300', 'badminton court', NULL, '[]', 'Active'),
+('facility-jaipur-master', 'Rajwada Sports Hub', 'Complex', 'Mansarovar, Jaipur', 'Jaipur', 'Mansarovar', 'A modern sports hub with cricket nets, football turf, and a swimming pool.', 4.7, 150, 1, 0, 'https://picsum.photos/seed/facility-jaipur-master/400/300', 'sports complex modern', NULL, '[]', 'Active');
 
 -- --------------------------------------------------------
 
@@ -845,3 +847,4 @@ ALTER TABLE `reviews`
 ALTER TABLE `teams`
   ADD CONSTRAINT `teams_ibfk_1` FOREIGN KEY (`sportId`) REFERENCES `sports` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `teams_ibfk_2` FOREIGN KEY (`captainId`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
