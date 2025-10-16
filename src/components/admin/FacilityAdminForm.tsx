@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,8 +18,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Save, ArrowLeft, Trash2, PlusCircle, Building2, Info, MapPin, DollarSign, ListChecks, Clock, Dices, ImageIcon } from 'lucide-react';
+import { Save, ArrowLeft, Trash2, PlusCircle, Building2, Info, MapPin, DollarSign, ListChecks, Clock, Dices, ImageIcon, UploadCloud } from 'lucide-react';
 import { getIconComponent } from '@/components/shared/Icon';
+import Image from 'next/image';
 
 const operatingHoursSchema = z.object({
   day: z.enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
@@ -44,7 +46,7 @@ const facilityFormSchema = z.object({
   isIndoor: z.boolean().default(false),
   isPopular: z.boolean().default(false),
   capacity: z.coerce.number().optional(),
-  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  imageUrl: z.string().optional().or(z.literal('')),
   imageDataAiHint: z.string().optional(),
   operatingHours: z.array(operatingHoursSchema).min(1, "Please define operating hours for at least one day."),
   sportPrices: z.array(sportPriceSchema).min(1, "Please set a price for at least one selected sport."),
@@ -67,6 +69,8 @@ export function FacilityAdminForm({ initialData, ownerId, onSubmitSuccess, curre
   const [isLoading, setIsLoading] = useState(false);
   const [allSports, setAllSports] = useState<Sport[]>([]);
   const [allAmenities, setAllAmenities] = useState<Amenity[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FacilityFormValues>({
     resolver: zodResolver(facilityFormSchema),
@@ -144,6 +148,23 @@ export function FacilityAdminForm({ initialData, ownerId, onSubmitSuccess, curre
             appendHour({ day, open: '08:00', close: '22:00' });
         }
     })
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+          toast({ title: 'File too large', description: 'Please select an image smaller than 5MB.', variant: 'destructive' });
+          return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImagePreview(result);
+        form.setValue('imageUrl', result, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
 
@@ -230,20 +251,32 @@ export function FacilityAdminForm({ initialData, ownerId, onSubmitSuccess, curre
                 </CardContent>
              </Card>
              <Card>
-                <CardHeader><CardTitle className="flex items-center"><ImageIcon className="mr-2 h-5 w-5 text-primary" />Image Details</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="flex items-center"><ImageIcon className="mr-2 h-5 w-5 text-primary" />Facility Image</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                     <FormField control={form.control} name="imageUrl" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Image URL (Optional)</FormLabel>
-                            <FormControl><Input placeholder="https://example.com/image.jpg" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                     )} />
-                      <FormField control={form.control} name="imageDataAiHint" render={({ field }) => (
+                    <div className="w-full aspect-video relative bg-muted rounded-md overflow-hidden flex items-center justify-center">
+                      {imagePreview ? (
+                        <Image src={imagePreview} alt="Facility preview" fill className="object-cover" />
+                      ) : (
+                        <p className="text-muted-foreground">Image preview will appear here</p>
+                      )}
+                    </div>
+                    <Input
+                      id="image-upload"
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept="image/png, image/jpeg, image/gif, image/webp"
+                    />
+                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                      <UploadCloud className="mr-2 h-4 w-4" /> Upload Image
+                    </Button>
+                     <FormField control={form.control} name="imageDataAiHint" render={({ field }) => (
                         <FormItem>
                             <FormLabel>AI Hint for Image (Optional)</FormLabel>
                             <FormControl><Input placeholder="e.g., soccer stadium at night" {...field} /></FormControl>
-                            <FormDescription>Keywords if using a placeholder URL that needs AI generation guidance.</FormDescription>
                             <FormMessage />
                         </FormItem>
                      )} />
