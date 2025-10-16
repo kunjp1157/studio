@@ -302,10 +302,10 @@ export async function updateSiteSettings(newSettings: SiteSettings) {
 
 export async function dbAddFacility(facilityData: any): Promise<Facility> {
     noStore();
-    const { sports, amenities, sportPrices, operatingHours, availableEquipment, blockedSlots, ...mainData } = facilityData;
+    const { sports, amenities, sportPrices, operatingHours, availableEquipment, ...mainData } = facilityData;
     
     // Convert arrays to JSON strings for storage
-    mainData.blockedSlots = JSON.stringify(blockedSlots || []);
+    mainData.blockedSlots = JSON.stringify(mainData.blockedSlots || []);
 
     const columns = Object.keys(mainData).map(k => `\`${k}\``).join(', ');
     const values = Object.values(mainData);
@@ -338,7 +338,7 @@ export async function dbAddFacility(facilityData: any): Promise<Facility> {
     }
      if (availableEquipment) {
         for (const eq of availableEquipment) {
-             const [eqResult] = await query('INSERT INTO rental_equipment (name, description, pricePerItem, priceType, stock) VALUES (?, ?, ?, ?, ?)', [eq.name, eq.description, eq.pricePerItem, eq.priceType, eq.stock]);
+             const [eqResult] = await query('INSERT INTO rental_equipment (name, description, pricePerItem, priceType, stock, sportIds) VALUES (?, ?, ?, ?, ?, ?)', [eq.name, eq.description, eq.pricePerItem, eq.priceType, eq.stock, JSON.stringify(eq.sportIds)]);
              const eqId = (eqResult as any).insertId;
              await query('INSERT INTO facility_equipment (facilityId, equipmentId) VALUES (?, ?)', [newId, eqId]);
         }
@@ -349,10 +349,10 @@ export async function dbAddFacility(facilityData: any): Promise<Facility> {
 
 export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
     noStore();
-    const { id, sports, amenities, sportPrices, operatingHours, availableEquipment, blockedSlots, ...mainData } = facilityData;
+    const { id, sports, amenities, sportPrices, operatingHours, availableEquipment, ...mainData } = facilityData;
     
     // Convert arrays to JSON strings for storage
-    mainData.blockedSlots = JSON.stringify(blockedSlots || []);
+    mainData.blockedSlots = JSON.stringify(mainData.blockedSlots || []);
     
     const setClauses = Object.keys(mainData).map((k) => `\`${k}\` = ?`).join(', ');
     const values = [...Object.values(mainData), id];
@@ -402,9 +402,9 @@ export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
     if (availableEquipment) {
         for (const eq of availableEquipment) {
             if (eq.id && existingEqIds.includes(eq.id)) { // Update
-                await query('UPDATE rental_equipment SET name=?, description=?, pricePerItem=?, priceType=?, stock=? WHERE id=?', [eq.name, eq.description, eq.pricePerItem, eq.priceType, eq.stock, eq.id]);
+                await query('UPDATE rental_equipment SET name=?, description=?, pricePerItem=?, priceType=?, stock=?, sportIds=? WHERE id=?', [eq.name, eq.description, eq.pricePerItem, eq.priceType, eq.stock, JSON.stringify(eq.sportIds), eq.id]);
             } else { // Insert
-                const [eqResult] = await query('INSERT INTO rental_equipment (name, description, pricePerItem, priceType, stock) VALUES (?, ?, ?, ?, ?)', [eq.name, eq.description, eq.pricePerItem, eq.priceType, eq.stock]);
+                const [eqResult] = await query('INSERT INTO rental_equipment (name, description, pricePerItem, priceType, stock, sportIds) VALUES (?, ?, ?, ?, ?, ?)', [eq.name, eq.description, eq.pricePerItem, eq.priceType, eq.stock, JSON.stringify(eq.sportIds)]);
                 const eqId = (eqResult as any).insertId;
                 await query('INSERT INTO facility_equipment (facilityId, equipmentId) VALUES (?, ?)', [id, eqId]);
             }
@@ -676,7 +676,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;
