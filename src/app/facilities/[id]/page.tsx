@@ -15,7 +15,7 @@ import { ReviewItem } from '@/components/reviews/ReviewItem';
 import { useToast } from '@/hooks/use-toast';
 import { cn, calculateDynamicPrice } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
-import { format, parseISO, startOfDay, differenceInHours, parse } from 'date-fns';
+import { format, parseISO, startOfDay, differenceInHours, parse, isValid } from 'date-fns';
 import {
   MapPin, CalendarDays, Clock, Users, SunMoon, DollarSign, Sparkles, Heart,
   ThumbsUp, ThumbsDown, PackageSearch, Minus, Plus, List, AlertCircle
@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
+import Image from 'next/image';
 
 
 export default function FacilityDetailPage() {
@@ -319,8 +320,15 @@ export default function FacilityDetailPage() {
       <div className="grid lg:grid-cols-3 gap-8 mt-8">
         <div className="lg:col-span-2 space-y-6">
           <Card className="overflow-hidden shadow-lg">
-             <div className="w-full h-auto object-cover bg-muted/50 aspect-video flex items-center justify-center">
-                 <p className="text-muted-foreground">Image removed</p>
+             <div className="w-full h-auto object-cover bg-muted/50 aspect-video flex items-center justify-center relative">
+                 <Image
+                    src={`https://picsum.photos/seed/${facility.id}/1200/675`}
+                    alt={facility.name}
+                    fill
+                    className="object-cover"
+                    data-ai-hint={facility.dataAiHint || 'sports facility'}
+                    priority
+                />
              </div>
           </Card>
 

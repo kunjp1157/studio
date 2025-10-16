@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getIconComponent } from '@/components/shared/Icon';
 import { toggleFavoriteFacilityAction } from '@/app/actions';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
+import Image from 'next/image';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -93,65 +94,67 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
       "flex flex-col h-full overflow-hidden rounded-xl",
       "shadow-lg hover:shadow-2xl hover:shadow-primary/20",
       "transition-all duration-500 ease-in-out group preserve-3d",
-      "animate-float-3d hover:!animate-none",
-      "hover:[transform:rotateX(10deg)_translateY(-10px)_scale(1.05)]",
       "bg-secondary/20 border-border/20 hover:border-primary/50"
     )}>
-      <CardContent className="p-4 flex-grow relative">
-        <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-background/70 p-1 backdrop-blur-sm transition-all duration-300 hover:bg-background/90 group-hover:scale-110"
-            onClick={handleFavoriteClick}
-            aria-label="Add to favorites"
-            disabled={isFavoriteLoading}
-        >
-            {isFavoriteLoading ? <LoadingSpinner size={16} /> : <Heart className={cn(
-                "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
-                isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
-            )} />}
-        </Button>
-        <div className="flex justify-between items-start">
-            <CardTitle className="text-xl font-headline mb-1.5 truncate pr-8">{facility.name}</CardTitle>
-             <div className="flex flex-col items-end shrink-0">
-                {facility.isPopular && (
-                    <Badge variant="default" className="mb-1 bg-primary text-primary-foreground shadow-md transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">Popular</Badge>
-                )}
+        <CardContent className="p-0 relative">
+            <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-background/70 p-1 backdrop-blur-sm transition-all duration-300 hover:bg-background/90 group-hover:scale-110"
+                onClick={handleFavoriteClick}
+                aria-label="Add to favorites"
+                disabled={isFavoriteLoading}
+            >
+                {isFavoriteLoading ? <LoadingSpinner size={16} /> : <Heart className={cn(
+                    "h-5 w-5 text-destructive transition-all duration-300 ease-in-out",
+                    isFavorited ? "fill-destructive animate-pop" : "fill-transparent"
+                )} />}
+            </Button>
+            <div className="aspect-video w-full overflow-hidden">
+                <Image
+                    src={`https://picsum.photos/seed/${facility.id}/400/225`}
+                    alt={facility.name}
+                    width={400}
+                    height={225}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    data-ai-hint={facility.dataAiHint || 'sports facility'}
+                />
+            </div>
+        </CardContent>
+        <div className="p-4 flex-grow flex flex-col">
+            <div className="flex justify-between items-start">
+                <CardTitle className="text-xl font-headline mb-1.5 truncate pr-8">{facility.name}</CardTitle>
+                <div className="flex flex-col items-end shrink-0">
+                    {facility.isPopular && (
+                        <Badge variant="default" className="mb-1 bg-primary text-primary-foreground shadow-md transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">Popular</Badge>
+                    )}
+                </div>
+            </div>
+        
+            <div className="text-sm text-muted-foreground mb-1 flex items-center">
+            <SportIcon className="w-4 h-4 mr-1.5 text-primary" />
+            {facility.type} - {facility.sports.map(s => s.name).join(', ')}
+            </div>
+            <div className="text-sm text-muted-foreground mb-2.5 flex items-center">
+            <MapPin className="w-4 h-4 mr-1.5 text-primary" />
+            {facility.location}
+            </div>
+
+            <div className="flex items-center justify-between text-sm mb-2">
+            <div className="flex items-center">
+                <StarDisplay rating={ratingValue} starSize={16} />
+                <span className="ml-1.5 text-muted-foreground">({ratingValue.toFixed(1)})</span>
+            </div>
+            <div className="flex items-center text-muted-foreground">
+                <MessageSquare className="w-4 h-4 mr-1" />
+                <span>{reviewCount} review{reviewCount !== 1 ? 's' : ''}</span>
+            </div>
+            </div>
+            <div className="flex items-center text-base font-medium mb-3">
+            <span>From {currency ? formatCurrency(minPrice, currency) : <Skeleton className="h-5 w-20 inline-block" />}</span>
+            <span className='ml-1'>/hr</span>
             </div>
         </div>
-       
-        <div className="text-sm text-muted-foreground mb-1 flex items-center">
-          <SportIcon className="w-4 h-4 mr-1.5 text-primary" />
-          {facility.type} - {facility.sports.map(s => s.name).join(', ')}
-        </div>
-        <div className="text-sm text-muted-foreground mb-2.5 flex items-center">
-          <MapPin className="w-4 h-4 mr-1.5 text-primary" />
-          {facility.location}
-        </div>
-
-        <div className="flex items-center justify-between text-sm mb-2">
-          <div className="flex items-center">
-            <StarDisplay rating={ratingValue} starSize={16} />
-            <span className="ml-1.5 text-muted-foreground">({ratingValue.toFixed(1)})</span>
-          </div>
-          <div className="flex items-center text-muted-foreground">
-            <MessageSquare className="w-4 h-4 mr-1" />
-            <span>{reviewCount} review{reviewCount !== 1 ? 's' : ''}</span>
-          </div>
-        </div>
-        <div className="flex items-center text-base font-medium mb-3">
-          <span>From {currency ? formatCurrency(minPrice, currency) : <Skeleton className="h-5 w-20 inline-block" />}</span>
-          <span className='ml-1'>/hr</span>
-        </div>
-
-        <div className="flex items-center text-xs">
-           <CalendarCheck2 className="w-3.5 h-3.5 mr-1.5 text-primary" />
-           <Badge variant={availabilityStatus.variant} className="py-0.5 px-1.5">
-            {availabilityStatus.text}
-          </Badge>
-        </div>
-
-      </CardContent>
       <CardFooter className="p-4 pt-2 mt-auto">
         <Link href={`/facilities/${facility.id}`} className="w-full">
           <Button className="w-full transition-transform duration-300" variant="default" aria-label={`View details for ${facility.name}`}>
