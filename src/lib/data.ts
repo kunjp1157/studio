@@ -54,12 +54,19 @@ async function enrichFacility(facility: Facility): Promise<void> {
     const [reviewsRes] = await query('SELECT r.*, u.name as userName, u.profilePictureUrl as userAvatar, u.isProfilePublic FROM reviews r JOIN users u ON r.userId = u.id WHERE r.facilityId = ? ORDER BY r.createdAt DESC', [facility.id]);
     const [equipmentRes] = await query('SELECT re.* FROM rental_equipment re JOIN facility_equipment fe ON re.id = fe.equipmentId WHERE fe.facilityId = ?', [facility.id]);
     
-    facility.sports = sportsRes as Sport[];
+    const sports = sportsRes as Sport[];
+    facility.sports = sports;
     facility.amenities = amenitiesRes as Amenity[];
     facility.operatingHours = hoursRes as FacilityOperatingHours[];
     facility.sportPrices = pricesRes as SportPrice[];
     facility.reviews = reviewsRes as Review[];
     facility.availableEquipment = equipmentRes as RentalEquipment[];
+    
+    // Assign dataAiHint from the first sport if not present
+    if (!facility.dataAiHint && sports.length > 0 && sports[0].imageDataAiHint) {
+        facility.dataAiHint = sports[0].imageDataAiHint;
+    }
+
 
     // JSON fields from the facility table itself need parsing
     if (typeof facility.blockedSlots === 'string') {
