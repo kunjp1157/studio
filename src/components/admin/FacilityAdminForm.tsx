@@ -21,6 +21,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Save, ArrowLeft, Trash2, PlusCircle, Building2, Info, MapPin, DollarSign, ListChecks, Clock, Dices, ImageIcon, UploadCloud } from 'lucide-react';
 import { getIconComponent } from '@/components/shared/Icon';
 import Image from 'next/image';
+import { Label } from '@/components/ui/label';
 
 const operatingHoursSchema = z.object({
   day: z.enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
