@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent that generates an image from a text prompt.
@@ -30,14 +31,10 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async ({ prompt }) => {
-    // IMPORTANT: ONLY the googleai/gemini-2.0-flash-preview-image-generation model is able to generate images. You MUST use exactly this model to generate images.
+    // Using a powerful text-to-image model
     const { media } = await ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        model: 'googleai/imagen-4.0-fast-generate-001',
         prompt,
-        config: {
-            // MUST provide both TEXT and IMAGE, IMAGE only won't work
-            responseModalities: ['TEXT', 'IMAGE'],
-        },
     });
 
     if (!media || !media.url) {
@@ -47,3 +44,5 @@ const generateImageFlow = ai.defineFlow(
     return { imageUrl: media.url };
   }
 );
+
+    
