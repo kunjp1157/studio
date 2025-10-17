@@ -452,6 +452,7 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
     noStore();
     const { currentPassword, ...dbUpdates } = updates;
 
+    // Only validate current password if a new password is being set
     if (dbUpdates.password) {
         if (!currentPassword) {
             throw new Error("Current password is required to set a new password.");
@@ -462,19 +463,21 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
         }
     }
 
-    const fieldsToUpdate: Record<string, any> = { ...dbUpdates };
-    const jsonFields: (keyof UserProfile)[] = ['favoriteFacilities', 'achievements', 'skillLevels', 'preferredSports'];
-
-    for (const field of jsonFields) {
-        if (field in fieldsToUpdate && fieldsToUpdate[field] !== undefined) {
-             if (typeof fieldsToUpdate[field] !== 'string') {
-                fieldsToUpdate[field] = JSON.stringify(fieldsToUpdate[field]);
+    // Prepare fields for update, ensuring JSON fields are stringified
+    const fieldsToUpdate: { [key: string]: any } = {};
+    for (const key in dbUpdates) {
+        if (Object.prototype.hasOwnProperty.call(dbUpdates, key)) {
+            const value = (dbUpdates as any)[key];
+            if (Array.isArray(value)) {
+                fieldsToUpdate[key] = JSON.stringify(value);
+            } else {
+                fieldsToUpdate[key] = value;
             }
         }
     }
     
     if (Object.keys(fieldsToUpdate).length === 0) {
-        return dbGetUserById(userId);
+        return dbGetUserById(userId); // Nothing to update
     }
 
     const setClauses = Object.keys(fieldsToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
@@ -671,7 +674,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;
