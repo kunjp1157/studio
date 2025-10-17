@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -102,7 +103,7 @@ export default function ProfilePage() {
         newPassword: '',
         confirmPassword: '',
       });
-      setImagePreview(null);
+      setImagePreview(userData.profilePictureUrl || null);
   };
 
   useEffect(() => {
@@ -221,7 +222,7 @@ export default function ProfilePage() {
             const parsedUser = parseUserJSONFields(updatedUser);
             sessionStorage.setItem('activeUser', JSON.stringify(parsedUser));
             window.dispatchEvent(new Event('userChanged'));
-            setIsEditing(false);
+            setIsEditing(false); // This was missing
             toast({
                 title: "Profile Updated",
                 description: "Your profile information has been successfully saved.",
