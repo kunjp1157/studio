@@ -222,7 +222,7 @@ export default function ProfilePage() {
             const parsedUser = parseUserJSONFields(updatedUser);
             sessionStorage.setItem('activeUser', JSON.stringify(parsedUser));
             window.dispatchEvent(new Event('userChanged'));
-            setIsEditing(false); // This was missing
+            setIsEditing(false);
             toast({
                 title: "Profile Updated",
                 description: "Your profile information has been successfully saved.",
@@ -610,3 +610,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
