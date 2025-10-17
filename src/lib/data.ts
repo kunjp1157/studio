@@ -358,7 +358,9 @@ export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
     if (mainData.description) facilityToUpdate.description = mainData.description;
     if (mainData.hasOwnProperty('isIndoor')) facilityToUpdate.isIndoor = mainData.isIndoor;
     if (mainData.hasOwnProperty('isPopular')) facilityToUpdate.isPopular = mainData.isPopular;
-    if (mainData.capacity) facilityToUpdate.capacity = mainData.capacity;
+    if (mainData.hasOwnProperty('capacity')) {
+        facilityToUpdate.capacity = isNaN(mainData.capacity) || mainData.capacity === '' ? null : mainData.capacity;
+    }
     if (mainData.imageUrl) facilityToUpdate.imageUrl = mainData.imageUrl;
     if (mainData.imageDataAiHint) facilityToUpdate.dataAiHint = mainData.imageDataAiHint;
     if (mainData.ownerId) facilityToUpdate.ownerId = mainData.ownerId;
@@ -449,7 +451,8 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
     noStore();
     const { currentPassword, ...dbUpdates } = updates;
 
-    if (dbUpdates.password) {
+    // Password validation logic
+    if (dbUpdates.password && dbUpdates.password.length > 0) {
         if (!currentPassword) {
             throw new Error("Current password is required to set a new password.");
         }
@@ -457,14 +460,19 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
         if (!currentUser || currentUser.password !== currentPassword) {
             throw new Error("Current password does not match.");
         }
+    } else {
+        // If new password is not provided or is empty, remove it from updates to avoid overwriting with empty value
+        delete dbUpdates.password;
     }
     
+    // Prepare fields for SQL query
     const fieldsToUpdate: Record<string, any> = {};
     for (const key in dbUpdates) {
         if (Object.prototype.hasOwnProperty.call(dbUpdates, key)) {
             const value = (dbUpdates as any)[key];
-            if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
-                fieldsToUpdate[key] = JSON.stringify(value);
+            // Stringify JSON fields before sending to DB
+            if (['favoriteFacilities', 'achievements', 'skillLevels', 'preferredSports'].includes(key)) {
+                fieldsToUpdate[key] = JSON.stringify(value || []);
             } else {
                 fieldsToUpdate[key] = value;
             }
@@ -472,7 +480,7 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
     }
     
     if (Object.keys(fieldsToUpdate).length === 0) {
-        return dbGetUserById(userId);
+        return dbGetUserById(userId); // No changes to apply
     }
 
     const setClauses = Object.keys(fieldsToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
@@ -669,7 +677,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;
