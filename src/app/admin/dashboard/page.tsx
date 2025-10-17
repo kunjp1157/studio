@@ -194,7 +194,7 @@ export default function AdminDashboardPage() {
         .slice(0, 10);
     
     const liveBookings = bookings.filter(b => {
-        const bookingDate = parseISO(b.date);
+        const bookingDate = new Date(b.date);
         if (!isSameDay(now, bookingDate)) return false;
         
         const [startHour, startMinute] = b.startTime.split(':').map(Number);
@@ -358,4 +358,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
