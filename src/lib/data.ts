@@ -454,7 +454,7 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
     const { currentPassword, ...dbUpdates } = updates;
 
     // Only validate password if a new password is being set
-    if (dbUpdates.password) {
+    if (dbUpdates.password && dbUpdates.password.length > 0) {
         if (!currentPassword) {
             throw new Error("Current password is required to set a new password.");
         }
@@ -462,22 +462,31 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
         if (!currentUser || currentUser.password !== currentPassword) {
             throw new Error("Current password does not match.");
         }
+    } else {
+        // If password is not being updated, remove it from the updates object
+        delete dbUpdates.password;
     }
     
-    // Stringify JSON fields if they are present in the update
-    if (dbUpdates.favoriteFacilities) (dbUpdates as any).favoriteFacilities = JSON.stringify(dbUpdates.favoriteFacilities);
-    if (dbUpdates.achievements) (dbUpdates as any).achievements = JSON.stringify(dbUpdates.achievements);
-    if (dbUpdates.skillLevels) (dbUpdates as any).skillLevels = JSON.stringify(dbUpdates.skillLevels);
-    if (dbUpdates.preferredSports) (dbUpdates as any).preferredSports = JSON.stringify(dbUpdates.preferredSports);
+    const fieldsToUpdate: Record<string, any> = { ...dbUpdates };
+    const jsonFields: (keyof UserProfile)[] = ['favoriteFacilities', 'achievements', 'skillLevels', 'preferredSports'];
+
+    for (const field of jsonFields) {
+        if (field in fieldsToUpdate && fieldsToUpdate[field] !== undefined) {
+             if (typeof fieldsToUpdate[field] !== 'string') {
+                fieldsToUpdate[field] = JSON.stringify(fieldsToUpdate[field]);
+            }
+        }
+    }
     
-    if (Object.keys(dbUpdates).length === 0) {
+    if (Object.keys(fieldsToUpdate).length === 0) {
         // No actual fields to update other than password logic checks
         return dbGetUserById(userId);
     }
 
-    const setClauses = Object.keys(dbUpdates).map((k) => `\`${k}\` = ?`).join(', ');
-    const values = [...Object.values(dbUpdates), userId];
+    const setClauses = Object.keys(fieldsToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
+    const values = [...Object.values(fieldsToUpdate), userId];
     await query(`UPDATE users SET ${setClauses} WHERE id = ?`, values);
+    
     return dbGetUserById(userId);
 }
 
@@ -667,7 +676,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;
@@ -790,11 +799,6 @@ export async function dbGetTeamById(id: string): Promise<Team | undefined> {
     }
     return team;
 }
-export async function getPricingRuleById(id: string): Promise<PricingRule | undefined> {
-    noStore();
-    const [rows] = await query('SELECT * FROM pricing_rules WHERE id = ?', [id]);
-    return (rows as PricingRule[])[0];
-}
 
 export async function getPromotionRuleByCode(code: string): Promise<PromotionRule | undefined> {
     noStore();
@@ -802,17 +806,6 @@ export async function getPromotionRuleByCode(code: string): Promise<PromotionRul
     return (rows as PromotionRule[])[0];
 }
 
-export async function getPromotionRuleById(id: string): Promise<PromotionRule | undefined> {
-    noStore();
-    const [rows] = await query('SELECT * FROM promotion_rules WHERE id = ?', [id]);
-    return (rows as PromotionRule[])[0];
-}
-
-export async function getSportById(id: string): Promise<Sport | undefined> {
-    noStore();
-    const [rows] = await query('SELECT * FROM sports WHERE id = ?', [id]);
-    return (rows as Sport[])[0];
-}
 
 export async function dbGetLfgRequestById(id: string): Promise<LfgRequest | undefined> { 
     noStore();
@@ -875,3 +868,22 @@ export async function updateEventAction(data: SportEvent): Promise<void> {
     noStore();
     return dbUpdateEvent(data);
 }
+
+export async function getPricingRuleById(id: string): Promise<PricingRule | undefined> {
+    noStore();
+    const [rows] = await query('SELECT * FROM pricing_rules WHERE id = ?', [id]);
+    return (rows as PricingRule[])[0];
+}
+
+export async function getPromotionRuleById(id: string): Promise<PromotionRule | undefined> {
+    noStore();
+    const [rows] = await query('SELECT * FROM promotion_rules WHERE id = ?', [id]);
+    return (rows as PromotionRule[])[0];
+}
+
+export async function getSportById(id: string): Promise<Sport | undefined> {
+    noStore();
+    const [rows] = await query('SELECT * FROM sports WHERE id = ?', [id]);
+    return (rows as Sport[])[0];
+}
+    
