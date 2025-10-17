@@ -506,33 +506,24 @@ export default function FacilityDetailPage() {
 
               <Card className="bg-muted/30">
                 <CardHeader className="p-3">
-                  <CardTitle className="text-base flex items-center"><List className="mr-2 h-4 w-4" /> Today's Bookings</CardTitle>
+                  <CardTitle className="text-base flex items-center"><List className="mr-2 h-4 w-4" />
+                    Bookings for {selectedDate ? format(selectedDate, 'MMM d') : 'the selected date'}
+                    {isSelectedDateToday && bookingsOnDate.length > 0 && (
+                        <AlertTitle className="ml-2 text-destructive font-semibold">(Booked Today)</AlertTitle>
+                    )}
+                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 pt-0 max-h-40 overflow-y-auto">
                     {isSlotsLoading ? <div className="flex justify-center"><LoadingSpinner size={24}/></div> : (
                       bookingsOnDate.length > 0 ? (
-                        isSelectedDateToday ? (
-                            <Alert variant="destructive">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Booked Today</AlertTitle>
-                                <AlertDescription>
-                                    <ul className="list-disc list-inside">
-                                        {bookingsOnDate.map(b => (
-                                            <li key={b.id}>{b.startTime} - {b.endTime}</li>
-                                        ))}
-                                    </ul>
-                                </AlertDescription>
-                            </Alert>
-                        ) : (
-                            <ul className="space-y-1">
-                            {bookingsOnDate.map(b => (
-                                <li key={b.id} className="text-sm text-muted-foreground p-1 rounded-md bg-background/50 flex justify-between">
-                                <span>{b.startTime} - {b.endTime}</span>
-                                <span className="font-semibold text-destructive">Booked</span>
-                                </li>
-                            ))}
-                            </ul>
-                        )
+                        <ul className="space-y-1">
+                          {bookingsOnDate.map(b => (
+                            <li key={b.id} className="text-sm text-muted-foreground p-1 rounded-md bg-background/50 flex justify-between">
+                              <span>{b.startTime} - {b.endTime}</span>
+                              <span className="font-semibold text-destructive">Booked</span>
+                            </li>
+                          ))}
+                        </ul>
                       ) : <p className="text-sm text-muted-foreground text-center">No bookings for this date yet.</p>
                     )}
                 </CardContent>
