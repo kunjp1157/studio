@@ -53,21 +53,12 @@ async function enrichFacility(facility: Facility): Promise<void> {
     const [pricesRes] = await query('SELECT sportId, price, pricingModel FROM facility_sport_prices WHERE facilityId = ?', [facility.id]);
     const [reviewsRes] = await query('SELECT r.*, u.name as userName, u.profilePictureUrl as userAvatar, u.isProfilePublic FROM reviews r JOIN users u ON r.userId = u.id WHERE r.facilityId = ? ORDER BY r.createdAt DESC', [facility.id]);
     
-    // Fetch equipment for the facility
-    const [equipmentRes] = await query(`
-        SELECT re.* 
-        FROM rental_equipment re
-        JOIN facility_equipment fe ON re.id = fe.equipmentId
-        WHERE fe.facilityId = ?
-    `, [facility.id]);
-    
     const sports = sportsRes as Sport[];
     facility.sports = sports;
     facility.amenities = amenitiesRes as Amenity[];
     facility.operatingHours = hoursRes as FacilityOperatingHours[];
     facility.sportPrices = pricesRes as SportPrice[];
     facility.reviews = reviewsRes as Review[];
-    facility.availableEquipment = equipmentRes as RentalEquipment[];
     
     // Assign dataAiHint from the first sport if not present
     if (!facility.dataAiHint && sports.length > 0 && sports[0].imageDataAiHint) {
@@ -310,6 +301,7 @@ export async function dbAddFacility(facilityData: any): Promise<Facility> {
 
     // Prepare main facility data
     const facilityToInsert = {
+        id: `facility-${mainData.city.toLowerCase().replace(' ', '-')}-${Date.now()}`,
         name: mainData.name,
         type: mainData.type,
         address: mainData.address,
@@ -331,8 +323,8 @@ export async function dbAddFacility(facilityData: any): Promise<Facility> {
     const values = Object.values(facilityToInsert);
     const valuePlaceholders = values.map(() => '?').join(', ');
     
-    const [result] = await query(`INSERT INTO facilities (${columns}) VALUES (${valuePlaceholders})`, values);
-    const newId = (result as any).insertId;
+    await query(`INSERT INTO facilities (${columns}) VALUES (${valuePlaceholders})`, values);
+    const newId = facilityToInsert.id;
 
     // Handle relationships
     if (sports && sports.length > 0) {
@@ -359,27 +351,27 @@ export async function dbUpdateFacility(facilityData: any): Promise<Facility> {
     noStore();
     const { id, sports, amenities, sportPrices, operatingHours, ...mainData } = facilityData;
 
-    const facilityToUpdate = {
-        name: mainData.name,
-        type: mainData.type,
-        address: mainData.address,
-        city: mainData.city,
-        location: mainData.location,
-        description: mainData.description,
-        isIndoor: mainData.isIndoor,
-        isPopular: mainData.isPopular,
-        capacity: mainData.capacity,
-        imageUrl: mainData.imageUrl,
-        dataAiHint: mainData.imageDataAiHint,
-        ownerId: mainData.ownerId,
-        status: mainData.status,
-        blockedSlots: JSON.stringify(mainData.blockedSlots || []),
-    };
+    const facilityToUpdate: Record<string, any> = {};
+    if (mainData.name) facilityToUpdate.name = mainData.name;
+    if (mainData.type) facilityToUpdate.type = mainData.type;
+    if (mainData.address) facilityToUpdate.address = mainData.address;
+    if (mainData.city) facilityToUpdate.city = mainData.city;
+    if (mainData.location) facilityToUpdate.location = mainData.location;
+    if (mainData.description) facilityToUpdate.description = mainData.description;
+    if (mainData.hasOwnProperty('isIndoor')) facilityToUpdate.isIndoor = mainData.isIndoor;
+    if (mainData.hasOwnProperty('isPopular')) facilityToUpdate.isPopular = mainData.isPopular;
+    if (mainData.capacity) facilityToUpdate.capacity = mainData.capacity;
+    if (mainData.imageUrl) facilityToUpdate.imageUrl = mainData.imageUrl;
+    if (mainData.imageDataAiHint) facilityToUpdate.dataAiHint = mainData.imageDataAiHint;
+    if (mainData.ownerId) facilityToUpdate.ownerId = mainData.ownerId;
+    if (mainData.status) facilityToUpdate.status = mainData.status;
+    if (mainData.blockedSlots) facilityToUpdate.blockedSlots = JSON.stringify(mainData.blockedSlots);
 
-    const setClauses = Object.keys(facilityToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
-    const values = [...Object.values(facilityToUpdate), id];
-    
-    await query(`UPDATE facilities SET ${setClauses} WHERE id = ?`, values);
+    if(Object.keys(facilityToUpdate).length > 0) {
+        const setClauses = Object.keys(facilityToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
+        const values = [...Object.values(facilityToUpdate), id];
+        await query(`UPDATE facilities SET ${setClauses} WHERE id = ?`, values);
+    }
 
     // Update relationships by deleting old and inserting new
     await query('DELETE FROM facility_sports WHERE facilityId = ?', [id]);
@@ -439,6 +431,7 @@ export async function dbAddUser(userData: Partial<Omit<UserProfile, 'id'>>): Pro
     noStore();
     const dataToInsert = {
         ...userData,
+        id: `user-${userData.name?.toLowerCase()}-${Date.now()}`,
         joinedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
         favoriteFacilities: JSON.stringify(userData.favoriteFacilities || []),
         achievements: JSON.stringify(userData.achievements || []),
@@ -449,8 +442,8 @@ export async function dbAddUser(userData: Partial<Omit<UserProfile, 'id'>>): Pro
     const values = Object.values(dataToInsert);
     const valuePlaceholders = values.map(() => '?').join(', ');
 
-    const [result] = await query(`INSERT INTO users (${columns}) VALUES (${valuePlaceholders})`, values);
-    const newId = (result as any).insertId;
+    await query(`INSERT INTO users (${columns}) VALUES (${valuePlaceholders})`, values);
+    const newId = dataToInsert.id;
     return (await dbGetUserById(newId.toString()))!;
 }
 
@@ -536,9 +529,9 @@ export async function dbRequestOwnerRole(userId: string, requestData: Omit<Owner
 
 export async function addSportAction(sportData: Omit<Sport, 'id'>): Promise<Sport> {
     noStore();
-    const [result] = await query('INSERT INTO sports (name, iconName, imageUrl, imageDataAiHint) VALUES (?, ?, ?, ?)', [sportData.name, sportData.iconName, sportData.imageUrl, sportData.imageDataAiHint]);
-    const newId = (result as any).insertId;
-    const [rows] = await query('SELECT * FROM sports WHERE id = ?', [newId]);
+    const id = `sport-${sportData.name.toLowerCase().replace(' ', '-')}`;
+    await query('INSERT INTO sports (id, name, iconName, imageUrl, imageDataAiHint) VALUES (?, ?, ?, ?, ?)', [id, sportData.name, sportData.iconName, sportData.imageUrl, sportData.imageDataAiHint]);
+    const [rows] = await query('SELECT * FROM sports WHERE id = ?', [id]);
     return (rows as Sport[])[0];
 }
 export async function dbUpdateSport(sportId: string, sportData: Partial<Sport>): Promise<Sport> {
@@ -556,11 +549,13 @@ export async function dbDeleteSport(sportId: string): Promise<void> {
 
 export async function addEventAction(data: Omit<SportEvent, 'id' | 'sport' | 'registeredParticipants'>): Promise<void> {
     noStore();
-    await query('INSERT INTO events (name, facilityId, sportId, startDate, endDate, description, entryFee, maxParticipants) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [data.name, data.facilityId, data.sportId, data.startDate, data.endDate, data.description, data.entryFee, data.maxParticipants]);
+    const facility = await dbGetFacilityById(data.facilityId);
+    await query('INSERT INTO events (name, facilityId, facilityName, sportId, startDate, endDate, description, entryFee, maxParticipants) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [data.name, data.facilityId, facility?.name, data.sportId, data.startDate, data.endDate, data.description, data.entryFee, data.maxParticipants]);
 }
 export async function dbUpdateEvent(data: SportEvent): Promise<void> {
     noStore();
-    await query('UPDATE events SET name = ?, facilityId = ?, sportId = ?, startDate = ?, endDate = ?, description = ?, entryFee = ?, maxParticipants = ? WHERE id = ?', [data.name, data.facilityId, data.sport.id, data.startDate, data.endDate, data.description, data.entryFee, data.maxParticipants, data.id]);
+    const facility = await dbGetFacilityById(data.facilityId);
+    await query('UPDATE events SET name = ?, facilityId = ?, facilityName=?, sportId = ?, startDate = ?, endDate = ?, description = ?, entryFee = ?, maxParticipants = ? WHERE id = ?', [data.name, data.facilityId, facility?.name, data.sport.id, data.startDate, data.endDate, data.description, data.entryFee, data.maxParticipants, data.id]);
 }
 export async function dbDeleteEvent(id: string): Promise<void> {
     noStore();
@@ -795,11 +790,12 @@ export async function dbGetTeamById(id: string): Promise<Team | undefined> {
     }
     return team;
 }
-export async function getPricingRuleById(id: string): Promise<PricingRule | undefined> { 
+export async function getPricingRuleById(id: string): Promise<PricingRule | undefined> {
     noStore();
     const [rows] = await query('SELECT * FROM pricing_rules WHERE id = ?', [id]);
     return (rows as PricingRule[])[0];
 }
+
 export async function getPromotionRuleByCode(code: string): Promise<PromotionRule | undefined> {
     noStore();
     const [rows] = await query('SELECT * FROM promotion_rules WHERE code = ? AND isActive = true', [code]);
@@ -812,7 +808,7 @@ export async function getPromotionRuleById(id: string): Promise<PromotionRule | 
     return (rows as PromotionRule[])[0];
 }
 
-export async function dbGetSportById(id: string): Promise<Sport | undefined> { 
+export async function getSportById(id: string): Promise<Sport | undefined> {
     noStore();
     const [rows] = await query('SELECT * FROM sports WHERE id = ?', [id]);
     return (rows as Sport[])[0];
@@ -874,10 +870,7 @@ export async function getFacilitiesByIds(ids: string[]): Promise<Facility[]> {
     }
     return facilities;
 }
-export async function getSportById(id: string): Promise<Sport | undefined> {
-    noStore();
-    return dbGetSportById(id);
-}
+
 export async function updateEventAction(data: SportEvent): Promise<void> {
     noStore();
     return dbUpdateEvent(data);
