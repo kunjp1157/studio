@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -15,7 +16,7 @@ import { ReviewItem } from '@/components/reviews/ReviewItem';
 import { useToast } from '@/hooks/use-toast';
 import { cn, calculateDynamicPrice } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
-import { format, parseISO, startOfDay, differenceInHours, parse, isValid } from 'date-fns';
+import { format, parseISO, startOfDay, differenceInHours, parse, isValid, isToday } from 'date-fns';
 import {
   MapPin, CalendarDays, Clock, Users, SunMoon, DollarSign, Sparkles, Heart,
   ThumbsUp, ThumbsDown, PackageSearch, Minus, Plus, List, AlertCircle
@@ -28,7 +29,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
-import { Alert } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 
 
@@ -313,6 +314,7 @@ export default function FacilityDetailPage() {
   }
 
   const ratingValue = Number(facility.rating);
+  const isSelectedDateToday = selectedDate ? isToday(selectedDate) : false;
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -509,14 +511,28 @@ export default function FacilityDetailPage() {
                 <CardContent className="p-3 pt-0 max-h-40 overflow-y-auto">
                     {isSlotsLoading ? <div className="flex justify-center"><LoadingSpinner size={24}/></div> : (
                       bookingsOnDate.length > 0 ? (
-                        <ul className="space-y-1">
-                          {bookingsOnDate.map(b => (
-                            <li key={b.id} className="text-sm text-muted-foreground p-1 rounded-md bg-background/50 flex justify-between">
-                              <span>{b.startTime} - {b.endTime}</span>
-                              <span className="font-semibold text-destructive">Booked</span>
-                            </li>
-                          ))}
-                        </ul>
+                        isSelectedDateToday ? (
+                            <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Booked Today</AlertTitle>
+                                <AlertDescription>
+                                    <ul className="list-disc list-inside">
+                                        {bookingsOnDate.map(b => (
+                                            <li key={b.id}>{b.startTime} - {b.endTime}</li>
+                                        ))}
+                                    </ul>
+                                </AlertDescription>
+                            </Alert>
+                        ) : (
+                            <ul className="space-y-1">
+                            {bookingsOnDate.map(b => (
+                                <li key={b.id} className="text-sm text-muted-foreground p-1 rounded-md bg-background/50 flex justify-between">
+                                <span>{b.startTime} - {b.endTime}</span>
+                                <span className="font-semibold text-destructive">Booked</span>
+                                </li>
+                            ))}
+                            </ul>
+                        )
                       ) : <p className="text-sm text-muted-foreground text-center">No bookings for this date yet.</p>
                     )}
                 </CardContent>
