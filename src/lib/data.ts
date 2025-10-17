@@ -450,11 +450,9 @@ export async function dbAddUser(userData: Partial<Omit<UserProfile, 'id'>>): Pro
 
 export async function dbUpdateUser(userId: string, updates: Partial<UserProfile> & { currentPassword?: string }): Promise<UserProfile | undefined> {
     noStore();
-    
     const { currentPassword, ...dbUpdates } = updates;
 
-    // Only validate password if a new password is being set
-    if (dbUpdates.password && dbUpdates.password.length > 0) {
+    if (dbUpdates.password) {
         if (!currentPassword) {
             throw new Error("Current password is required to set a new password.");
         }
@@ -462,11 +460,8 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
         if (!currentUser || currentUser.password !== currentPassword) {
             throw new Error("Current password does not match.");
         }
-    } else {
-        // If password is not being updated, remove it from the updates object
-        delete dbUpdates.password;
     }
-    
+
     const fieldsToUpdate: Record<string, any> = { ...dbUpdates };
     const jsonFields: (keyof UserProfile)[] = ['favoriteFacilities', 'achievements', 'skillLevels', 'preferredSports'];
 
@@ -479,12 +474,12 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
     }
     
     if (Object.keys(fieldsToUpdate).length === 0) {
-        // No actual fields to update other than password logic checks
         return dbGetUserById(userId);
     }
 
     const setClauses = Object.keys(fieldsToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
     const values = [...Object.values(fieldsToUpdate), userId];
+    
     await query(`UPDATE users SET ${setClauses} WHERE id = ?`, values);
     
     return dbGetUserById(userId);
