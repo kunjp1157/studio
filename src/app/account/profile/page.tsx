@@ -1,10 +1,9 @@
-
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import * * as z from 'zod';
 
 import { PageTitle } from '@/components/shared/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -17,9 +16,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { updateUserAction, getAllSportsAction } from '@/app/actions';
-import type { UserProfile as UserProfileType, Sport, MembershipPlan, Achievement, UserSkill, SkillLevel } from '@/lib/types';
+import type { UserProfile as UserProfileType, Sport, SkillLevel } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, History, UserCircle, ClockIcon, Dumbbell, Shield, HandCoins, KeyRound } from 'lucide-react';
+import { UploadCloud, Save, Edit3, Mail, Phone, Heart, Award, Zap, Medal, Gem, Sparkles, ShieldCheck, UserCircle, Dumbbell, Shield, HandCoins, KeyRound } from 'lucide-react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -66,11 +65,11 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfileType | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const [allSports, setAllSports] = useState<Sport[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -78,20 +77,39 @@ export default function ProfilePage() {
 
   const form = useForm<ProfileFormValues>({
       resolver: zodResolver(profileSchema),
+      defaultValues: {
+        name: '',
+        email: '',
+        phone: '',
+        bio: '',
+        preferredPlayingTimes: '',
+        isProfilePublic: false,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      }
   });
 
-  const parseUserJSONFields = (user: UserProfileType): UserProfileType => {
-    const parsedUser = { ...user };
-    const fieldsToParse = ['skillLevels', 'achievements', 'favoriteFacilities', 'preferredSports'];
+  const parseUserJSONFields = (userObject: UserProfileType): UserProfileType => {
+    const parsedUser = { ...userObject };
+    const fieldsToParse: (keyof UserProfileType)[] = ['skillLevels', 'achievements', 'favoriteFacilities', 'preferredSports'];
+    
     for (const field of fieldsToParse) {
         if (typeof (parsedUser as any)[field] === 'string') {
-            try { (parsedUser as any)[field] = JSON.parse((parsedUser as any)[field]); } catch { (parsedUser as any)[field] = []; }
+            try {
+                (parsedUser as any)[field] = JSON.parse((parsedUser as any)[field]);
+            } catch {
+                (parsedUser as any)[field] = [];
+            }
+        }
+        if ((parsedUser as any)[field] === null || (parsedUser as any)[field] === undefined) {
+             (parsedUser as any)[field] = [];
         }
     }
     return parsedUser;
   };
-  
-  const resetFormWithUserData = (userData: UserProfileType) => {
+
+  const resetFormWithUserData = useCallback((userData: UserProfileType) => {
       form.reset({
         name: userData.name,
         email: userData.email,
@@ -104,39 +122,48 @@ export default function ProfilePage() {
         confirmPassword: '',
       });
       setImagePreview(userData.profilePictureUrl || null);
-  };
+  }, [form]);
 
-  useEffect(() => {
-    const activeUserStr = sessionStorage.getItem('activeUser');
-    if (activeUserStr) {
-        const userObject = JSON.parse(activeUserStr);
-        const parsedUser = parseUserJSONFields(userObject);
-        setUser(parsedUser);
-        resetFormWithUserData(parsedUser);
-    }
-    const fetchSports = async () => {
-        const sports = await getAllSportsAction();
-        setAllSports(sports);
-    };
-    fetchSports();
-    setIsLoading(false);
-  }, []);
-  
-  useEffect(() => {
-    const handleUserUpdate = () => {
+  const loadInitialData = useCallback(async () => {
+    setIsLoading(true);
+    try {
         const activeUserStr = sessionStorage.getItem('activeUser');
         if (activeUserStr) {
             const userObject = JSON.parse(activeUserStr);
             const parsedUser = parseUserJSONFields(userObject);
             setUser(parsedUser);
-            if (!isEditing) {
-              resetFormWithUserData(parsedUser);
-            }
+            resetFormWithUserData(parsedUser);
         }
-    };
-    window.addEventListener('userChanged', handleUserUpdate);
-    return () => window.removeEventListener('userChanged', handleUserUpdate);
-  }, [isEditing]);
+        const sports = await getAllSportsAction();
+        setAllSports(sports);
+    } catch(e) {
+        toast({ title: 'Error', description: 'Failed to load initial data.', variant: 'destructive'});
+    } finally {
+        setIsLoading(false);
+    }
+  }, [resetFormWithUserData, toast]);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+  
+  const handleUserSessionChange = useCallback(() => {
+    const activeUserStr = sessionStorage.getItem('activeUser');
+    if (activeUserStr) {
+        const userObject = JSON.parse(activeUserStr);
+        const parsedUser = parseUserJSONFields(userObject);
+        setUser(parsedUser);
+        if (!isEditing) {
+          resetFormWithUserData(parsedUser);
+        }
+    }
+  }, [isEditing, resetFormWithUserData]);
+
+  useEffect(() => {
+    window.addEventListener('userChanged', handleUserSessionChange);
+    return () => window.removeEventListener('userChanged', handleUserSessionChange);
+  }, [handleUserSessionChange]);
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -156,7 +183,7 @@ export default function ProfilePage() {
 
   const handlePreferredSportsChange = (sportId: string) => {
     if (!user) return;
-    const currentPreferredSports = user.preferredSports || [];
+    const currentPreferredSports = Array.isArray(user.preferredSports) ? user.preferredSports : [];
     const sport = allSports.find(s => s.id === sportId);
     if (!sport) return;
 
@@ -173,7 +200,7 @@ export default function ProfilePage() {
 
   const handleSkillLevelChange = (sportId: string, sportName: string, level: string) => {
     if (!user) return;
-    let currentSkills = [...(user.skillLevels || [])];
+    const currentSkills = Array.isArray(user.skillLevels) ? [...user.skillLevels] : [];
     const existingSkillIndex = currentSkills.findIndex(skill => skill.sportId === sportId);
 
     if (level === "Not Specified") {
@@ -181,7 +208,7 @@ export default function ProfilePage() {
         currentSkills.splice(existingSkillIndex, 1);
       }
     } else {
-      const newSkill: UserSkill = { sportId, sportName, level: level as SkillLevel };
+      const newSkill = { sportId, sportName, level: level as SkillLevel };
       if (existingSkillIndex !== -1) {
         currentSkills[existingSkillIndex] = newSkill;
       } else {
@@ -193,7 +220,7 @@ export default function ProfilePage() {
 
   const handleSubmit = async (data: ProfileFormValues) => {
     if(!user) return;
-    setIsLoading(true);
+    setIsSubmitting(true);
     
     try {
         const updates: Partial<UserProfileType> & { currentPassword?: string } = {
@@ -219,8 +246,7 @@ export default function ProfilePage() {
         const updatedUser = await updateUserAction(user.id, updates);
         
         if (updatedUser) {
-            const parsedUser = parseUserJSONFields(updatedUser);
-            sessionStorage.setItem('activeUser', JSON.stringify(parsedUser));
+            sessionStorage.setItem('activeUser', JSON.stringify(updatedUser));
             window.dispatchEvent(new Event('userChanged'));
             setIsEditing(false);
             toast({
@@ -235,9 +261,16 @@ export default function ProfilePage() {
           form.setError("currentPassword", { type: "manual", message: errorMessage });
         }
     } finally {
-        setIsLoading(false);
+        setIsSubmitting(false);
     }
   };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    if(user) {
+        resetFormWithUserData(user);
+    }
+  }
 
   if (isLoading) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
@@ -249,7 +282,6 @@ export default function ProfilePage() {
 
   const isOwnerOrAdmin = user.role === 'FacilityOwner' || user.role === 'Admin';
   const isRequestPending = user.status === 'PendingApproval';
-
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
@@ -456,7 +488,7 @@ export default function ProfilePage() {
                     <h3 className="text-xl font-semibold mb-4 font-headline flex items-center"><Shield className="mr-2 h-5 w-5 text-primary" /> Privacy & Security</h3>
                     <div className="flex items-center justify-between rounded-lg border p-4 bg-muted/30">
                         <div className="space-y-0.5">
-                            <FormField
+                             <FormField
                                 control={form.control}
                                 name="isProfilePublic"
                                 render={() => (
@@ -529,7 +561,6 @@ export default function ProfilePage() {
                         <p className="text-5xl font-bold text-primary">{user.loyaltyPoints || 0}</p>
                         <p className="text-muted-foreground mt-1">Points Earned</p>
                     </div>
-                    <Button variant="link" className="w-full mt-4 text-sm p-0">Learn how to earn & redeem points (Coming Soon)</Button>
                 </CardContent>
             </Card>
 
@@ -596,11 +627,11 @@ export default function ProfilePage() {
           
           {isEditing && (
               <div className="lg:col-span-3 flex justify-end space-x-3 pt-4 border-t sticky bottom-0 bg-background py-4">
-                <Button type="button" variant="outline" size="lg" onClick={() => { setIsEditing(false); if(user) resetFormWithUserData(user); }}>
+                <Button type="button" variant="outline" size="lg" onClick={handleCancelEdit}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading} size="lg">
-                  {isLoading ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
+                <Button type="submit" disabled={isSubmitting} size="lg">
+                  {isSubmitting ? <LoadingSpinner size={20} className="mr-2" /> : <Save className="mr-2 h-5 w-5" />}
                   Save Changes
                 </Button>
               </div>
@@ -610,5 +641,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

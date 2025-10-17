@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import type {
@@ -447,12 +445,10 @@ export async function dbAddUser(userData: Partial<Omit<UserProfile, 'id'>>): Pro
     return (await dbGetUserById(newId.toString()))!;
 }
 
-
 export async function dbUpdateUser(userId: string, updates: Partial<UserProfile> & { currentPassword?: string }): Promise<UserProfile | undefined> {
     noStore();
     const { currentPassword, ...dbUpdates } = updates;
 
-    // Only validate current password if a new password is being set
     if (dbUpdates.password) {
         if (!currentPassword) {
             throw new Error("Current password is required to set a new password.");
@@ -462,13 +458,12 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
             throw new Error("Current password does not match.");
         }
     }
-
-    // Prepare fields for update, ensuring JSON fields are stringified
-    const fieldsToUpdate: { [key: string]: any } = {};
+    
+    const fieldsToUpdate: Record<string, any> = {};
     for (const key in dbUpdates) {
         if (Object.prototype.hasOwnProperty.call(dbUpdates, key)) {
             const value = (dbUpdates as any)[key];
-            if (Array.isArray(value)) {
+            if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
                 fieldsToUpdate[key] = JSON.stringify(value);
             } else {
                 fieldsToUpdate[key] = value;
@@ -477,7 +472,7 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
     }
     
     if (Object.keys(fieldsToUpdate).length === 0) {
-        return dbGetUserById(userId); // Nothing to update
+        return dbGetUserById(userId);
     }
 
     const setClauses = Object.keys(fieldsToUpdate).map((k) => `\`${k}\` = ?`).join(', ');
