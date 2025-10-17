@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Sport, Amenity, Facility, FacilityOperatingHours, SportPrice, UserProfile } from '@/lib/types';
+import type { Sport, Amenity as AmenityType, Facility, FacilityOperatingHours, SportPrice, UserProfile } from '@/lib/types';
 import { addFacilityAction, updateFacilityAction } from '@/app/actions';
 import { getAllSportsAction, getAllAmenitiesAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
@@ -345,7 +345,7 @@ export function FacilityAdminForm({ initialData, ownerId, onSubmitSuccess, curre
                     <Button type="button" size="sm" variant="secondary" onClick={() => appendHour({ day: 'Mon', open: '08:00', close: '22:00'})}><PlusCircle className="mr-2 h-4 w-4" /> Add Day</Button>
                     <FormMessage>{form.formState.errors.operatingHours?.message}</FormMessage>
                 </CardContent>
-            </Card>
+             </Card>
              <Card>
                 <CardHeader><CardTitle className="flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary" />Amenities</CardTitle></CardHeader>
                 <CardContent>
@@ -353,14 +353,14 @@ export function FacilityAdminForm({ initialData, ownerId, onSubmitSuccess, curre
                       <FormItem>
                         <div className="grid grid-cols-2 gap-2">
                           {allAmenities.map(amenity => {
-                            const Icon = getIconComponent(amenity.iconName);
+                            const AmenityIcon = getIconComponent(amenity.iconName);
                             return (
                                <FormField key={amenity.id} control={form.control} name="amenities" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-2 space-y-0">
                                     <FormControl><Checkbox checked={field.value?.includes(amenity.id)} onCheckedChange={checked => {
                                     return checked ? field.onChange([...(field.value || []), amenity.id]) : field.onChange(field.value?.filter(id => id !== amenity.id))
                                     }} /></FormControl>
-                                    <FormLabel className="font-normal flex items-center gap-1.5"><Icon className="h-4 w-4 text-muted-foreground"/> {amenity.name}</FormLabel>
+                                    <FormLabel className="font-normal flex items-center gap-1.5">{AmenityIcon && <AmenityIcon className="h-4 w-4 text-muted-foreground"/>} {amenity.name}</FormLabel>
                                 </FormItem>
                                 )} />
                             )
