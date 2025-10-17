@@ -69,7 +69,7 @@ export function FacilityAdminForm({ initialData, ownerId, onSubmitSuccess, curre
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [allSports, setAllSports] = useState<Sport[]>([]);
-  const [allAmenities, setAllAmenities] = useState<Amenity[]>([]);
+  const [allAmenities, setAllAmenities] = useState<AmenityType[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
