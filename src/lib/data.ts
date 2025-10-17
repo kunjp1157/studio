@@ -451,18 +451,18 @@ export async function dbAddUser(userData: Partial<Omit<UserProfile, 'id'>>): Pro
 export async function dbUpdateUser(userId: string, updates: Partial<UserProfile> & { currentPassword?: string }): Promise<UserProfile | undefined> {
     noStore();
     
-    if (updates.password && updates.currentPassword) {
+    const { currentPassword, ...dbUpdates } = updates;
+
+    // Only validate password if a new password is being set
+    if (dbUpdates.password) {
+        if (!currentPassword) {
+            throw new Error("Current password is required to set a new password.");
+        }
         const currentUser = await dbGetUserById(userId);
-        if (!currentUser || currentUser.password !== updates.currentPassword) {
+        if (!currentUser || currentUser.password !== currentPassword) {
             throw new Error("Current password does not match.");
         }
-    } else if (updates.password && !updates.currentPassword) {
-        // This case is for initial password setup or admin reset, but for profile update, current password is required.
-        // For profile page, the action should ensure currentPassword is provided.
     }
-
-    // Remove `currentPassword` so it's not written to the DB
-    const { currentPassword, ...dbUpdates } = updates;
     
     // Stringify JSON fields if they are present in the update
     if (dbUpdates.favoriteFacilities) (dbUpdates as any).favoriteFacilities = JSON.stringify(dbUpdates.favoriteFacilities);
