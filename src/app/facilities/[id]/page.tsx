@@ -16,7 +16,7 @@ import { ReviewItem } from '@/components/reviews/ReviewItem';
 import { useToast } from '@/hooks/use-toast';
 import { cn, calculateDynamicPrice } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
-import { format, parseISO, startOfDay, differenceInHours, parse, isValid, isToday } from 'date-fns';
+import { format, parseISO, startOfDay, differenceInMinutes, parse, isValid, isToday } from 'date-fns';
 import {
   MapPin, CalendarDays, Clock, Users, SunMoon, DollarSign, Sparkles, Heart,
   ThumbsUp, ThumbsDown, PackageSearch, Minus, Plus, List, AlertCircle
@@ -127,8 +127,10 @@ export default function FacilityDetailPage() {
         const start = parse(startTime, 'HH:mm', new Date());
         const end = parse(endTime, 'HH:mm', new Date());
         if (isValid(start) && isValid(end) && end > start) {
-           const diff = differenceInHours(end, start);
-           return diff > 0 ? diff : 1; // Minimum 1 hour charge even for less than 1 hour booking
+           const diffInMinutes = differenceInMinutes(end, start);
+           const diffInHours = diffInMinutes / 60;
+           // Minimum 1 hour charge even for less than 1 hour booking, but allow fractional hours above 1.
+           return diffInHours > 1 ? diffInHours : 1; 
         }
       } catch (error) {
           return 1;
@@ -506,12 +508,13 @@ export default function FacilityDetailPage() {
 
               <Card className="bg-muted/30">
                 <CardHeader className="p-3">
-                  <CardTitle className="text-base flex items-center"><List className="mr-2 h-4 w-4" />
+                  <CardTitle className="text-base flex items-center">
+                    <List className="mr-2 h-4 w-4" />
                     Bookings for {selectedDate ? format(selectedDate, 'MMM d') : 'the selected date'}
-                    {isSelectedDateToday && bookingsOnDate.length > 0 && (
-                        <AlertTitle className="ml-2 text-destructive font-semibold">(Booked Today)</AlertTitle>
+                  </CardTitle>
+                   {isSelectedDateToday && bookingsOnDate.length > 0 && (
+                        <AlertTitle className="text-destructive font-semibold">(Booked Today)</AlertTitle>
                     )}
-                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 pt-0 max-h-40 overflow-y-auto">
                     {isSlotsLoading ? <div className="flex justify-center"><LoadingSpinner size={24}/></div> : (
