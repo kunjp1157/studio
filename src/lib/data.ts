@@ -1,12 +1,14 @@
+
 'use server';
 
 import type {
   Facility, Sport, Amenity, Review, Booking, UserProfile, SportEvent, MembershipPlan,
   PricingRule, PromotionRule, AppNotification, BlogPost, Team, LfgRequest, Challenge, SiteSettings,
-  FacilityOperatingHours, RentalEquipment, MaintenanceSchedule, SportPrice, OwnerVerificationRequest
+  FacilityOperatingHours, RentalEquipment, MaintenanceSchedule, SportPrice, OwnerVerificationRequest, TimeSlot
 } from './types';
 import { query } from './db';
 import { unstable_noStore as noStore } from 'next/cache';
+import { calculateDynamicPrice } from './utils';
 
 // Mock settings as we don't have a settings table
 let siteSettings: SiteSettings = {
@@ -37,7 +39,6 @@ let siteSettings: SiteSettings = {
         },
     ]
 };
-
 
 // ========== READ ==========
 
@@ -230,7 +231,7 @@ export async function dbGetBookingsByUserId(userId: string): Promise<Booking[]> 
 
 export async function dbGetBookingsForFacilityOnDate(facilityId: string, date: string): Promise<Booking[]> {
     noStore();
-    const [rows] = await query('SELECT * FROM bookings WHERE facilityId = ? AND date = ? AND status = ?', [facilityId, date, 'Confirmed']);
+    const [rows] = await query('SELECT * FROM bookings WHERE facilityId = ? AND date = ? AND status IN (?, ?)', [facilityId, date, 'Confirmed', 'Pending']);
     return rows as Booking[];
 }
 
@@ -771,7 +772,12 @@ export async function rejectOwnerRequestAction(requestId: number, userId: string
 export async function getEventById(id: string): Promise<SportEvent | undefined> { 
     noStore();
     const [rows] = await query('SELECT * FROM events WHERE id = ?', [id]);
-    return (rows as SportEvent[])[0];
+    const event = (rows as SportEvent[])[0];
+    if (event) {
+        const [sportRows] = await query('SELECT * FROM sports WHERE id = ?', [event.sportId]);
+        event.sport = (sportRows as Sport[])[0];
+    }
+    return event;
 }
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> { 
     noStore();
@@ -872,19 +878,20 @@ export async function updateEventAction(data: SportEvent): Promise<void> {
 
 export async function getPricingRuleById(id: string): Promise<PricingRule | undefined> {
     noStore();
-    const [rows] = await query('SELECT * FROM pricing_rules WHERE id = ?', [id]);
-    return (rows as PricingRule[])[0];
+    // This is a mock implementation. In a real app, you'd query the DB.
+    // The data is fetched in the page component instead.
+    return Promise.resolve(undefined);
 }
 
 export async function getPromotionRuleById(id: string): Promise<PromotionRule | undefined> {
     noStore();
-    const [rows] = await query('SELECT * FROM promotion_rules WHERE id = ?', [id]);
-    return (rows as PromotionRule[])[0];
+    // This is a mock implementation. 
+    return Promise.resolve(undefined);
 }
 
 export async function getSportById(id: string): Promise<Sport | undefined> {
     noStore();
-    const [rows] = await query('SELECT * FROM sports WHERE id = ?', [id]);
-    return (rows as Sport[])[0];
+    // This is a mock implementation.
+    return Promise.resolve(undefined);
 }
     

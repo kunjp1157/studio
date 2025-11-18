@@ -44,3 +44,4 @@ export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: D
     // Fallback to base price if duration is invalid
     return { finalPrice: basePricePerHour };
 };
+
