@@ -14,7 +14,7 @@ import { StarDisplay } from '@/components/shared/StarDisplay';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ReviewItem } from '@/components/reviews/ReviewItem';
 import { useToast } from '@/hooks/use-toast';
-import { cn, calculateDynamicPrice } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO, startOfDay, differenceInMinutes, parse, isValid, isToday } from 'date-fns';
 import {
@@ -552,4 +552,3 @@ export default function FacilityDetailPage() {
   );
 }
 
-    
