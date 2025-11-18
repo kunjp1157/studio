@@ -130,7 +130,7 @@ export default function FacilityDetailPage() {
            const diffInMinutes = differenceInMinutes(end, start);
            const diffInHours = diffInMinutes / 60;
            // Minimum 1 hour charge even for less than 1 hour booking, but allow fractional hours above 1.
-           return diffInHours > 1 ? diffInHours : 1; 
+           return diffInHours > 0 ? Math.max(1, diffInHours) : 1;
         }
       } catch (error) {
           return 1;
@@ -551,3 +551,5 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
+
+    
