@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type {
@@ -310,7 +311,6 @@ export async function dbAddFacility(facilityData: any): Promise<Facility> {
         isIndoor: mainData.isIndoor || false,
         isPopular: mainData.isPopular || false,
         capacity: mainData.capacity || null,
-        imageUrl: mainData.imageUrl,
         dataAiHint: mainData.imageDataAiHint,
         ownerId: mainData.ownerId,
         status: mainData.status || 'Active',
@@ -678,7 +678,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;
@@ -894,4 +894,6 @@ export async function getSportById(id: string): Promise<Sport | undefined> {
     // This is a mock implementation.
     return Promise.resolve(undefined);
 }
+    
+
     
