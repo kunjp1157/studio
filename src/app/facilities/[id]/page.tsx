@@ -1,6 +1,5 @@
 
 
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -16,7 +15,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ReviewItem } from '@/components/reviews/ReviewItem';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, calculateDynamicPrice } from '@/lib/utils';
 import { format, parseISO, startOfDay, differenceInMinutes, parse, isValid, isToday } from 'date-fns';
 import {
   MapPin, CalendarDays, Clock, Users, SunMoon, DollarSign, Sparkles, Heart,
@@ -32,7 +31,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
-import { calculateDynamicPrice } from '@/lib/utils';
 
 
 export default function FacilityDetailPage() {
@@ -91,14 +89,14 @@ export default function FacilityDetailPage() {
   }, [currentUser, facility]);
 
   const fetchBookings = useCallback(async () => {
-      if (facility && selectedDate) {
+      if (facility && selectedDate && selectedSport) {
           setIsSlotsLoading(true);
           const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-          const bookings = await getBookingsForFacilityOnDateAction(facility.id, formattedDate);
+          const bookings = await getBookingsForFacilityOnDateAction(facility.id, formattedDate, selectedSport.id);
           setBookingsOnDate(bookings.sort((a,b) => a.startTime.localeCompare(b.startTime)));
           setIsSlotsLoading(false);
       }
-  }, [facility, selectedDate]);
+  }, [facility, selectedDate, selectedSport]);
 
 
   useEffect(() => {

@@ -288,8 +288,8 @@ export async function getBookingsByUserIdAction(userId: string): Promise<Booking
     return await dbGetBookingsByUserId(userId);
 }
 
-export async function getBookingsForFacilityOnDateAction(facilityId: string, date: string): Promise<Booking[]> {
-    return await dbGetBookingsForFacilityOnDate(facilityId, date);
+export async function getBookingsForFacilityOnDateAction(facilityId: string, date: string, sportId: string): Promise<Booking[]> {
+    return await dbGetBookingsForFacilityOnDate(facilityId, date, sportId);
 }
 
 export async function blockTimeSlot(facilityId: string, ownerId: string, newBlock: BlockedSlot): Promise<boolean> {

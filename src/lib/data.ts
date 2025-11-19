@@ -1,6 +1,5 @@
 
 
-
 'use server';
 
 import type {
@@ -11,6 +10,7 @@ import type {
 import { query } from './db';
 import { unstable_noStore as noStore } from 'next/cache';
 import placeholderImages from './placeholder-images.json';
+import { calculateDynamicPrice as calculatePriceUtil } from './utils';
 
 // Mock settings as we don't have a settings table
 let siteSettings: SiteSettings = {
@@ -41,6 +41,7 @@ let siteSettings: SiteSettings = {
         },
     ]
 };
+
 
 // ========== READ ==========
 
@@ -231,9 +232,9 @@ export async function dbGetBookingsByUserId(userId: string): Promise<Booking[]> 
     return bookings;
 }
 
-export async function dbGetBookingsForFacilityOnDate(facilityId: string, date: string): Promise<Booking[]> {
+export async function dbGetBookingsForFacilityOnDate(facilityId: string, date: string, sportId: string): Promise<Booking[]> {
     noStore();
-    const [rows] = await query('SELECT * FROM bookings WHERE facilityId = ? AND date = ? AND status IN (?, ?)', [facilityId, date, 'Confirmed', 'Pending']);
+    const [rows] = await query('SELECT * FROM bookings WHERE facilityId = ? AND date = ? AND sportId = ? AND status IN (?, ?)', [facilityId, date, sportId, 'Confirmed', 'Pending']);
     return rows as Booking[];
 }
 
