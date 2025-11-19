@@ -31,6 +31,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
+import { calculateDynamicPrice } from '@/lib/utils';
 
 
 export default function FacilityDetailPage() {
@@ -369,7 +370,12 @@ export default function FacilityDetailPage() {
                     <ul className="grid grid-cols-2 gap-2 text-sm">
                         {facility.amenities.map(amenity => {
                             const Icon = getIconComponent(amenity.iconName);
-                            return <li key={amenity.id} className="flex items-center"><Icon className="h-4 w-4 mr-2 text-primary"/>{amenity.name}</li>
+                            return (
+                                <li key={amenity.id} className="flex items-center">
+                                    {Icon && <Icon className="h-4 w-4 mr-2 text-primary"/>}
+                                    {amenity.name}
+                                </li>
+                            )
                         })}
                     </ul>
                 </CardContent>
@@ -551,4 +557,3 @@ export default function FacilityDetailPage() {
     </div>
   );
 }
-
