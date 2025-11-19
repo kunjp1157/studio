@@ -42,7 +42,7 @@ export type PlanWeekendOutput = z.infer<typeof PlanWeekendOutputSchema>;
 // The main exported function that the UI will call
 export async function planWeekend(input: PlanWeekendInput): Promise<PlanWeekendOutput> {
   const facilities = await dbGetAllFacilities();
-  const settings = getSiteSettingsAction();
+  const settings = await getSiteSettingsAction();
 
   const facilityContext = facilities
     .map(f => {
