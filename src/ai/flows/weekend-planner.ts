@@ -10,7 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { dbGetAllFacilities, getSiteSettings } from '@/lib/data';
+import { dbGetAllFacilities, getSiteSettingsAction } from '@/lib/data';
 
 // Define Input Schema
 const PlanWeekendInputSchema = z.object({
@@ -42,7 +42,7 @@ export type PlanWeekendOutput = z.infer<typeof PlanWeekendOutputSchema>;
 // The main exported function that the UI will call
 export async function planWeekend(input: PlanWeekendInput): Promise<PlanWeekendOutput> {
   const facilities = await dbGetAllFacilities();
-  const settings = getSiteSettings();
+  const settings = getSiteSettingsAction();
 
   const facilityContext = facilities
     .map(f => {
