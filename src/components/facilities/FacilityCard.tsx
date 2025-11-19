@@ -112,7 +112,7 @@ export function FacilityCard({ facility, currency }: FacilityCardProps) {
             </Button>
             <div className="aspect-video w-full overflow-hidden">
                 <Image
-                    src={`https://picsum.photos/seed/${facility.id}/400/225`}
+                    src={facility.imageUrl || `https://picsum.photos/seed/${facility.id}/400/225`}
                     alt={facility.name}
                     width={400}
                     height={225}

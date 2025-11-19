@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -150,7 +151,7 @@ export default function DashboardPage() {
                     <Card className="group overflow-hidden relative shadow-lg hover:shadow-xl transition-all duration-300 aspect-video rounded-2xl">
                          <Image
                             key={currentFeaturedFacility.id}
-                            src={`https://picsum.photos/seed/${currentFeaturedFacility.id}/1200/675`}
+                            src={currentFeaturedFacility.imageUrl || `https://picsum.photos/seed/${currentFeaturedFacility.id}/1200/675`}
                             alt={currentFeaturedFacility.name}
                             fill
                             className="object-cover transition-transform duration-500 group-hover:scale-105 animate-fadeInUp"

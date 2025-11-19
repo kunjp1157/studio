@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import type {
@@ -9,7 +10,7 @@ import type {
 } from './types';
 import { query } from './db';
 import { unstable_noStore as noStore } from 'next/cache';
-import { calculateDynamicPrice } from './utils';
+import placeholderImages from './placeholder-images.json';
 
 // Mock settings as we don't have a settings table
 let siteSettings: SiteSettings = {
@@ -60,10 +61,10 @@ async function enrichFacility(facility: Facility): Promise<void> {
     facility.sportPrices = pricesRes as SportPrice[];
     facility.reviews = reviewsRes as Review[];
     
-    // Assign dataAiHint from the first sport if not present
-    if (!facility.dataAiHint && sports.length > 0 && sports[0].imageDataAiHint) {
-        facility.dataAiHint = sports[0].imageDataAiHint;
-    }
+    // Assign image URL and dataAiHint
+    const primarySportName = facility.sports[0]?.name.toLowerCase().replace(' ', '-');
+    facility.imageUrl = facility.imageUrl || (placeholderImages.sports as Record<string, string>)[primarySportName!] || placeholderImages.default;
+    facility.dataAiHint = facility.dataAiHint || primarySportName || 'sports facility';
 
 
     // JSON fields from the facility table itself need parsing
@@ -678,7 +679,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;

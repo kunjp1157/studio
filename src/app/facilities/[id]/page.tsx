@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -130,7 +131,6 @@ export default function FacilityDetailPage() {
         if (isValid(start) && isValid(end) && end > start) {
            const diffInMinutes = differenceInMinutes(end, start);
            const diffInHours = diffInMinutes / 60;
-           // Minimum 1 hour charge even for less than 1 hour booking, but allow fractional hours above 1.
            return diffInHours > 0 ? Math.max(1, diffInHours) : 1;
         }
       } catch (error) {
@@ -327,7 +327,7 @@ export default function FacilityDetailPage() {
           <Card className="overflow-hidden shadow-lg">
              <div className="w-full h-auto object-cover bg-muted/50 aspect-video flex items-center justify-center relative">
                  <Image
-                    src={`https://picsum.photos/seed/${facility.id}/1200/675`}
+                    src={facility.imageUrl || `https://picsum.photos/seed/${facility.id}/1200/675`}
                     alt={facility.name}
                     fill
                     className="object-cover"
@@ -375,7 +375,7 @@ export default function FacilityDetailPage() {
                                     {Icon && <Icon className="h-4 w-4 mr-2 text-primary"/>}
                                     {amenity.name}
                                 </li>
-                            )
+                            );
                         })}
                     </ul>
                 </CardContent>

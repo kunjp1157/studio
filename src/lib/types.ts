@@ -1,6 +1,7 @@
 
 
 
+
 export interface MaintenanceSchedule {
   id: string;
   taskName: string;
@@ -122,6 +123,7 @@ export interface Facility {
   capacity?: number;
   isPopular?: boolean;
   isIndoor?: boolean; 
+  imageUrl?: string;
   dataAiHint?: string; 
   availableEquipment?: RentalEquipment[];
   ownerId?: string;
