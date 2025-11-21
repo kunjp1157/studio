@@ -177,9 +177,9 @@ export default function EventDetailPage() {
                 <FeeIcon className="w-5 h-5 mr-3 text-primary mt-1 shrink-0" />
                 <div>
                   <p className="font-semibold">Entry Fee</p>
-                  <p className="text-muted-foreground">
+                  <div className="text-muted-foreground">
                     {event.entryFee !== undefined && currency ? (event.entryFee > 0 ? formatCurrency(event.entryFee, currency) : 'Free Entry') : <Skeleton className="h-5 w-20" />}
-                  </p>
+                  </div>
                 </div>
               </div>
             </div>
