@@ -235,3 +235,22 @@
   color: #c72c7d;
   text-decoration: underline;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-card, #receipt-card * {
+    visibility: visible;
+  }
+  #receipt-card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+  }
+}

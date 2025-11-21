@@ -1,8 +1,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import type { Booking, Facility, SiteSettings } from '@/lib/types';
 import { getBookingByIdAction, getFacilityByIdAction, getSiteSettingsAction } from '@/app/actions';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -38,10 +40,12 @@ export default function BookingReceiptPage() {
   const router = useRouter();
   const { toast } = useToast();
   const bookingId = params.id as string;
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   const [booking, setBooking] = useState<Booking | null | undefined>(undefined);
   const [facility, setFacility] = useState<Facility | null | undefined>(undefined);
   const [currency, setCurrency] = useState<SiteSettings['defaultCurrency'] | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -58,6 +62,35 @@ export default function BookingReceiptPage() {
     };
     fetchBookingData();
   }, [bookingId]);
+  
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownload = async () => {
+    if (!receiptRef.current) return;
+    setIsProcessing(true);
+    toast({ title: "Preparing Download...", description: "Your PDF is being generated." });
+    
+    try {
+        const canvas = await html2canvas(receiptRef.current, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`receipt-${bookingId}.pdf`);
+    } catch(error) {
+        console.error("Failed to generate PDF:", error);
+        toast({ title: "Error", description: "Could not generate PDF.", variant: "destructive" });
+    } finally {
+        setIsProcessing(false);
+    }
+  };
 
   if (booking === undefined || currency === null) {
     return <div className="container mx-auto py-12 px-4 md:px-6 flex justify-center items-center min-h-[calc(100vh-200px)]"><LoadingSpinner size={48} /></div>;
@@ -71,19 +104,21 @@ export default function BookingReceiptPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 max-w-2xl">
-      <Button variant="outline" onClick={() => router.push('/account/bookings')} className="mb-6">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Bookings
-      </Button>
+      <div id="print-hide">
+        <Button variant="outline" onClick={() => router.push('/account/bookings')} className="mb-6">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Bookings
+        </Button>
 
-      <Alert className="mb-8 border-green-500 bg-green-500/10 text-green-700 dark:text-green-400 [&>svg]:text-green-500">
-        <CheckCircle className="h-4 w-4" />
-        <AlertTitle className="font-bold">Booking Confirmed!</AlertTitle>
-        <AlertDescription>
-          Your booking is complete. You can show the QR code at the facility.
-        </AlertDescription>
-      </Alert>
+        <Alert className="mb-8 border-green-500 bg-green-500/10 text-green-700 dark:text-green-400 [&>svg]:text-green-500">
+            <CheckCircle className="h-4 w-4" />
+            <AlertTitle className="font-bold">Booking Confirmed!</AlertTitle>
+            <AlertDescription>
+            Your booking is complete. You can show the QR code at the facility.
+            </AlertDescription>
+        </Alert>
+      </div>
 
-      <Card className="shadow-lg">
+      <Card className="shadow-lg" ref={receiptRef} id="receipt-card">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">Booking Receipt</CardTitle>
           <CardDescription>Booking ID: {booking.id}</CardDescription>
@@ -131,15 +166,17 @@ export default function BookingReceiptPage() {
             <p className="text-xs text-muted-foreground">Show this code at the facility for verification.</p>
           </div>
         </CardContent>
-        <CardFooter className="gap-2">
-            <Button className="w-full" variant="outline" onClick={() => toast({title: "Feature not implemented"})}>
+      </Card>
+      
+      <CardFooter className="gap-2 mt-4" id="print-hide-footer">
+            <Button className="w-full" variant="outline" onClick={handlePrint} disabled={isProcessing}>
                 <Printer className="mr-2 h-4 w-4"/> Print Receipt
             </Button>
-             <Button className="w-full" variant="outline" onClick={() => toast({title: "Feature not implemented"})}>
-                <Download className="mr-2 h-4 w-4"/> Download
+             <Button className="w-full" variant="outline" onClick={handleDownload} disabled={isProcessing}>
+                {isProcessing ? <LoadingSpinner size={16} className="mr-2"/> : <Download className="mr-2 h-4 w-4"/>}
+                {isProcessing ? "Downloading..." : "Download PDF"}
             </Button>
         </CardFooter>
-      </Card>
     </div>
   );
 }
