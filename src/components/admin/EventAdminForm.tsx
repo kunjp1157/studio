@@ -19,19 +19,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Save, ArrowLeft, CalendarDays, DollarSign, Users, ImageIcon, Info, Zap } from 'lucide-react';
+import { formatISO, parseISO } from 'date-fns';
 
 const eventFormSchema = z.object({
   name: z.string().min(3, { message: "Event name must be at least 3 characters." }),
   facilityId: z.string().min(1, { message: "Please select a facility." }),
   sportId: z.string().min(1, { message: "Please select a sport." }),
-  startDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid start date format." }),
-  endDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid end date format." }),
+  startDate: z.date({ required_error: "Start date is required."}),
+  endDate: z.date({ required_error: "End date is required."}),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
   entryFee: z.coerce.number().min(0).optional().default(0),
   maxParticipants: z.coerce.number().min(0).optional().default(0),
   imageUrl: z.string().url({ message: "Please enter a valid image URL." }).optional().or(z.literal('')),
   imageDataAiHint: z.string().optional(),
-}).refine(data => new Date(data.endDate) >= new Date(data.startDate), {
+}).refine(data => data.endDate >= data.startDate, {
   message: "End date cannot be before start date.",
   path: ["endDate"],
 });
@@ -70,25 +71,37 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
     defaultValues: initialData ? {
       ...initialData,
       sportId: initialData.sport.id,
-      startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().substring(0, 16) : '',
-      endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().substring(0, 16) : '',
+      startDate: parseISO(initialData.startDate),
+      endDate: parseISO(initialData.endDate),
       entryFee: initialData.entryFee ?? 0,
       maxParticipants: initialData.maxParticipants ?? 0,
       imageUrl: initialData.imageUrl ?? '',
     } : {
-      name: '', facilityId: '', sportId: '', startDate: '', endDate: '', description: '',
+      name: '', facilityId: '', sportId: '', description: '',
       entryFee: 0, maxParticipants: 0, imageUrl: '', imageDataAiHint: ''
     },
   });
+  
+  const toLocalISOString = (date: Date) => {
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
+    const localISOTime = (new Date(date.getTime() - tzoffset)).toISOString().slice(0, -1);
+    return localISOTime.substring(0, 16);
+  }
 
   const onSubmit = async (data: EventFormValues) => {
     setIsLoading(true);
 
     try {
+        const payload = {
+            ...data,
+            startDate: data.startDate.toISOString(),
+            endDate: data.endDate.toISOString(),
+        };
+
         if (initialData) {
-            await updateEventAction({ ...initialData, ...data });
+            await updateEventAction({ ...initialData, ...payload });
         } else {
-            await addEventAction(data);
+            await addEventAction(payload);
         }
         toast({
             title: initialData ? "Event Updated" : "Event Created",
@@ -167,14 +180,14 @@ export function EventAdminForm({ initialData, onSubmitSuccess }: EventAdminFormP
               <FormField control={form.control} name="startDate" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground"/>Start Date & Time</FormLabel>
-                  <FormControl><Input type="datetime-local" {...field} /></FormControl>
+                  <FormControl><Input type="datetime-local" value={field.value ? toLocalISOString(field.value) : ''} onChange={(e) => field.onChange(new Date(e.target.value))}/></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="endDate" render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-muted-foreground"/>End Date & Time</FormLabel>
-                  <FormControl><Input type="datetime-local" {...field} /></FormControl>
+                  <FormControl><Input type="datetime-local" value={field.value ? toLocalISOString(field.value) : ''} onChange={(e) => field.onChange(new Date(e.target.value))} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
