@@ -128,12 +128,19 @@ export async function getAllAmenitiesAction(): Promise<Amenity[]> {
 export async function getAllEventsAction(): Promise<SportEvent[]> {
     noStore();
     const [rows] = await query('SELECT * FROM events');
-    const events = rows as SportEvent[];
+    const events = rows as any[];
     for(const event of events) {
         const [sportRows] = await query('SELECT * FROM sports WHERE id = ?', [event.sportId]);
         event.sport = (sportRows as Sport[])[0];
+        // Ensure dates are ISO strings
+        if (event.startDate instanceof Date) {
+            event.startDate = event.startDate.toISOString();
+        }
+        if (event.endDate instanceof Date) {
+            event.endDate = event.endDate.toISOString();
+        }
     }
-    return events;
+    return events as SportEvent[];
 }
 
 export async function getAllMembershipPlansAction(): Promise<MembershipPlan[]> {
@@ -463,6 +470,9 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
         if (!currentUser || currentUser.password !== currentPassword) {
             throw new Error("Current password does not match.");
         }
+    } else {
+        // Ensure we don't try to update the password to undefined if it's not provided
+        delete dbUpdates.password;
     }
     
     // Prepare fields for SQL query
@@ -771,10 +781,16 @@ export async function rejectOwnerRequestAction(requestId: number, userId: string
 export async function getEventById(id: string): Promise<SportEvent | undefined> { 
     noStore();
     const [rows] = await query('SELECT * FROM events WHERE id = ?', [id]);
-    const event = (rows as SportEvent[])[0];
+    const event = (rows as any[])[0] as SportEvent | undefined;
     if (event) {
         const [sportRows] = await query('SELECT * FROM sports WHERE id = ?', [event.sportId]);
         event.sport = (sportRows as Sport[])[0];
+        if (event.startDate instanceof Date) {
+            event.startDate = event.startDate.toISOString();
+        }
+        if (event.endDate instanceof Date) {
+            event.endDate = event.endDate.toISOString();
+        }
     }
     return event;
 }
