@@ -158,7 +158,7 @@ export default function AdminDashboardPage() {
     });
     const monthlyRevenueData = last6Months.map(m => ({
         month: m.month,
-        revenue: parseFloat((aggregatedRevenue[m.monthKey] || 0).toFixed(2)),
+        revenue: aggregatedRevenue[m.monthKey] || 0,
     }));
     
     const sportUsageMap = new Map<string, number>();

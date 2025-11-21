@@ -455,7 +455,7 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
     const { currentPassword, ...dbUpdates } = updates;
 
     // Password validation logic
-    if (dbUpdates.password && dbUpdates.password.length > 0) {
+    if (dbUpdates.password) {
         if (!currentPassword) {
             throw new Error("Current password is required to set a new password.");
         }
@@ -463,9 +463,6 @@ export async function dbUpdateUser(userId: string, updates: Partial<UserProfile>
         if (!currentUser || currentUser.password !== currentPassword) {
             throw new Error("Current password does not match.");
         }
-    } else {
-        // If new password is not provided or is empty, remove it from updates to avoid overwriting with empty value
-        delete dbUpdates.password;
     }
     
     // Prepare fields for SQL query
@@ -680,7 +677,7 @@ export async function dbAddReview(reviewData: Omit<Review, 'id' | 'createdAt' | 
     const { userId, facilityId, rating, comment, bookingId } = reviewData;
     const user = await dbGetUserById(userId);
     const [result] = await query('INSERT INTO reviews (userId, facilityId, rating, comment, bookingId, userName, userAvatar, isPublicProfile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isProfilePublic]
+        [userId, facilityId, rating, comment, bookingId, user?.name, user?.profilePictureUrl, user?.isPublicProfile]
     );
     await query('UPDATE bookings SET reviewed = true WHERE id = ?', [bookingId]);
     const newId = (result as any).insertId;

@@ -32,16 +32,22 @@ export function formatCurrency(amount: number, currency: 'USD' | 'EUR' | 'GBP' |
   }
 }
 
-export const calculateDynamicPrice = ( basePricePerHour: number, selectedDate: Date, selectedSlot: TimeSlot, durationHours: number ): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } => {
-    // Placeholder for actual dynamic pricing logic
-    // In a real app, this would check pricing rules against the date and time.
-    
-    // For now, it just calculates based on duration.
-    if(durationHours > 0) {
-      return { finalPrice: basePricePerHour * durationHours };
-    }
-    
-    // Fallback to base price if duration is invalid
-    return { finalPrice: basePricePerHour };
+// A simple utility function to calculate dynamic prices.
+// This is a placeholder for a more complex pricing engine.
+export function calculateDynamicPrice(
+  basePricePerHour: number,
+  selectedDate: Date,
+  selectedSlot: { startTime: string, endTime: string },
+  durationHours: number
+): { finalPrice: number; appliedRuleName?: string, appliedRuleDetails?: PricingRule } {
+  // In a real app, you would fetch and apply pricing rules here.
+  // For now, it's a simple duration-based calculation.
+  if(durationHours > 0) {
+    return { finalPrice: basePricePerHour * durationHours };
+  }
+  
+  // Fallback to base price if duration is invalid
+  return { finalPrice: basePricePerHour };
 };
+
 
